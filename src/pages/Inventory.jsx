@@ -31,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 const sourceIcons = {
   "Amazon": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/af08cfed1_Logo.png",
@@ -48,6 +49,7 @@ export default function InventoryPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [filters, setFilters] = useState({ search: "", status: "not_sold", daysInStock: "all" });
   const [sort, setSort] = useState("newest");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -76,28 +78,76 @@ export default function InventoryPage() {
   }, [location.search]);
 
   const deleteItemMutation = useMutation({
-    mutationFn: (itemId) => base44.entities.InventoryItem.delete(itemId),
-    onSuccess: () => {
+    mutationFn: async (itemId) => {
+      try {
+        await base44.entities.InventoryItem.delete(itemId);
+        return itemId;
+      } catch (error) {
+        throw new Error(`Failed to delete item: ${error.message}`);
+      }
+    },
+    onSuccess: (deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
       setDeleteDialogOpen(false);
       setItemToDelete(null);
+      toast({
+        title: "Item Deleted",
+        description: "The inventory item has been successfully removed.",
+      });
     },
     onError: (error) => {
-      console.error("Failed to delete item:", error);
-      alert("Failed to delete item. Please try again.");
+      console.error("Delete error:", error);
+      toast({
+        title: "Error Deleting Item",
+        description: error.message || "Failed to delete item. Please try again.",
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
     },
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (itemIds) => Promise.all(itemIds.map(id => base44.entities.InventoryItem.delete(id))),
-    onSuccess: () => {
+    mutationFn: async (itemIds) => {
+      const results = [];
+      for (const id of itemIds) {
+        try {
+          await base44.entities.InventoryItem.delete(id);
+          results.push({ id, success: true });
+        } catch (error) {
+          results.push({ id, success: false, error: error.message });
+        }
+      }
+      return results;
+    },
+    onSuccess: (results) => {
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+      
       queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
       setSelectedItems([]);
       setBulkDeleteDialogOpen(false);
+      
+      if (failCount === 0) {
+        toast({
+          title: "Items Deleted",
+          description: `${successCount} selected items have been successfully removed.`,
+        });
+      } else {
+        toast({
+          title: "Bulk Delete Completed",
+          description: `Deleted ${successCount} items. ${failCount} items failed to delete.`,
+          variant: failCount === results.length ? "destructive" : "default",
+        });
+      }
     },
     onError: (error) => {
-      console.error("Failed to delete items:", error);
-      alert("Failed to delete items. Please try again.");
+      console.error("Bulk delete error:", error);
+      toast({
+        title: "Error Deleting Items",
+        description: "Failed to delete items. Please try again.",
+        variant: "destructive",
+      });
+      setBulkDeleteDialogOpen(false);
     },
   });
 
@@ -185,6 +235,18 @@ export default function InventoryPage() {
   const handleDeleteClick = (item) => {
     setItemToDelete(item);
     setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteItemMutation.mutate(itemToDelete.id);
+    }
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedItems.length > 0) {
+      bulkDeleteMutation.mutate(selectedItems);
+    }
   };
 
   const proceedToAddSale = (item, quantity) => {
@@ -342,9 +404,14 @@ export default function InventoryPage() {
               <span className="text-sm font-medium">
                 {selectedItems.length} item(s) selected
               </span>
-              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)}>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => setBulkDeleteDialogOpen(true)}
+                disabled={bulkDeleteMutation.isPending}
+              >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                {bulkDeleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </Button>
             </div>
           )}
@@ -466,6 +533,7 @@ export default function InventoryPage() {
                             variant="outline" 
                             size="sm" 
                             onClick={() => handleDeleteClick(item)} 
+                            disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
                             className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 px-2"
                           >
                             <Trash2 className="w-3 h-3" />
@@ -496,8 +564,14 @@ export default function InventoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteItemMutation.mutate(itemToDelete.id)} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              disabled={deleteItemMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteItemMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -511,9 +585,9 @@ export default function InventoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setSelectedItems([])}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => bulkDeleteMutation.mutate(selectedItems)}
+              onClick={confirmBulkDelete}
               className="bg-red-600 hover:bg-red-700"
               disabled={bulkDeleteMutation.isPending}
             >

@@ -15,7 +15,7 @@ import { addDays, format, parseISO } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-const PREDEFINED_SOURCES = ["Amazon", "Walmart", "Best Buy"];
+const PREDEFINED_SOURCES = ["Amazon", "Walmart", "Best Buy", "eBay", "eBay - SalvationArmy"];
 const PREDEFINED_CATEGORIES = [
   "Electronics",
   "Clothing & Apparel",
@@ -28,7 +28,8 @@ const PREDEFINED_CATEGORIES = [
   "Tools",
   "Health & Beauty",
   "Jewelry & Watches",
-  "Antiques"
+  "Antiques",
+  "Pets"
 ];
 
 const RETURN_WINDOWS = {
@@ -326,15 +327,6 @@ export default function AddInventoryItem() {
                           required
                         />
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="return_deadline" className="dark:text-gray-200">Return Deadline</Label>
-                        <Input 
-                          id="return_deadline" 
-                          type="date" 
-                          value={formData.return_deadline} 
-                          onChange={(e) => handleChange('return_deadline', e.target.value)}
-                        />
-                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="source_select" className="dark:text-gray-200">Source</Label>
                       <Select
@@ -351,6 +343,15 @@ export default function AddInventoryItem() {
                           <SelectItem value="other">Other...</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="return_deadline" className="dark:text-gray-200">Return Deadline</Label>
+                        <Input 
+                          id="return_deadline" 
+                          type="date" 
+                          value={formData.return_deadline} 
+                          onChange={(e) => handleChange('return_deadline', e.target.value)}
+                        />
                     </div>
 
                     {isOtherSource ? (

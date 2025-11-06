@@ -205,7 +205,7 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* Updated grid layout for 6 stat cards */}
+        {/* Updated grid layout for 3 stat cards instead of 6 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Total Profit"
@@ -225,24 +225,6 @@ export default function Dashboard() {
             value={inventoryStats.totalQuantity}
             icon={Package}
             bgGradient="bg-gradient-to-br from-purple-500 to-pink-600"
-          />
-          <StatCard
-            title="Profit Margin"
-            value={`${profitMargin.toFixed(1)}%`}
-            icon={Percent}
-            bgGradient="bg-gradient-to-br from-orange-500 to-red-600"
-          />
-          <StatCard
-            title="Avg Profit/Sale"
-            value={`$${avgProfit.toFixed(2)}`}
-            icon={TrendingUp}
-            bgGradient="bg-gradient-to-br from-sky-400 to-cyan-500"
-          />
-          <StatCard
-            title="Avg. Time to Sell"
-            value={`${averageSaleSpeed.toFixed(1)} Days`}
-            icon={Timer}
-            bgGradient="bg-gradient-to-br from-teal-400 to-emerald-500"
           />
         </div>
 
