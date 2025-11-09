@@ -179,27 +179,27 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* New Stale Inventory Banner */}
+        {/* Updated Stale Inventory Banner with better dark mode contrast */}
         {staleItems.length > 0 && showStaleItemBanner && (
-          <Alert className="mb-8 border-blue-400 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-200 relative group">
-            <Lightbulb className="h-4 w-4 !text-blue-700 dark:!text-blue-400" />
+          <Alert className="mb-8 border-blue-400 bg-blue-50 text-blue-900 dark:bg-gray-800/70 dark:text-gray-100 dark:border-gray-700 relative group">
+            <Lightbulb className="h-4 w-4 !text-blue-700 dark:!text-emerald-400" />
             <div className="flex justify-between items-start w-full">
               <div className="pr-8">
-                <AlertTitle className="font-bold">Smart Reminder</AlertTitle>
-                <AlertDescription>
+                <AlertTitle className="font-bold dark:text-gray-100">Smart Reminder</AlertTitle>
+                <AlertDescription className="dark:text-gray-100">
                   {staleItems.length === 1 ? (
-                    <>Your <span className="font-semibold text-blue-700 dark:text-blue-300">"{staleItems[0].item_name}"</span> has been sitting for 14+ days.</>
+                    <>Your <span className="font-semibold text-blue-700 dark:text-emerald-300">"{staleItems[0].item_name}"</span> has been sitting for 14+ days.</>
                   ) : (
                     <>{staleItems.length} items have been sitting for 14+ days.</>
                   )}
                   {' '}Consider dropping the price by 5% to boost sales.
-                  <Link to={createPageUrl("Inventory?filter=stale")} className="font-semibold underline ml-2 hover:text-blue-800 dark:hover:text-blue-100">
+                  <Link to={createPageUrl("Inventory?filter=stale")} className="font-semibold underline ml-2 hover:text-blue-800 dark:hover:text-emerald-200 dark:text-emerald-300">
                     View Items
                   </Link>
                 </AlertDescription>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity" onClick={() => setShowStaleItemBanner(false)}>
+            <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity dark:text-gray-300 dark:hover:text-gray-100" onClick={() => setShowStaleItemBanner(false)}>
               <X className="h-4 w-4" />
             </Button>
           </Alert>

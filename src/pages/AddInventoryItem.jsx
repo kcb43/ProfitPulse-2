@@ -4,17 +4,18 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { compressImage } from "@/utils/imageCompression";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Upload, Copy as CopyIcon, Calendar as CalendarIcon } from "lucide-react";
+import { ArrowLeft, Save, Upload, Copy as CopyIcon, BarChart } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import ClearableDateInput from "../components/ClearableDateInput";
+import SoldLookupDialog from "../components/SoldLookupDialog";
 
 const PREDEFINED_SOURCES = ["Amazon", "Walmart", "Best Buy", "eBay", "eBay - SalvationArmy"];
 const PREDEFINED_CATEGORIES = [
@@ -46,7 +47,7 @@ export default function AddInventoryItem() {
   
   const searchParams = new URLSearchParams(location.search);
   const itemId = searchParams.get('id');
-  const copyId = searchParams.get('copyId'); // New: Parameter for copying an item
+  const copyId = searchParams.get('copyId');
 
   const [formData, setFormData] = useState({
     item_name: "",
@@ -63,17 +64,18 @@ export default function AddInventoryItem() {
   const [isOtherSource, setIsOtherSource] = useState(false);
   const [isOtherCategory, setIsOtherCategory] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [soldDialogOpen, setSoldDialogOpen] = useState(false);
 
   const { data: existingItem, isLoading: isLoadingItem } = useQuery({
     queryKey: ['inventoryItem', itemId],
     queryFn: () => base44.entities.InventoryItem.get(itemId),
-    enabled: !!itemId && !copyId, // Only fetch if editing and not copying
+    enabled: !!itemId && !copyId,
   });
 
   const { data: itemToCopy, isLoading: isLoadingCopy } = useQuery({
     queryKey: ['inventoryItem', copyId],
     queryFn: () => base44.entities.InventoryItem.get(copyId),
-    enabled: !!copyId, // Fetch if copying
+    enabled: !!copyId,
   });
 
   useEffect(() => {
@@ -81,16 +83,13 @@ export default function AddInventoryItem() {
     let isCopying = false;
 
     if (copyId && itemToCopy) {
-      // If we are copying an item, use data from itemToCopy
       dataToLoad = itemToCopy;
       isCopying = true;
     } else if (itemId && existingItem) {
-      // If we are editing an existing item, use data from existingItem
       dataToLoad = existingItem;
     }
 
     if (dataToLoad) {
-      // Determine if source and category are 'other' based on loaded data
       const initialSource = dataToLoad.source || "";
       if (initialSource && !PREDEFINED_SOURCES.includes(initialSource)) {
         setIsOtherSource(true);
@@ -105,23 +104,20 @@ export default function AddInventoryItem() {
         setIsOtherCategory(false);
       }
 
-      // Populate formData
       setFormData({
         item_name: dataToLoad.item_name || "",
-        purchase_price: String(dataToLoad.purchase_price) || "", // Ensure purchase_price is a string for input type="number"
+        purchase_price: String(dataToLoad.purchase_price) || "",
         purchase_date: dataToLoad.purchase_date || new Date().toISOString().split('T')[0],
         source: initialSource,
-        status: isCopying ? "available" : (dataToLoad.status || "available"), // Copied items start as available
+        status: isCopying ? "available" : (dataToLoad.status || "available"),
         category: initialCategory,
-        notes: isCopying ? "" : (dataToLoad.notes || ""), // Clear notes when copying, or keep original when editing
+        notes: isCopying ? "" : (dataToLoad.notes || ""),
         image_url: dataToLoad.image_url || "",
         quantity: dataToLoad.quantity || 1,
-        return_deadline: isCopying ? "" : (dataToLoad.return_deadline || "") // Clear deadline for copied items
+        return_deadline: isCopying ? "" : (dataToLoad.return_deadline || "")
       });
-    } else if (!itemId && !copyId) { // Only pre-fill from URL parameters if creating a NEW item (not editing, not copying)
-      // Logic to pre-fill from URL parameters when creating from a sale
+    } else if (!itemId && !copyId) {
       const itemName = searchParams.get('itemName');
-      // Only proceed if itemName is provided, as it's the primary indicator for this flow
       if (itemName) {
         const purchasePrice = searchParams.get('purchasePrice');
         const purchaseDate = searchParams.get('purchaseDate');
@@ -130,20 +126,18 @@ export default function AddInventoryItem() {
         const imageUrl = searchParams.get('imageUrl');
         const notes = searchParams.get('notes');
 
-        // Handle 'other' source state
         const initialSource = source || "";
         if (initialSource && !PREDEFINED_SOURCES.includes(initialSource)) {
           setIsOtherSource(true);
         } else {
-          setIsOtherSource(false); // Ensure it's false if source is predefined or empty
+          setIsOtherSource(false);
         }
 
-        // Handle 'other' category state
         const initialCategory = category || "";
         if (initialCategory && !PREDEFINED_CATEGORIES.includes(initialCategory)) {
           setIsOtherCategory(true);
         } else {
-          setIsOtherCategory(false); // Ensure it's false if category is predefined or empty
+          setIsOtherCategory(false);
         }
 
         setFormData(prev => ({
@@ -152,11 +146,11 @@ export default function AddInventoryItem() {
           purchase_price: purchasePrice || "",
           purchase_date: purchaseDate || new Date().toISOString().split('T')[0],
           source: initialSource,
-          status: "available", // Default to available for new items from sales
+          status: "available",
           category: initialCategory,
           notes: notes || "", 
           image_url: imageUrl || "",
-          quantity: 1, // Default quantity to 1
+          quantity: 1,
         }));
       }
     }
@@ -171,10 +165,9 @@ export default function AddInventoryItem() {
         const formattedDeadline = format(deadline, 'yyyy-MM-dd');
         setFormData(prev => ({ ...prev, return_deadline: formattedDeadline }));
       } catch (e) {
-        // Invalid date string, do nothing
+        // Invalid date string
       }
     } else if (purchase_date && !RETURN_WINDOWS[source]) {
-      // If source changes to one without a predefined return window, clear the auto-calculated deadline
       setFormData(prev => ({ ...prev, return_deadline: "" }));
     }
   }, [formData.source, formData.purchase_date]);
@@ -191,10 +184,9 @@ export default function AddInventoryItem() {
       const numericData = {
         ...data,
         purchase_price: parseFloat(data.purchase_price) || 0,
-        quantity: parseInt(data.quantity, 10) || 1
+        quantity: parseInt(data.quantity, 10) || 1,
+        return_deadline: data.return_deadline ? data.return_deadline : null
       };
-      // If itemId is present AND we are not in a copy flow, update the item.
-      // Otherwise, create a new item (this covers both 'Add' and 'Copy' scenarios).
       return (itemId && !copyId) ? base44.entities.InventoryItem.update(itemId, numericData) : base44.entities.InventoryItem.create(numericData);
     },
     onSuccess: () => {
@@ -204,47 +196,25 @@ export default function AddInventoryItem() {
   });
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files[0];
     if (!file) return;
-
-    // Reject huge files
-    if (file.size > 15 * 1024 * 1024) {
-      alert("Image is too large (max 15MB).");
-      e.target.value = null; // Clear the input so same file can be re-selected
-      return;
-    }
-
     setIsUploading(true);
     try {
-      // Quick guard: skip videos / non-images
-      if (!file.type.startsWith("image/")) {
-        alert("Please upload an image file.");
-        return;
-      }
-
-      // Compress before upload
-      const compressed = await compressImage(file, {
-        maxWidth: 1600,
-        maxHeight: 1600,
-        quality: 0.82,
-        preferWebP: true
-      });
-
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressed });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       handleChange('image_url', file_url);
     } catch (error) {
       console.error("Image upload failed:", error);
-      alert("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
-      e.target.value = null; // Clear the input value after upload (success or fail)
+      // Clear the input value to allow re-uploading the same file if needed
+      if (e.target) e.target.value = null; 
     }
   };
 
   const handleSourceSelectChange = (value) => {
     if (value === 'other') {
       setIsOtherSource(true);
-      handleChange('source', ''); // Clear source when switching to 'other'
+      handleChange('source', '');
     } else {
       setIsOtherSource(false);
       handleChange('source', value);
@@ -267,7 +237,7 @@ export default function AddInventoryItem() {
   };
 
   if (isLoadingItem || isLoadingCopy) {
-    return <div className="p-8 text-center text-gray-700 dark:text-gray-300">Loading item data...</div>
+    return <div className="p-8 text-center text-gray-700 dark:text-gray-300">Loading item data...</div>;
   }
 
   return (
@@ -308,14 +278,27 @@ export default function AddInventoryItem() {
                 <div className="grid md:grid-cols-2 gap-6 min-w-0">
                     <div className="space-y-2 min-w-0">
                         <Label htmlFor="item_name" className="dark:text-gray-200 break-words">Item Name *</Label>
-                        <Input 
-                          id="item_name" 
-                          value={formData.item_name} 
-                          onChange={(e) => handleChange('item_name', e.target.value)} 
-                          placeholder="e.g., Vintage Nike Sneakers"
-                          required
-                          className="w-full"
-                        />
+                        <div className="flex gap-2">
+                          <Input 
+                            id="item_name" 
+                            value={formData.item_name} 
+                            onChange={(e) => handleChange('item_name', e.target.value)} 
+                            placeholder="e.g., Vintage Nike Sneakers"
+                            required
+                            className="w-full"
+                          />
+                          {formData.item_name?.trim() && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setSoldDialogOpen(true)}
+                              className="whitespace-nowrap"
+                            >
+                              <BarChart className="w-4 h-4 mr-2" />
+                              Sold
+                            </Button>
+                          )}
+                        </div>
                     </div>
                      <div className="space-y-2 min-w-0">
                         <Label htmlFor="purchase_price" className="dark:text-gray-200 break-words">Purchase Price *</Label>
@@ -331,27 +314,15 @@ export default function AddInventoryItem() {
                           className="w-full"
                         />
                     </div>
-                     <div className="space-y-2 min-w-0">
-                        <Label htmlFor="purchase_date" className="dark:text-gray-200 break-words">Purchase Date *</Label>
-                        <div className="relative">
-                          <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-white pointer-events-none z-10" />
-                          <Input 
-                            id="purchase_date" 
-                            type="date" 
-                            value={formData.purchase_date} 
-                            onChange={(e) => handleChange('purchase_date', e.target.value)}
-                            required
-                            className="pl-10 w-full cursor-pointer
-                              [&::-webkit-calendar-picker-indicator]:opacity-0
-                              [&::-webkit-calendar-picker-indicator]:absolute
-                              [&::-webkit-calendar-picker-indicator]:left-0
-                              [&::-webkit-calendar-picker-indicator]:top-0
-                              [&::-webkit-calendar-picker-indicator]:w-full
-                              [&::-webkit-calendar-picker-indicator]:h-full
-                              [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                          />
-                        </div>
-                    </div>
+                    
+                    <ClearableDateInput
+                      id="purchase_date"
+                      label="Purchase Date"
+                      value={formData.purchase_date}
+                      onChange={(val) => handleChange('purchase_date', val)}
+                      required
+                    />
+                    
                     <div className="space-y-2 min-w-0">
                         <Label htmlFor="quantity" className="dark:text-gray-200 break-words">Quantity *</Label>
                         <Input 
@@ -383,26 +354,13 @@ export default function AddInventoryItem() {
                         </SelectContent>
                       </Select>
                     </div>
-                     <div className="space-y-2 min-w-0">
-                        <Label htmlFor="return_deadline" className="dark:text-gray-200 break-words">Return Deadline</Label>
-                        <div className="relative">
-                          <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-white pointer-events-none z-10" />
-                          <Input 
-                            id="return_deadline" 
-                            type="date" 
-                            value={formData.return_deadline} 
-                            onChange={(e) => handleChange('return_deadline', e.target.value)}
-                            className="pl-10 w-full cursor-pointer
-                              [&::-webkit-calendar-picker-indicator]:opacity-0
-                              [&::-webkit-calendar-picker-indicator]:absolute
-                              [&::-webkit-calendar-picker-indicator]:left-0
-                              [&::-webkit-calendar-picker-indicator]:top-0
-                              [&::-webkit-calendar-picker-indicator]:w-full
-                              [&::-webkit-calendar-picker-indicator]:h-full
-                              [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                          />
-                        </div>
-                    </div>
+                    
+                    <ClearableDateInput
+                      id="return_deadline"
+                      label="Return Deadline (optional)"
+                      value={formData.return_deadline}
+                      onChange={(val) => handleChange('return_deadline', val)}
+                    />
 
                     {isOtherSource ? (
                       <div className="space-y-2 md:col-span-2 min-w-0">
@@ -528,6 +486,12 @@ export default function AddInventoryItem() {
           </CardContent>
         </Card>
       </div>
+
+      <SoldLookupDialog
+        open={soldDialogOpen}
+        onOpenChange={setSoldDialogOpen}
+        itemName={formData.item_name}
+      />
     </div>
   );
 }

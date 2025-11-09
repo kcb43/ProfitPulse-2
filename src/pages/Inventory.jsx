@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, differenceInDays, isAfter } from "date-fns";
-import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy } from "lucide-react";
+import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import SoldLookupDialog from "../components/SoldLookupDialog";
 
 const sourceIcons = {
   "Amazon": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/af08cfed1_Logo.png",
@@ -59,6 +60,8 @@ export default function InventoryPage() {
   const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
   const [itemToSell, setItemToSell] = useState(null);
   const [quantityToSell, setQuantityToSell] = useState(1);
+  const [soldDialogOpen, setSoldDialogOpen] = useState(false);
+  const [soldDialogName, setSoldDialogName] = useState("");
 
   const { data: inventoryItems, isLoading } = useQuery({
     queryKey: ['inventoryItems'],
@@ -518,6 +521,15 @@ export default function InventoryPage() {
                             Mark Sold
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setSoldDialogName(item.item_name); setSoldDialogOpen(true); }}
+                          className="w-full h-8 text-xs"
+                        >
+                          <BarChart className="w-3.5 h-3.5 mr-2" />
+                          Search Sold
+                        </Button>
                         <div className="grid grid-cols-3 gap-1">
                           <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} className="flex-1">
                             <Button variant="outline" size="sm" className="w-full h-7 px-2">
@@ -631,6 +643,12 @@ export default function InventoryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SoldLookupDialog
+        open={soldDialogOpen}
+        onOpenChange={setSoldDialogOpen}
+        itemName={soldDialogName}
+      />
     </div>
   );
 }

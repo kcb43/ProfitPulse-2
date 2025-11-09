@@ -4,19 +4,19 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { compressImage } from "@/utils/imageCompression";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Calculator, Copy, Upload, Calendar as CalendarIcon, BarChart, Globe } from "lucide-react";
+import { ArrowLeft, Save, Calculator, Upload, Calendar as CalendarIcon, BarChart, Globe } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogOverlay
 } from "@/components/ui/dialog";
+import ClearableDateInput from "../components/ClearableDateInput";
 
 
 const platformOptions = [
@@ -95,6 +95,7 @@ export default function AddSale() {
     notes: "",
     image_url: "",
     quantity_sold: 1, // Default for new sales
+    return_deadline: "",
   });
 
   // NEW: Store per-item purchase price for multi-quantity inventory items
@@ -128,11 +129,13 @@ export default function AddSale() {
         delete dataToLoad._id;
         dataToLoad.notes = '';
         dataToLoad.inventory_id = null; // Don't copy inventory association when creating a new sale from an existing one
+        dataToLoad.return_deadline = ""; // Clear return deadline for copied sales
       }
 
       setFormData(prev => ({
         ...prev,
         ...dataToLoad,
+        return_deadline: dataToLoad.return_deadline || "", // Initialize return_deadline
         purchase_price: String(dataToLoad.purchase_price ?? ''),
         selling_price: String(dataToLoad.selling_price ?? ''),
         shipping_cost: String(dataToLoad.shipping_cost ?? ''),
@@ -219,6 +222,7 @@ export default function AddSale() {
         platform_fees: platformFees, 
         other_costs: otherCosts,
         vat_fees: vatFees,
+        return_deadline: saleData.return_deadline ? saleData.return_deadline : null, // Set to null if empty
         profit: profit,
         quantity_sold: quantitySold,
         inventory_id: inventoryId || saleData.inventory_id || null // Added inventory_id here
@@ -291,32 +295,12 @@ export default function AddSale() {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files[0];
     if (!file) return;
-
-    // Reject huge files
-    if (file.size > 15 * 1024 * 1024) { // 15 MB limit
-      alert("Image is too large (max 15MB).");
-      e.target.value = null; // Clear the input
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      alert("Please upload an image file.");
-      e.target.value = null; // Clear the input
-      return;
-    }
 
     setIsUploading(true);
     try {
-      const compressed = await compressImage(file, {
-        maxWidth: 1600,
-        maxHeight: 1600,
-        quality: 0.82,
-        preferWebP: true
-      });
-
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: compressed });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       handleChange('image_url', file_url);
     } catch (error) {
       console.error("Image upload failed:", error);
@@ -407,43 +391,43 @@ export default function AddSale() {
 
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      <div className="max-w-3xl mx-auto w-full min-w-0">
-        <div className="flex items-center gap-4 mb-8 min-w-0">
+    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
           <Button
             variant="outline"
             onClick={() => navigate(createPageUrl(saleId || copyId ? "SalesHistory" : "Dashboard"))}
           >
             <ArrowLeft className="w-5 h-5 mr-2" /> Back
           </Button>
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white break-words">{saleId ? "Edit Sale" : (copyId ? "Copy Sale" : "Add New Sale")}</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1 break-words">{saleId ? "Update the details of this sale" : (copyId ? "Create a new sale from a copy" : "Record a new sale and track your profit")}</p>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{saleId ? "Edit Sale" : (copyId ? "Copy Sale" : "Add New Sale")}</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">{saleId ? "Update the details of this sale" : (copyId ? "Create a new sale from a copy" : "Record a new sale and track your profit")}</p>
           </div>
         </div>
 
         <Card className="border-0 shadow-lg">
           <CardHeader className="border-b bg-gray-800 dark:bg-gray-800">
             <div className="flex items-center gap-3">
-              <CardTitle className="text-xl text-white dark:text-white">Sale Details</CardTitle>
+              <CardTitle className="text-xl text-white">Sale Details</CardTitle>
               {copyId && (
-                <Badge className="bg-orange-100 text-orange-800 border border-orange-200">Copied</Badge>
+                <Badge className="bg-orange-100 text-orange-800">Copied</Badge>
               )}
             </div>
           </CardHeader>
-          <CardContent className="p-6 min-w-0">
-            <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
                 
                 {inventoryId && !idToLoad && (
                     <Alert variant="default" className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
-                        <AlertDescription className="dark:text-blue-200 break-words">
+                        <AlertDescription className="dark:text-blue-200">
                             Creating a sale for inventory item: <span className="font-semibold">{formData.item_name}</span>
                         </AlertDescription>
                     </Alert>
                 )}
               <div className="grid md:grid-cols-2 gap-6 min-w-0">
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="item_name" className="dark:text-gray-200 break-words">Item Name *</Label>
+                  <Label htmlFor="item_name" className="dark:text-gray-200">Item Name *</Label>
                   <Input
                     id="item_name"
                     value={formData.item_name}
@@ -469,7 +453,7 @@ export default function AddSale() {
                 )}
 
                 <div className="space-y-2 min-w-0">
-                   <Label htmlFor="quantity_sold" className="dark:text-gray-200 break-words">Quantity Sold *</Label>
+                   <Label htmlFor="quantity_sold" className="dark:text-gray-200">Quantity Sold *</Label>
                    <Input 
                        id="quantity_sold" 
                        type="number" 
@@ -483,11 +467,11 @@ export default function AddSale() {
                    {inventoryId && !idToLoad && totalItemQuantity > 0 && (
                        <>
                            {remainingItemQuantity <= 0 ? (
-                               <p className="text-sm text-red-500 dark:text-red-400 break-words">
+                               <p className="text-sm text-red-500 dark:text-red-400">
                                  Warning: This inventory item is marked as sold out.
                                </p>
                            ) : (
-                               <p className="text-sm text-gray-500 dark:text-gray-400 break-words">
+                               <p className="text-sm text-gray-500 dark:text-gray-400">
                                  {remainingAfterThisSale} of {totalItemQuantity} remaining after this sale.
                                </p>
                            )}
@@ -496,7 +480,7 @@ export default function AddSale() {
                 </div>
 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="purchase_price" className="dark:text-gray-200 break-words">
+                  <Label htmlFor="purchase_price" className="dark:text-gray-200">
                     Purchase Price {inventoryId && !idToLoad && perItemPurchasePrice !== null ? `($${perItemPurchasePrice.toFixed(2)} per item)` : ''} *
                   </Label>
                   <Input
@@ -513,7 +497,7 @@ export default function AddSale() {
                 </div>
 
                  <div className="space-y-2 min-w-0">
-                  <Label htmlFor="source_select" className="dark:text-gray-200 break-words">Source</Label>
+                  <Label htmlFor="source_select" className="dark:text-gray-200">Source</Label>
                   <Select
                     onValueChange={handleSourceSelectChange}
                     value={isOtherSource ? 'other' : formData.source}
@@ -531,7 +515,7 @@ export default function AddSale() {
                 </div>
                 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="platform" className="dark:text-gray-200 break-words">Sold On *</Label>
+                  <Label htmlFor="platform" className="dark:text-gray-200">Sold On *</Label>
                   <Select
                     value={formData.platform}
                     onValueChange={(value) => handleChange('platform', value)}
@@ -552,7 +536,7 @@ export default function AddSale() {
 
                 {isOtherSource ? (
                   <div className="space-y-2 md:col-span-2 min-w-0">
-                    <Label htmlFor="other_source" className="dark:text-gray-200 break-words">Custom Source</Label>
+                    <Label htmlFor="other_source" className="dark:text-gray-200">Custom Source</Label>
                     <Input
                       id="other_source"
                       value={formData.source}
@@ -563,24 +547,16 @@ export default function AddSale() {
                   </div>
                 ) : null}
 
-                <div className="space-y-2 min-w-0">
-                  <Label htmlFor="purchase_date" className="dark:text-gray-200 break-words">Purchase Date *</Label>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white dark:text-white pointer-events-none z-10" />
-                    <Input
-                      id="purchase_date"
-                      type="date"
-                      value={formData.purchase_date}
-                      onChange={(e) => handleChange('purchase_date', e.target.value)}
-                      onClick={(e) => e.currentTarget.showPicker?.()}
-                      required
-                      className="pl-10 w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                    />
-                  </div>
-                </div>
+                <ClearableDateInput
+                  id="purchase_date"
+                  label="Purchase Date"
+                  value={formData.purchase_date}
+                  onChange={(val) => handleChange('purchase_date', val)}
+                  required
+                />
                 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="selling_price" className="dark:text-gray-200 break-words">Selling Price *</Label>
+                  <Label htmlFor="selling_price" className="dark:text-gray-200">Selling Price *</Label>
                   <Input
                     id="selling_price"
                     type="number"
@@ -594,24 +570,16 @@ export default function AddSale() {
                   />
                 </div>
                 
-                <div className="space-y-2 min-w-0">
-                  <Label htmlFor="sale_date" className="dark:text-gray-200 break-words">Sale Date *</Label>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white dark:text-white pointer-events-none z-10" />
-                    <Input
-                      id="sale_date"
-                      type="date"
-                      value={formData.sale_date}
-                      onChange={(e) => handleChange('sale_date', e.target.value)}
-                      onClick={(e) => e.currentTarget.showPicker?.()}
-                      required
-                      className="pl-10 w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                    />
-                  </div>
-                </div>
+                <ClearableDateInput
+                  id="sale_date"
+                  label="Sale Date"
+                  value={formData.sale_date}
+                  onChange={(val) => handleChange('sale_date', val)}
+                  required
+                />
 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="shipping_cost" className="dark:text-gray-200 break-words">Shipping Cost</Label>
+                  <Label htmlFor="shipping_cost" className="dark:text-gray-200">Shipping Cost</Label>
                   <Input
                     id="shipping_cost"
                     type="number"
@@ -625,7 +593,7 @@ export default function AddSale() {
                 </div>
 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="platform_fees" className="dark:text-gray-200 break-words">
+                  <Label htmlFor="platform_fees" className="dark:text-gray-200">
                     {isEbay ? 'Sales Tax (collected from buyer)' : 'Platform Fees'}
                   </Label>
                   <Input
@@ -641,7 +609,7 @@ export default function AddSale() {
                 </div>
 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="other_costs" className="dark:text-gray-200 break-words">
+                  <Label htmlFor="other_costs" className="dark:text-gray-200">
                     {isEbay ? 'Transaction Fees' : 'Other Costs'}
                   </Label>
                   <Input
@@ -658,7 +626,7 @@ export default function AddSale() {
 
                 {isEbay && (
                   <div className="space-y-2 min-w-0">
-                    <Label htmlFor="vat_fees" className="dark:text-gray-200 break-words">
+                    <Label htmlFor="vat_fees" className="dark:text-gray-200">
                       VAT Fees (if applicable, collected from buyer)
                     </Label>
                     <Input
@@ -673,9 +641,16 @@ export default function AddSale() {
                     />
                   </div>
                 )}
+                
+                <ClearableDateInput
+                  id="return_deadline"
+                  label="Return Deadline"
+                  value={formData.return_deadline}
+                  onChange={(val) => handleChange('return_deadline', val)}
+                />
 
                 <div className="space-y-2 min-w-0">
-                  <Label htmlFor="category_select" className="dark:text-gray-200 break-words">Category</Label>
+                  <Label htmlFor="category_select" className="dark:text-gray-200">Category</Label>
                   <Select
                     onValueChange={handleCategorySelectChange}
                     value={isOtherCategory ? 'other' : formData.category}
@@ -694,7 +669,7 @@ export default function AddSale() {
 
                 {isOtherCategory ? (
                   <div className="space-y-2 min-w-0">
-                    <Label htmlFor="other_category" className="dark:text-gray-200 break-words">Custom Category</Label>
+                    <Label htmlFor="other_category" className="dark:text-gray-200">Custom Category</Label>
                     <Input
                       id="other_category"
                       value={formData.category}
@@ -707,7 +682,7 @@ export default function AddSale() {
 
 
                 <div className="space-y-2 md:col-span-2 min-w-0">
-                  <Label htmlFor="notes" className="dark:text-gray-200 break-words">Notes</Label>
+                  <Label htmlFor="notes" className="dark:text-gray-200">Notes</Label>
                   <Textarea
                     id="notes"
                     value={formData.notes}
@@ -719,7 +694,7 @@ export default function AddSale() {
                 </div>
 
                 <div className="space-y-2 md:col-span-2 min-w-0">
-                  <Label htmlFor="image-upload" className="dark:text-gray-200 break-words">Item Image</Label>
+                  <Label htmlFor="image-upload" className="dark:text-gray-200">Item Image</Label>
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
@@ -820,15 +795,15 @@ export default function AddSale() {
         ">
           <div className="space-y-4 overflow-x-hidden break-words whitespace-normal hyphens-auto">
             <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl font-semibold leading-snug text-balance">
+              <DialogTitle className="text-lg sm:text-xl font-semibold">
                 Sold Listings Lookup
               </DialogTitle>
-              <DialogDescription className="text-sm sm:text-base leading-relaxed break-words">
+              <DialogDescription className="text-sm sm:text-base leading-relaxed">
                 Quick search links based on "{q || "your item name"}".
               </DialogDescription>
             </DialogHeader>
 
-            <div className="text-sm text-muted-foreground break-words">
+            <div className="text-sm text-muted-foreground">
               💡Tip:  <br className="block sm:hidden" /> Keep names tight (brand + model + size). You can refine once the page opens.
             </div>
 
@@ -848,7 +823,7 @@ export default function AddSale() {
                     border border-border transition
                     bg-muted/70 hover:bg-muted
                     dark:bg-muted/40 dark:hover:bg-muted/60
-                    text-foreground whitespace-nowrap min-w-0
+                    text-foreground
                     ${activeMarket === 'ebay_sold' ? '!bg-foreground !text-background dark:!bg-foreground dark:!text-background' : ''}
                   `}
                 >
@@ -867,7 +842,7 @@ export default function AddSale() {
                     border border-border transition
                     bg-muted/70 hover:bg-muted
                     dark:bg-muted/40 dark:hover:bg-muted/60
-                    text-foreground whitespace-nowrap min-w-0
+                    text-foreground
                     ${activeMarket === 'mercari' ? '!bg-foreground !text-background dark:!bg-foreground dark:!text-background' : ''}
                   `}
                 >
@@ -886,7 +861,7 @@ export default function AddSale() {
                     border border-border transition
                     bg-muted/70 hover:bg-muted
                     dark:bg-muted/40 dark:hover:bg-muted/60
-                    text-foreground whitespace-nowrap min-w-0
+                    text-foreground
                     ${activeMarket === 'facebook' ? '!bg-foreground !text-background dark:!bg-foreground dark:!text-background' : ''}
                   `}
                 >
@@ -911,7 +886,7 @@ export default function AddSale() {
                     border border-border transition
                     bg-muted/70 hover:bg-muted
                     dark:bg-muted/40 dark:hover:bg-muted/60
-                    text-foreground whitespace-nowrap min-w-0
+                    text-foreground
                     ${activeMarket === 'etsy' ? '!bg-foreground !text-background dark:!bg-foreground dark:!text-background' : ''}
                   `}
                 >
@@ -932,7 +907,7 @@ export default function AddSale() {
                     border border-border transition
                     bg-muted/70 hover:bg-muted
                     dark:bg-muted/40 dark:hover:bg-muted/60
-                    text-foreground whitespace-nowrap min-w-0
+                    text-foreground
                     ${activeMarket === 'all' ? '!bg-foreground !text-background dark:!bg-foreground dark:!text-background' : ''}
                   `}
                 >
@@ -942,7 +917,7 @@ export default function AddSale() {
               </div>
 
               {/* Helper text */}
-              <p className="text-xs text-muted-foreground leading-relaxed break-words">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Completed + Sold filter applied
               </p>
             </div>
@@ -951,7 +926,7 @@ export default function AddSale() {
             <div className="space-y-3 min-w-0 pt-2">
               {activeMarket === 'ebay_sold' && (
                 <>
-                  <p className="text-sm break-words">Completed + Sold filter applied.</p>
+                  <p className="text-sm">Completed + Sold filter applied.</p>
                   <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                     <Button asChild className="bg-blue-600 hover:bg-blue-700 max-w-full truncate">
                       <a href={ebaySoldUrl} target="_blank" rel="noreferrer">Open eBay Sold</a>
@@ -965,7 +940,7 @@ export default function AddSale() {
 
               {activeMarket === 'mercari' && (
                 <>
-                  <p className="text-sm break-words">Search via Google.</p>
+                  <p className="text-sm">Search via Google.</p>
                   <Button asChild variant="outline" className="max-w-full truncate">
                     <a href={mercariSoldGoogle} target="_blank" rel="noreferrer">Search Mercari (Google)</a>
                   </Button>
@@ -974,7 +949,7 @@ export default function AddSale() {
 
               {activeMarket === 'facebook' && (
                 <>
-                  <p className="text-sm break-words">Search via Google.</p>
+                  <p className="text-sm">Search via Google.</p>
                   <Button asChild variant="outline" className="max-w-full truncate">
                     <a href={fbMarketplaceGoogle} target="_blank" rel="noreferrer">Search Facebook (Google)</a>
                   </Button>
@@ -983,7 +958,7 @@ export default function AddSale() {
 
               {activeMarket === 'etsy' && (
                 <>
-                  <p className="text-sm break-words">Etsy sold examples (via Google).</p>
+                  <p className="text-sm">Etsy sold examples (via Google).</p>
                   <Button asChild variant="outline" className="max-w-full truncate">
                     <a href={etsySoldGoogle} target="_blank" rel="noreferrer">Search Etsy (Google)</a>
                   </Button>
@@ -992,7 +967,7 @@ export default function AddSale() {
 
               {activeMarket === 'all' && (
                 <>
-                  <p className="text-sm break-words">Broad Search via Google.</p>
+                  <p className="text-sm">Broad Search via Google.</p>
                   <Button asChild variant="outline" className="max-w-full truncate">
                     <a href={googleAllMarketsUrl} target="_blank" rel="noreferrer">Search All Markets (Google)</a>
                   </Button>

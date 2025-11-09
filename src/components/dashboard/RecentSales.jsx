@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -113,38 +112,63 @@ export default function RecentSales({ sales }) {
         <CardContent>
           {recentSales.length > 0 ? (
               <CarouselContent className="-ml-4">
-                {recentSales.map((sale) => (
-                  <CarouselItem key={sale.id} className="pl-4 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
-                    <div className="group relative">
-                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}`)}>
-                        <div className="overflow-hidden rounded-xl relative shadow-md">
-                          <div className="aspect-square bg-gray-100 dark:bg-gray-800">
-                            <img
-                              src={sale.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
-                              alt={sale.item_name}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
+                {recentSales.map((sale, idx) => {
+                  const isFirst = idx === 0;
+                  const isLast = idx === recentSales.length - 1;
+
+                  return (
+                    <CarouselItem key={sale.id} className="pl-4 md:basis-1/3 lg:basis-1/4 xl:basis-1/5">
+                      <div className="group relative">
+                        <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}`)}>
+                          <div className="overflow-hidden rounded-xl relative shadow-md">
+                            <div className="aspect-square bg-gray-100 dark:bg-gray-800">
+                              <img
+                                src={sale.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
+                                alt={sale.item_name}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            
+                            {isFirst && (
+                              <div className="absolute top-2 left-2 z-10">
+                                <Badge className="bg-blue-600 text-white border-blue-500 shadow-lg">
+                                  Recent Sale
+                                </Badge>
+                              </div>
+                            )}
+                            
+                            {isLast && (
+                              <div className="absolute top-2 left-2 z-10">
+                                <Badge className="bg-red-600 text-white border-red-500 shadow-lg">
+                                  Leaving Soon
+                                </Badge>
+                              </div>
+                            )}
+                            
+                            <div className="absolute top-2 right-2 z-10">
+                              <Badge className="bg-green-600/90 text-white border-green-500 shadow-lg dark:[text-shadow:0_0_6px_rgba(34,197,94,0.5)]">
+                                ${sale.profit?.toFixed(2) || '0.00'}
+                              </Badge>
+                            </div>
+                            
+                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+                              <p className="text-white font-semibold text-sm truncate">{sale.item_name}</p>
+                            </div>
                           </div>
-                          <div className="absolute top-2 right-2">
-                            <Badge className="bg-green-600/90 text-white border-green-500 shadow-lg dark:[text-shadow:0_0_6px_rgba(34,197,94,0.5)]">${sale.profit?.toFixed(2) || '0.00'}</Badge>
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                            <p className="text-white font-semibold text-sm truncate">{sale.item_name}</p>
-                          </div>
-                        </div>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 left-2 w-8 h-8 bg-black/30 text-white hover:bg-black/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleAddToInventory(e, sale)}
-                        title="Add back to inventory"
-                      >
-                        <ArchiveRestore className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CarouselItem>
-                ))}
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 left-2 w-8 h-8 bg-black/30 text-white hover:bg-black/50 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                          onClick={(e) => handleAddToInventory(e, sale)}
+                          title="Add back to inventory"
+                        >
+                          <ArchiveRestore className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
               </CarouselContent>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -159,4 +183,3 @@ export default function RecentSales({ sales }) {
     </Carousel>
   );
 }
-
