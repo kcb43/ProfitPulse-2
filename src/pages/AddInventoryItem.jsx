@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Copy as CopyIcon, BarChart, Camera, Scan } from "lucide-react";
+import { ArrowLeft, Save, Copy as CopyIcon, BarChart, Camera, Scan, Package } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import ClearableDateInput from "../components/ClearableDateInput";
 import SoldLookupDialog from "../components/SoldLookupDialog";
 import ReceiptScannerDialog from "@/components/ReceiptScannerDialog";
+import EbaySearchDialog from "@/components/EbaySearchDialog";
 import { scanReceiptPlaceholder } from "@/api/receiptScanner";
 import imageCompression from "browser-image-compression";
 
@@ -109,6 +110,7 @@ export default function AddInventoryItem() {
   const imageInputRef = useRef(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [isReceiptScanning, setIsReceiptScanning] = useState(false);
+  const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
 
   const { data: existingItem, isLoading: isLoadingItem } = useQuery({
     queryKey: ['inventoryItem', itemId],
@@ -335,6 +337,29 @@ export default function AddInventoryItem() {
     }
   };
 
+  const handleEbayItemSelect = (inventoryData) => {
+    setFormData((prev) => {
+      const next = { ...prev };
+      if (inventoryData.item_name) next.item_name = inventoryData.item_name;
+      if (inventoryData.purchase_price) next.purchase_price = String(inventoryData.purchase_price);
+      if (inventoryData.image_url) next.image_url = inventoryData.image_url;
+      if (inventoryData.category) next.category = inventoryData.category;
+      if (inventoryData.source) {
+        next.source = inventoryData.source;
+        setIsOtherSource(!PREDEFINED_SOURCES.includes(inventoryData.source));
+      }
+      if (inventoryData.category) {
+        setIsOtherCategory(!PREDEFINED_CATEGORIES.includes(inventoryData.category));
+      }
+      if (inventoryData.notes) {
+        // Append eBay notes to existing notes
+        next.notes = prev.notes ? `${prev.notes}\n\n${inventoryData.notes}` : inventoryData.notes;
+      }
+      return next;
+    });
+    setEbaySearchDialogOpen(false);
+  };
+
   const handleSourceSelectChange = (value) => {
     if (value === 'other') {
       setIsOtherSource(true);
@@ -459,6 +484,17 @@ export default function AddInventoryItem() {
                         >
                           <Scan className="w-4 h-4" />
                           Scan Receipt
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEbaySearchDialogOpen(true)}
+                          disabled={isUploading}
+                          className="flex items-center gap-2"
+                        >
+                          <Package className="w-4 h-4" />
+                          Search eBay
                         </Button>
                       </div>
                       <span className="text-[11px] sm:text-xs text-muted-foreground/70">Supports JPG or PNG up to 5 MB.</span>
@@ -675,6 +711,11 @@ export default function AddInventoryItem() {
         onOpenChange={setReceiptDialogOpen}
         onScan={handleReceiptScan}
         isScanning={isReceiptScanning}
+      />
+      <EbaySearchDialog
+        open={ebaySearchDialogOpen}
+        onOpenChange={setEbaySearchDialogOpen}
+        onSelectItem={handleEbayItemSelect}
       />
     </div>
   );
