@@ -108,37 +108,8 @@ async function makeRequest(endpoint, options = {}) {
 
     return await response.json();
   } else {
-    // Fallback for other endpoints - try direct call (may still have CORS issues)
-    const accessToken = await getAccessToken();
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-      ...options.headers,
-    };
-
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const url = `${EBAY_CONFIG.baseUrl}${endpoint}`;
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`eBay API error: ${response.status} - ${errorText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('eBay API request error:', error);
-      throw error;
-    }
+    // For unsupported endpoints, throw an error instead of calling eBay directly
+    throw new Error(`Endpoint ${endpoint} is not yet supported via API routes. Please use searchItems or getItem instead.`);
   }
 }
 
