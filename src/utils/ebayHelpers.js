@@ -268,19 +268,23 @@ export function formatEbayCondition(condition) {
  * @returns {string} Item URL
  */
 export function getEbayItemUrl(itemId, itemWebUrl) {
-  if (itemWebUrl) {
+  // If we have a valid web URL, use it (but check if it's sandbox)
+  if (itemWebUrl && !itemWebUrl.includes('sandbox')) {
     return itemWebUrl;
   }
   
-  // Construct URL from item ID if needed
+  // Construct URL from item ID
   // Format: https://www.ebay.com/itm/{itemId}
   // For RESTful IDs like "v1|123456789012|0", extract the middle number
+  let extractedId = itemId;
   const idMatch = itemId?.match(/\|(\d+)\|/);
   if (idMatch) {
-    return `https://www.ebay.com/itm/${idMatch[1]}`;
+    extractedId = idMatch[1];
   }
   
-  return `https://www.ebay.com/itm/${itemId}`;
+  // For sandbox, we can still construct a URL but it may not work
+  // Try the regular eBay URL - sandbox items won't exist there but we'll handle it
+  return `https://www.ebay.com/itm/${extractedId}`;
 }
 
 /**

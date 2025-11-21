@@ -52,7 +52,8 @@ export default function EbaySearchDialog({
     {
       q: debouncedQuery,
       limit,
-      sort: "price",
+      // Removed sort: "price" - let eBay use best match (relevance) instead of sorting by cheapest
+      // This will show more relevant results like actual iPhones instead of just cases
       filter: "buyingOptions:{FIXED_PRICE}",
     },
     {
@@ -237,14 +238,15 @@ export default function EbaySearchDialog({
                               )}
                             </div>
 
-                            {item.itemWebUrl && (
+                            {item.itemId && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="mt-2 h-7 text-xs"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  window.open(item.itemWebUrl, "_blank");
+                                  const ebayUrl = getEbayItemUrl(item.itemId, item.itemWebUrl);
+                                  window.open(ebayUrl, "_blank", "noopener,noreferrer");
                                 }}
                               >
                                 <ExternalLink className="w-3 h-3 mr-1" />
