@@ -31,7 +31,7 @@ export default function EbaySearchDialog({
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [limit] = useState(20);
+  const [limit] = useState(100); // Increased to 100 items
 
   // Debounce search query
   useEffect(() => {
@@ -62,7 +62,62 @@ export default function EbaySearchDialog({
     }
   );
 
-  const items = searchResults?.itemSummaries || [];
+  // Filter and sort items for better relevance
+  const items = React.useMemo(() => {
+    if (!searchResults?.itemSummaries) return [];
+    
+    const allItems = searchResults.itemSummaries;
+    const queryLower = debouncedQuery.toLowerCase();
+    
+    // Split query into words
+    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 0);
+    
+    // Score items based on relevance
+    const scoredItems = allItems.map(item => {
+      const titleLower = (item.title || '').toLowerCase();
+      let score = 0;
+      
+      // Exact phrase match gets highest score
+      if (titleLower.includes(queryLower)) {
+        score += 100;
+      }
+      
+      // Word matches
+      queryWords.forEach(word => {
+        if (titleLower.includes(word)) {
+          score += 10;
+        }
+      });
+      
+      // Penalize common accessory keywords
+      const accessoryKeywords = ['case', 'cover', 'protector', 'screen protector', 'charger', 'cable', 'adapter'];
+      accessoryKeywords.forEach(keyword => {
+        if (titleLower.includes(keyword) && !queryLower.includes(keyword)) {
+          score -= 5;
+        }
+      });
+      
+      // Boost items that start with query words
+      queryWords.forEach(word => {
+        if (titleLower.startsWith(word)) {
+          score += 5;
+        }
+      });
+      
+      return { ...item, _relevanceScore: score };
+    });
+    
+    // Sort by relevance score (highest first), then by price
+    return scoredItems.sort((a, b) => {
+      if (b._relevanceScore !== a._relevanceScore) {
+        return b._relevanceScore - a._relevanceScore;
+      }
+      // If scores are equal, sort by price (lower first)
+      const priceA = a.price?.value || 0;
+      const priceB = b.price?.value || 0;
+      return priceA - priceB;
+    });
+  }, [searchResults?.itemSummaries, debouncedQuery]);
 
   const handleSearch = () => {
     if (searchQuery.trim().length >= 2) {
@@ -150,32 +205,33 @@ export default function EbaySearchDialog({
           )}
 
           {/* Search Results */}
-          <ScrollArea className="flex-1 min-h-0">
-            {isLoading && (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">
-                  Searching eBay...
-                </span>
-              </div>
-            )}
+          <ScrollArea className="flex-1 min-h-0 h-[400px]">
+            <div className="pr-4">
+              {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Searching eBay...
+                  </span>
+                </div>
+              )}
 
-            {!isLoading && !error && debouncedQuery && items.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No items found. Try a different search term.</p>
-              </div>
-            )}
+              {!isLoading && !error && debouncedQuery && items.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No items found. Try a different search term.</p>
+                </div>
+              )}
 
-            {!isLoading && !error && !debouncedQuery && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Enter a search term to find items on eBay</p>
-              </div>
-            )}
+              {!isLoading && !error && !debouncedQuery && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Enter a search term to find items on eBay</p>
+                </div>
+              )}
 
-            {!isLoading && !error && items.length > 0 && (
-              <div className="space-y-3 pr-4">
+              {!isLoading && !error && items.length > 0 && (
+                <div className="space-y-3">
                 {items.map((item) => {
                   const isSelected = selectedItem?.itemId === item.itemId;
                   const isAvailable = isEbayItemAvailable(item);
@@ -259,18 +315,38 @@ export default function EbaySearchDialog({
                     </Card>
                   );
                 })}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </ScrollArea>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="text-sm text-muted-foreground">
-            {items.length > 0 && (
-              <span>
-                {items.length} {items.length === 1 ? "item" : "items"} found
-              </span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t">
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-muted-foreground">
+              {items.length > 0 && (
+                <span>
+                  Showing {items.length} {items.length === 1 ? "item" : "items"}
+                  {searchResults?.total && searchResults.total > items.length && (
+                    <span> of {searchResults.total} total</span>
+                  )}
+                </span>
+              )}
+            </div>
+            {debouncedQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-primary p-0"
+                onClick={() => {
+                  const ebaySearchUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(debouncedQuery)}`;
+                  window.open(ebaySearchUrl, "_blank", "noopener,noreferrer");
+                }}
+              >
+                <ExternalLink className="w-3 h-3 mr-1" />
+                Search more on eBay
+              </Button>
             )}
           </div>
           <div className="flex gap-2">
