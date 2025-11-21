@@ -159,10 +159,19 @@ export async function searchItems(params = {}) {
     compatibility_filter,
   } = params;
 
+  // Validate that we have at least one required search parameter
+  const trimmedQ = q ? String(q).trim() : '';
+  const hasRequiredParam = !!(trimmedQ || category_ids || gtin || charity_ids);
+  
+  if (!hasRequiredParam) {
+    throw new Error('Missing required parameter. Must provide q, category_ids, gtin, or charity_ids');
+  }
+
   // Build query string
   const queryParams = new URLSearchParams();
   
-  if (q) queryParams.append('q', q);
+  // Only append q if it's not empty after trimming
+  if (trimmedQ) queryParams.append('q', trimmedQ);
   if (category_ids) queryParams.append('category_ids', category_ids);
   if (gtin) queryParams.append('gtin', gtin);
   if (charity_ids) queryParams.append('charity_ids', charity_ids);
