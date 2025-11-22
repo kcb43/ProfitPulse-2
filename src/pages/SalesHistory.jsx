@@ -634,32 +634,32 @@ export default function SalesHistory() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-start md:justify-end gap-1 sm:gap-2 min-w-0 w-full border-t border-gray-200 dark:border-gray-700 pt-3">
+                        <div className="flex flex-wrap items-center justify-start md:justify-end gap-1 sm:gap-2 md:gap-[10.4px] min-w-0 w-full border-t border-gray-200 dark:border-gray-700 pt-3">
                           <Link to={createPageUrl(`AddSale?id=${sale.id}`)} className="flex-shrink-0">
-                            <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 w-8 sm:h-10 sm:w-10">
-                              <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
+                              <Pencil className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
                             </Button>
                           </Link>
                           <Link to={createPageUrl(`AddSale?copyId=${sale.id}`)} className="flex-shrink-0">
-                            <Button variant="ghost" size="icon" className="text-foreground hover:text-foreground/80 hover:bg-muted/50 h-8 w-8 sm:h-10 sm:w-10">
-                              <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <Button variant="ghost" size="icon" className="text-foreground hover:text-foreground/80 hover:bg-muted/50 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
+                              <Copy className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
                             </Button>
                           </Link>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleAddToInventory(sale)}
-                            className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10"
+                            className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
                           >
-                            <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDeleteClick(sale)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
                           >
-                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
                           </Button>
                         </div>
                       </div>
