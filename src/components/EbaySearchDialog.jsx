@@ -273,7 +273,7 @@ export default function EbaySearchDialog({
                   className="gap-2"
                 >
                   <BarChart className="w-4 h-4" />
-                  View Sold Items on eBay
+                  View All Sold
                 </Button>
                 <span className="text-xs text-muted-foreground">
                   Opens eBay's sold listings page (LH_Sold=1&LH_Complete=1)
