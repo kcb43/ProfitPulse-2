@@ -9,8 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Loader2, Package, ExternalLink, Check, BarChart } from "lucide-react";
+import { Search, Loader2, Package, ExternalLink, Check, BarChart, Filter } from "lucide-react";
 import { useEbaySearch, useEbaySearchInfinite } from "@/hooks/useEbaySearch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   ebayItemToInventory,
   formatEbayPrice,
@@ -34,6 +36,8 @@ export default function EbaySearchDialog({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [limit] = useState(100); // Increased to 100 items
+  const [conditionFilter, setConditionFilter] = useState("");
+  const [buyingOptionFilter, setBuyingOptionFilter] = useState("");
   const scrollAreaRef = React.useRef(null);
 
   // Set initial search query when dialog opens
@@ -46,6 +50,8 @@ export default function EbaySearchDialog({
       setSearchQuery("");
       setDebouncedQuery("");
       setSelectedItem(null);
+      setConditionFilter("");
+      setBuyingOptionFilter("");
     }
   }, [open, initialSearchQuery]);
 
@@ -62,6 +68,18 @@ export default function EbaySearchDialog({
   const trimmedQuery = debouncedQuery?.trim() || '';
   const hasValidQuery = trimmedQuery.length >= 2;
 
+  // Build filter string for eBay API
+  const filterString = React.useMemo(() => {
+    const filters = [];
+    if (conditionFilter) {
+      filters.push(`conditions:{${conditionFilter}}`);
+    }
+    if (buyingOptionFilter) {
+      filters.push(`buyingOptions:{${buyingOptionFilter}}`);
+    }
+    return filters.length > 0 ? filters.join(',') : undefined;
+  }, [conditionFilter, buyingOptionFilter]);
+
   const {
     data: searchResultsData,
     isLoading,
@@ -74,9 +92,9 @@ export default function EbaySearchDialog({
     {
       q: trimmedQuery,
       limit,
+      filter: filterString,
       // Removed sort: "price" - let eBay use best match (relevance) instead of sorting by cheapest
       // This will show more relevant results like actual iPhones instead of just cases
-      // Removed filter: "buyingOptions:{FIXED_PRICE}" - show all items including auctions
     },
     {
       enabled: hasValidQuery, // Only search if we have a valid query
@@ -205,6 +223,8 @@ export default function EbaySearchDialog({
       setSearchQuery("");
       setDebouncedQuery("");
       setSelectedItem(null);
+      setConditionFilter("");
+      setBuyingOptionFilter("");
     }
     onOpenChange?.(openState);
   };
@@ -260,6 +280,54 @@ export default function EbaySearchDialog({
                 Search
               </Button>
             </div>
+            {/* Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="condition-filter" className="text-xs">Condition</Label>
+                <Select
+                  value={conditionFilter}
+                  onValueChange={setConditionFilter}
+                >
+                  <SelectTrigger id="condition-filter" className="h-9">
+                    <SelectValue placeholder="All Conditions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Conditions</SelectItem>
+                    <SelectItem value="NEW">New</SelectItem>
+                    <SelectItem value="NEW_OTHER">New Other</SelectItem>
+                    <SelectItem value="NEW_WITH_DEFECTS">New With Defects</SelectItem>
+                    <SelectItem value="CERTIFIED_REFURBISHED">Certified Refurbished</SelectItem>
+                    <SelectItem value="EXCELLENT_REFURBISHED">Excellent Refurbished</SelectItem>
+                    <SelectItem value="VERY_GOOD_REFURBISHED">Very Good Refurbished</SelectItem>
+                    <SelectItem value="GOOD_REFURBISHED">Good Refurbished</SelectItem>
+                    <SelectItem value="SELLER_REFURBISHED">Seller Refurbished</SelectItem>
+                    <SelectItem value="LIKE_NEW">Like New</SelectItem>
+                    <SelectItem value="USED">Used</SelectItem>
+                    <SelectItem value="VERY_GOOD">Very Good</SelectItem>
+                    <SelectItem value="GOOD">Good</SelectItem>
+                    <SelectItem value="ACCEPTABLE">Acceptable</SelectItem>
+                    <SelectItem value="FOR_PARTS_OR_NOT_WORKING">For Parts or Not Working</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="buying-option-filter" className="text-xs">Buying Option</Label>
+                <Select
+                  value={buyingOptionFilter}
+                  onValueChange={setBuyingOptionFilter}
+                >
+                  <SelectTrigger id="buying-option-filter" className="h-9">
+                    <SelectValue placeholder="All Options" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Options</SelectItem>
+                    <SelectItem value="FIXED_PRICE">Buy It Now</SelectItem>
+                    <SelectItem value="AUCTION">Auction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* View Sold Button */}
             {hasValidQuery && (
               <div className="flex items-center gap-2">
