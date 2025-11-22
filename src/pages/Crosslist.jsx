@@ -270,14 +270,27 @@ export default function Crosslist() {
     ? selectedCategoryPath[selectedCategoryPath.length - 1].categoryId 
     : '0';
   
-  const { data: categoriesData, isLoading: isLoadingCategories } = useEbayCategories(
+  const { data: categoriesData, isLoading: isLoadingCategories, error: categoriesError } = useEbayCategories(
     categoryTreeId,
     currentCategoryId,
     activeForm === "ebay" && composerOpen && !!categoryTreeId
   );
   
   // Get child categories from the current level
-  const currentCategories = categoriesData?.categorySubtreeNode?.childCategoryTreeNodes || [];
+  // The response structure is: { categorySubtreeNode: {...}, categoryTreeId: "...", categoryTreeVersion: "..." }
+  // When category_id=0, categorySubtreeNode should have childCategoryTreeNodes with top-level categories
+  const categorySubtreeNode = categoriesData?.categorySubtreeNode;
+  const currentCategories = categorySubtreeNode?.childCategoryTreeNodes || [];
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (activeForm === "ebay" && composerOpen && categoriesData) {
+      console.log('Categories Data:', categoriesData);
+      console.log('Category Subtree Node:', categorySubtreeNode);
+      console.log('Current Categories:', currentCategories);
+      console.log('Current Category ID:', currentCategoryId);
+    }
+  }, [activeForm, composerOpen, categoriesData, categorySubtreeNode, currentCategories, currentCategoryId]);
   
   // Sort categories alphabetically
   const sortedCategories = [...currentCategories].sort((a, b) => {
@@ -1725,6 +1738,10 @@ export default function Crosslist() {
                         <div className="flex items-center gap-2 p-3 border rounded-md">
                           <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">Loading categories...</span>
+                        </div>
+                      ) : categoriesError ? (
+                        <div className="p-3 border rounded-md border-destructive/50 bg-destructive/10">
+                          <p className="text-sm text-destructive">Error loading categories: {categoriesError.message}</p>
                         </div>
                       ) : sortedCategories.length > 0 ? (
                         <Select
