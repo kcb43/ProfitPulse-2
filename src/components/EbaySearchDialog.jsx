@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Search, Loader2, Package, ExternalLink, Check, BarChart, Filter } from "lucide-react";
 import { useEbaySearch, useEbaySearchInfinite } from "@/hooks/useEbaySearch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -282,7 +281,7 @@ export default function EbaySearchDialog({
             {/* Filters */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="condition-filter" className="text-xs">Condition</Label>
+                <label htmlFor="condition-filter" className="text-xs font-medium leading-none">Condition</label>
                 <Select
                   value={conditionFilter}
                   onValueChange={setConditionFilter}
@@ -310,7 +309,7 @@ export default function EbaySearchDialog({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="buying-option-filter" className="text-xs">Buying Option</Label>
+                <label htmlFor="buying-option-filter" className="text-xs font-medium leading-none">Buying Option</label>
                 <Select
                   value={buyingOptionFilter}
                   onValueChange={setBuyingOptionFilter}
