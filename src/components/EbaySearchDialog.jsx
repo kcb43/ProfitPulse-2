@@ -28,12 +28,26 @@ export default function EbaySearchDialog({
   open,
   onOpenChange,
   onSelectItem,
+  initialSearchQuery = "",
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [limit] = useState(100); // Increased to 100 items
   const scrollAreaRef = React.useRef(null);
+
+  // Set initial search query when dialog opens
+  useEffect(() => {
+    if (open && initialSearchQuery) {
+      setSearchQuery(initialSearchQuery);
+      setDebouncedQuery(initialSearchQuery);
+    } else if (!open) {
+      // Reset when dialog closes
+      setSearchQuery("");
+      setDebouncedQuery("");
+      setSelectedItem(null);
+    }
+  }, [open, initialSearchQuery]);
 
   // Debounce search query
   useEffect(() => {

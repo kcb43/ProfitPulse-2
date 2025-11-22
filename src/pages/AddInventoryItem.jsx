@@ -111,6 +111,7 @@ export default function AddInventoryItem() {
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [isReceiptScanning, setIsReceiptScanning] = useState(false);
   const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
+  const [ebaySearchInitialQuery, setEbaySearchInitialQuery] = useState("");
 
   const { data: existingItem, isLoading: isLoadingItem } = useQuery({
     queryKey: ['inventoryItem', itemId],
@@ -489,7 +490,10 @@ export default function AddInventoryItem() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => setEbaySearchDialogOpen(true)}
+                          onClick={() => {
+                            setEbaySearchInitialQuery(formData.item_name || "");
+                            setEbaySearchDialogOpen(true);
+                          }}
                           disabled={isUploading}
                           className="flex items-center gap-2"
                         >
@@ -705,6 +709,10 @@ export default function AddInventoryItem() {
         open={soldDialogOpen}
         onOpenChange={setSoldDialogOpen}
         itemName={soldDialogName}
+        onEbaySearch={() => {
+          setEbaySearchInitialQuery(soldDialogName || "");
+          setEbaySearchDialogOpen(true);
+        }}
       />
       <ReceiptScannerDialog
         open={receiptDialogOpen}
@@ -716,6 +724,7 @@ export default function AddInventoryItem() {
         open={ebaySearchDialogOpen}
         onOpenChange={setEbaySearchDialogOpen}
         onSelectItem={handleEbayItemSelect}
+        initialSearchQuery={ebaySearchInitialQuery}
       />
     </div>
   );

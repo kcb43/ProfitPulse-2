@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BarChart, Copy } from "lucide-react";
+import { BarChart, Copy, Package } from "lucide-react";
 
 /**
- * Minimal, crash-proof “Sold Listings” dialog used across Inventory and Add Sale.
+ * Minimal, crash-proof "Sold Listings" dialog used across Inventory and Add Sale.
  */
-export default function SoldLookupDialog({ open, onOpenChange, itemName = "" }) {
+export default function SoldLookupDialog({ open, onOpenChange, itemName = "", onEbaySearch }) {
   const q = useMemo(() => {
     if (!itemName) return "";
     return itemName
@@ -60,11 +60,24 @@ export default function SoldLookupDialog({ open, onOpenChange, itemName = "" }) 
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <Button asChild className="w-full">
-            <a href={ebaySoldUrl} target="_blank" rel="noreferrer">
-              eBay (Sold + Completed)
-            </a>
-          </Button>
+          {onEbaySearch ? (
+            <Button 
+              onClick={() => {
+                onEbaySearch();
+                onOpenChange(false);
+              }}
+              className="w-full"
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Search eBay
+            </Button>
+          ) : (
+            <Button asChild className="w-full">
+              <a href={ebaySoldUrl} target="_blank" rel="noreferrer">
+                eBay (Sold + Completed)
+              </a>
+            </Button>
+          )}
           <Button asChild variant="outline" className="w-full">
             <a href={mercariGoogle} target="_blank" rel="noreferrer">
               Mercari (Google)
