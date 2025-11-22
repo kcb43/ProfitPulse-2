@@ -184,13 +184,13 @@ button:focus-visible {
   color: white !important;
 }
 
-/* Add Sale button - revert to original blue gradient (Dashboard) */
+/* Add Sale button - keep green gradient (Dashboard) */
 [data-theme="default-dark"] a[href*="AddSale"] button.from-emerald-500 {
-  background-image: linear-gradient(to right, rgb(59 130 246), rgb(99 102 241)) !important; /* from-blue-500 to-indigo-500 */
+  background-image: linear-gradient(to right, rgb(16 185 129), rgb(34 197 94)) !important; /* from-emerald-500 to-green-500 */
 }
 
 [data-theme="default-dark"] a[href*="AddSale"] button.from-emerald-500:hover {
-  background-image: linear-gradient(to right, rgb(37 99 235), rgb(79 70 229)) !important; /* from-blue-600 to-indigo-600 */
+  background-image: linear-gradient(to right, rgb(5 150 105), rgb(22 163 74)) !important; /* from-emerald-600 to-green-600 */
 }
 
 /* Add Item button - same as Add Inventory button (blue-to-indigo gradient) */
