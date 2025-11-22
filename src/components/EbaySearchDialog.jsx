@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Loader2, Package, ExternalLink, Check } from "lucide-react";
+import { Search, Loader2, Package, ExternalLink, Check, Filter } from "lucide-react";
 import { useEbaySearch, useEbaySearchInfinite } from "@/hooks/useEbaySearch";
 import {
   ebayItemToInventory,
@@ -34,6 +34,7 @@ export default function EbaySearchDialog({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [limit] = useState(100); // Increased to 100 items
+  const [showSoldOnly, setShowSoldOnly] = useState(false);
   const scrollAreaRef = React.useRef(null);
 
   // Set initial search query when dialog opens
@@ -46,6 +47,7 @@ export default function EbaySearchDialog({
       setSearchQuery("");
       setDebouncedQuery("");
       setSelectedItem(null);
+      setShowSoldOnly(false);
     }
   }, [open, initialSearchQuery]);
 
@@ -127,7 +129,29 @@ export default function EbaySearchDialog({
   const items = React.useMemo(() => {
     if (!searchResults?.itemSummaries) return [];
     
-    const allItems = searchResults.itemSummaries;
+    let allItems = searchResults.itemSummaries;
+    
+    // Filter for sold/ended items if showSoldOnly is true
+    if (showSoldOnly) {
+      allItems = allItems.filter(item => {
+        // Check if item has ended
+        if (item.itemEndDate) {
+          const endDate = new Date(item.itemEndDate);
+          const now = new Date();
+          if (endDate < now) {
+            return true;
+          }
+        }
+        
+        // Check estimated availability status
+        if (item.estimatedAvailabilityStatus === 'OUT_OF_STOCK') {
+          return true;
+        }
+        
+        return false;
+      });
+    }
+    
     const queryLower = debouncedQuery.toLowerCase();
     
     // Split query into words
@@ -178,7 +202,7 @@ export default function EbaySearchDialog({
       const priceB = b.price?.value || 0;
       return priceA - priceB;
     });
-  }, [searchResults?.itemSummaries, debouncedQuery]);
+  }, [searchResults?.itemSummaries, debouncedQuery, showSoldOnly]);
 
   const handleSearch = () => {
     const trimmedQuery = searchQuery.trim();
@@ -205,6 +229,7 @@ export default function EbaySearchDialog({
       setSearchQuery("");
       setDebouncedQuery("");
       setSelectedItem(null);
+      setShowSoldOnly(false);
     }
     onOpenChange?.(openState);
   };
@@ -250,6 +275,24 @@ export default function EbaySearchDialog({
                 )}
                 Search
               </Button>
+            </div>
+            {/* Filter Button */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showSoldOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowSoldOnly(!showSoldOnly)}
+                disabled={!hasValidQuery || isLoading}
+                className="gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                {showSoldOnly ? "Show All Items" : "Show Sold Items Only"}
+              </Button>
+              {showSoldOnly && hasValidQuery && (
+                <span className="text-xs text-muted-foreground">
+                  Showing only sold/ended items
+                </span>
+              )}
             </div>
             {searchQuery && searchQuery.trim().length < 2 && (
               <p className="text-xs text-muted-foreground">
@@ -341,18 +384,18 @@ export default function EbaySearchDialog({
                               {item.buyingOptions && item.buyingOptions.length > 0 && (() => {
                                 const buyingOption = formatEbayBuyingOption(item.buyingOptions);
                                 return (
-                                  <Badge variant={buyingOption.variant}>
+                                  <Badge variant="outline" className="text-foreground">
                                     {buyingOption.text}
                                   </Badge>
                                 );
                               })()}
                               {item.condition && (
-                                <Badge variant="outline">
+                                <Badge variant="outline" className="text-foreground">
                                   {formatEbayCondition(item.condition)}
                                 </Badge>
                               )}
                               {!isAvailable && (
-                                <Badge variant="destructive">Ended</Badge>
+                                <Badge variant="destructive" className="font-semibold">Sold</Badge>
                               )}
                             </div>
 
