@@ -43,28 +43,6 @@ export default function EbaySearchDialog({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Set up infinite scroll - detect when user scrolls near bottom
-  useEffect(() => {
-    if (!scrollAreaRef.current || !hasNextPage || isFetchingNextPage) return;
-
-    const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-    if (!viewport) return;
-
-    const handleScroll = () => {
-      const scrollTop = viewport.scrollTop;
-      const scrollHeight = viewport.scrollHeight;
-      const clientHeight = viewport.clientHeight;
-      
-      // Load more when within 200px of bottom
-      if (scrollHeight - scrollTop - clientHeight < 200 && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    };
-
-    viewport.addEventListener('scroll', handleScroll);
-    return () => viewport.removeEventListener('scroll', handleScroll);
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
   // Perform search - only when we have a valid query (2+ characters after trim)
   const trimmedQuery = debouncedQuery?.trim() || '';
   const hasValidQuery = trimmedQuery.length >= 2;
@@ -107,6 +85,28 @@ export default function EbaySearchDialog({
       total,
     };
   }, [searchResultsData]);
+
+  // Set up infinite scroll - detect when user scrolls near bottom
+  useEffect(() => {
+    if (!scrollAreaRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      const scrollTop = viewport.scrollTop;
+      const scrollHeight = viewport.scrollHeight;
+      const clientHeight = viewport.clientHeight;
+      
+      // Load more when within 200px of bottom
+      if (scrollHeight - scrollTop - clientHeight < 200 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    };
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Filter and sort items for better relevance
   const items = React.useMemo(() => {
