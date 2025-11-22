@@ -239,13 +239,36 @@ export default function Crosslist() {
     [inventory]
   );
 
+  // Compute which marketplaces an item is actually crosslisted to
+  // Items are only considered crosslisted when they've been explicitly listed on that marketplace
+  // "Listed" status from Add Inventory page alone doesn't count - need actual crosslisting
   const computeListingState = (item) => {
+    // For now, check if item has crosslisting data
+    // In the future, this will check actual crosslisting records/relationships
+    // Until we have crosslisting API integration, all icons will be grayed out by default
+    const hasCrosslistingData = item.crosslisted_marketplaces && Array.isArray(item.crosslisted_marketplaces);
+    
+    if (!hasCrosslistingData) {
+      // No crosslisting data - all marketplaces grayed out
+      // Items that are just "in stock" or have "listed" status but haven't been crosslisted
+      // should show all grayed out icons
+      return {
+        ebay:     false,
+        facebook: false,
+        mercari:  false,
+        etsy:     false,
+        poshmark: false,
+      };
+    }
+    
+    // Check which marketplaces are in the crosslisting array
+    const marketplaces = item.crosslisted_marketplaces;
     return {
-      ebay:     item.status === "listed",
-      facebook: false,
-      mercari:  false,
-      etsy:     false,
-      poshmark: false,
+      ebay:     marketplaces.includes("ebay"),
+      facebook: marketplaces.includes("facebook_marketplace") || marketplaces.includes("facebook"),
+      mercari:  marketplaces.includes("mercari"),
+      etsy:     marketplaces.includes("etsy"),
+      poshmark: marketplaces.includes("poshmark"),
     };
   };
 
@@ -674,14 +697,22 @@ export default function Crosslist() {
                       </div>
 
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {MARKETPLACES.map((m) => (
-                          <Badge key={m.id} variant="outline" className={map[m.id] ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}>
-                            <span className="mr-1 flex items-center">
-                              {renderMarketplaceIcon(m)}
-                            </span>
-                            {m.label}
-                          </Badge>
-                        ))}
+                        {MARKETPLACES.map((m) => {
+                          const isListed = map[m.id];
+                          return (
+                            <div
+                              key={m.id}
+                              className={`inline-flex items-center justify-center w-7 h-7 rounded border transition-all ${
+                                isListed
+                                  ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700 opacity-100"
+                                  : "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-700 opacity-40"
+                              }`}
+                              title={isListed ? `Listed on ${m.label}` : `Not listed on ${m.label}`}
+                            >
+                              {renderMarketplaceIcon(m, "w-4 h-4")}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -744,14 +775,22 @@ export default function Crosslist() {
                     <div className="font-semibold text-sm line-clamp-2 break-words">{it.item_name}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">{it.category || "—"}</div>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {MARKETPLACES.map((m) => (
-                        <Badge key={m.id} variant="outline" className={map[m.id] ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-700 border-gray-200"}>
-                          <span className="mr-1 flex items-center">
-                            {renderMarketplaceIcon(m)}
-                          </span>
-                          {m.label}
-                        </Badge>
-                      ))}
+                      {MARKETPLACES.map((m) => {
+                        const isListed = map[m.id];
+                        return (
+                          <div
+                            key={m.id}
+                            className={`inline-flex items-center justify-center w-7 h-7 rounded border transition-all ${
+                              isListed
+                                ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700 opacity-100"
+                                : "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-700 opacity-40"
+                            }`}
+                            title={isListed ? `Listed on ${m.label}` : `Not listed on ${m.label}`}
+                          >
+                            {renderMarketplaceIcon(m, "w-4 h-4")}
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="flex gap-2 mt-3">
                       <Button size="sm" className="w-full whitespace-nowrap" onClick={() => openComposer([it.id])}>
