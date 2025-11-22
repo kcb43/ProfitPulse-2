@@ -6,7 +6,15 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: true
+    allowedHosts: true,
+    proxy: {
+      // Proxy API routes to Vercel during local development
+      '/api': {
+        target: 'https://profit-pulse-2.vercel.app',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
   },
   resolve: {
     alias: {
