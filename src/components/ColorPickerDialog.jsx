@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
 
 // Limited color palette - only these colors are available
 const COMMON_COLORS = [
@@ -37,28 +34,12 @@ export default function ColorPickerDialog({
   onSelectColor,
   fieldLabel,
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredColors = useMemo(() => {
-    if (!searchQuery.trim()) return COMMON_COLORS;
-    const query = searchQuery.toLowerCase();
-    return COMMON_COLORS.filter(
-      (color) =>
-        color.name.toLowerCase().includes(query) ||
-        color.hex.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
-
   const handleColorSelect = (colorName, colorHex) => {
     onSelectColor(colorName, colorHex);
-    setSearchQuery("");
     onOpenChange(false);
   };
 
   const handleClose = (openState) => {
-    if (!openState) {
-      setSearchQuery("");
-    }
     onOpenChange(openState);
   };
 
@@ -73,21 +54,10 @@ export default function ColorPickerDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4 flex-1 overflow-hidden">
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search colors..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
           {/* Color grid */}
           <div className="flex-1 overflow-y-auto">
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 pb-2">
-              {filteredColors.map((color) => (
+              {COMMON_COLORS.map((color) => (
                 <button
                   key={color.hex}
                   type="button"
@@ -110,12 +80,6 @@ export default function ColorPickerDialog({
                 </button>
               ))}
             </div>
-
-            {filteredColors.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No colors found. Try a different search term.
-              </div>
-            )}
           </div>
         </div>
 

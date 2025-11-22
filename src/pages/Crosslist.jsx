@@ -1362,7 +1362,7 @@ export default function Crosslist() {
                       <Package className="w-4 h-4 mr-2" />
                       {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
                         ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
-                        : "Enter package weight and dimensions"}
+                        : "Enter weight & size"}
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
