@@ -184,24 +184,24 @@ button:focus-visible {
   color: white !important;
 }
 
-/* Add Sale button - keep green gradient (Dashboard) */
-[data-theme="default-dark"] a[href*="AddSale"] button.from-emerald-500 {
-  background-image: linear-gradient(to right, rgb(16 185 129), rgb(34 197 94)) !important; /* from-emerald-500 to-green-500 */
+/* Add Sale button - green gradient (emerald-500 to green-500) matching Add Item (Dashboard only) */
+/* Force green gradient for Add Sale button in Default Dark theme */
+[data-theme="default-dark"] button.from-emerald-500.to-green-500 {
+  --tw-gradient-from: #10b981 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(16 185 129 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #22c55e var(--tw-gradient-to-position) !important;
+  background-image: linear-gradient(to right, var(--tw-gradient-stops)) !important;
 }
 
-[data-theme="default-dark"] a[href*="AddSale"] button.from-emerald-500:hover {
-  background-image: linear-gradient(to right, rgb(5 150 105), rgb(22 163 74)) !important; /* from-emerald-600 to-green-600 */
+[data-theme="default-dark"] button.from-emerald-500.to-green-500:hover {
+  --tw-gradient-from: #059669 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(5 150 105 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #16a34a var(--tw-gradient-to-position) !important;
+  background-image: linear-gradient(to right, var(--tw-gradient-stops)) !important;
 }
 
-/* Add Item button - same as Add Inventory button (blue-to-indigo gradient) */
-/* Target buttons with emerald-green gradient that are NOT already blue-indigo (to exclude Dashboard Add Inventory) */
-[data-theme="default-dark"] button.from-emerald-500.to-green-500:not(.from-blue-500):not(.to-indigo-500) {
-  background-image: linear-gradient(to right, rgb(59 130 246), rgb(99 102 241)) !important; /* from-blue-500 to-indigo-500 */
-}
-
-[data-theme="default-dark"] button.from-emerald-500.to-green-500:not(.from-blue-500):not(.to-indigo-500):hover {
-  background-image: linear-gradient(to right, rgb(37 99 235), rgb(79 70 229)) !important; /* from-blue-600 to-indigo-600 */
-}
+/* Add Item button - keep green gradient (same as Add Sale) */
+/* No override needed - it already has the green gradient classes and should stay green */
 
 /* Mark Sold button - same as Crosslist button */
 /* Already covered by the .bg-green-600 rule above */
