@@ -5,7 +5,8 @@
  * Supports:
  * - getDefaultCategoryTreeId: Get the default category tree ID for a marketplace
  * - getCategorySuggestions: Get category suggestions based on a query
- * - getCategorySubtree: Get a category subtree (hierarchical structure)
+ * - getCategoryTree: Get the full category tree (for root level)
+ * - getCategorySubtree: Get a category subtree (hierarchical structure, not for root)
  */
 
 const MARKETPLACE_ID = 'EBAY_US';
@@ -159,20 +160,18 @@ export default async function handler(req, res) {
       const taxonomyData = await taxonomyResp.json();
       return res.status(200).json(taxonomyData);
 
-    } else if (operation === 'getCategorySubtree') {
-      // Get category subtree
+    } else if (operation === 'getCategoryTree') {
+      // Get the full category tree (use this for root level)
       if (!category_tree_id) {
-        return res.status(400).json({ error: 'category_tree_id is required for getCategorySubtree' });
+        return res.status(400).json({ error: 'category_tree_id is required for getCategoryTree' });
       }
 
-      const category_id = req.query.category_id || '0'; // Default to root (0)
       const marketplaceId = marketplace_id || MARKETPLACE_ID;
-      const taxonomyUrl = `${baseUrl}/commerce/taxonomy/v1/category_tree/${category_tree_id}/get_category_subtree?category_id=${category_id}`;
+      const taxonomyUrl = `${baseUrl}/commerce/taxonomy/v1/category_tree/${category_tree_id}`;
 
-      console.log('Calling eBay Taxonomy API:', {
+      console.log('Calling eBay Taxonomy API (getCategoryTree):', {
         url: taxonomyUrl,
         category_tree_id,
-        category_id,
         marketplaceId,
       });
 
@@ -183,13 +182,11 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
           'X-EBAY-C-MARKETPLACE-ID': marketplaceId,
           'Accept-Language': 'en-US',
-          // Note: Node.js fetch automatically handles gzip decompression, so we don't set Accept-Encoding manually
         },
       });
 
       if (!taxonomyResp.ok) {
         const errorData = await taxonomyResp.json().catch(() => {
-          // If JSON parsing fails, try to get the text
           return taxonomyResp.text().then(text => {
             console.error('eBay Taxonomy API error (non-JSON):', text);
             return { error: 'Unknown error', rawResponse: text };
@@ -210,7 +207,67 @@ export default async function handler(req, res) {
       }
 
       const taxonomyData = await taxonomyResp.json();
-      console.log('eBay Taxonomy API success:', {
+      console.log('eBay Taxonomy API success (getCategoryTree):', {
+        categoryTreeId: taxonomyData.categoryTreeId,
+        hasRootNode: !!taxonomyData.rootCategoryNode,
+        rootNodeKeys: taxonomyData.rootCategoryNode ? Object.keys(taxonomyData.rootCategoryNode) : [],
+      });
+      return res.status(200).json(taxonomyData);
+
+    } else if (operation === 'getCategorySubtree') {
+      // Get category subtree (for non-root categories only)
+      if (!category_tree_id) {
+        return res.status(400).json({ error: 'category_tree_id is required for getCategorySubtree' });
+      }
+
+      const category_id = req.query.category_id;
+      if (!category_id || category_id === '0') {
+        return res.status(400).json({ error: 'category_id is required for getCategorySubtree and cannot be 0 (root). Use getCategoryTree for root level.' });
+      }
+
+      const marketplaceId = marketplace_id || MARKETPLACE_ID;
+      const taxonomyUrl = `${baseUrl}/commerce/taxonomy/v1/category_tree/${category_tree_id}/get_category_subtree?category_id=${category_id}`;
+
+      console.log('Calling eBay Taxonomy API (getCategorySubtree):', {
+        url: taxonomyUrl,
+        category_tree_id,
+        category_id,
+        marketplaceId,
+      });
+
+      const taxonomyResp = await fetch(taxonomyUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-EBAY-C-MARKETPLACE-ID': marketplaceId,
+          'Accept-Language': 'en-US',
+        },
+      });
+
+      if (!taxonomyResp.ok) {
+        const errorData = await taxonomyResp.json().catch(() => {
+          return taxonomyResp.text().then(text => {
+            console.error('eBay Taxonomy API error (non-JSON):', text);
+            return { error: 'Unknown error', rawResponse: text };
+          });
+        });
+        console.error('eBay Taxonomy API error:', {
+          status: taxonomyResp.status,
+          statusText: taxonomyResp.statusText,
+          errorData,
+          url: taxonomyUrl,
+        });
+        return res.status(taxonomyResp.status).json({
+          error: 'eBay Taxonomy API error',
+          details: errorData,
+          status: taxonomyResp.status,
+          statusText: taxonomyResp.statusText,
+        });
+      }
+
+      const taxonomyData = await taxonomyResp.json();
+      console.log('eBay Taxonomy API success (getCategorySubtree):', {
         categoryTreeId: taxonomyData.categoryTreeId,
         hasSubtreeNode: !!taxonomyData.categorySubtreeNode,
         subtreeNodeKeys: taxonomyData.categorySubtreeNode ? Object.keys(taxonomyData.categorySubtreeNode) : [],

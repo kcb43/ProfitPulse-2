@@ -52,7 +52,8 @@ export function useEbayCategorySuggestions(categoryTreeId, query, enabled = true
 }
 
 /**
- * Hook to get eBay category subtree (hierarchical structure)
+ * Hook to get eBay categories (hierarchical structure)
+ * Uses getCategoryTree for root level (categoryId='0'), getCategorySubtree for nested categories
  */
 export function useEbayCategories(categoryTreeId, categoryId = '0', enabled = true) {
   return useQuery({
@@ -62,10 +63,14 @@ export function useEbayCategories(categoryTreeId, categoryId = '0', enabled = tr
         return null;
       }
 
-      // Get category subtree
-      const response = await fetch(
-        `/api/ebay/taxonomy?operation=getCategorySubtree&category_tree_id=${categoryTreeId}&category_id=${categoryId}`
-      );
+      // Use getCategoryTree for root level, getCategorySubtree for nested categories
+      const isRoot = !categoryId || categoryId === '0';
+      const operation = isRoot ? 'getCategoryTree' : 'getCategorySubtree';
+      const url = isRoot
+        ? `/api/ebay/taxonomy?operation=getCategoryTree&category_tree_id=${categoryTreeId}`
+        : `/api/ebay/taxonomy?operation=getCategorySubtree&category_tree_id=${categoryTreeId}&category_id=${categoryId}`;
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -73,7 +78,9 @@ export function useEbayCategories(categoryTreeId, categoryId = '0', enabled = tr
           status: response.status,
           statusText: response.statusText,
           errorData,
-          url: `/api/ebay/taxonomy?operation=getCategorySubtree&category_tree_id=${categoryTreeId}&category_id=${categoryId}`,
+          url,
+          operation,
+          categoryId,
         });
         const error = new Error(`Failed to get categories: ${response.status} - ${errorData.error || 'Unknown error'}`);
         error.response = { details: errorData };
@@ -82,11 +89,15 @@ export function useEbayCategories(categoryTreeId, categoryId = '0', enabled = tr
       
       const data = await response.json();
       
-      // The response structure is: { categorySubtreeNode: {...}, categoryTreeId: "...", categoryTreeVersion: "..." }
-      const rootNode = data.categorySubtreeNode || data;
+      // getCategoryTree returns: { rootCategoryNode: {...}, categoryTreeId: "...", categoryTreeVersion: "..." }
+      // getCategorySubtree returns: { categorySubtreeNode: {...}, categoryTreeId: "...", categoryTreeVersion: "..." }
+      // We normalize both to have categorySubtreeNode for consistency
+      const categoryNode = isRoot 
+        ? data.rootCategoryNode 
+        : data.categorySubtreeNode;
       
       return {
-        categorySubtreeNode: rootNode,
+        categorySubtreeNode: categoryNode,
         categoryTreeId: data.categoryTreeId || categoryTreeId,
         categoryTreeVersion: data.categoryTreeVersion || '',
       };
