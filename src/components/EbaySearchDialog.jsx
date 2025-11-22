@@ -15,6 +15,7 @@ import {
   ebayItemToInventory,
   formatEbayPrice,
   formatEbayCondition,
+  formatEbayBuyingOption,
   getEbayItemUrl,
   isEbayItemAvailable,
 } from "@/utils/ebayHelpers";
@@ -323,6 +324,14 @@ export default function EbaySearchDialog({
                               <Badge variant="default" className="font-semibold">
                                 {formatEbayPrice(item.price)}
                               </Badge>
+                              {item.buyingOptions && item.buyingOptions.length > 0 && (() => {
+                                const buyingOption = formatEbayBuyingOption(item.buyingOptions);
+                                return (
+                                  <Badge variant={buyingOption.variant}>
+                                    {buyingOption.text}
+                                  </Badge>
+                                );
+                              })()}
                               {item.condition && (
                                 <Badge variant="outline">
                                   {formatEbayCondition(item.condition)}
@@ -333,7 +342,7 @@ export default function EbaySearchDialog({
                               )}
                             </div>
 
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                               {item.seller?.username && (
                                 <span>Seller: {item.seller.username}</span>
                               )}
@@ -341,6 +350,21 @@ export default function EbaySearchDialog({
                                 <span>
                                   Shipping:{" "}
                                   {formatEbayPrice(item.shippingOptions.shippingCost)}
+                                </span>
+                              )}
+                              {item.quantityLimitPerBuyer && (
+                                <span>Max Qty: {item.quantityLimitPerBuyer}</span>
+                              )}
+                              {item.itemLocation?.city && item.itemLocation.stateOrProvince && (
+                                <span>
+                                  Location: {item.itemLocation.city}, {item.itemLocation.stateOrProvince}
+                                </span>
+                              )}
+                              {item.estimatedAvailabilities?.length > 0 && (
+                                <span>
+                                  Est. Delivery: {item.estimatedAvailabilities[0]?.estimatedAvailabilityDate 
+                                    ? new Date(item.estimatedAvailabilities[0].estimatedAvailabilityDate).toLocaleDateString()
+                                    : 'N/A'}
                                 </span>
                               )}
                             </div>

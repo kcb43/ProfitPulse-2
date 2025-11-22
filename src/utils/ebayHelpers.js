@@ -329,3 +329,28 @@ export function isEbayItemAvailable(ebayItem) {
   return true;
 }
 
+/**
+ * Format buying option for display badge
+ * 
+ * @param {Array} buyingOptions - Array of buying options from eBay item
+ * @returns {Object} Badge text and variant
+ */
+export function formatEbayBuyingOption(buyingOptions) {
+  if (!buyingOptions || !Array.isArray(buyingOptions) || buyingOptions.length === 0) {
+    return { text: 'Unknown', variant: 'outline' };
+  }
+  
+  const hasFixedPrice = buyingOptions.includes('FIXED_PRICE');
+  const hasAuction = buyingOptions.includes('AUCTION');
+  
+  if (hasFixedPrice && hasAuction) {
+    return { text: 'Buy It Now & Auction', variant: 'default' };
+  } else if (hasFixedPrice) {
+    return { text: 'Buy It Now', variant: 'default' };
+  } else if (hasAuction) {
+    return { text: 'Auction', variant: 'secondary' };
+  }
+  
+  return { text: 'Unknown', variant: 'outline' };
+}
+

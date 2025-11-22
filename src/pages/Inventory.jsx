@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, differenceInDays, isAfter } from "date-fns";
-import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X } from "lucide-react";
+import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
@@ -516,15 +516,27 @@ export default function InventoryPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Inventory</h1>
               <p className="text-sm text-muted-foreground mt-1">Track items you have for sale.</p>
             </div>
-            <Link
-              to={createPageUrl("AddInventoryItem")}
-              state={returnStateForInventory}
-            >
-              <Button className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-md w-full sm:w-auto">
-                <Plus className="w-5 h-5 mr-2" />
-                Add Item
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                disabled
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Discover Items
+                <span className="ml-2 text-xs opacity-60">(Feed API)</span>
               </Button>
-            </Link>
+              <Link
+                to={createPageUrl("AddInventoryItem")}
+                state={returnStateForInventory}
+                className="w-full sm:w-auto"
+              >
+                <Button className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-md w-full sm:w-auto">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Add Item
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">

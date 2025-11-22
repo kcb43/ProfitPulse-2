@@ -18,6 +18,7 @@ import PlatformBreakdown from "../components/dashboard/PlatformBreakdown";
 import RecentSales from "../components/dashboard/RecentSales";
 import Gamification from "../components/dashboard/Gamification";
 import TipOfTheDay from "../components/dashboard/TipOfTheDay";
+import MarketIntelligence from "../components/dashboard/MarketIntelligence";
 
 const SUPPORTED_MARKETPLACES = [
   {
@@ -353,10 +354,11 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Removed AiInsights component and adjusted grid for Gamification and TipOfTheDay */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Removed AiInsights component and adjusted grid for Gamification, TipOfTheDay, and MarketIntelligence */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
           <TipOfTheDay />
+          <MarketIntelligence />
         </div>
 
         <div className="flex justify-start lg:justify-end mb-6">
