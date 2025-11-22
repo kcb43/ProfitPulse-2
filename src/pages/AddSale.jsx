@@ -1270,7 +1270,7 @@ export default function AddSale() {
                       <a href={ebaySoldUrl} target="_blank" rel="noreferrer">Open eBay Sold</a>
                     </Button>
                     <Button variant="outline" onClick={() => navigator.clipboard.writeText(q || "")} className="max-w-full truncate">
-                      Copy Query
+                      Copy Title
                     </Button>
                   </div>
                 </>
