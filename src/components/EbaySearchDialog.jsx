@@ -76,7 +76,7 @@ export default function EbaySearchDialog({
     if (buyingOptionFilter) {
       filters.push(`buyingOptions:{${buyingOptionFilter}}`);
     }
-    return filters.length > 0 ? filters.join(',') : undefined;
+    return filters.length > 0 ? filters.join(',') : null;
   }, [conditionFilter, buyingOptionFilter]);
 
   const {
@@ -91,7 +91,7 @@ export default function EbaySearchDialog({
     {
       q: trimmedQuery,
       limit,
-      filter: filterString,
+      ...(filterString && { filter: filterString }),
       // Removed sort: "price" - let eBay use best match (relevance) instead of sorting by cheapest
       // This will show more relevant results like actual iPhones instead of just cases
     },
