@@ -42,7 +42,10 @@ export default function EbaySearchDialog({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Perform search
+  // Perform search - only when we have a valid query (2+ characters after trim)
+  const trimmedQuery = debouncedQuery?.trim() || '';
+  const hasValidQuery = trimmedQuery.length >= 2;
+
   const {
     data: searchResults,
     isLoading,
@@ -50,15 +53,16 @@ export default function EbaySearchDialog({
     refetch,
   } = useEbaySearch(
     {
-      q: debouncedQuery,
+      q: trimmedQuery,
       limit,
       // Removed sort: "price" - let eBay use best match (relevance) instead of sorting by cheapest
       // This will show more relevant results like actual iPhones instead of just cases
       filter: "buyingOptions:{FIXED_PRICE}",
     },
     {
-      enabled: !!debouncedQuery && debouncedQuery.length >= 2,
-      retry: 1,
+      enabled: hasValidQuery, // Only search if we have a valid query
+      retry: false, // Don't retry failed searches automatically
+      refetchOnWindowFocus: false, // Don't refetch when window regains focus
     }
   );
 

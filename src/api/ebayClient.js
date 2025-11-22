@@ -153,7 +153,7 @@ export async function searchItems(params = {}) {
     limit = 20,
     offset = 0,
     filter,
-    sort,
+    sort, // Don't default to "price" - let eBay use relevance (best match) by default
     fieldgroups = 'MATCHING_ITEMS',
     aspect_filter,
     compatibility_filter,
@@ -178,6 +178,7 @@ export async function searchItems(params = {}) {
   if (limit) queryParams.append('limit', limit.toString());
   if (offset) queryParams.append('offset', offset.toString());
   if (filter) queryParams.append('filter', filter);
+  // Only add sort if explicitly provided - otherwise eBay uses relevance (best match)
   if (sort) queryParams.append('sort', sort);
   if (fieldgroups) queryParams.append('fieldgroups', fieldgroups);
   if (aspect_filter) queryParams.append('aspect_filter', aspect_filter);
