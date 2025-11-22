@@ -16,10 +16,16 @@ async function getAppToken() {
   }
 
   // Determine environment (default to sandbox if not explicitly set)
-  const useProduction = process.env.EBAY_ENV === 'production';
+  const ebayEnv = process.env.EBAY_ENV;
+  console.log('EBAY_ENV value:', JSON.stringify(ebayEnv), 'Type:', typeof ebayEnv);
+  const useProduction = ebayEnv === 'production' || ebayEnv?.trim() === 'production';
+  console.log('useProduction:', useProduction);
+  
   const oauthUrl = useProduction
     ? 'https://api.ebay.com/identity/v1/oauth2/token'
     : 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
+  
+  console.log('OAuth URL:', oauthUrl);
 
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
@@ -113,15 +119,22 @@ export default async function handler(req, res) {
     const token = await getAppToken();
 
     // Determine environment (default to sandbox if not explicitly set)
-    const useProduction = process.env.EBAY_ENV === 'production';
+    const ebayEnv = process.env.EBAY_ENV;
+    console.log('EBAY_ENV value (in handler):', JSON.stringify(ebayEnv), 'Type:', typeof ebayEnv);
+    const useProduction = ebayEnv === 'production' || ebayEnv?.trim() === 'production';
+    console.log('useProduction (in handler):', useProduction);
+    
     const baseUrl = useProduction
       ? 'https://api.ebay.com'
       : 'https://api.sandbox.ebay.com';
+
+    console.log('Base URL:', baseUrl);
 
     const searchUrl = `${baseUrl}/buy/browse/v1/item_summary/search?${params.toString()}`;
 
     console.log('Making request to eBay:', {
       environment: useProduction ? 'production' : 'sandbox',
+      ebayEnv: ebayEnv,
       url: searchUrl,
     });
 
