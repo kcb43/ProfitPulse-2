@@ -51,3 +51,42 @@ export function useEbayCategorySuggestions(categoryTreeId, query, enabled = true
   });
 }
 
+/**
+ * Hook to get eBay category subtree (hierarchical structure)
+ */
+export function useEbayCategories(categoryTreeId, categoryId = '0', enabled = true) {
+  return useQuery({
+    queryKey: ['ebayCategories', categoryTreeId, categoryId],
+    queryFn: async () => {
+      if (!categoryTreeId) {
+        return null;
+      }
+
+      // Get category subtree
+      const response = await fetch(
+        `/api/ebay/taxonomy?operation=getCategorySubtree&category_tree_id=${categoryTreeId}&category_id=${categoryId}`
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to get categories:', response.status, errorData);
+        throw new Error(`Failed to get categories: ${response.status} - ${errorData.error || 'Unknown error'}`);
+      }
+      
+      const data = await response.json();
+      
+      // The response structure is: { categorySubtreeNode: {...}, categoryTreeId: "...", categoryTreeVersion: "..." }
+      const rootNode = data.categorySubtreeNode || data;
+      
+      return {
+        categorySubtreeNode: rootNode,
+        categoryTreeId: data.categoryTreeId || categoryTreeId,
+        categoryTreeVersion: data.categoryTreeVersion || '',
+      };
+    },
+    enabled: enabled && !!categoryTreeId,
+    staleTime: 24 * 60 * 60 * 1000, // Cache for 24 hours
+    retry: 1,
+  });
+}
+

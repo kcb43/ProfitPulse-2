@@ -258,19 +258,33 @@ export default function Crosslist() {
   const [brandIsCustom, setBrandIsCustom] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [editingColorField, setEditingColorField] = useState(null); // "color1", "color2", or "ebay.color"
+  const [selectedCategoryPath, setSelectedCategoryPath] = useState([]); // Array of {categoryId, categoryName} for the selected path
   const photoInputRef = React.useRef(null);
   
   // Get eBay category tree ID
   const { data: categoryTreeData, isLoading: isLoadingCategoryTree } = useEbayCategoryTreeId('EBAY_US');
   const categoryTreeId = categoryTreeData?.categoryTreeId;
   
-  // Get all eBay categories (flattened and sorted alphabetically)
+  // Get the current level of categories based on selected path
+  const currentCategoryId = selectedCategoryPath.length > 0 
+    ? selectedCategoryPath[selectedCategoryPath.length - 1].categoryId 
+    : '0';
+  
   const { data: categoriesData, isLoading: isLoadingCategories } = useEbayCategories(
     categoryTreeId,
-    activeForm === "ebay" && composerOpen
+    currentCategoryId,
+    activeForm === "ebay" && composerOpen && !!categoryTreeId
   );
   
-  const ebayCategories = categoriesData?.categories || [];
+  // Get child categories from the current level
+  const currentCategories = categoriesData?.categorySubtreeNode?.childCategoryTreeNodes || [];
+  
+  // Sort categories alphabetically
+  const sortedCategories = [...currentCategories].sort((a, b) => {
+    const nameA = a.category?.categoryName || '';
+    const nameB = b.category?.categoryName || '';
+    return nameA.localeCompare(nameB);
+  });
 
   // Popular brands list (sorted alphabetically)
   const POPULAR_BRANDS = [
@@ -717,6 +731,7 @@ export default function Crosslist() {
       setCurrentEditingItemId(itemId);
       populateTemplates(item);
       setActiveForm("general"); // Reset to general form when switching items
+      setSelectedCategoryPath([]); // Reset category path when switching items
     }
   };
 
@@ -1057,6 +1072,7 @@ export default function Crosslist() {
           // Reset bulk mode when closing
           setBulkSelectedItems([]);
           setCurrentEditingItemId(null);
+          setSelectedCategoryPath([]);
         }
       }}>
         <SheetContent side="bottom" className="h-[85vh] sm:rounded-t-2xl overflow-y-auto">
@@ -1668,34 +1684,133 @@ export default function Crosslist() {
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
-                    {isLoadingCategoryTree || isLoadingCategories ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-md">
-                        <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Loading categories...</span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={ebayForm.categoryId || undefined}
-                        onValueChange={(value) => {
-                          const selectedCategory = ebayCategories.find(cat => cat.categoryId === value);
-                          if (selectedCategory) {
-                            handleMarketplaceChange("ebay", "categoryId", selectedCategory.categoryId);
-                            handleMarketplaceChange("ebay", "categoryName", selectedCategory.fullPath);
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                          {ebayCategories.map((category) => (
-                            <SelectItem key={category.categoryId} value={category.categoryId}>
-                              {category.fullPath}
-                            </SelectItem>
+                    <div className="space-y-2">
+                      {/* Breadcrumb navigation */}
+                      {selectedCategoryPath.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap text-xs text-muted-foreground">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategoryPath([]);
+                              handleMarketplaceChange("ebay", "categoryId", "");
+                              handleMarketplaceChange("ebay", "categoryName", "");
+                            }}
+                            className="hover:text-foreground underline"
+                          >
+                            Home
+                          </button>
+                          {selectedCategoryPath.map((cat, index) => (
+                            <React.Fragment key={cat.categoryId}>
+                              <span>/</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newPath = selectedCategoryPath.slice(0, index + 1);
+                                  setSelectedCategoryPath(newPath);
+                                  const lastCat = newPath[newPath.length - 1];
+                                  const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                  handleMarketplaceChange("ebay", "categoryId", lastCat.categoryId);
+                                  handleMarketplaceChange("ebay", "categoryName", fullPath);
+                                }}
+                                className="hover:text-foreground underline"
+                              >
+                                {cat.categoryName}
+                              </button>
+                            </React.Fragment>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                        </div>
+                      )}
+                      
+                      {isLoadingCategoryTree || isLoadingCategories ? (
+                        <div className="flex items-center gap-2 p-3 border rounded-md">
+                          <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Loading categories...</span>
+                        </div>
+                      ) : sortedCategories.length > 0 ? (
+                        <Select
+                          value={ebayForm.categoryId || undefined}
+                          onValueChange={(value) => {
+                            const selectedCategory = sortedCategories.find(
+                              cat => cat.category?.categoryId === value
+                            );
+                            
+                            if (selectedCategory) {
+                              const category = selectedCategory.category;
+                              const newPath = [...selectedCategoryPath, {
+                                categoryId: category.categoryId,
+                                categoryName: category.categoryName,
+                              }];
+                              
+                              // Check if this category has children
+                              const hasChildren = selectedCategory.childCategoryTreeNodes && 
+                                selectedCategory.childCategoryTreeNodes.length > 0 &&
+                                !selectedCategory.leafCategoryTreeNode;
+                              
+                              if (hasChildren) {
+                                // Navigate deeper into the tree
+                                setSelectedCategoryPath(newPath);
+                              } else {
+                                // This is a leaf node - select it
+                                const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                handleMarketplaceChange("ebay", "categoryId", category.categoryId);
+                                handleMarketplaceChange("ebay", "categoryName", fullPath);
+                                setSelectedCategoryPath(newPath);
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedCategoryPath.length > 0 ? "Select subcategory" : "Select a category"} />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[300px]">
+                            {sortedCategories.map((categoryNode) => {
+                              const category = categoryNode.category;
+                              if (!category || !category.categoryId) return null;
+                              
+                              const hasChildren = categoryNode.childCategoryTreeNodes && 
+                                categoryNode.childCategoryTreeNodes.length > 0 &&
+                                !categoryNode.leafCategoryTreeNode;
+                              
+                              return (
+                                <SelectItem key={category.categoryId} value={category.categoryId}>
+                                  <div className="flex items-center gap-2">
+                                    <span>{category.categoryName}</span>
+                                    {hasChildren && (
+                                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="p-3 border rounded-md">
+                          <p className="text-sm text-muted-foreground">No subcategories available.</p>
+                        </div>
+                      )}
+                      
+                      {ebayForm.categoryName && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            Selected: {ebayForm.categoryName}
+                          </Badge>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              handleMarketplaceChange("ebay", "categoryId", "");
+                              handleMarketplaceChange("ebay", "categoryName", "");
+                              setSelectedCategoryPath([]);
+                            }}
+                            className="h-6 px-2 text-xs"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -2170,6 +2285,7 @@ export default function Crosslist() {
                   setBulkSelectedItems([]);
                   setCurrentEditingItemId(null);
                   setBrandIsCustom(false);
+                  setSelectedCategoryPath([]);
                 } catch (error) {
                   console.error("Error saving inventory item:", error);
                   toast({
