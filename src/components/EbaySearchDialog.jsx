@@ -57,7 +57,7 @@ export default function EbaySearchDialog({
       limit,
       // Removed sort: "price" - let eBay use best match (relevance) instead of sorting by cheapest
       // This will show more relevant results like actual iPhones instead of just cases
-      filter: "buyingOptions:{FIXED_PRICE}",
+      // Removed filter: "buyingOptions:{FIXED_PRICE}" - show all items including auctions
     },
     {
       enabled: hasValidQuery, // Only search if we have a valid query
@@ -211,8 +211,8 @@ export default function EbaySearchDialog({
           )}
 
           {/* Search Results */}
-          <ScrollArea className="flex-1 min-h-0 h-[400px]">
-            <div className="pr-4">
+          <ScrollArea className="h-[500px] w-full">
+            <div className="pr-4 space-y-3">
               {isLoading && (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -237,8 +237,7 @@ export default function EbaySearchDialog({
               )}
 
               {!isLoading && !error && items.length > 0 && (
-                <div className="space-y-3">
-                {items.map((item) => {
+                items.map((item) => {
                   const isSelected = selectedItem?.itemId === item.itemId;
                   const isAvailable = isEbayItemAvailable(item);
 
@@ -320,8 +319,7 @@ export default function EbaySearchDialog({
                       </CardContent>
                     </Card>
                   );
-                })}
-                </div>
+                })
               )}
             </div>
           </ScrollArea>
