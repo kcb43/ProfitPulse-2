@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,7 @@ import {
   X,
   RefreshCw,
   Save,
+  Package,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import BulkActionsMenu from "../components/BulkActionsMenu";
@@ -226,6 +228,8 @@ export default function Crosslist() {
   const [templateForms, setTemplateForms] = useState(() => createInitialTemplateState());
   const [activeForm, setActiveForm] = useState("general"); // "general" | "ebay" | "etsy" | "mercari" | "facebook"
   const [isSaving, setIsSaving] = useState(false);
+  const [bulkSelectedItems, setBulkSelectedItems] = useState([]); // Items selected for bulk crosslisting
+  const [currentEditingItemId, setCurrentEditingItemId] = useState(null); // Currently editing item ID in bulk mode
   const photoInputRef = React.useRef(null);
 
   const { data: inventory = [], isLoading } = useQuery({
@@ -559,20 +563,40 @@ export default function Crosslist() {
     setActiveMkts((prev) => (prev.includes(mkt) ? prev.filter((x) => x !== mkt) : [...prev, mkt]));
 
   const openComposer = (ids) => {
-    const primaryId = ids?.[0] || selected[0];
-    const targetItem = crosslistableItems.find((item) => item.id === primaryId);
-
-    // If no item selected, create new empty template
-    if (!targetItem) {
-      setTemplateForms(createInitialTemplateState(null));
+    const itemIds = ids && ids.length > 0 ? ids : selected.length > 0 ? selected : [];
+    
+    // If bulk mode (multiple items selected)
+    if (itemIds.length > 0) {
+      const selectedItems = crosslistableItems.filter(item => itemIds.includes(item.id));
+      setBulkSelectedItems(selectedItems);
+      
+      // Set the first item as the default editing item
+      const primaryItem = selectedItems[0];
+      if (primaryItem) {
+        setCurrentEditingItemId(primaryItem.id);
+        populateTemplates(primaryItem);
+      }
     } else {
-      populateTemplates(targetItem);
+      // Single item or new item mode
+      setBulkSelectedItems([]);
+      setCurrentEditingItemId(null);
+      setTemplateForms(createInitialTemplateState(null));
     }
 
     // Set composer targets - if activeMkts is empty, use all marketplaces as default for composer
     setComposerTargets(activeMkts.length > 0 ? activeMkts : MARKETPLACES.map(m => m.id));
-    if (ids?.length) setSelected(ids);
+    if (itemIds.length > 0) setSelected(itemIds);
     setComposerOpen(true);
+  };
+
+  // Handle switching between items in bulk mode
+  const switchToItem = (itemId) => {
+    const item = bulkSelectedItems.find(it => it.id === itemId);
+    if (item) {
+      setCurrentEditingItemId(itemId);
+      populateTemplates(item);
+      setActiveForm("general"); // Reset to general form when switching items
+    }
   };
 
   const generalForm = templateForms.general;
@@ -687,11 +711,17 @@ export default function Crosslist() {
                 </Button>
                 <BulkActionsMenu />
                 <Button
-                  onClick={() => openComposer([])}
+                  onClick={() => {
+                    if (selected.length > 0) {
+                      openComposer(selected);
+                    } else {
+                      openComposer([]);
+                    }
+                  }}
                   className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
                 >
                   <Rocket className="w-4 h-4 mr-2" />
-                  Crosslist
+                  {selected.length > 0 ? `Bulk Crosslist (${selected.length})` : "Crosslist"}
                 </Button>
               </div>
             </div>
@@ -846,16 +876,80 @@ export default function Crosslist() {
         )}
       </div>
 
-      <Sheet open={composerOpen} onOpenChange={setComposerOpen}>
+      <Sheet open={composerOpen} onOpenChange={(open) => {
+        setComposerOpen(open);
+        if (!open) {
+          // Reset bulk mode when closing
+          setBulkSelectedItems([]);
+          setCurrentEditingItemId(null);
+        }
+      }}>
         <SheetContent side="bottom" className="h-[85vh] sm:rounded-t-2xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Compose Listing</SheetTitle>
+            <SheetTitle>
+              {bulkSelectedItems.length > 1 ? "Bulk Crosslist" : "Compose Listing"}
+            </SheetTitle>
             <SheetDescription>
-              Choose marketplaces and set the base fields. Full per-market fine-tuning can follow.
+              {bulkSelectedItems.length > 1
+                ? `Editing ${bulkSelectedItems.length} items. Select an item to configure its listing.`
+                : "Choose marketplaces and set the base fields. Full per-market fine-tuning can follow."
+              }
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-4">
+          {/* Bulk item selector - show above Select Form when multiple items selected */}
+          {bulkSelectedItems.length > 1 && (
+            <div className="mt-4 space-y-3">
+              <Label className="text-xs mb-1.5 block">Select Item to Edit</Label>
+              <div className="flex flex-wrap gap-2">
+                {bulkSelectedItems.map((item) => {
+                  const isCurrent = currentEditingItemId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => switchToItem(item.id)}
+                      className={`relative flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                        isCurrent
+                          ? "border-primary bg-primary/10 ring-2 ring-primary"
+                          : "border-muted-foreground/40 hover:border-primary/50 bg-muted/30"
+                      }`}
+                    >
+                      <img
+                        src={item.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
+                        alt={item.item_name}
+                        className="w-16 h-16 rounded-md object-cover"
+                      />
+                      <span className={`text-xs text-center max-w-[80px] truncate ${
+                        isCurrent ? "font-semibold text-primary" : "text-muted-foreground"
+                      }`}>
+                        {item.item_name}
+                      </span>
+                      {isCurrent && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Current editing item banner */}
+              {currentEditingItemId && (
+                <Alert className="bg-primary/10 border-primary/20">
+                  <AlertDescription className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-primary" />
+                    <span className="font-semibold text-primary">
+                      You are currently editing: {bulkSelectedItems.find(item => item.id === currentEditingItemId)?.item_name || "Unknown Item"}
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
+          <div className={bulkSelectedItems.length > 1 ? "mt-4" : "mt-4"}>
             <Label className="text-xs mb-1.5 block">Select Form</Label>
             <div className="flex flex-wrap gap-2">
               {/* General form option */}
@@ -1737,6 +1831,8 @@ export default function Crosslist() {
                   // Reset form for next use
                   setTemplateForms(createInitialTemplateState(null));
                   setSelected([]);
+                  setBulkSelectedItems([]);
+                  setCurrentEditingItemId(null);
                 } catch (error) {
                   console.error("Error saving inventory item:", error);
                   toast({
