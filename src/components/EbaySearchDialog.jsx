@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Loader2, Package, ExternalLink, Check } from "lucide-react";
-import { useEbaySearch } from "@/hooks/useEbaySearch";
+import { useEbaySearch, useEbaySearchInfinite } from "@/hooks/useEbaySearch";
 import {
   ebayItemToInventory,
   formatEbayPrice,
@@ -32,6 +32,7 @@ export default function EbaySearchDialog({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const [limit] = useState(100); // Increased to 100 items
+  const scrollAreaRef = React.useRef(null);
 
   // Debounce search query
   useEffect(() => {
@@ -42,16 +43,41 @@ export default function EbaySearchDialog({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Set up infinite scroll - detect when user scrolls near bottom
+  useEffect(() => {
+    if (!scrollAreaRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      const scrollTop = viewport.scrollTop;
+      const scrollHeight = viewport.scrollHeight;
+      const clientHeight = viewport.clientHeight;
+      
+      // Load more when within 200px of bottom
+      if (scrollHeight - scrollTop - clientHeight < 200 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    };
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   // Perform search - only when we have a valid query (2+ characters after trim)
   const trimmedQuery = debouncedQuery?.trim() || '';
   const hasValidQuery = trimmedQuery.length >= 2;
 
   const {
-    data: searchResults,
+    data: searchResultsData,
     isLoading,
     error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     refetch,
-  } = useEbaySearch(
+  } = useEbaySearchInfinite(
     {
       q: trimmedQuery,
       limit,
@@ -65,6 +91,22 @@ export default function EbaySearchDialog({
       refetchOnWindowFocus: false, // Don't refetch when window regains focus
     }
   );
+
+  // Flatten all pages into a single array of itemSummaries
+  const searchResults = React.useMemo(() => {
+    if (!searchResultsData?.pages) return null;
+    
+    // Combine all itemSummaries from all pages
+    const allItems = searchResultsData.pages.flatMap(page => page.itemSummaries || []);
+    
+    // Get total from the first page (should be same across all pages)
+    const total = searchResultsData.pages[0]?.total || 0;
+    
+    return {
+      itemSummaries: allItems,
+      total,
+    };
+  }, [searchResultsData]);
 
   // Filter and sort items for better relevance
   const items = React.useMemo(() => {
@@ -211,7 +253,10 @@ export default function EbaySearchDialog({
           )}
 
           {/* Search Results */}
-          <ScrollArea className="h-[500px] w-full">
+          <ScrollArea 
+            ref={scrollAreaRef}
+            className="h-[500px] w-full"
+          >
             <div className="pr-4 space-y-3">
               {isLoading && (
                 <div className="flex items-center justify-center py-8">
@@ -237,7 +282,8 @@ export default function EbaySearchDialog({
               )}
 
               {!isLoading && !error && items.length > 0 && (
-                items.map((item) => {
+                <>
+                {items.map((item) => {
                   const isSelected = selectedItem?.itemId === item.itemId;
                   const isAvailable = isEbayItemAvailable(item);
 
@@ -319,7 +365,23 @@ export default function EbaySearchDialog({
                       </CardContent>
                     </Card>
                   );
-                })
+                })}
+                
+                {/* Loading indicator for next page */}
+                {isFetchingNextPage && (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mr-2" />
+                    <span className="text-sm text-muted-foreground">Loading more items...</span>
+                  </div>
+                )}
+                
+                {/* End of results message */}
+                {!hasNextPage && items.length > 0 && (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    <p>No more items to load</p>
+                  </div>
+                )}
+                </>
               )}
             </div>
           </ScrollArea>
