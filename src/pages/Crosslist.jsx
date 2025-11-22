@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
@@ -248,7 +248,25 @@ export default function Crosslist() {
   const [bulkSelectedItems, setBulkSelectedItems] = useState([]); // Items selected for bulk crosslisting
   const [currentEditingItemId, setCurrentEditingItemId] = useState(null); // Currently editing item ID in bulk mode
   const [packageDetailsDialogOpen, setPackageDetailsDialogOpen] = useState(false);
+  const [brandIsCustom, setBrandIsCustom] = useState(false);
   const photoInputRef = React.useRef(null);
+
+  // Popular brands list
+  const POPULAR_BRANDS = [
+    "Nike", "Adidas", "Jordan", "Puma", "New Balance", "Vans", "Converse",
+    "Under Armour", "Reebok", "Fila", "ASICS", "Brooks",
+    "Patagonia", "The North Face", "Columbia", "Arc'teryx", "REI",
+    "Lululemon", "Athleta", "Fabletics", "Gymshark", "Alo Yoga",
+    "Levi's", "Wrangler", "Dickies", "Carhartt",
+    "Apple", "Samsung", "Sony", "Bose", "JBL", "Beats",
+    "Gucci", "Louis Vuitton", "Prada", "Versace", "Burberry", "Chanel",
+    "Coach", "Kate Spade", "Michael Kors", "Tory Burch",
+    "Ralph Lauren", "Tommy Hilfiger", "Calvin Klein", "Hugo Boss",
+    "Zara", "H&M", "Forever 21", "Uniqlo", "Gap",
+    "Yeti", "Hydro Flask", "Stanley",
+    "Lego", "Hasbro", "Mattel",
+    "KitchenAid", "Instant Pot", "Ninja", "Dyson",
+  ];
 
   const { data: inventory = [], isLoading } = useQuery({
     queryKey: ["inventoryItems"],
@@ -298,6 +316,13 @@ export default function Crosslist() {
     (item) => {
       setTemplateForms(createInitialTemplateState(item));
       setActiveForm("general");
+      // Check if brand is custom (not in popular brands list)
+      const brand = item?.brand || "";
+      if (brand && !POPULAR_BRANDS.includes(brand)) {
+        setBrandIsCustom(true);
+      } else {
+        setBrandIsCustom(false);
+      }
     },
     []
   );
@@ -590,7 +615,7 @@ export default function Crosslist() {
       
       // Set the first item as the default editing item
       const primaryItem = selectedItems[0];
-      if (primaryItem) {
+      if (primaryItem && autoSelect) {
         setCurrentEditingItemId(primaryItem.id);
         populateTemplates(primaryItem);
       }
@@ -599,6 +624,7 @@ export default function Crosslist() {
       setBulkSelectedItems([]);
       setCurrentEditingItemId(null);
       setTemplateForms(createInitialTemplateState(null));
+      setBrandIsCustom(false);
     }
 
     // Set composer targets - if activeMkts is empty, use all marketplaces as default for composer
@@ -1086,11 +1112,51 @@ export default function Crosslist() {
                   </div>
                   <div>
                     <Label className="text-xs mb-1.5 block">Brand</Label>
-                    <Input
-                      placeholder="e.g. Patagonia"
-                      value={generalForm.brand}
-                      onChange={(e) => handleGeneralChange("brand", e.target.value)}
-                    />
+                    {brandIsCustom ? (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter brand name"
+                          value={generalForm.brand}
+                          onChange={(e) => handleGeneralChange("brand", e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setBrandIsCustom(false);
+                            handleGeneralChange("brand", "");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <Select
+                        value={generalForm.brand || undefined}
+                        onValueChange={(value) => {
+                          if (value === "custom") {
+                            setBrandIsCustom(true);
+                            handleGeneralChange("brand", "");
+                          } else {
+                            handleGeneralChange("brand", value);
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select or Custom" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {POPULAR_BRANDS.map((brand) => (
+                            <SelectItem key={brand} value={brand}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Add Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div>
                     <Label className="text-xs mb-1.5 block">Condition</Label>
@@ -1113,7 +1179,7 @@ export default function Crosslist() {
                   <div>
                     <Label className="text-xs mb-1.5 block">SKU</Label>
                     <Input
-                      placeholder="Internal SKU"
+                      placeholder=""
                       value={generalForm.sku}
                       onChange={(e) => handleGeneralChange("sku", e.target.value)}
                     />
@@ -1121,7 +1187,7 @@ export default function Crosslist() {
                   <div>
                     <Label className="text-xs mb-1.5 block">Zip Code</Label>
                     <Input
-                      placeholder="Ship-from zip"
+                      placeholder="Enter Zip Code"
                       value={generalForm.zip}
                       onChange={(e) => handleGeneralChange("zip", e.target.value)}
                     />
@@ -1865,6 +1931,7 @@ export default function Crosslist() {
                   setSelected([]);
                   setBulkSelectedItems([]);
                   setCurrentEditingItemId(null);
+                  setBrandIsCustom(false);
                 } catch (error) {
                   console.error("Error saving inventory item:", error);
                   toast({
