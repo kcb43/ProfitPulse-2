@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Search, Loader2, Package, ExternalLink, Check, BarChart, Filter } from "lucide-react";
 import { useEbaySearch, useEbaySearchInfinite } from "@/hooks/useEbaySearch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import {
   ebayItemToInventory,
   formatEbayPrice,
