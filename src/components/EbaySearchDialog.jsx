@@ -260,24 +260,26 @@ export default function EbaySearchDialog({
                 Search
               </Button>
             </div>
-            {/* Filter Button */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={showSoldOnly ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowSoldOnly(!showSoldOnly)}
-                disabled={!hasValidQuery || isLoading}
-                className="gap-2"
-              >
-                <Filter className="w-4 h-4" />
-                {showSoldOnly ? "Show All Items" : "Show Sold Items Only"}
-              </Button>
-              {showSoldOnly && hasValidQuery && (
+            {/* View Sold Button */}
+            {hasValidQuery && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    window.open(ebaySoldUrl, "_blank", "noopener,noreferrer");
+                  }}
+                  disabled={isLoading}
+                  className="gap-2"
+                >
+                  <BarChart className="w-4 h-4" />
+                  View Sold Items on eBay
+                </Button>
                 <span className="text-xs text-muted-foreground">
-                  Showing only sold/ended items
+                  Opens eBay's sold listings page (LH_Sold=1&LH_Complete=1)
                 </span>
-              )}
-            </div>
+              </div>
+            )}
             {searchQuery && searchQuery.trim().length < 2 && (
               <p className="text-xs text-muted-foreground">
                 Enter at least 2 characters to search
