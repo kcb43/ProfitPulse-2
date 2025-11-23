@@ -34,8 +34,11 @@ import {
   ArrowLeft,
   GripVertical,
   Sparkles,
+  BarChart,
 } from "lucide-react";
 import ColorPickerDialog from "../components/ColorPickerDialog";
+import SoldLookupDialog from "../components/SoldLookupDialog";
+import EbaySearchDialog from "../components/EbaySearchDialog";
 import imageCompression from "browser-image-compression";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInventoryTags } from "@/hooks/useInventoryTags";
@@ -363,6 +366,9 @@ export default function CrosslistComposer() {
   const etsyPhotoInputRef = React.useRef(null);
   const mercariPhotoInputRef = React.useRef(null);
   const facebookPhotoInputRef = React.useRef(null);
+  const [soldDialogOpen, setSoldDialogOpen] = useState(false);
+  const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
+  const [ebaySearchInitialQuery, setEbaySearchInitialQuery] = useState("");
   
   // Get eBay category tree ID
   const { data: categoryTreeData, isLoading: isLoadingCategoryTree } = useEbayCategoryTreeId('EBAY_US');
@@ -641,6 +647,35 @@ export default function CrosslistComposer() {
       setEditingColorField(null);
       setColorPickerOpen(false);
     }
+  };
+
+  const handleEbayItemSelect = (inventoryData) => {
+    setTemplateForms((prev) => {
+      const updated = { ...prev };
+      const general = { ...prev.general };
+      
+      // Populate general form with eBay item data
+      if (inventoryData.item_name) general.title = inventoryData.item_name;
+      if (inventoryData.image_url) {
+        // Add image as photo
+        const photo = {
+          id: `ebay-${Date.now()}`,
+          preview: inventoryData.image_url,
+          fileName: "eBay item image",
+          fromInventory: true,
+        };
+        general.photos = [photo, ...(general.photos || [])];
+      }
+      if (inventoryData.category) general.category = inventoryData.category;
+      if (inventoryData.purchase_price) general.cost = String(inventoryData.purchase_price);
+      if (inventoryData.notes) {
+        general.description = inventoryData.notes;
+      }
+      
+      updated.general = general;
+      return updated;
+    });
+    setEbaySearchDialogOpen(false);
   };
   
   const openColorPicker = (field) => {
@@ -1642,11 +1677,27 @@ export default function CrosslistComposer() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs mb-1.5 block">Title</Label>
-                  <Input
-                    placeholder=""
-                    value={generalForm.title}
-                    onChange={(e) => handleGeneralChange("title", e.target.value)}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder=""
+                      value={generalForm.title}
+                      onChange={(e) => handleGeneralChange("title", e.target.value)}
+                      className="w-full"
+                    />
+                    {generalForm.title?.trim() && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setSoldDialogOpen(true);
+                        }}
+                        className="whitespace-nowrap"
+                      >
+                        <BarChart className="w-4 h-4 mr-2" />
+                        Search
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-xs mb-1.5 block">Listing Price</Label>
@@ -3352,6 +3403,26 @@ export default function CrosslistComposer() {
         category={generalForm.category}
         condition={generalForm.condition}
         similarDescriptions={similarItems}
+      />
+
+      {/* Sold Lookup Dialog */}
+      <SoldLookupDialog
+        open={soldDialogOpen}
+        onOpenChange={setSoldDialogOpen}
+        itemName={generalForm.title || ""}
+        onEbaySearch={() => {
+          setEbaySearchInitialQuery(generalForm.title || "");
+          setSoldDialogOpen(false);
+          setEbaySearchDialogOpen(true);
+        }}
+      />
+
+      {/* eBay Search Dialog */}
+      <EbaySearchDialog
+        open={ebaySearchDialogOpen}
+        onOpenChange={setEbaySearchDialogOpen}
+        onSelectItem={handleEbayItemSelect}
+        initialSearchQuery={ebaySearchInitialQuery}
       />
     </div>
   );
