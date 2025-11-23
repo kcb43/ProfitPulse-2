@@ -605,7 +605,7 @@ export default function CrosslistComposer() {
     return errors;
   };
   
-  const handleListOnMarketplace = (marketplace) => {
+  const handleListOnMarketplace = async (marketplace) => {
     if (marketplace === "ebay") {
       const errors = validateEbayForm();
       if (errors.length > 0) {
@@ -616,11 +616,213 @@ export default function CrosslistComposer() {
         });
         return;
       }
+
+      try {
+        setIsSaving(true);
+
+        // Prepare listing data
+        const listingData = {
+          title: generalForm.title,
+          description: generalForm.description || '',
+          categoryId: ebayForm.categoryId,
+          price: ebayForm.buyItNowPrice || generalForm.price,
+          quantity: parseInt(generalForm.quantity) || 1,
+          photos: generalForm.photos || [],
+          condition: generalForm.condition || 'new',
+          brand: generalForm.brand || ebayForm.ebayBrand || '',
+          itemType: ebayForm.itemType || '',
+          shippingMethod: ebayForm.shippingMethod,
+          shippingCost: ebayForm.shippingCost,
+          shippingService: ebayForm.shippingService,
+          handlingTime: ebayForm.handlingTime,
+          shipFromCountry: ebayForm.shipFromCountry || 'United States',
+          acceptReturns: ebayForm.acceptReturns,
+          returnWithin: ebayForm.returnWithin,
+          returnShippingPayer: ebayForm.returnShippingPayer,
+          returnRefundMethod: ebayForm.returnRefundMethod,
+          duration: ebayForm.duration,
+          allowBestOffer: ebayForm.allowBestOffer,
+          sku: generalForm.sku || '',
+        };
+
+        // Call eBay listing API
+        const response = await fetch('/api/ebay/listing', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            operation: 'AddFixedPriceItem',
+            listingData,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(errorData.error || errorData.details || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.Ack === 'Success' || result.Ack === 'Warning') {
+          // Update inventory item status if we have a current item
+          if (currentEditingItemId) {
+            try {
+              await base44.entities.InventoryItem.update(currentEditingItemId, {
+                status: 'listed',
+              });
+              queryClient.invalidateQueries(['inventoryItems']);
+            } catch (updateError) {
+              console.error('Error updating inventory item:', updateError);
+            }
+          }
+
+          toast({
+            title: "Listing created successfully!",
+            description: result.ItemID ? `eBay Item ID: ${result.ItemID}` : "Your item has been listed on eBay.",
+          });
+
+          // Optionally navigate back or clear form
+          // navigate(createPageUrl('Inventory'));
+        } else {
+          throw new Error(result.Errors?.join(', ') || 'Failed to create listing');
+        }
+
+      } catch (error) {
+        console.error('Error creating eBay listing:', error);
+        toast({
+          title: "Failed to create listing",
+          description: error.message || "An error occurred while creating the listing. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+
+      return;
     }
+
+    // For other marketplaces, show coming soon
     toast({
       title: `List on ${TEMPLATE_DISPLAY_NAMES[marketplace] || marketplace}`,
       description: "Listing functionality coming soon!",
     });
+  };
+
+  const handleCrosslist = async (marketplaces) => {
+    // List on multiple marketplaces
+    const marketplacesToUse = marketplaces || ["ebay", "etsy", "mercari", "facebook"];
+    const results = [];
+    const errors = [];
+
+    setIsSaving(true);
+
+    try {
+      // Validate all required forms first
+      if (marketplacesToUse.includes("ebay")) {
+        const ebayErrors = validateEbayForm();
+        if (ebayErrors.length > 0) {
+          toast({
+            title: "Missing required fields for eBay",
+            description: `Please fill in: ${ebayErrors.join(", ")}`,
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      // List on each marketplace
+      for (const marketplace of marketplacesToUse) {
+        try {
+          if (marketplace === "ebay") {
+            // Prepare eBay listing data
+            const listingData = {
+              title: generalForm.title,
+              description: generalForm.description || '',
+              categoryId: ebayForm.categoryId,
+              price: ebayForm.buyItNowPrice || generalForm.price,
+              quantity: parseInt(generalForm.quantity) || 1,
+              photos: generalForm.photos || [],
+              condition: generalForm.condition || 'new',
+              brand: generalForm.brand || ebayForm.ebayBrand || '',
+              itemType: ebayForm.itemType || '',
+              shippingMethod: ebayForm.shippingMethod,
+              shippingCost: ebayForm.shippingCost,
+              shippingService: ebayForm.shippingService,
+              handlingTime: ebayForm.handlingTime,
+              shipFromCountry: ebayForm.shipFromCountry || 'United States',
+              acceptReturns: ebayForm.acceptReturns,
+              returnWithin: ebayForm.returnWithin,
+              returnShippingPayer: ebayForm.returnShippingPayer,
+              returnRefundMethod: ebayForm.returnRefundMethod,
+              duration: ebayForm.duration,
+              allowBestOffer: ebayForm.allowBestOffer,
+              sku: generalForm.sku || '',
+            };
+
+            const response = await fetch('/api/ebay/listing', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                operation: 'AddFixedPriceItem',
+                listingData,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+              throw new Error(errorData.error || errorData.details || `HTTP ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.Ack === 'Success' || result.Ack === 'Warning') {
+              results.push({ marketplace, itemId: result.ItemID });
+            } else {
+              throw new Error(result.Errors?.join(', ') || 'Failed to create listing');
+            }
+          } else {
+            // For other marketplaces, just mark as coming soon for now
+            errors.push({ marketplace, error: 'Not yet implemented' });
+          }
+        } catch (error) {
+          console.error(`Error listing on ${marketplace}:`, error);
+          errors.push({ marketplace, error: error.message });
+        }
+      }
+
+      // Update inventory item status if all listings succeeded
+      if (results.length > 0 && currentEditingItemId) {
+        try {
+          await base44.entities.InventoryItem.update(currentEditingItemId, {
+            status: 'listed',
+          });
+          queryClient.invalidateQueries(['inventoryItems']);
+        } catch (updateError) {
+          console.error('Error updating inventory item:', updateError);
+        }
+      }
+
+      if (results.length > 0) {
+        toast({
+          title: "Crosslisted successfully!",
+          description: `Listed on ${results.length} marketplace${results.length === 1 ? '' : 's'}: ${results.map(r => r.marketplace).join(', ')}`,
+        });
+      }
+
+      if (errors.length > 0) {
+        toast({
+          title: "Some listings failed",
+          description: `Failed to list on: ${errors.map(e => e.marketplace).join(', ')}`,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   const MAX_PHOTOS = 25;
@@ -2236,23 +2438,42 @@ export default function CrosslistComposer() {
           >
             Cancel
           </Button>
-          <Button
-            className="bg-green-600 hover:bg-green-700"
-            disabled={isSaving || !generalForm.packageWeight || !generalForm.packageLength || !generalForm.packageWidth || !generalForm.packageHeight}
-            onClick={handleSaveToInventory}
-          >
-            {isSaving ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                Save to Inventory
-                <Rocket className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              disabled={isSaving || !generalForm.packageWeight || !generalForm.packageLength || !generalForm.packageWidth || !generalForm.packageHeight}
+              onClick={handleSaveToInventory}
+            >
+              {isSaving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Save to Inventory
+                  <Rocket className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={isSaving}
+              onClick={() => handleCrosslist(["ebay", "etsy", "mercari", "facebook"])}
+            >
+              {isSaving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Listing...
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Crosslist All
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -895,7 +895,10 @@ export default function Crosslist() {
                 >
                   {selected.length === filtered.length ? "Unselect All" : "Select All"}
                 </Button>
-                <BulkActionsMenu />
+                <BulkActionsMenu 
+                  selectedItems={selected}
+                  onActionComplete={() => setSelected([])}
+                />
                 <Button
                   onClick={() => {
                     if (selected.length > 0) {
