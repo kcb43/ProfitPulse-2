@@ -380,6 +380,83 @@ export default function CrosslistComposer() {
   const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
   const [ebaySearchInitialQuery, setEbaySearchInitialQuery] = useState("");
   
+  // eBay OAuth token state
+  const [ebayToken, setEbayToken] = useState(() => {
+    // Load token from localStorage on mount
+    try {
+      const stored = localStorage.getItem('ebay_user_token');
+      if (stored) {
+        const tokenData = JSON.parse(stored);
+        // Check if token is expired
+        if (tokenData.expires_at && tokenData.expires_at > Date.now()) {
+          return tokenData;
+        }
+        // Token expired, remove it
+        localStorage.removeItem('ebay_user_token');
+      }
+    } catch (e) {
+      console.error('Error loading eBay token:', e);
+    }
+    return null;
+  });
+  
+  // Handle OAuth callback from URL params
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    
+    // Check for OAuth success
+    if (params.get('ebay_auth_success') === '1') {
+      const tokenParam = params.get('token');
+      if (tokenParam) {
+        try {
+          const tokenData = JSON.parse(decodeURIComponent(tokenParam));
+          const expiresAt = Date.now() + (tokenData.expires_in * 1000);
+          
+          const tokenToStore = {
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            expires_at: expiresAt,
+            expires_in: tokenData.expires_in,
+            refresh_token_expires_in: tokenData.refresh_token_expires_in,
+            token_type: tokenData.token_type,
+          };
+          
+          // Store token securely
+          localStorage.setItem('ebay_user_token', JSON.stringify(tokenToStore));
+          setEbayToken(tokenToStore);
+          
+          toast({
+            title: "eBay account connected!",
+            description: "Your eBay account has been successfully connected.",
+          });
+          
+          // Clean up URL
+          window.history.replaceState({}, '', window.location.pathname);
+        } catch (e) {
+          console.error('Error parsing token:', e);
+          toast({
+            title: "Connection error",
+            description: "Failed to save eBay connection. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+    
+    // Check for OAuth errors
+    const authError = params.get('ebay_auth_error');
+    if (authError) {
+      toast({
+        title: "Connection failed",
+        description: `Failed to connect eBay account: ${decodeURIComponent(authError)}`,
+        variant: "destructive",
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [location, toast]);
+  
   // Get eBay category tree ID
   const { data: categoryTreeData, isLoading: isLoadingCategoryTree } = useEbayCategoryTreeId('EBAY_US');
   const categoryTreeId = categoryTreeData?.categoryTreeId;
@@ -965,11 +1042,30 @@ export default function CrosslistComposer() {
   };
 
   const handleReconnect = (templateKey) => {
-    const label = TEMPLATE_DISPLAY_NAMES[templateKey] || "Marketplace";
+    if (templateKey === 'ebay') {
+      // Initiate eBay OAuth flow
+      window.location.href = '/api/ebay/auth';
+    } else {
+      const label = TEMPLATE_DISPLAY_NAMES[templateKey] || "Marketplace";
+      toast({
+        title: `${label} reconnected`,
+        description: "We'll refresh the integration and pull the latest account settings.",
+      });
+    }
+  };
+  
+  const handleDisconnectEbay = () => {
+    localStorage.removeItem('ebay_user_token');
+    setEbayToken(null);
     toast({
-      title: `${label} reconnected`,
-      description: "We'll refresh the integration and pull the latest account settings.",
+      title: "eBay account disconnected",
+      description: "Your eBay account has been disconnected.",
     });
+  };
+  
+  const handleConnectEbay = () => {
+    // Initiate eBay OAuth flow
+    window.location.href = '/api/ebay/auth';
   };
 
   const handleTemplateSave = async (templateKey) => {
@@ -1188,6 +1284,32 @@ export default function CrosslistComposer() {
           shippingLocation: ebayForm.shippingLocation || generalForm.zip || '',
         };
 
+        // Get user token - check if stored or use from request
+        let userToken = null;
+        if (ebayToken && ebayToken.access_token) {
+          // Check if token is expired
+          if (ebayToken.expires_at && ebayToken.expires_at > Date.now()) {
+            userToken = ebayToken.access_token;
+          } else {
+            // Token expired - need to refresh or reconnect
+            toast({
+              title: "eBay token expired",
+              description: "Please reconnect your eBay account to continue.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        
+        if (!userToken) {
+          toast({
+            title: "eBay account not connected",
+            description: "Please connect your eBay account before listing items.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         // Call eBay listing API
         const response = await fetch('/api/ebay/listing', {
           method: 'POST',
@@ -1197,6 +1319,7 @@ export default function CrosslistComposer() {
           body: JSON.stringify({
             operation: 'AddFixedPriceItem',
             listingData,
+            userToken, // Pass user token
           }),
         });
 
@@ -3218,13 +3341,40 @@ export default function CrosslistComposer() {
 
               <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <RefreshCw className="h-4 w-4" />
-                  Keep the eBay connection fresh before pushing drafts.
+                  {ebayToken ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span>eBay account connected</span>
+                      {ebayToken.expires_at && (
+                        <span className="text-xs">
+                          (Expires: {new Date(ebayToken.expires_at).toLocaleDateString()})
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <X className="h-4 w-4 text-red-600" />
+                      <span>eBay account not connected</span>
+                    </>
+                  )}
                 </div>
-                <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("ebay")}>
-                  <RefreshCw className="h-4 w-4" />
-                  Reconnect eBay
-                </Button>
+                {ebayToken ? (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("ebay")}>
+                      <RefreshCw className="h-4 w-4" />
+                      Reconnect
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive" onClick={handleDisconnectEbay}>
+                      <X className="h-4 w-4" />
+                      Disconnect
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="default" size="sm" className="gap-2" onClick={handleConnectEbay}>
+                    <Check className="h-4 w-4" />
+                    Connect eBay Account
+                  </Button>
+                )}
               </div>
 
               <div className="flex justify-end gap-2">
