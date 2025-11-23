@@ -2314,25 +2314,23 @@ export default function CrosslistComposer() {
                 </div>
               </div>
 
-              {/* Photos and Title Section */}
-              <div className="space-y-6">
-                {/* Photos Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
-                    {(ebayForm.photos?.length > 0) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteAllPhotos('ebay')}
-                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        Delete All
-                      </Button>
-                    )}
-                  </div>
+              {/* Photos Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                  {(ebayForm.photos?.length > 0) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteAllPhotos('ebay')}
+                      className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Delete All
+                    </Button>
+                  )}
+                </div>
                   <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
                     {/* Main Photo - spans 2 columns and 2 rows */}
                     {ebayForm.photos?.length > 0 && (
@@ -2444,12 +2442,21 @@ export default function CrosslistComposer() {
                       onChange={(e) => handlePhotoUpload(e, 'ebay')}
                     />
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {ebayForm.photos?.length || 0}/{MAX_PHOTOS} used.
-                    {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
-                  </p>
-                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {ebayForm.photos?.length || 0}/{MAX_PHOTOS} used.
+                  {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
+                </p>
+              </div>
 
+              {/* Item Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Item Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Title Section */}
                 <div>
                   <Label className="text-xs mb-1.5 block">Title</Label>
@@ -2488,67 +2495,6 @@ export default function CrosslistComposer() {
                   )}
                 </div>
 
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs mb-1.5 block">Pricing Format <span className="text-red-500">*</span></Label>
-                  <Select
-                    value={ebayForm.pricingFormat}
-                    onValueChange={(value) => handleMarketplaceChange("ebay", "pricingFormat", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fixed">Fixed Price</SelectItem>
-                      <SelectItem value="auction">Auction</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs mb-1.5 block">Duration <span className="text-red-500">*</span></Label>
-                  <Select
-                    value={ebayForm.duration}
-                    onValueChange={(value) => handleMarketplaceChange("ebay", "duration", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Good 'Til Canceled">Good 'Til Canceled</SelectItem>
-                      <SelectItem value="30 Days">30 Days</SelectItem>
-                      <SelectItem value="7 Days">7 Days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs mb-1.5 block">Buy It Now Price <span className="text-red-500">*</span></Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder={generalForm.price || "0.00"}
-                    value={ebayForm.buyItNowPrice}
-                    onChange={(e) => handleMarketplaceChange("ebay", "buyItNowPrice", e.target.value)}
-                  />
-                  {generalForm.price && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Inherited ${generalForm.price} from General form. You can edit this price.
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label className="text-xs mb-1.5 block">Allow Best Offer</Label>
-                  <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
-                    <Switch
-                      id="ebay-best-offer"
-                      checked={ebayForm.allowBestOffer}
-                      onCheckedChange={(checked) => handleMarketplaceChange("ebay", "allowBestOffer", checked)}
-                    />
-                    <Label htmlFor="ebay-best-offer" className="text-sm">Allow buyers to submit offers</Label>
-                  </div>
-                </div>
                 {/* eBay Brand - use same dropdown as general form */}
                 <div className="md:col-span-2">
                   <Label className="text-xs mb-1.5 block">Brand <span className="text-red-500">*</span></Label>
@@ -2872,6 +2818,92 @@ export default function CrosslistComposer() {
                 </div>
               </div>
 
+              {/* Pricing Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <Label className="text-xs mb-1.5 block">Pricing Format <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={ebayForm.pricingFormat}
+                    onValueChange={(value) => handleMarketplaceChange("ebay", "pricingFormat", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed Price</SelectItem>
+                      <SelectItem value="auction">Auction</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Duration <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={ebayForm.duration}
+                    onValueChange={(value) => handleMarketplaceChange("ebay", "duration", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Good 'Til Canceled">Good 'Til Canceled</SelectItem>
+                      <SelectItem value="30 Days">30 Days</SelectItem>
+                      <SelectItem value="7 Days">7 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Buy It Now Price <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder={generalForm.price || "0.00"}
+                    value={ebayForm.buyItNowPrice}
+                    onChange={(e) => handleMarketplaceChange("ebay", "buyItNowPrice", e.target.value)}
+                  />
+                  {generalForm.price && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited ${generalForm.price} from General form. You can edit this price.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Allow Best Offer</Label>
+                  <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
+                    <Switch
+                      id="ebay-best-offer"
+                      checked={ebayForm.allowBestOffer}
+                      onCheckedChange={(checked) => handleMarketplaceChange("ebay", "allowBestOffer", checked)}
+                    />
+                    <Label htmlFor="ebay-best-offer" className="text-sm">Allow buyers to submit offers</Label>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Color <span className="text-red-500">*</span></Label>
+                  <Button
+                    type="button"
+                    variant={ebayForm.color ? "default" : "outline"}
+                    onClick={() => openColorPicker("ebay.color")}
+                    className="w-full justify-start"
+                  >
+                    {ebayForm.color ? (
+                      <>
+                        <div
+                          className="w-4 h-4 mr-2 rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                          style={{ backgroundColor: getColorHex(ebayForm.color) || "#808080" }}
+                        />
+                        <span className="flex-1 text-left">{getColorName(ebayForm.color)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Palette className="w-4 h-4 mr-2" />
+                        <span>Select color</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
               {/* Save Default Button for Shipping Fields */}
               <div className="flex items-center justify-between pb-2 border-b mb-4">
                 <div className="flex items-center gap-2">
@@ -3066,29 +3098,31 @@ export default function CrosslistComposer() {
                     </div>
                   </>
                 )}
-                
+              </div>
+
+              {/* Package Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Package Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <Label className="text-xs mb-1.5 block">Color <span className="text-red-500">*</span></Label>
+                  <Label className="text-xs mb-1.5 block">
+                    Package Details <span className="text-red-500">*</span>
+                  </Label>
                   <Button
                     type="button"
-                    variant={ebayForm.color ? "default" : "outline"}
-                    onClick={() => openColorPicker("ebay.color")}
+                    variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                    onClick={() => setPackageDetailsDialogOpen(true)}
                     className="w-full justify-start"
                   >
-                    {ebayForm.color ? (
-                      <>
-                        <div
-                          className="w-4 h-4 mr-2 rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
-                          style={{ backgroundColor: getColorHex(ebayForm.color) || "#808080" }}
-                        />
-                        <span className="flex-1 text-left">{getColorName(ebayForm.color)}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Palette className="w-4 h-4 mr-2" />
-                        <span>Select color</span>
-                      </>
-                    )}
+                    <Package className="w-4 h-4 mr-2" />
+                    {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                      ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                      : "Enter weight & size"}
                   </Button>
                 </div>
               </div>
@@ -3270,7 +3304,17 @@ export default function CrosslistComposer() {
                     {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
                   </p>
                 </div>
+              </div>
 
+              {/* Item Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Item Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Title Section */}
                 <div>
                   <Label className="text-xs mb-1.5 block">Title</Label>
@@ -3648,7 +3692,17 @@ export default function CrosslistComposer() {
                     {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
                   </p>
                 </div>
+              </div>
 
+              {/* Item Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Item Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Title Section */}
                 <div>
                   <Label className="text-xs mb-1.5 block">Title</Label>
@@ -3985,7 +4039,17 @@ export default function CrosslistComposer() {
                     {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
                   </p>
                 </div>
+              </div>
 
+              {/* Item Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Item Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Title Section */}
                 <div>
                   <Label className="text-xs mb-1.5 block">Title</Label>
