@@ -1511,19 +1511,31 @@ export default function CrosslistComposer() {
     });
   };
 
-  const handlePhotoReorder = (dragIndex, dropIndex) => {
+  const handlePhotoReorder = (dragIndex, dropIndex, marketplace = 'general') => {
     setTemplateForms((prev) => {
-      const photos = [...prev.general.photos];
+      const photos = marketplace === 'general'
+        ? [...prev.general.photos]
+        : [...(prev[marketplace]?.photos || [])];
       const [draggedPhoto] = photos.splice(dragIndex, 1);
       photos.splice(dropIndex, 0, draggedPhoto);
-      const general = {
-        ...prev.general,
-        photos,
-      };
-      return {
-        ...prev,
-        general,
-      };
+      
+      if (marketplace === 'general') {
+        return {
+          ...prev,
+          general: {
+            ...prev.general,
+            photos,
+          },
+        };
+      } else {
+        return {
+          ...prev,
+          [marketplace]: {
+            ...prev[marketplace],
+            photos,
+          },
+        };
+      }
     });
   };
   
@@ -2321,16 +2333,90 @@ export default function CrosslistComposer() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
-                    {ebayForm.photos?.length > 0 && ebayForm.photos.map((photo, index) => (
+                  <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                    {/* Main Photo - spans 2 columns and 2 rows */}
+                    {ebayForm.photos?.length > 0 && (
                       <div
-                        key={photo.id || index}
-                        className="relative aspect-square overflow-hidden rounded-lg border border-muted-foreground/40 bg-muted cursor-move"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", "0");
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = 0;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'ebay');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
                       >
-                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || `Photo ${index + 1}`} className="h-full w-full object-cover" />
+                        <img src={ebayForm.photos[0].preview || ebayForm.photos[0].imageUrl} alt={ebayForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                          Main
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handlePhotoRemove(photo.id, 'ebay')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(ebayForm.photos[0].id, 'ebay');
+                          }}
+                          className="absolute top-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          <span className="sr-only">Remove photo</span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Other Photos */}
+                    {ebayForm.photos?.slice(1).map((photo, index) => (
+                      <div
+                        key={photo.id || index + 1}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", String(index + 1));
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = index + 1;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'ebay');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                      >
+                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                          <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(photo.id, 'ebay');
+                          }}
                           className="absolute top-1 right-1 inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
                         >
                           <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -2338,6 +2424,8 @@ export default function CrosslistComposer() {
                         </button>
                       </div>
                     ))}
+                    
+                    {/* Add Photo Button */}
                     <button
                       type="button"
                       onClick={() => ebayPhotoInputRef.current?.click()}
@@ -3064,16 +3152,90 @@ export default function CrosslistComposer() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
-                    {etsyForm.photos?.length > 0 && etsyForm.photos.map((photo, index) => (
+                  <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                    {/* Main Photo - spans 2 columns and 2 rows */}
+                    {etsyForm.photos?.length > 0 && (
                       <div
-                        key={photo.id || index}
-                        className="relative aspect-square overflow-hidden rounded-lg border border-muted-foreground/40 bg-muted cursor-move"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", "0");
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = 0;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'etsy');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
                       >
-                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || `Photo ${index + 1}`} className="h-full w-full object-cover" />
+                        <img src={etsyForm.photos[0].preview || etsyForm.photos[0].imageUrl} alt={etsyForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                          Main
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handlePhotoRemove(photo.id, 'etsy')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(etsyForm.photos[0].id, 'etsy');
+                          }}
+                          className="absolute top-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          <span className="sr-only">Remove photo</span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Other Photos */}
+                    {etsyForm.photos?.slice(1).map((photo, index) => (
+                      <div
+                        key={photo.id || index + 1}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", String(index + 1));
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = index + 1;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'etsy');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                      >
+                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                          <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(photo.id, 'etsy');
+                          }}
                           className="absolute top-1 right-1 inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
                         >
                           <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -3081,6 +3243,8 @@ export default function CrosslistComposer() {
                         </button>
                       </div>
                     ))}
+                    
+                    {/* Add Photo Button */}
                     <button
                       type="button"
                       onClick={() => etsyPhotoInputRef.current?.click()}
@@ -3366,16 +3530,90 @@ export default function CrosslistComposer() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
-                    {mercariForm.photos?.length > 0 && mercariForm.photos.map((photo, index) => (
+                  <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                    {/* Main Photo - spans 2 columns and 2 rows */}
+                    {mercariForm.photos?.length > 0 && (
                       <div
-                        key={photo.id || index}
-                        className="relative aspect-square overflow-hidden rounded-lg border border-muted-foreground/40 bg-muted cursor-move"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", "0");
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = 0;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'mercari');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
                       >
-                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || `Photo ${index + 1}`} className="h-full w-full object-cover" />
+                        <img src={mercariForm.photos[0].preview || mercariForm.photos[0].imageUrl} alt={mercariForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                          Main
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handlePhotoRemove(photo.id, 'mercari')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(mercariForm.photos[0].id, 'mercari');
+                          }}
+                          className="absolute top-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          <span className="sr-only">Remove photo</span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Other Photos */}
+                    {mercariForm.photos?.slice(1).map((photo, index) => (
+                      <div
+                        key={photo.id || index + 1}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", String(index + 1));
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = index + 1;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'mercari');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                      >
+                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                          <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(photo.id, 'mercari');
+                          }}
                           className="absolute top-1 right-1 inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
                         >
                           <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -3383,6 +3621,8 @@ export default function CrosslistComposer() {
                         </button>
                       </div>
                     ))}
+                    
+                    {/* Add Photo Button */}
                     <button
                       type="button"
                       onClick={() => mercariPhotoInputRef.current?.click()}
@@ -3627,16 +3867,90 @@ export default function CrosslistComposer() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
-                    {facebookForm.photos?.length > 0 && facebookForm.photos.map((photo, index) => (
+                  <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                    {/* Main Photo - spans 2 columns and 2 rows */}
+                    {facebookForm.photos?.length > 0 && (
                       <div
-                        key={photo.id || index}
-                        className="relative aspect-square overflow-hidden rounded-lg border border-muted-foreground/40 bg-muted cursor-move"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", "0");
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = 0;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'facebook');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
                       >
-                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || `Photo ${index + 1}`} className="h-full w-full object-cover" />
+                        <img src={facebookForm.photos[0].preview || facebookForm.photos[0].imageUrl} alt={facebookForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                          Main
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handlePhotoRemove(photo.id, 'facebook')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(facebookForm.photos[0].id, 'facebook');
+                          }}
+                          className="absolute top-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          <span className="sr-only">Remove photo</span>
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* Other Photos */}
+                    {facebookForm.photos?.slice(1).map((photo, index) => (
+                      <div
+                        key={photo.id || index + 1}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", String(index + 1));
+                          e.currentTarget.classList.add("opacity-50");
+                        }}
+                        onDragEnd={(e) => {
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                          const dropIndex = index + 1;
+                          if (dragIndex !== dropIndex) {
+                            handlePhotoReorder(dragIndex, dropIndex, 'facebook');
+                          }
+                          e.currentTarget.classList.remove("opacity-50");
+                        }}
+                        className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                      >
+                        <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                        <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                          <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePhotoRemove(photo.id, 'facebook');
+                          }}
                           className="absolute top-1 right-1 inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 z-10"
                         >
                           <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -3644,6 +3958,8 @@ export default function CrosslistComposer() {
                         </button>
                       </div>
                     ))}
+                    
+                    {/* Add Photo Button */}
                     <button
                       type="button"
                       onClick={() => facebookPhotoInputRef.current?.click()}
