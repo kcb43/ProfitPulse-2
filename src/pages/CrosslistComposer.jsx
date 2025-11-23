@@ -593,6 +593,12 @@ export default function CrosslistComposer() {
     if (!ebayForm.categoryId) errors.push("Category");
     if (ebayForm.categoryId && !ebayForm.itemType) errors.push("Type");
     if (!ebayForm.shippingCost) errors.push("Shipping Cost");
+    if (!ebayForm.acceptReturns) errors.push("Accept Returns");
+    if (ebayForm.acceptReturns) {
+      if (!ebayForm.returnWithin) errors.push("Return Within");
+      if (!ebayForm.returnShippingPayer) errors.push("Return Shipping Payer");
+      if (!ebayForm.returnRefundMethod) errors.push("Return Refund Method");
+    }
     if (!generalForm.title) errors.push("Title");
     if (!generalForm.brand) errors.push("Brand");
     if (!generalForm.quantity) errors.push("Quantity");
@@ -1592,7 +1598,7 @@ export default function CrosslistComposer() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs mb-1.5 block">Accept Returns</Label>
+                  <Label className="text-xs mb-1.5 block">Accept Returns <span className="text-red-500">*</span></Label>
                   <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
                     <Switch
                       id="ebay-accept-returns"
@@ -1607,7 +1613,7 @@ export default function CrosslistComposer() {
                 {ebayForm.acceptReturns && (
                   <>
                     <div>
-                      <Label className="text-xs mb-1.5 block">Return Within</Label>
+                      <Label className="text-xs mb-1.5 block">Return Within <span className="text-red-500">*</span></Label>
                       <Select
                         value={ebayForm.returnWithin || "30 days"}
                         onValueChange={(value) => handleMarketplaceChange("ebay", "returnWithin", value)}
@@ -1622,7 +1628,7 @@ export default function CrosslistComposer() {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-xs mb-1.5 block">Return Shipping Payer</Label>
+                      <Label className="text-xs mb-1.5 block">Return Shipping Payer <span className="text-red-500">*</span></Label>
                       <Select
                         value={ebayForm.returnShippingPayer || "Buyer"}
                         onValueChange={(value) => handleMarketplaceChange("ebay", "returnShippingPayer", value)}
@@ -1637,7 +1643,7 @@ export default function CrosslistComposer() {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-xs mb-1.5 block">Return Refund Method</Label>
+                      <Label className="text-xs mb-1.5 block">Return Refund Method <span className="text-red-500">*</span></Label>
                       <Select
                         value={ebayForm.returnRefundMethod || "Full Refund"}
                         onValueChange={(value) => handleMarketplaceChange("ebay", "returnRefundMethod", value)}
