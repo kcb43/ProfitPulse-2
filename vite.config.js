@@ -6,6 +6,8 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0', // Allow access from other devices on the network
+    port: 5173, // Default Vite port
     allowedHosts: true,
     proxy: {
       // Proxy API routes to Vercel during local development
