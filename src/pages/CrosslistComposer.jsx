@@ -133,6 +133,9 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     categoryName: "",
     itemType: "",
     ebayBrand: "",
+    condition: "",
+    model: "",
+    sku: "",
     shippingMethod: "Calculated",
     shippingCostType: "calculated",
     shippingCost: "",
@@ -155,6 +158,7 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     title: "",
     description: "",
     brand: "",
+    sku: "",
     renewalOption: "manual",
     whoMade: "i_did",
     whenMade: "2020s",
@@ -681,6 +685,21 @@ export default function CrosslistComposer() {
     }
   };
 
+  // Condition mapping functions
+  const mapGeneralConditionToEbay = (generalCondition) => {
+    const conditionMap = {
+      "New With Tags/Box": "New",
+      "New Without Tags/Box": "Open Box",
+      "Pre - Owned - Good": "Used",
+      "Poor (Majorflaws)": "Used",
+      // These don't map - user must choose manually on eBay
+      "New With Imperfections": null,
+      "Pre - Owned - Excellent": null,
+      "Pre - Owned - Fair": null,
+    };
+    return conditionMap[generalCondition] || null;
+  };
+
   const handleEbayItemSelect = (inventoryData) => {
     setTemplateForms((prev) => {
       const updated = { ...prev };
@@ -720,54 +739,61 @@ export default function CrosslistComposer() {
       const general = { ...prev.general, [field]: value };
       const next = { ...prev, general };
 
-      // Sync to all marketplace forms when inheritGeneral is true
-      if (next.ebay?.inheritGeneral) {
-        next.ebay = { ...next.ebay };
-        if (field === "title") next.ebay.title = value;
-        if (field === "description") next.ebay.description = value;
-        if (field === "photos") next.ebay.photos = value;
-        if (field === "price") next.ebay.buyItNowPrice = value;
-        if (field === "zip") next.ebay.shippingLocation = value;
-        if (field === "category") {
-          next.ebay.categoryName = value;
-        }
-        if (field === "categoryId") {
-          next.ebay.categoryId = value;
-        }
-        if (field === "brand") {
-          next.ebay.ebayBrand = value;
+      // Always sync to all marketplace forms (removed inheritGeneral checks)
+      // eBay sync
+      next.ebay = { ...next.ebay };
+      if (field === "title") next.ebay.title = value;
+      if (field === "description") next.ebay.description = value;
+      if (field === "photos") next.ebay.photos = value;
+      if (field === "price") next.ebay.buyItNowPrice = value;
+      if (field === "zip") next.ebay.shippingLocation = value;
+      if (field === "category") {
+        next.ebay.categoryName = value;
+      }
+      if (field === "categoryId") {
+        next.ebay.categoryId = value;
+      }
+      if (field === "brand") {
+        next.ebay.ebayBrand = value;
+        next.ebay.brand = value;
+      }
+      if (field === "sku") {
+        next.ebay.sku = value;
+      }
+      if (field === "condition") {
+        const mappedCondition = mapGeneralConditionToEbay(value);
+        if (mappedCondition) {
+          next.ebay.condition = mappedCondition;
         }
       }
 
-      if (next.etsy?.inheritGeneral) {
-        next.etsy = { ...next.etsy };
-        if (field === "title") next.etsy.title = value;
-        if (field === "description") next.etsy.description = value;
-        if (field === "photos") next.etsy.photos = value;
-        if (field === "tags") next.etsy.tags = value;
+      // Etsy sync
+      next.etsy = { ...next.etsy };
+      if (field === "title") next.etsy.title = value;
+      if (field === "description") next.etsy.description = value;
+      if (field === "photos") next.etsy.photos = value;
+      if (field === "tags") next.etsy.tags = value;
+      if (field === "sku") next.etsy.sku = value;
+
+      // Mercari sync
+      next.mercari = { ...next.mercari };
+      if (field === "title") next.mercari.title = value;
+      if (field === "description") next.mercari.description = value;
+      if (field === "photos") next.mercari.photos = value;
+      if (field === "price") {
+        next.mercari.shippingPrice = Number(value) >= 100 ? "Free" : "Buyer pays";
       }
 
-      if (next.mercari?.inheritGeneral) {
-        next.mercari = { ...next.mercari };
-        if (field === "title") next.mercari.title = value;
-        if (field === "description") next.mercari.description = value;
-        if (field === "photos") next.mercari.photos = value;
-        if (field === "price") {
-          next.mercari.shippingPrice = Number(value) >= 100 ? "Free" : "Buyer pays";
-        }
+      // Facebook sync
+      next.facebook = { ...next.facebook };
+      if (field === "title") next.facebook.title = value;
+      if (field === "description") next.facebook.description = value;
+      if (field === "photos") next.facebook.photos = value;
+      if (field === "zip") {
+        next.facebook.meetUpLocation = value ? `Meet near ${value}` : "";
       }
-
-      if (next.facebook?.inheritGeneral) {
-        next.facebook = { ...next.facebook };
-        if (field === "title") next.facebook.title = value;
-        if (field === "description") next.facebook.description = value;
-        if (field === "photos") next.facebook.photos = value;
-        if (field === "zip") {
-          next.facebook.meetUpLocation = value ? `Meet near ${value}` : "";
-        }
-        if (field === "price") {
-          next.facebook.shippingPrice = Number(value) >= 75 ? "Free shipping" : "";
-        }
+      if (field === "price") {
+        next.facebook.shippingPrice = Number(value) >= 75 ? "Free shipping" : "";
       }
 
       return next;
@@ -863,7 +889,6 @@ export default function CrosslistComposer() {
     // Copy ALL common fields that all marketplaces can use (even if empty to ensure sync)
     copied.title = generalData.title || "";
     copied.description = generalData.description || "";
-    copied.condition = generalData.condition || "";
     copied.quantity = generalData.quantity || "1";
     copied.photos = generalData.photos || [];
     copied.sku = generalData.sku || "";
@@ -872,9 +897,15 @@ export default function CrosslistComposer() {
     copied.color = generalData.color1 || "";
     copied.brand = generalData.brand || "";
     
-    // Handle eBay-specific brand field (also copy to brand for consistency)
+    // Handle condition mapping for eBay
     if (marketplaceKey === 'ebay') {
+      const mappedCondition = mapGeneralConditionToEbay(generalData.condition || "");
+      if (mappedCondition) {
+        copied.condition = mappedCondition;
+      }
       copied.ebayBrand = generalData.brand || "";
+    } else {
+      copied.condition = generalData.condition || "";
     }
     
     // Marketplace-specific field mappings
@@ -915,40 +946,32 @@ export default function CrosslistComposer() {
       // Save general form (per-item if editing, or as template for new items)
       saveTemplateToStorage('general', generalForm, itemId);
       
-      // Copy general fields to all marketplace forms (only if inheritGeneral is true)
+      // Always copy general fields to all marketplace forms (auto-sync)
       const updatedForms = { ...templateForms };
       
-      // Update eBay form if sync is enabled
-      if (updatedForms.ebay?.inheritGeneral) {
-        const ebayUpdates = copyGeneralFieldsToMarketplace(generalForm, 'ebay');
-        updatedForms.ebay = { ...updatedForms.ebay, ...ebayUpdates };
-        // Also sync the category path state for eBay
-        if (generalCategoryPath.length > 0) {
-          setSelectedCategoryPath(generalCategoryPath);
-        }
-        saveTemplateToStorage('ebay', updatedForms.ebay, itemId);
+      // Update eBay form (always sync)
+      const ebayUpdates = copyGeneralFieldsToMarketplace(generalForm, 'ebay');
+      updatedForms.ebay = { ...updatedForms.ebay, ...ebayUpdates };
+      // Also sync the category path state for eBay
+      if (generalCategoryPath.length > 0) {
+        setSelectedCategoryPath(generalCategoryPath);
       }
+      saveTemplateToStorage('ebay', updatedForms.ebay, itemId);
       
-      // Update Etsy form if sync is enabled
-      if (updatedForms.etsy?.inheritGeneral) {
-        const etsyUpdates = copyGeneralFieldsToMarketplace(generalForm, 'etsy');
-        updatedForms.etsy = { ...updatedForms.etsy, ...etsyUpdates };
-        saveTemplateToStorage('etsy', updatedForms.etsy, itemId);
-      }
+      // Update Etsy form (always sync)
+      const etsyUpdates = copyGeneralFieldsToMarketplace(generalForm, 'etsy');
+      updatedForms.etsy = { ...updatedForms.etsy, ...etsyUpdates };
+      saveTemplateToStorage('etsy', updatedForms.etsy, itemId);
       
-      // Update Mercari form if sync is enabled
-      if (updatedForms.mercari?.inheritGeneral) {
-        const mercariUpdates = copyGeneralFieldsToMarketplace(generalForm, 'mercari');
-        updatedForms.mercari = { ...updatedForms.mercari, ...mercariUpdates };
-        saveTemplateToStorage('mercari', updatedForms.mercari, itemId);
-      }
+      // Update Mercari form (always sync)
+      const mercariUpdates = copyGeneralFieldsToMarketplace(generalForm, 'mercari');
+      updatedForms.mercari = { ...updatedForms.mercari, ...mercariUpdates };
+      saveTemplateToStorage('mercari', updatedForms.mercari, itemId);
       
-      // Update Facebook form if sync is enabled
-      if (updatedForms.facebook?.inheritGeneral) {
-        const facebookUpdates = copyGeneralFieldsToMarketplace(generalForm, 'facebook');
-        updatedForms.facebook = { ...updatedForms.facebook, ...facebookUpdates };
-        saveTemplateToStorage('facebook', updatedForms.facebook, itemId);
-      }
+      // Update Facebook form (always sync)
+      const facebookUpdates = copyGeneralFieldsToMarketplace(generalForm, 'facebook');
+      updatedForms.facebook = { ...updatedForms.facebook, ...facebookUpdates };
+      saveTemplateToStorage('facebook', updatedForms.facebook, itemId);
       
       // Update state with copied fields
       setTemplateForms(updatedForms);
@@ -1070,7 +1093,8 @@ export default function CrosslistComposer() {
     if (!ebayForm.buyItNowPrice) errors.push("Buy It Now Price");
     if (!ebayForm.color) errors.push("Color");
     if (!ebayForm.categoryId) errors.push("Category");
-    if (ebayForm.categoryId && !ebayForm.itemType) errors.push("Type");
+    if (ebayForm.categoryId && !ebayForm.itemType) errors.push("Model (Type)");
+    if (!ebayForm.condition) errors.push("Condition");
     if (!ebayForm.shippingCost) errors.push("Shipping Cost");
     if (!ebayForm.acceptReturns) errors.push("Accept Returns");
     if (ebayForm.acceptReturns) {
@@ -1079,8 +1103,8 @@ export default function CrosslistComposer() {
       if (!ebayForm.returnRefundMethod) errors.push("Return Refund Method");
     }
     if (!generalForm.title) errors.push("Title");
-    // Check eBay brand, fallback to general brand if inheritGeneral is enabled
-    if (!ebayForm.ebayBrand && (!ebayForm.inheritGeneral || !generalForm.brand)) {
+    // Check eBay brand, fallback to general brand
+    if (!ebayForm.ebayBrand && !generalForm.brand) {
       errors.push("eBay Brand");
     }
     if (!generalForm.quantity) errors.push("Quantity");
@@ -1949,17 +1973,26 @@ export default function CrosslistComposer() {
                   <Label className="text-xs mb-1.5 block">Condition</Label>
                   <Select
                     value={generalForm.condition || undefined}
-                    onValueChange={(value) => handleGeneralChange("condition", value)}
+                    onValueChange={(value) => {
+                      handleGeneralChange("condition", value);
+                      // Map condition to eBay form
+                      const ebayCondition = mapGeneralConditionToEbay(value);
+                      if (ebayCondition) {
+                        handleMarketplaceChange("ebay", "condition", ebayCondition);
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select condition" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="like_new">Like New</SelectItem>
-                      <SelectItem value="excellent">Excellent</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="New With Tags/Box">New With Tags/Box</SelectItem>
+                      <SelectItem value="New Without Tags/Box">New Without Tags/Box</SelectItem>
+                      <SelectItem value="New With Imperfections">New With Imperfections</SelectItem>
+                      <SelectItem value="Pre - Owned - Excellent">Pre - Owned - Excellent</SelectItem>
+                      <SelectItem value="Pre - Owned - Good">Pre - Owned - Good</SelectItem>
+                      <SelectItem value="Pre - Owned - Fair">Pre - Owned - Fair</SelectItem>
+                      <SelectItem value="Poor (Majorflaws)">Poor (Majorflaws)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2267,14 +2300,6 @@ export default function CrosslistComposer() {
                     Media, title, description, and pricing inherit from your General template.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="ebay-sync"
-                    checked={ebayForm.inheritGeneral}
-                    onCheckedChange={(checked) => handleToggleInherit("ebay", checked)}
-                  />
-                  <Label htmlFor="ebay-sync" className="text-sm text-muted-foreground">Sync with General</Label>
-                </div>
               </div>
 
               {/* Photos and Title Section */}
@@ -2367,11 +2392,11 @@ export default function CrosslistComposer() {
                     value={ebayForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("ebay", "description", e.target.value)}
                     className="min-h-[120px]"
-                    disabled={ebayForm.inheritGeneral && Boolean(generalForm.description)}
+                    disabled={Boolean(generalForm.description)}
                   />
                   {ebayForm.inheritGeneral && generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits description from General form when synced.
+                      Inherits description from General form.
                     </p>
                   )}
                 </div>
@@ -2419,11 +2444,11 @@ export default function CrosslistComposer() {
                     placeholder={generalForm.price || "0.00"}
                     value={ebayForm.buyItNowPrice}
                     onChange={(e) => handleMarketplaceChange("ebay", "buyItNowPrice", e.target.value)}
-                    disabled={ebayForm.inheritGeneral && Boolean(generalForm.price)}
+                    disabled={Boolean(generalForm.price)}
                   />
                   {ebayForm.inheritGeneral && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.price ? `$${generalForm.price}` : "General price"} when synced.
+                      Inherits {generalForm.price ? `$${generalForm.price}` : "General price"} from General form.
                     </p>
                   )}
                 </div>
@@ -2448,7 +2473,7 @@ export default function CrosslistComposer() {
                         value={ebayForm.ebayBrand || ""}
                         onChange={(e) => handleMarketplaceChange("ebay", "ebayBrand", e.target.value)}
                         className="flex-1"
-                        disabled={ebayForm.inheritGeneral && Boolean(generalForm.brand)}
+                        disabled={Boolean(generalForm.brand)}
                       />
                       <Button
                         type="button"
@@ -2473,10 +2498,10 @@ export default function CrosslistComposer() {
                           handleMarketplaceChange("ebay", "ebayBrand", value);
                         }
                       }}
-                      disabled={ebayForm.inheritGeneral && Boolean(generalForm.brand)}
+                      disabled={Boolean(generalForm.brand)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={ebayForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
+                        <SelectValue placeholder={generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
                       </SelectTrigger>
                       <SelectContent>
                         {POPULAR_BRANDS.map((brand) => (
@@ -2488,9 +2513,87 @@ export default function CrosslistComposer() {
                       </SelectContent>
                     </Select>
                   )}
-                  {ebayForm.inheritGeneral && generalForm.brand && (
+                </div>
+
+                {/* Category Specifics Section */}
+                {ebayForm.categoryId && (
+                  <div className="md:col-span-2 space-y-4 border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium">Category Specifics</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Reload category aspects
+                          queryClient.invalidateQueries(['ebayCategoryAspects', categoryTreeId, ebayForm.categoryId]);
+                        }}
+                        className="gap-2 h-7 text-xs"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Reload
+                      </Button>
+                    </div>
+                    
+                    {/* Model Dropdown */}
+                    {typeValues.length > 0 && (
+                      <div>
+                        <Label className="text-xs mb-1.5 block">
+                          Model <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={ebayForm.itemType || undefined}
+                          onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select model" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {typeValues.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Condition Dropdown */}
+                    <div>
+                      <Label className="text-xs mb-1.5 block">
+                        Condition <span className="text-red-500">*</span>
+                      </Label>
+                      <Select
+                        value={ebayForm.condition || undefined}
+                        onValueChange={(value) => handleMarketplaceChange("ebay", "condition", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select condition" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="New">New</SelectItem>
+                          <SelectItem value="Open Box">Open Box</SelectItem>
+                          <SelectItem value="Used">Used</SelectItem>
+                          <SelectItem value="For parts or not working">For parts or not working</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* SKU Field */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">SKU</Label>
+                  <Input
+                    placeholder={generalForm.sku || "Enter SKU"}
+                    value={ebayForm.sku || ""}
+                    onChange={(e) => handleMarketplaceChange("ebay", "sku", e.target.value)}
+                    disabled={Boolean(generalForm.sku)}
+                  />
+                  {generalForm.sku && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.brand} from General form when synced.
+                      Inherits {generalForm.sku} from General form.
                     </p>
                   )}
                 </div>
@@ -2620,7 +2723,7 @@ export default function CrosslistComposer() {
                   <Input
                     placeholder={generalForm.zip || "Zip or region"}
                     value={ebayForm.shippingLocation}
-                    disabled={ebayForm.inheritGeneral && Boolean(generalForm.zip)}
+                    disabled={Boolean(generalForm.zip)}
                     onChange={(e) => handleMarketplaceChange("ebay", "shippingLocation", e.target.value)}
                   />
                 </div>
@@ -2916,14 +3019,6 @@ export default function CrosslistComposer() {
                     Etsy loves rich listings—processing time and "who made it" details are required.
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="etsy-sync"
-                    checked={etsyForm.inheritGeneral}
-                    onCheckedChange={(checked) => handleToggleInherit("etsy", checked)}
-                  />
-                  <Label htmlFor="etsy-sync" className="text-sm text-muted-foreground">Sync with General</Label>
-                </div>
               </div>
 
               {/* Photos and Title Section */}
@@ -3012,15 +3107,15 @@ export default function CrosslistComposer() {
                     </Button>
                   </div>
                   <Textarea
-                    placeholder={etsyForm.inheritGeneral && generalForm.description ? `Inherits: ${generalForm.description.substring(0, 50)}...` : ""}
+                    placeholder={generalForm.description ? `Inherits: ${generalForm.description.substring(0, 50)}...` : ""}
                     value={etsyForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("etsy", "description", e.target.value)}
                     className="min-h-[120px]"
-                    disabled={etsyForm.inheritGeneral && Boolean(generalForm.description)}
+                    disabled={Boolean(generalForm.description)}
                   />
-                  {etsyForm.inheritGeneral && generalForm.description && (
+                  {generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits description from General form when synced.
+                      Inherits description from General form.
                     </p>
                   )}
                 </div>
@@ -3035,7 +3130,7 @@ export default function CrosslistComposer() {
                         value={etsyForm.brand || ""}
                         onChange={(e) => handleMarketplaceChange("etsy", "brand", e.target.value)}
                         className="flex-1"
-                        disabled={etsyForm.inheritGeneral && Boolean(generalForm.brand)}
+                        disabled={Boolean(generalForm.brand)}
                       />
                       <Button
                         type="button"
@@ -3060,10 +3155,10 @@ export default function CrosslistComposer() {
                           handleMarketplaceChange("etsy", "brand", value);
                         }
                       }}
-                      disabled={etsyForm.inheritGeneral && Boolean(generalForm.brand)}
+                      disabled={Boolean(generalForm.brand)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={etsyForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
+                        <SelectValue placeholder={generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
                       </SelectTrigger>
                       <SelectContent>
                         {POPULAR_BRANDS.map((brand) => (
@@ -3075,9 +3170,20 @@ export default function CrosslistComposer() {
                       </SelectContent>
                     </Select>
                   )}
-                  {etsyForm.inheritGeneral && generalForm.brand && (
+                </div>
+
+                {/* SKU Field */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">SKU</Label>
+                  <Input
+                    placeholder={generalForm.sku || "Enter SKU"}
+                    value={etsyForm.sku || ""}
+                    onChange={(e) => handleMarketplaceChange("etsy", "sku", e.target.value)}
+                    disabled={Boolean(generalForm.sku)}
+                  />
+                  {generalForm.sku && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.brand} from General form when synced.
+                      Inherits {generalForm.sku} from General form.
                     </p>
                   )}
                 </div>
@@ -3163,7 +3269,7 @@ export default function CrosslistComposer() {
                     placeholder={etsyForm.inheritGeneral ? "Inherits general tags" : "Type keywords and press space or comma to add tags"}
                     value={etsyForm.tags}
                     onChange={(value) => handleMarketplaceChange("etsy", "tags", value)}
-                    disabled={etsyForm.inheritGeneral}
+                    disabled={false}
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -3218,14 +3324,6 @@ export default function CrosslistComposer() {
                   <p className="text-sm text-muted-foreground">
                     Control smart pricing and shipping preferences for Mercari listings.
                   </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="mercari-sync"
-                    checked={mercariForm.inheritGeneral}
-                    onCheckedChange={(checked) => handleToggleInherit("mercari", checked)}
-                  />
-                  <Label htmlFor="mercari-sync" className="text-sm text-muted-foreground">Sync with General</Label>
                 </div>
               </div>
 
@@ -3319,11 +3417,11 @@ export default function CrosslistComposer() {
                     value={mercariForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("mercari", "description", e.target.value)}
                     className="min-h-[120px]"
-                    disabled={mercariForm.inheritGeneral && Boolean(generalForm.description)}
+                    disabled={Boolean(generalForm.description)}
                   />
                   {mercariForm.inheritGeneral && generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits description from General form when synced.
+                      Inherits description from General form.
                     </p>
                   )}
                 </div>
@@ -3338,7 +3436,7 @@ export default function CrosslistComposer() {
                         value={mercariForm.brand || ""}
                         onChange={(e) => handleMarketplaceChange("mercari", "brand", e.target.value)}
                         className="flex-1"
-                        disabled={mercariForm.inheritGeneral && Boolean(generalForm.brand)}
+                        disabled={Boolean(generalForm.brand)}
                       />
                       <Button
                         type="button"
@@ -3363,7 +3461,7 @@ export default function CrosslistComposer() {
                           handleMarketplaceChange("mercari", "brand", value);
                         }
                       }}
-                      disabled={mercariForm.inheritGeneral && Boolean(generalForm.brand)}
+                      disabled={Boolean(generalForm.brand)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={mercariForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
@@ -3380,7 +3478,7 @@ export default function CrosslistComposer() {
                   )}
                   {mercariForm.inheritGeneral && generalForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.brand} from General form when synced.
+                      Inherits {generalForm.brand} from General form.
                     </p>
                   )}
                 </div>
@@ -3410,7 +3508,7 @@ export default function CrosslistComposer() {
                     placeholder="Inherit or override"
                     value={mercariForm.shippingPrice}
                     onChange={(e) => handleMarketplaceChange("mercari", "shippingPrice", e.target.value)}
-                    disabled={mercariForm.inheritGeneral}
+                    disabled={false}
                   />
                   {mercariForm.inheritGeneral && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -3490,14 +3588,6 @@ export default function CrosslistComposer() {
                   <p className="text-sm text-muted-foreground">
                     Configure shipping vs pickup defaults and whether offers are allowed.
                   </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="facebook-sync"
-                    checked={facebookForm.inheritGeneral}
-                    onCheckedChange={(checked) => handleToggleInherit("facebook", checked)}
-                  />
-                  <Label htmlFor="facebook-sync" className="text-sm text-muted-foreground">Sync with General</Label>
                 </div>
               </div>
 
@@ -3591,11 +3681,11 @@ export default function CrosslistComposer() {
                     value={facebookForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("facebook", "description", e.target.value)}
                     className="min-h-[120px]"
-                    disabled={facebookForm.inheritGeneral && Boolean(generalForm.description)}
+                    disabled={Boolean(generalForm.description)}
                   />
                   {facebookForm.inheritGeneral && generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits description from General form when synced.
+                      Inherits description from General form.
                     </p>
                   )}
                 </div>
@@ -3610,7 +3700,7 @@ export default function CrosslistComposer() {
                         value={facebookForm.brand || ""}
                         onChange={(e) => handleMarketplaceChange("facebook", "brand", e.target.value)}
                         className="flex-1"
-                        disabled={facebookForm.inheritGeneral && Boolean(generalForm.brand)}
+                        disabled={Boolean(generalForm.brand)}
                       />
                       <Button
                         type="button"
@@ -3635,7 +3725,7 @@ export default function CrosslistComposer() {
                           handleMarketplaceChange("facebook", "brand", value);
                         }
                       }}
-                      disabled={facebookForm.inheritGeneral && Boolean(generalForm.brand)}
+                      disabled={Boolean(generalForm.brand)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={facebookForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
@@ -3652,7 +3742,7 @@ export default function CrosslistComposer() {
                   )}
                   {facebookForm.inheritGeneral && generalForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.brand} from General form when synced.
+                      Inherits {generalForm.brand} from General form.
                     </p>
                   )}
                 </div>
@@ -3681,7 +3771,7 @@ export default function CrosslistComposer() {
                     placeholder="Optional override"
                     value={facebookForm.shippingPrice}
                     onChange={(e) => handleMarketplaceChange("facebook", "shippingPrice", e.target.value)}
-                    disabled={facebookForm.inheritGeneral}
+                    disabled={false}
                   />
                   {facebookForm.inheritGeneral && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -3695,7 +3785,7 @@ export default function CrosslistComposer() {
                     placeholder="Preferred meetup details"
                     value={facebookForm.meetUpLocation}
                     onChange={(e) => handleMarketplaceChange("facebook", "meetUpLocation", e.target.value)}
-                    disabled={facebookForm.inheritGeneral && Boolean(generalForm.zip)}
+                    disabled={Boolean(generalForm.zip)}
                   />
                 </div>
                 <div>
