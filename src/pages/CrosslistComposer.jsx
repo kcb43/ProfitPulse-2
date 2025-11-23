@@ -2599,6 +2599,171 @@ export default function CrosslistComposer() {
                   )}
                 </div>
 
+                {/* Category Section */}
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
+                  <div className="space-y-2">
+                    {/* Breadcrumb navigation */}
+                    {selectedCategoryPath.length > 0 && (
+                      <div className="flex items-center gap-1 flex-wrap text-xs text-muted-foreground">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCategoryPath([]);
+                            handleMarketplaceChange("ebay", "categoryId", "");
+                            handleMarketplaceChange("ebay", "categoryName", "");
+                          }}
+                          className="hover:text-foreground underline"
+                        >
+                          Home
+                        </button>
+                        {selectedCategoryPath.map((cat, index) => (
+                          <React.Fragment key={cat.categoryId}>
+                            <span>/</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newPath = selectedCategoryPath.slice(0, index + 1);
+                                setSelectedCategoryPath(newPath);
+                                const lastCat = newPath[newPath.length - 1];
+                                const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                handleMarketplaceChange("ebay", "categoryId", lastCat.categoryId);
+                                handleMarketplaceChange("ebay", "categoryName", fullPath);
+                              }}
+                              className="hover:text-foreground underline"
+                            >
+                              {cat.categoryName}
+                            </button>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {isLoadingCategoryTree || isLoadingCategories ? (
+                      <div className="flex items-center gap-2 p-3 border rounded-md">
+                        <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Loading categories...</span>
+                      </div>
+                    ) : categoriesError ? (
+                      <div className="p-3 border rounded-md border-destructive/50 bg-destructive/10">
+                        <p className="text-sm text-destructive">Error loading categories: {categoriesError.message}</p>
+                        {categoriesError?.response?.details && (
+                          <p className="text-xs text-destructive mt-2">
+                            Details: {JSON.stringify(categoriesError.response.details)}
+                          </p>
+                        )}
+                      </div>
+                    ) : sortedCategories.length > 0 ? (
+                      <Select
+                        value={ebayForm.categoryId || undefined}
+                        onValueChange={(value) => {
+                          const selectedCategory = sortedCategories.find(
+                            cat => cat.category?.categoryId === value
+                          );
+                          
+                          if (selectedCategory) {
+                            const category = selectedCategory.category;
+                            const newPath = [...selectedCategoryPath, {
+                              categoryId: category.categoryId,
+                              categoryName: category.categoryName,
+                            }];
+                            
+                            // Check if this category has children
+                            const hasChildren = selectedCategory.childCategoryTreeNodes && 
+                              selectedCategory.childCategoryTreeNodes.length > 0 &&
+                              !selectedCategory.leafCategoryTreeNode;
+                            
+                            if (hasChildren) {
+                              // Navigate deeper into the tree
+                              setSelectedCategoryPath(newPath);
+                            } else {
+                              // This is a leaf node - select it
+                              const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                              handleMarketplaceChange("ebay", "categoryId", category.categoryId);
+                              handleMarketplaceChange("ebay", "categoryName", fullPath);
+                              setSelectedCategoryPath(newPath);
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedCategoryPath.length > 0 ? "Select subcategory" : "Select a category"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {sortedCategories.map((categoryNode) => {
+                            const category = categoryNode.category;
+                            if (!category || !category.categoryId) return null;
+                            
+                            const hasChildren = categoryNode.childCategoryTreeNodes && 
+                              categoryNode.childCategoryTreeNodes.length > 0 &&
+                              !categoryNode.leafCategoryTreeNode;
+                            
+                            return (
+                              <SelectItem key={category.categoryId} value={category.categoryId}>
+                                <div className="flex items-center gap-2">
+                                  <span>{category.categoryName}</span>
+                                  {hasChildren && (
+                                    <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="p-3 border rounded-md">
+                        <p className="text-sm text-muted-foreground">No subcategories available.</p>
+                      </div>
+                    )}
+                    
+                    {ebayForm.categoryName && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="secondary" className="text-xs">
+                          Selected: {ebayForm.categoryName}
+                        </Badge>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            handleMarketplaceChange("ebay", "categoryId", "");
+                            handleMarketplaceChange("ebay", "categoryName", "");
+                            setSelectedCategoryPath([]);
+                          }}
+                          className="h-6 px-2 text-xs"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Type field - shown when category is selected */}
+                {ebayForm.categoryId && typeAspect && typeValues.length > 0 && (
+                  <div>
+                    <Label className="text-xs mb-1.5 block">
+                      Type <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={ebayForm.itemType || undefined}
+                      onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {typeValues.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 {/* Category Specifics Section */}
                 {ebayForm.categoryId && (
                   <div className="md:col-span-2 space-y-3 border-t pt-4">
@@ -2926,169 +3091,6 @@ export default function CrosslistComposer() {
                     )}
                   </Button>
                 </div>
-                <div className="md:col-span-2">
-                  <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
-                  <div className="space-y-2">
-                    {/* Breadcrumb navigation */}
-                    {selectedCategoryPath.length > 0 && (
-                      <div className="flex items-center gap-1 flex-wrap text-xs text-muted-foreground">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedCategoryPath([]);
-                            handleMarketplaceChange("ebay", "categoryId", "");
-                            handleMarketplaceChange("ebay", "categoryName", "");
-                          }}
-                          className="hover:text-foreground underline"
-                        >
-                          Home
-                        </button>
-                        {selectedCategoryPath.map((cat, index) => (
-                          <React.Fragment key={cat.categoryId}>
-                            <span>/</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newPath = selectedCategoryPath.slice(0, index + 1);
-                                setSelectedCategoryPath(newPath);
-                                const lastCat = newPath[newPath.length - 1];
-                                const fullPath = newPath.map(c => c.categoryName).join(" > ");
-                                handleMarketplaceChange("ebay", "categoryId", lastCat.categoryId);
-                                handleMarketplaceChange("ebay", "categoryName", fullPath);
-                              }}
-                              className="hover:text-foreground underline"
-                            >
-                              {cat.categoryName}
-                            </button>
-                          </React.Fragment>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {isLoadingCategoryTree || isLoadingCategories ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-md">
-                        <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Loading categories...</span>
-                      </div>
-                    ) : categoriesError ? (
-                      <div className="p-3 border rounded-md border-destructive/50 bg-destructive/10">
-                        <p className="text-sm text-destructive">Error loading categories: {categoriesError.message}</p>
-                        {categoriesError?.response?.details && (
-                          <p className="text-xs text-destructive mt-2">
-                            Details: {JSON.stringify(categoriesError.response.details)}
-                          </p>
-                        )}
-                      </div>
-                    ) : sortedCategories.length > 0 ? (
-                      <Select
-                        value={ebayForm.categoryId || undefined}
-                        onValueChange={(value) => {
-                          const selectedCategory = sortedCategories.find(
-                            cat => cat.category?.categoryId === value
-                          );
-                          
-                          if (selectedCategory) {
-                            const category = selectedCategory.category;
-                            const newPath = [...selectedCategoryPath, {
-                              categoryId: category.categoryId,
-                              categoryName: category.categoryName,
-                            }];
-                            
-                            // Check if this category has children
-                            const hasChildren = selectedCategory.childCategoryTreeNodes && 
-                              selectedCategory.childCategoryTreeNodes.length > 0 &&
-                              !selectedCategory.leafCategoryTreeNode;
-                            
-                            if (hasChildren) {
-                              // Navigate deeper into the tree
-                              setSelectedCategoryPath(newPath);
-                            } else {
-                              // This is a leaf node - select it
-                              const fullPath = newPath.map(c => c.categoryName).join(" > ");
-                              handleMarketplaceChange("ebay", "categoryId", category.categoryId);
-                              handleMarketplaceChange("ebay", "categoryName", fullPath);
-                              setSelectedCategoryPath(newPath);
-                            }
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={selectedCategoryPath.length > 0 ? "Select subcategory" : "Select a category"} />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                          {sortedCategories.map((categoryNode) => {
-                            const category = categoryNode.category;
-                            if (!category || !category.categoryId) return null;
-                            
-                            const hasChildren = categoryNode.childCategoryTreeNodes && 
-                              categoryNode.childCategoryTreeNodes.length > 0 &&
-                              !categoryNode.leafCategoryTreeNode;
-                            
-                            return (
-                              <SelectItem key={category.categoryId} value={category.categoryId}>
-                                <div className="flex items-center gap-2">
-                                  <span>{category.categoryName}</span>
-                                  {hasChildren && (
-                                    <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                                  )}
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="p-3 border rounded-md">
-                        <p className="text-sm text-muted-foreground">No subcategories available.</p>
-                      </div>
-                    )}
-                    
-                    {ebayForm.categoryName && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary" className="text-xs">
-                          Selected: {ebayForm.categoryName}
-                        </Badge>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            handleMarketplaceChange("ebay", "categoryId", "");
-                            handleMarketplaceChange("ebay", "categoryName", "");
-                            setSelectedCategoryPath([]);
-                          }}
-                          className="h-6 px-2 text-xs"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Type field - shown when category is selected */}
-                {ebayForm.categoryId && typeAspect && typeValues.length > 0 && (
-                  <div>
-                    <Label className="text-xs mb-1.5 block">
-                      Type <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={ebayForm.itemType || undefined}
-                      onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {typeValues.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
 
               <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
