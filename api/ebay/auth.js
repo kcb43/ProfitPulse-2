@@ -40,11 +40,15 @@ export default async function handler(req, res) {
     }
 
     // Build callback URL - should match what's configured in eBay Developer Console
+    // For OAuth 2.0, this must be YOUR application's callback URL, not eBay's signin page
+    // Example: https://your-domain.vercel.app/api/ebay/callback
     const baseUrl = process.env.VERCEL_URL 
       ? `https://${process.env.VERCEL_URL}` 
       : (req.headers.referer ? new URL(req.headers.referer).origin : req.headers.host ? `https://${req.headers.host}` : 'http://localhost:5173');
     
     const redirectUri = `${baseUrl}/api/ebay/callback`;
+    
+    console.log('OAuth Redirect URI:', redirectUri);
     
     // Get optional state parameter for CSRF protection
     const state = req.query.state || Math.random().toString(36).substring(7);
