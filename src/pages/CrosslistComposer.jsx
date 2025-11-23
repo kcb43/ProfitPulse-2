@@ -2405,32 +2405,55 @@ export default function CrosslistComposer() {
                     <Label htmlFor="ebay-best-offer" className="text-sm">Allow buyers to submit offers</Label>
                   </div>
                 </div>
-                {/* eBay Brand Dropdown - show always, use category-specific brands if available */}
+                {/* eBay Brand - use same dropdown as general form */}
                 <div className="md:col-span-2">
                   <Label className="text-xs mb-1.5 block">Brand Select or Custom <span className="text-red-500">*</span></Label>
-                  {ebayBrands.length > 0 ? (
+                  {brandIsCustom ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter brand name"
+                        value={ebayForm.ebayBrand || ""}
+                        onChange={(e) => handleMarketplaceChange("ebay", "ebayBrand", e.target.value)}
+                        className="flex-1"
+                        disabled={ebayForm.inheritGeneral && Boolean(generalForm.brand)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setBrandIsCustom(false);
+                          handleMarketplaceChange("ebay", "ebayBrand", "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
                     <Select
-                      value={ebayForm.ebayBrand || undefined}
-                      onValueChange={(value) => handleMarketplaceChange("ebay", "ebayBrand", value)}
+                      value={ebayForm.ebayBrand || generalForm.brand || undefined}
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          setBrandIsCustom(true);
+                          handleMarketplaceChange("ebay", "ebayBrand", "");
+                        } else {
+                          handleMarketplaceChange("ebay", "ebayBrand", value);
+                        }
+                      }}
+                      disabled={ebayForm.inheritGeneral && Boolean(generalForm.brand)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select brand" />
+                        <SelectValue placeholder={ebayForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {ebayBrands.map((brand) => (
+                      <SelectContent>
+                        {POPULAR_BRANDS.map((brand) => (
                           <SelectItem key={brand} value={brand}>
                             {brand}
                           </SelectItem>
                         ))}
+                        <SelectItem value="custom">Add Custom</SelectItem>
                       </SelectContent>
                     </Select>
-                  ) : (
-                    <Input
-                      placeholder={ebayForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Enter brand"}
-                      value={ebayForm.ebayBrand || ""}
-                      onChange={(e) => handleMarketplaceChange("ebay", "ebayBrand", e.target.value)}
-                      disabled={ebayForm.inheritGeneral && Boolean(generalForm.brand)}
-                    />
                   )}
                   {ebayForm.inheritGeneral && generalForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
