@@ -127,6 +127,7 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     photos: [],
     title: "",
     description: "",
+    brand: "",
     color: "",
     categoryId: "",
     categoryName: "",
@@ -153,6 +154,7 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     photos: [],
     title: "",
     description: "",
+    brand: "",
     renewalOption: "manual",
     whoMade: "i_did",
     whenMade: "2020s",
@@ -166,6 +168,7 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     photos: [],
     title: "",
     description: "",
+    brand: "",
     shippingCarrier: "Mercari Prepaid",
     shippingPrice: "",
     localPickup: false,
@@ -177,6 +180,7 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     photos: [],
     title: "",
     description: "",
+    brand: "",
     deliveryMethod: "shipping_and_pickup",
     shippingPrice: "",
     localPickup: true,
@@ -866,12 +870,11 @@ export default function CrosslistComposer() {
     copied.category = generalData.category || "";
     copied.size = generalData.size || "";
     copied.color = generalData.color1 || "";
+    copied.brand = generalData.brand || "";
     
-    // Handle brand field (marketplace-specific)
+    // Handle eBay-specific brand field (also copy to brand for consistency)
     if (marketplaceKey === 'ebay') {
       copied.ebayBrand = generalData.brand || "";
-    } else {
-      copied.brand = generalData.brand || "";
     }
     
     // Marketplace-specific field mappings
@@ -2343,6 +2346,36 @@ export default function CrosslistComposer() {
                     onChange={(e) => handleMarketplaceChange("ebay", "title", e.target.value)}
                   />
                 </div>
+
+                {/* Description Section */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label className="text-xs">Description</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDescriptionGeneratorOpen(true)}
+                      className="gap-2 h-7 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      AI Generate
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder={ebayForm.inheritGeneral && generalForm.description ? `Inherits: ${generalForm.description.substring(0, 50)}...` : ""}
+                    value={ebayForm.description || ""}
+                    onChange={(e) => handleMarketplaceChange("ebay", "description", e.target.value)}
+                    className="min-h-[120px]"
+                    disabled={ebayForm.inheritGeneral && Boolean(generalForm.description)}
+                  />
+                  {ebayForm.inheritGeneral && generalForm.description && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits description from General form when synced.
+                    </p>
+                  )}
+                </div>
+
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2962,6 +2995,92 @@ export default function CrosslistComposer() {
                     onChange={(e) => handleMarketplaceChange("etsy", "title", e.target.value)}
                   />
                 </div>
+
+                {/* Description Section */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label className="text-xs">Description</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDescriptionGeneratorOpen(true)}
+                      className="gap-2 h-7 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      AI Generate
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder={etsyForm.inheritGeneral && generalForm.description ? `Inherits: ${generalForm.description.substring(0, 50)}...` : ""}
+                    value={etsyForm.description || ""}
+                    onChange={(e) => handleMarketplaceChange("etsy", "description", e.target.value)}
+                    className="min-h-[120px]"
+                    disabled={etsyForm.inheritGeneral && Boolean(generalForm.description)}
+                  />
+                  {etsyForm.inheritGeneral && generalForm.description && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits description from General form when synced.
+                    </p>
+                  )}
+                </div>
+
+                {/* Brand Section */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Brand</Label>
+                  {brandIsCustom ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter brand name"
+                        value={etsyForm.brand || ""}
+                        onChange={(e) => handleMarketplaceChange("etsy", "brand", e.target.value)}
+                        className="flex-1"
+                        disabled={etsyForm.inheritGeneral && Boolean(generalForm.brand)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setBrandIsCustom(false);
+                          handleMarketplaceChange("etsy", "brand", "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={etsyForm.brand || generalForm.brand || undefined}
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          setBrandIsCustom(true);
+                          handleMarketplaceChange("etsy", "brand", "");
+                        } else {
+                          handleMarketplaceChange("etsy", "brand", value);
+                        }
+                      }}
+                      disabled={etsyForm.inheritGeneral && Boolean(generalForm.brand)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={etsyForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {POPULAR_BRANDS.map((brand) => (
+                          <SelectItem key={brand} value={brand}>
+                            {brand}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">Add Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {etsyForm.inheritGeneral && generalForm.brand && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits {generalForm.brand} from General form when synced.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3179,6 +3298,92 @@ export default function CrosslistComposer() {
                     onChange={(e) => handleMarketplaceChange("mercari", "title", e.target.value)}
                   />
                 </div>
+
+                {/* Description Section */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label className="text-xs">Description</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDescriptionGeneratorOpen(true)}
+                      className="gap-2 h-7 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      AI Generate
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder={mercariForm.inheritGeneral && generalForm.description ? `Inherits: ${generalForm.description.substring(0, 50)}...` : ""}
+                    value={mercariForm.description || ""}
+                    onChange={(e) => handleMarketplaceChange("mercari", "description", e.target.value)}
+                    className="min-h-[120px]"
+                    disabled={mercariForm.inheritGeneral && Boolean(generalForm.description)}
+                  />
+                  {mercariForm.inheritGeneral && generalForm.description && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits description from General form when synced.
+                    </p>
+                  )}
+                </div>
+
+                {/* Brand Section */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Brand</Label>
+                  {brandIsCustom ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter brand name"
+                        value={mercariForm.brand || ""}
+                        onChange={(e) => handleMarketplaceChange("mercari", "brand", e.target.value)}
+                        className="flex-1"
+                        disabled={mercariForm.inheritGeneral && Boolean(generalForm.brand)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setBrandIsCustom(false);
+                          handleMarketplaceChange("mercari", "brand", "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={mercariForm.brand || generalForm.brand || undefined}
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          setBrandIsCustom(true);
+                          handleMarketplaceChange("mercari", "brand", "");
+                        } else {
+                          handleMarketplaceChange("mercari", "brand", value);
+                        }
+                      }}
+                      disabled={mercariForm.inheritGeneral && Boolean(generalForm.brand)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={mercariForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {POPULAR_BRANDS.map((brand) => (
+                          <SelectItem key={brand} value={brand}>
+                            {brand}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">Add Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {mercariForm.inheritGeneral && generalForm.brand && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits {generalForm.brand} from General form when synced.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3364,6 +3569,92 @@ export default function CrosslistComposer() {
                     value={facebookForm.title || ""}
                     onChange={(e) => handleMarketplaceChange("facebook", "title", e.target.value)}
                   />
+                </div>
+
+                {/* Description Section */}
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label className="text-xs">Description</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDescriptionGeneratorOpen(true)}
+                      className="gap-2 h-7 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      AI Generate
+                    </Button>
+                  </div>
+                  <Textarea
+                    placeholder={facebookForm.inheritGeneral && generalForm.description ? `Inherits: ${generalForm.description.substring(0, 50)}...` : ""}
+                    value={facebookForm.description || ""}
+                    onChange={(e) => handleMarketplaceChange("facebook", "description", e.target.value)}
+                    className="min-h-[120px]"
+                    disabled={facebookForm.inheritGeneral && Boolean(generalForm.description)}
+                  />
+                  {facebookForm.inheritGeneral && generalForm.description && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits description from General form when synced.
+                    </p>
+                  )}
+                </div>
+
+                {/* Brand Section */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Brand</Label>
+                  {brandIsCustom ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter brand name"
+                        value={facebookForm.brand || ""}
+                        onChange={(e) => handleMarketplaceChange("facebook", "brand", e.target.value)}
+                        className="flex-1"
+                        disabled={facebookForm.inheritGeneral && Boolean(generalForm.brand)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setBrandIsCustom(false);
+                          handleMarketplaceChange("facebook", "brand", "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={facebookForm.brand || generalForm.brand || undefined}
+                      onValueChange={(value) => {
+                        if (value === "custom") {
+                          setBrandIsCustom(true);
+                          handleMarketplaceChange("facebook", "brand", "");
+                        } else {
+                          handleMarketplaceChange("facebook", "brand", value);
+                        }
+                      }}
+                      disabled={facebookForm.inheritGeneral && Boolean(generalForm.brand)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={facebookForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Select or Custom"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {POPULAR_BRANDS.map((brand) => (
+                          <SelectItem key={brand} value={brand}>
+                            {brand}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">Add Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {facebookForm.inheritGeneral && generalForm.brand && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits {generalForm.brand} from General form when synced.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -3591,12 +3882,16 @@ export default function CrosslistComposer() {
         open={descriptionGeneratorOpen}
         onOpenChange={setDescriptionGeneratorOpen}
         onSelectDescription={(description) => {
-          handleGeneralChange("description", description);
+          if (activeForm === "general") {
+            handleGeneralChange("description", description);
+          } else {
+            handleMarketplaceChange(activeForm, "description", description);
+          }
         }}
-        title={generalForm.title}
-        brand={generalForm.brand}
-        category={generalForm.category}
-        condition={generalForm.condition}
+        title={activeForm === "general" ? generalForm.title : templateForms[activeForm]?.title || generalForm.title}
+        brand={activeForm === "general" ? generalForm.brand : templateForms[activeForm]?.brand || generalForm.brand}
+        category={activeForm === "general" ? generalForm.category : generalForm.category}
+        condition={activeForm === "general" ? generalForm.condition : generalForm.condition}
         similarDescriptions={similarItems}
       />
 
