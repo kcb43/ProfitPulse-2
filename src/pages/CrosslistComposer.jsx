@@ -38,7 +38,7 @@ import ColorPickerDialog from "../components/ColorPickerDialog";
 import imageCompression from "browser-image-compression";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useInventoryTags } from "@/hooks/useInventoryTags";
-import { useEbayCategoryTreeId, useEbayCategories } from "@/hooks/useEbayCategorySuggestions";
+import { useEbayCategoryTreeId, useEbayCategories, useEbayCategoryAspects } from "@/hooks/useEbayCategorySuggestions";
 
 const FACEBOOK_ICON_URL = "https://upload.wikimedia.org/wikipedia/commons/b/b9/2023_Facebook_icon.svg";
 const MERCARI_ICON_URL = "https://cdn.brandfetch.io/idjAt9LfED/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B";
@@ -93,6 +93,8 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     color: "",
     categoryId: "",
     categoryName: "",
+    itemType: "",
+    ebayBrand: "",
     shippingMethod: "Calculated",
     shippingCostType: "calculated",
     shippingCost: "",
@@ -246,6 +248,17 @@ const COMMON_COLORS = [
   { name: "White", hex: "#FFFFFF" },
 ];
 
+const COUNTRIES = [
+  "United States", "United Kingdom", "Canada", "Australia", "Germany", "France",
+  "Italy", "Spain", "Netherlands", "Belgium", "Switzerland", "Austria",
+  "Sweden", "Norway", "Denmark", "Finland", "Ireland", "Portugal",
+  "Poland", "Czech Republic", "Hungary", "Romania", "Greece", "Japan",
+  "China", "South Korea", "India", "Singapore", "Hong Kong", "Taiwan",
+  "New Zealand", "Mexico", "Brazil", "Argentina", "Chile", "South Africa",
+  "Israel", "United Arab Emirates", "Saudi Arabia", "Turkey", "Russia",
+  "Ukraine", "Other"
+];
+
 export default function CrosslistComposer() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -300,13 +313,59 @@ export default function CrosslistComposer() {
   
   const categorySubtreeNode = categoriesData?.categorySubtreeNode;
   const currentCategories = categorySubtreeNode?.childCategoryTreeNodes || [];
-  
+
   // Sort categories alphabetically
   const sortedCategories = [...currentCategories].sort((a, b) => {
     const nameA = a.category?.categoryName || '';
     const nameB = b.category?.categoryName || '';
     return nameA.localeCompare(nameB);
   });
+
+  // eBay shipping defaults storage
+  const EBAY_DEFAULTS_KEY = 'ebay-shipping-defaults';
+  const loadEbayDefaults = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem(EBAY_DEFAULTS_KEY);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch (error) {
+      console.warn('Failed to load eBay defaults:', error);
+      return null;
+    }
+  };
+
+  const saveEbayDefaults = (defaults) => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(EBAY_DEFAULTS_KEY, JSON.stringify(defaults));
+      toast({
+        title: "Defaults saved",
+        description: "Your shipping defaults have been saved and will be applied to new listings.",
+      });
+    } catch (error) {
+      console.warn('Failed to save eBay defaults:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save defaults. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load defaults on mount
+  useEffect(() => {
+    const defaults = loadEbayDefaults();
+    if (defaults) {
+      setTemplateForms((prev) => ({
+        ...prev,
+        ebay: {
+          ...prev.ebay,
+          ...defaults,
+        },
+      }));
+    }
+  }, []);
   
   const populateTemplates = React.useCallback((item) => {
     setTemplateForms(createInitialTemplateState(item));
@@ -357,6 +416,38 @@ export default function CrosslistComposer() {
   const etsyForm = templateForms.etsy;
   const mercariForm = templateForms.mercari;
   const facebookForm = templateForms.facebook;
+
+  // Get category aspects (brands, types, etc.) when a final category is selected
+  const { data: categoryAspectsData } = useEbayCategoryAspects(
+    categoryTreeId,
+    ebayForm.categoryId,
+    activeForm === "ebay" && !!categoryTreeId && !!ebayForm.categoryId && ebayForm.categoryId !== '0'
+  );
+
+  const categoryAspects = categoryAspectsData?.aspects || [];
+  const brandAspect = categoryAspects.find(aspect => 
+    aspect.localizedAspectName?.toLowerCase() === 'brand' ||
+    aspect.aspectConstraint?.aspectDataType === 'STRING'
+  );
+  const typeAspect = categoryAspects.find(aspect => 
+    aspect.localizedAspectName?.toLowerCase() === 'type'
+  );
+
+  const ebayBrands = brandAspect?.aspectValues?.map(val => val.localizedValue) || [];
+  const typeValues = typeAspect?.aspectValues?.map(val => val.localizedValue) || [];
+
+  const handleSaveShippingDefaults = () => {
+    const defaults = {
+      handlingTime: ebayForm.handlingTime,
+      shippingCost: ebayForm.shippingCost,
+      shippingService: ebayForm.shippingService,
+      shipFromCountry: ebayForm.shipFromCountry,
+      acceptReturns: ebayForm.acceptReturns,
+      shippingCostType: ebayForm.shippingCostType,
+      shippingMethod: ebayForm.shippingMethod,
+    };
+    saveEbayDefaults(defaults);
+  };
   
   const getColorHex = (colorValue) => {
     if (!colorValue) return null;
@@ -494,6 +585,7 @@ export default function CrosslistComposer() {
     if (!ebayForm.buyItNowPrice) errors.push("Buy It Now Price");
     if (!ebayForm.color) errors.push("Color");
     if (!ebayForm.categoryId) errors.push("Category");
+    if (ebayForm.categoryId && !ebayForm.itemType) errors.push("Type");
     if (!ebayForm.shippingCost) errors.push("Shipping Cost");
     if (!generalForm.title) errors.push("Title");
     if (!generalForm.brand) errors.push("Brand");
@@ -1342,6 +1434,55 @@ export default function CrosslistComposer() {
                     <Label htmlFor="ebay-best-offer" className="text-sm">Allow buyers to submit offers</Label>
                   </div>
                 </div>
+                {/* eBay Brand Dropdown - only show if brands are available from API */}
+                {ebayBrands.length > 0 && (
+                  <div className="md:col-span-2">
+                    <Label className="text-xs mb-1.5 block">eBay Brand <span className="text-red-500">*</span></Label>
+                    <Select
+                      value={ebayForm.ebayBrand || undefined}
+                      onValueChange={(value) => handleMarketplaceChange("ebay", "ebayBrand", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select brand" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {ebayBrands.map((brand) => (
+                          <SelectItem key={brand} value={brand}>
+                            {brand}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {/* Save Default Button for Shipping Fields */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4">
+                <div className="flex items-center gap-2">
+                  <Save className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Shipping Settings</Label>
+                </div>
+                <div className="group relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSaveShippingDefaults}
+                    className="gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save
+                  </Button>
+                  <div className="absolute right-0 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
+                    <div className="bg-popover text-popover-foreground text-xs px-2 py-1 rounded-md shadow-lg border whitespace-nowrap">
+                      Save Default
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs mb-1.5 block">Shipping Method <span className="text-red-500">*</span></Label>
                   <Select
@@ -1403,11 +1544,21 @@ export default function CrosslistComposer() {
                 </div>
                 <div>
                   <Label className="text-xs mb-1.5 block">Ship From Country</Label>
-                  <Input
-                    placeholder="United States"
-                    value={ebayForm.shipFromCountry}
-                    onChange={(e) => handleMarketplaceChange("ebay", "shipFromCountry", e.target.value)}
-                  />
+                  <Select
+                    value={ebayForm.shipFromCountry || "United States"}
+                    onValueChange={(value) => handleMarketplaceChange("ebay", "shipFromCountry", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {COUNTRIES.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-xs mb-1.5 block">Shipping Service <span className="text-red-500">*</span></Label>
@@ -1608,6 +1759,30 @@ export default function CrosslistComposer() {
                     )}
                   </div>
                 </div>
+                
+                {/* Type field - shown when category is selected */}
+                {ebayForm.categoryId && typeAspect && typeValues.length > 0 && (
+                  <div>
+                    <Label className="text-xs mb-1.5 block">
+                      Type <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={ebayForm.itemType || undefined}
+                      onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {typeValues.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">

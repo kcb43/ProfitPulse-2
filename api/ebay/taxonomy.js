@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     const { operation, marketplace_id, category_tree_id, q } = req.query;
 
     if (!operation) {
-      return res.status(400).json({ error: 'Operation parameter is required (getDefaultCategoryTreeId, getCategorySuggestions, or getCategorySubtree)' });
+      return res.status(400).json({ error: 'Operation parameter is required (getDefaultCategoryTreeId, getCategorySuggestions, getCategorySubtree, getCategoryTree, or getItemAspectsForCategory)' });
     }
 
     // Determine environment
@@ -271,6 +271,65 @@ export default async function handler(req, res) {
         categoryTreeId: taxonomyData.categoryTreeId,
         hasSubtreeNode: !!taxonomyData.categorySubtreeNode,
         subtreeNodeKeys: taxonomyData.categorySubtreeNode ? Object.keys(taxonomyData.categorySubtreeNode) : [],
+      });
+      return res.status(200).json(taxonomyData);
+
+    } else if (operation === 'getItemAspectsForCategory') {
+      // Get item aspects (like Brand, Type) for a specific category
+      if (!category_tree_id) {
+        return res.status(400).json({ error: 'category_tree_id is required for getItemAspectsForCategory' });
+      }
+
+      const category_id = req.query.category_id;
+      if (!category_id || category_id === '0') {
+        return res.status(400).json({ error: 'category_id is required for getItemAspectsForCategory' });
+      }
+
+      const marketplaceId = marketplace_id || MARKETPLACE_ID;
+      const taxonomyUrl = `${baseUrl}/commerce/taxonomy/v1/category_tree/${category_tree_id}/get_item_aspects_for_category?category_id=${category_id}`;
+
+      console.log('Calling eBay Taxonomy API (getItemAspectsForCategory):', {
+        url: taxonomyUrl,
+        category_tree_id,
+        category_id,
+        marketplaceId,
+      });
+
+      const taxonomyResp = await fetch(taxonomyUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-EBAY-C-MARKETPLACE-ID': marketplaceId,
+          'Accept-Language': 'en-US',
+        },
+      });
+
+      if (!taxonomyResp.ok) {
+        const errorData = await taxonomyResp.json().catch(() => {
+          return taxonomyResp.text().then(text => {
+            console.error('eBay Taxonomy API error (non-JSON):', text);
+            return { error: 'Unknown error', rawResponse: text };
+          });
+        });
+        console.error('eBay Taxonomy API error:', {
+          status: taxonomyResp.status,
+          statusText: taxonomyResp.statusText,
+          errorData,
+          url: taxonomyUrl,
+        });
+        return res.status(taxonomyResp.status).json({
+          error: 'eBay Taxonomy API error',
+          details: errorData,
+          status: taxonomyResp.status,
+          statusText: taxonomyResp.statusText,
+        });
+      }
+
+      const taxonomyData = await taxonomyResp.json();
+      console.log('eBay Taxonomy API success (getItemAspectsForCategory):', {
+        aspectCount: taxonomyData.aspects?.length || 0,
+        aspects: taxonomyData.aspects?.map(a => a.localizedAspectName) || [],
       });
       return res.status(200).json(taxonomyData);
 

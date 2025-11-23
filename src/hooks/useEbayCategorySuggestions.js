@@ -157,3 +157,32 @@ export function useEbayCategories(categoryTreeId, categoryId = '0', enabled = tr
   });
 }
 
+/**
+ * Hook to get eBay item aspects (like Brand, Type) for a specific category
+ * Returns aspects that can be used for item specifics
+ */
+export function useEbayCategoryAspects(categoryTreeId, categoryId, enabled = true) {
+  return useQuery({
+    queryKey: ['ebayCategoryAspects', categoryTreeId, categoryId],
+    queryFn: async () => {
+      if (!categoryTreeId || !categoryId || categoryId === '0') {
+        return null;
+      }
+
+      const response = await fetch(
+        `/api/ebay/taxonomy?operation=getItemAspectsForCategory&category_tree_id=${categoryTreeId}&category_id=${categoryId}`
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`Failed to get category aspects: ${response.status} - ${errorData.error || 'Unknown error'}`);
+      }
+      
+      return response.json();
+    },
+    enabled: enabled && !!categoryTreeId && !!categoryId && categoryId !== '0',
+    staleTime: 24 * 60 * 60 * 1000, // Cache for 24 hours
+    retry: 1,
+  });
+}
+
