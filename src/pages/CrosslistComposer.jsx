@@ -730,6 +730,9 @@ export default function CrosslistComposer() {
         if (field === "categoryId") {
           next.ebay.categoryId = value;
         }
+        if (field === "brand") {
+          next.ebay.ebayBrand = value;
+        }
       }
 
       if (next.etsy?.inheritGeneral) {
@@ -1073,7 +1076,10 @@ export default function CrosslistComposer() {
       if (!ebayForm.returnRefundMethod) errors.push("Return Refund Method");
     }
     if (!generalForm.title) errors.push("Title");
-    if (!generalForm.brand) errors.push("Brand");
+    // Check eBay brand, fallback to general brand if inheritGeneral is enabled
+    if (!ebayForm.ebayBrand && (!ebayForm.inheritGeneral || !generalForm.brand)) {
+      errors.push("eBay Brand");
+    }
     if (!generalForm.quantity) errors.push("Quantity");
     return errors;
   };
@@ -2399,10 +2405,10 @@ export default function CrosslistComposer() {
                     <Label htmlFor="ebay-best-offer" className="text-sm">Allow buyers to submit offers</Label>
                   </div>
                 </div>
-                {/* eBay Brand Dropdown - only show if brands are available from API */}
-                {ebayBrands.length > 0 && (
-                  <div className="md:col-span-2">
-                    <Label className="text-xs mb-1.5 block">eBay Brand <span className="text-red-500">*</span></Label>
+                {/* eBay Brand Dropdown - show always, use category-specific brands if available */}
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-1.5 block">eBay Brand <span className="text-red-500">*</span></Label>
+                  {ebayBrands.length > 0 ? (
                     <Select
                       value={ebayForm.ebayBrand || undefined}
                       onValueChange={(value) => handleMarketplaceChange("ebay", "ebayBrand", value)}
@@ -2418,8 +2424,20 @@ export default function CrosslistComposer() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                )}
+                  ) : (
+                    <Input
+                      placeholder={ebayForm.inheritGeneral && generalForm.brand ? `Inherits: ${generalForm.brand}` : "Enter brand"}
+                      value={ebayForm.ebayBrand || ""}
+                      onChange={(e) => handleMarketplaceChange("ebay", "ebayBrand", e.target.value)}
+                      disabled={ebayForm.inheritGeneral && Boolean(generalForm.brand)}
+                    />
+                  )}
+                  {ebayForm.inheritGeneral && generalForm.brand && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherits {generalForm.brand} from General form when synced.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Save Default Button for Shipping Fields */}
