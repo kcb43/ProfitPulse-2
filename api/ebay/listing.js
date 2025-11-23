@@ -11,53 +11,28 @@
 
 const MARKETPLACE_ID = 'EBAY_US';
 
-async function getUserToken() {
-  // For Trading API, we need a user token (OAuth user authorization)
-  // This would typically come from a stored session after user OAuth flow
-  // For now, we'll use the app token but note that Trading API requires user token
-  const clientId = process.env.VITE_EBAY_CLIENT_ID || process.env.EBAY_CLIENT_ID;
-  const clientSecret = process.env.VITE_EBAY_CLIENT_SECRET || process.env.EBAY_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    throw new Error('Missing EBAY_CLIENT_ID or EBAY_CLIENT_SECRET env vars');
+/**
+ * Get user token for Trading API
+ * Trading API requires a user token (OAuth user authorization), not an app token
+ * The user token can be:
+ * 1. Passed in the request body (userToken parameter)
+ * 2. Stored in environment variable (EBAY_USER_TOKEN)
+ * 3. Retrieved from OAuth flow (not implemented yet)
+ */
+async function getUserToken(userTokenFromRequest) {
+  // Priority 1: Use token from request if provided
+  if (userTokenFromRequest) {
+    return userTokenFromRequest;
   }
 
-  // Determine environment
-  const ebayEnv = process.env.EBAY_ENV;
-  const isProductionByEnv = ebayEnv === 'production' || ebayEnv?.trim() === 'production';
-  const isProductionByClientId = clientId && (
-    clientId.includes('-PRD-') || 
-    clientId.includes('-PRD') || 
-    clientId.startsWith('PRD-') ||
-    /PRD/i.test(clientId)
-  );
-  const useProduction = isProductionByEnv || isProductionByClientId;
-  
-  const oauthUrl = useProduction
-    ? 'https://api.ebay.com/identity/v1/oauth2/token'
-    : 'https://api.sandbox.ebay.com/identity/v1/oauth2/token';
-
-  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-  const resp = await fetch(oauthUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${basic}`,
-    },
-    body: new URLSearchParams({
-      grant_type: 'client_credentials',
-      scope: 'https://api.ebay.com/oauth/api_scope',
-    }),
-  });
-
-  const data = await resp.json();
-  if (!resp.ok) {
-    console.error('eBay token error:', resp.status, data);
-    throw new Error(`Failed to get eBay token: ${resp.status}`);
+  // Priority 2: Check environment variable
+  const envToken = process.env.VITE_EBAY_USER_TOKEN || process.env.EBAY_USER_TOKEN;
+  if (envToken) {
+    return envToken;
   }
 
-  return data.access_token;
+  // If no user token is available, throw error
+  throw new Error('User token is required for Trading API operations. Please provide EBAY_USER_TOKEN in environment variables or pass userToken in the request body.');
 }
 
 export default async function handler(req, res) {
@@ -77,7 +52,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { operation, listingData } = req.body;
+    const { operation, listingData, userToken } = req.body;
 
     if (!operation) {
       return res.status(400).json({ error: 'Operation parameter is required (AddFixedPriceItem, ReviseItem, EndItem, GetItem)' });
@@ -85,6 +60,8 @@ export default async function handler(req, res) {
 
     // Determine environment
     const clientId = process.env.VITE_EBAY_CLIENT_ID || process.env.EBAY_CLIENT_ID;
+    const devId = process.env.VITE_EBAY_DEV_ID || process.env.EBAY_DEV_ID;
+    const clientSecret = process.env.VITE_EBAY_CLIENT_SECRET || process.env.EBAY_CLIENT_SECRET;
     const ebayEnv = process.env.EBAY_ENV;
     const isProductionByEnv = ebayEnv === 'production' || ebayEnv?.trim() === 'production';
     const isProductionByClientId = clientId && (
@@ -99,8 +76,25 @@ export default async function handler(req, res) {
       ? 'https://api.ebay.com/ws/api.dll'
       : 'https://api.sandbox.ebay.com/ws/api.dll';
 
-    // Get token (note: Trading API requires user token, this is a placeholder)
-    const token = await getUserToken();
+    // Get user token (required for Trading API)
+    let token;
+    try {
+      token = await getUserToken(userToken);
+    } catch (tokenError) {
+      return res.status(401).json({
+        error: 'User token required',
+        details: tokenError.message,
+        hint: 'Trading API requires a user token. Provide EBAY_USER_TOKEN in environment variables or pass userToken in the request body.',
+      });
+    }
+
+    // Validate required credentials
+    if (!devId) {
+      return res.status(400).json({
+        error: 'Dev ID required',
+        details: 'EBAY_DEV_ID is required for Trading API calls',
+      });
+    }
 
     if (operation === 'AddFixedPriceItem') {
       if (!listingData) {
@@ -119,11 +113,11 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
           'X-EBAY-API-CALL-NAME': 'AddFixedPriceItem',
-          'X-EBAY-API-SITEID': '0', // 0 = US
-          'X-EBAY-API-COMPATIBILITY-LEVEL': '1193', // API version
-          'X-EBAY-API-DEV-NAME': process.env.VITE_EBAY_DEV_ID || process.env.EBAY_DEV_ID || '',
+          'X-EBAY-API-SITEID': '0', // 0 = US, see https://developer.ebay.com/DevZone/guides/ebayfeatures/Development/InternationalSites.html
+          'X-EBAY-API-COMPATIBILITY-LEVEL': '1193', // API version - update to latest as needed
+          'X-EBAY-API-DEV-NAME': devId,
           'X-EBAY-API-APP-NAME': clientId || '',
-          'X-EBAY-API-CERT-NAME': process.env.VITE_EBAY_CLIENT_SECRET || process.env.EBAY_CLIENT_SECRET || '',
+          'X-EBAY-API-CERT-NAME': clientSecret || '',
           'X-EBAY-API-DETAIL-LEVEL': '0',
           'Content-Type': 'text/xml',
         },
@@ -196,22 +190,45 @@ function buildAddFixedPriceItemXML(listingData, token) {
   const pictureUrls = photos.map(p => p.preview || p).filter(Boolean);
 
   // Build condition ID (eBay condition codes)
+  // Map our condition values to eBay condition IDs
   const conditionMap = {
-    'new': '1000',
-    'like_new': '1500',
-    'excellent': '2750',
-    'good': '3000',
-    'fair': '4000',
+    'New': '1000',
+    'Open Box': '1500',
+    'Used': '3000',
+    'For parts or not working': '7000',
+    // Fallback mappings for general form conditions
+    'New With Tags/Box': '1000',
+    'New Without Tags/Box': '1500',
+    'Pre - Owned - Good': '3000',
+    'Poor (Major flaws)': '3000',
   };
-  const conditionId = conditionMap[condition] || '1000';
+  const conditionId = conditionMap[condition] || conditionMap[condition?.trim()] || '1000';
 
   // Build listing type
   const listingType = 'FixedPriceItem';
   const listingDuration = duration === "Good 'Til Canceled" ? 'GTC' : duration === "30 Days" ? 'Days_30' : 'Days_7';
 
   // Build shipping details
+  // Determine shipping type from shippingCostType
+  const isFlat = shippingCostType && shippingCostType.includes('Flat');
+  const isCalculated = shippingCostType && shippingCostType.includes('Calculated');
+  const isLocalPickup = shippingMethod && shippingMethod.includes('Local pickup');
+  
   let shippingXML = '';
-  if (shippingMethod === 'Flat' && shippingCost) {
+  
+  if (isLocalPickup) {
+    // Local pickup only
+    shippingXML = `
+      <ShippingDetails>
+        <ShippingType>LocalPickup</ShippingType>
+        <ShippingServiceOptions>
+          <ShippingServicePriority>1</ShippingServicePriority>
+          <ShippingService>Pickup</ShippingService>
+          <ShippingServiceCost>0.0</ShippingServiceCost>
+        </ShippingServiceOptions>
+      </ShippingDetails>`;
+  } else if (isFlat && shippingCost) {
+    // Flat rate shipping
     shippingXML = `
       <ShippingDetails>
         <ShippingType>Flat</ShippingType>
@@ -221,17 +238,11 @@ function buildAddFixedPriceItemXML(listingData, token) {
           <ShippingServiceCost>${escapeXML(shippingCost)}</ShippingServiceCost>
           <ShippingServiceAdditionalCost>0.0</ShippingServiceAdditionalCost>
         </ShippingServiceOptions>
-        <ShippingServiceOptions>
-          <ShippingServicePriority>2</ShippingServicePriority>
-          <ShippingService>ShippingMethodStandard</ShippingService>
-          <ShippingServiceCost>0.0</ShippingServiceCost>
-          <ShippingServiceAdditionalCost>0.0</ShippingServiceAdditionalCost>
-        </ShippingServiceOptions>
-        <ExpeditedService>false</ExpeditedService>
         <ShippingTimeMin>${handlingTime ? handlingTime.split(' ')[0] : '1'}</ShippingTimeMin>
         <ShippingTimeMax>${handlingTime ? handlingTime.split(' ')[0] : '1'}</ShippingTimeMax>
       </ShippingDetails>`;
   } else {
+    // Calculated shipping (default)
     shippingXML = `
       <ShippingDetails>
         <ShippingType>Calculated</ShippingType>
@@ -241,6 +252,8 @@ function buildAddFixedPriceItemXML(listingData, token) {
           <ShippingServiceCost>0.0</ShippingServiceCost>
           <ShippingServiceAdditionalCost>0.0</ShippingServiceAdditionalCost>
         </ShippingServiceOptions>
+        <ShippingTimeMin>${handlingTime ? handlingTime.split(' ')[0] : '1'}</ShippingTimeMin>
+        <ShippingTimeMax>${handlingTime ? handlingTime.split(' ')[0] : '1'}</ShippingTimeMax>
       </ShippingDetails>`;
   }
 
@@ -265,19 +278,6 @@ function buildAddFixedPriceItemXML(listingData, token) {
       </ReturnPolicy>`;
   }
 
-  // Build item specifics (brand, type, etc.)
-  let itemSpecificsXML = '';
-  if (brand || itemType) {
-    itemSpecificsXML = '<ItemSpecifics>';
-    if (brand) {
-      itemSpecificsXML += `<NameValueList><Name>Brand</Name><Value>${escapeXML(brand)}</Value></NameValueList>`;
-    }
-    if (itemType) {
-      itemSpecificsXML += `<NameValueList><Name>Type</Name><Value>${escapeXML(itemType)}</Value></NameValueList>`;
-    }
-    itemSpecificsXML += '</ItemSpecifics>';
-  }
-
   // Build pictures XML
   let picturesXML = '';
   if (pictureUrls.length > 0) {
@@ -297,6 +297,29 @@ function buildAddFixedPriceItemXML(listingData, token) {
     // Add more as needed
   };
   const countryCode = countryCodeMap[shipFromCountry] || 'US';
+
+  // Build location details
+  let locationXML = '';
+  if (shippingLocation) {
+    locationXML = `<Location>${escapeXML(shippingLocation)}</Location>`;
+  }
+  if (locationDescriptions) {
+    // Location descriptions can be added as SellerProvidedTitle or in description
+    // For now, we'll include it in the Location field if provided
+  }
+
+  // Build item specifics XML (brand, type, etc.)
+  let itemSpecificsXML = '';
+  const itemSpecifics = [];
+  if (brand) {
+    itemSpecifics.push(`<NameValueList><Name>Brand</Name><Value>${escapeXML(brand)}</Value></NameValueList>`);
+  }
+  if (itemType) {
+    itemSpecifics.push(`<NameValueList><Name>Type</Name><Value>${escapeXML(itemType)}</Value></NameValueList>`);
+  }
+  if (itemSpecifics.length > 0) {
+    itemSpecificsXML = `<ItemSpecifics>${itemSpecifics.join('')}</ItemSpecifics>`;
+  }
 
   const xml = `<?xml version="1.0" encoding="utf-8"?>
 <AddFixedPriceItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
@@ -318,6 +341,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
     <Country>${countryCode}</Country>
     <Currency>USD</Currency>
     <ConditionID>${conditionId}</ConditionID>
+    ${locationXML}
     <ProductListingDetails>
       <IncludeStockPhotoURL>true</IncludeStockPhotoURL>
       <IncludePrefilledItemInformation>true</IncludePrefilledItemInformation>

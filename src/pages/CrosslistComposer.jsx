@@ -1162,16 +1162,17 @@ export default function CrosslistComposer() {
 
         // Prepare listing data
         const listingData = {
-          title: generalForm.title,
-          description: generalForm.description || '',
+          title: ebayForm.title || generalForm.title,
+          description: ebayForm.description || generalForm.description || '',
           categoryId: ebayForm.categoryId,
           price: ebayForm.buyItNowPrice || generalForm.price,
           quantity: parseInt(generalForm.quantity) || 1,
-          photos: generalForm.photos || [],
-          condition: generalForm.condition || 'new',
-          brand: generalForm.brand || ebayForm.ebayBrand || '',
+          photos: ebayForm.photos?.length > 0 ? ebayForm.photos : (generalForm.photos || []),
+          condition: ebayForm.condition || generalForm.condition || 'New',
+          brand: ebayForm.ebayBrand || generalForm.brand || '',
           itemType: ebayForm.itemType || '',
           shippingMethod: ebayForm.shippingMethod,
+          shippingCostType: ebayForm.shippingCostType,
           shippingCost: ebayForm.shippingCost,
           shippingService: ebayForm.shippingService,
           handlingTime: ebayForm.handlingTime,
@@ -1182,7 +1183,9 @@ export default function CrosslistComposer() {
           returnRefundMethod: ebayForm.returnRefundMethod,
           duration: ebayForm.duration,
           allowBestOffer: ebayForm.allowBestOffer,
-          sku: generalForm.sku || '',
+          sku: ebayForm.sku || generalForm.sku || '',
+          locationDescriptions: ebayForm.locationDescriptions || '',
+          shippingLocation: ebayForm.shippingLocation || generalForm.zip || '',
         };
 
         // Call eBay listing API
