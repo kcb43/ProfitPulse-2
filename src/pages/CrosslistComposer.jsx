@@ -1920,6 +1920,17 @@ export default function CrosslistComposer() {
                   />
                   <p className="mt-1 text-xs text-muted-foreground">Price you'll list this item for</p>
                 </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Purchase Price</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={generalForm.cost}
+                    onChange={(e) => handleGeneralChange("cost", e.target.value)}
+                  />
+                </div>
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <Label className="text-xs">Description</Label>
@@ -2284,29 +2295,16 @@ export default function CrosslistComposer() {
                       : "Enter weight & size"}
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Purchase Price</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={generalForm.cost}
-                      onChange={(e) => handleGeneralChange("cost", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs mb-1.5 block">Custom Labels</Label>
-                    <Input
-                      placeholder="Comma-separated labels (e.g. Q4 Liquidation, Holiday Gift). These will appear as tags in inventory."
-                      value={generalForm.customLabels}
-                      onChange={(e) => handleGeneralChange("customLabels", e.target.value)}
-                    />
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Custom labels will be saved as tags in your inventory page
-                    </p>
-                  </div>
+                <div>
+                  <Label className="text-xs mb-1.5 block">Custom Labels</Label>
+                  <Input
+                    placeholder="Comma-separated labels (e.g. Q4 Liquidation, Holiday Gift). These will appear as tags in inventory."
+                    value={generalForm.customLabels}
+                    onChange={(e) => handleGeneralChange("customLabels", e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Custom labels will be saved as tags in your inventory page
+                  </p>
                 </div>
               </div>
 
