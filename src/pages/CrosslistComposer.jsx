@@ -3493,9 +3493,9 @@ export default function CrosslistComposer() {
                       </SelectContent>
                     </Select>
                   )}
-                  {mercariForm.inheritGeneral && generalForm.brand && (
+                  {generalForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.brand} from General form.
+                      Inherited {generalForm.brand} from General form. You can edit this field.
                     </p>
                   )}
                 </div>
@@ -3754,9 +3754,9 @@ export default function CrosslistComposer() {
                       </SelectContent>
                     </Select>
                   )}
-                  {facebookForm.inheritGeneral && generalForm.brand && (
+                  {generalForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Inherits {generalForm.brand} from General form.
+                      Inherited {generalForm.brand} from General form. You can edit this field.
                     </p>
                   )}
                 </div>
