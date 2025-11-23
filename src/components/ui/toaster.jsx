@@ -9,7 +9,15 @@ import {
 } from "@/components/ui/toast";
 
 export function Toaster() {
-  const { toasts } = useToast();
+  const { toasts, dismiss } = useToast();
+
+  const handleClose = (id, onOpenChange) => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    } else {
+      dismiss(id);
+    }
+  };
 
   return (
     <ToastProvider>
@@ -23,7 +31,13 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose onClick={() => onOpenChange?.(false)} />
+            <ToastClose 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleClose(id, onOpenChange);
+              }} 
+            />
           </Toast>
         );
       })}

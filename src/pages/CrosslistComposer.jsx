@@ -118,6 +118,7 @@ const GENERAL_TEMPLATE_DEFAULT = {
   price: "",
   cost: "",
   customLabels: "",
+  categoryId: "",
 };
 
 const MARKETPLACE_TEMPLATE_DEFAULTS = {
@@ -688,26 +689,51 @@ export default function CrosslistComposer() {
       const general = { ...prev.general, [field]: value };
       const next = { ...prev, general };
 
-      if (field === "price") {
-        if (next.ebay?.inheritGeneral) {
-          next.ebay = { ...next.ebay, buyItNowPrice: value };
+      // Sync to all marketplace forms when inheritGeneral is true
+      if (next.ebay?.inheritGeneral) {
+        next.ebay = { ...next.ebay };
+        if (field === "title") next.ebay.title = value;
+        if (field === "description") next.ebay.description = value;
+        if (field === "photos") next.ebay.photos = value;
+        if (field === "price") next.ebay.buyItNowPrice = value;
+        if (field === "zip") next.ebay.shippingLocation = value;
+        if (field === "category") {
+          next.ebay.categoryName = value;
+        }
+        if (field === "categoryId") {
+          next.ebay.categoryId = value;
         }
       }
 
-      if (field === "zip") {
-        if (next.ebay?.inheritGeneral) {
-          next.ebay = { ...next.ebay, shippingLocation: value };
-        }
-        if (next.facebook?.inheritGeneral) {
-          next.facebook = {
-            ...next.facebook,
-            meetUpLocation: value ? `Meet near ${value}` : "",
-          };
+      if (next.etsy?.inheritGeneral) {
+        next.etsy = { ...next.etsy };
+        if (field === "title") next.etsy.title = value;
+        if (field === "description") next.etsy.description = value;
+        if (field === "photos") next.etsy.photos = value;
+        if (field === "tags") next.etsy.tags = value;
+      }
+
+      if (next.mercari?.inheritGeneral) {
+        next.mercari = { ...next.mercari };
+        if (field === "title") next.mercari.title = value;
+        if (field === "description") next.mercari.description = value;
+        if (field === "photos") next.mercari.photos = value;
+        if (field === "price") {
+          next.mercari.shippingPrice = Number(value) >= 100 ? "Free" : "Buyer pays";
         }
       }
 
-      if (field === "tags" && next.etsy?.inheritGeneral) {
-        next.etsy = { ...next.etsy, tags: value };
+      if (next.facebook?.inheritGeneral) {
+        next.facebook = { ...next.facebook };
+        if (field === "title") next.facebook.title = value;
+        if (field === "description") next.facebook.description = value;
+        if (field === "photos") next.facebook.photos = value;
+        if (field === "zip") {
+          next.facebook.meetUpLocation = value ? `Meet near ${value}` : "";
+        }
+        if (field === "price") {
+          next.facebook.shippingPrice = Number(value) >= 75 ? "Free shipping" : "";
+        }
       }
 
       return next;
@@ -810,6 +836,7 @@ export default function CrosslistComposer() {
     copied.sku = generalData.sku || "";
     copied.category = generalData.category || "";
     copied.size = generalData.size || "";
+    copied.color = generalData.color1 || "";
     
     // Handle brand field (marketplace-specific)
     if (marketplaceKey === 'ebay') {
@@ -822,7 +849,8 @@ export default function CrosslistComposer() {
     if (marketplaceKey === 'ebay') {
       copied.buyItNowPrice = generalData.price || "";
       copied.shippingLocation = generalData.zip || "";
-      copied.color = generalData.color1 || "";
+      copied.categoryId = generalData.categoryId || "";
+      copied.categoryName = generalData.category || "";
     } else if (marketplaceKey === 'etsy') {
       copied.tags = generalData.tags || "";
     } else if (marketplaceKey === 'mercari') {
@@ -847,43 +875,142 @@ export default function CrosslistComposer() {
     });
   };
 
-  const handleTemplateSave = (templateKey) => {
+  const handleTemplateSave = async (templateKey) => {
     const label = TEMPLATE_DISPLAY_NAMES[templateKey] || "Template";
     
     if (templateKey === 'general') {
       // Save general form
       saveTemplateToStorage('general', generalForm);
       
-      // Copy general fields to all marketplace forms
+      // Copy general fields to all marketplace forms (only if inheritGeneral is true)
       const updatedForms = { ...templateForms };
       
-      // Update eBay form
-      const ebayUpdates = copyGeneralFieldsToMarketplace(generalForm, 'ebay');
-      updatedForms.ebay = { ...updatedForms.ebay, ...ebayUpdates };
-      saveTemplateToStorage('ebay', updatedForms.ebay);
+      // Update eBay form if sync is enabled
+      if (updatedForms.ebay?.inheritGeneral) {
+        const ebayUpdates = copyGeneralFieldsToMarketplace(generalForm, 'ebay');
+        updatedForms.ebay = { ...updatedForms.ebay, ...ebayUpdates };
+        // Also sync the category path state for eBay
+        if (generalCategoryPath.length > 0) {
+          setSelectedCategoryPath(generalCategoryPath);
+        }
+        saveTemplateToStorage('ebay', updatedForms.ebay);
+      }
       
-      // Update Etsy form
-      const etsyUpdates = copyGeneralFieldsToMarketplace(generalForm, 'etsy');
-      updatedForms.etsy = { ...updatedForms.etsy, ...etsyUpdates };
-      saveTemplateToStorage('etsy', updatedForms.etsy);
+      // Update Etsy form if sync is enabled
+      if (updatedForms.etsy?.inheritGeneral) {
+        const etsyUpdates = copyGeneralFieldsToMarketplace(generalForm, 'etsy');
+        updatedForms.etsy = { ...updatedForms.etsy, ...etsyUpdates };
+        saveTemplateToStorage('etsy', updatedForms.etsy);
+      }
       
-      // Update Mercari form
-      const mercariUpdates = copyGeneralFieldsToMarketplace(generalForm, 'mercari');
-      updatedForms.mercari = { ...updatedForms.mercari, ...mercariUpdates };
-      saveTemplateToStorage('mercari', updatedForms.mercari);
+      // Update Mercari form if sync is enabled
+      if (updatedForms.mercari?.inheritGeneral) {
+        const mercariUpdates = copyGeneralFieldsToMarketplace(generalForm, 'mercari');
+        updatedForms.mercari = { ...updatedForms.mercari, ...mercariUpdates };
+        saveTemplateToStorage('mercari', updatedForms.mercari);
+      }
       
-      // Update Facebook form
-      const facebookUpdates = copyGeneralFieldsToMarketplace(generalForm, 'facebook');
-      updatedForms.facebook = { ...updatedForms.facebook, ...facebookUpdates };
-      saveTemplateToStorage('facebook', updatedForms.facebook);
+      // Update Facebook form if sync is enabled
+      if (updatedForms.facebook?.inheritGeneral) {
+        const facebookUpdates = copyGeneralFieldsToMarketplace(generalForm, 'facebook');
+        updatedForms.facebook = { ...updatedForms.facebook, ...facebookUpdates };
+        saveTemplateToStorage('facebook', updatedForms.facebook);
+      }
       
       // Update state with copied fields
       setTemplateForms(updatedForms);
       
-      toast({
-        title: "General template saved",
-        description: "Your preferences have been saved and copied to all marketplace forms.",
-      });
+      // If this is a new item (not editing an existing one), automatically save to inventory
+      if (!currentEditingItemId && generalForm.title && generalForm.title.trim()) {
+        try {
+          setIsSaving(true);
+          
+          // Upload first photo if available
+          let imageUrl = "";
+          if (generalForm.photos && generalForm.photos.length > 0) {
+            const firstPhoto = generalForm.photos[0];
+            if (firstPhoto.file) {
+              const uploadPayload = firstPhoto.file instanceof File 
+                ? firstPhoto.file 
+                : new File([firstPhoto.file], firstPhoto.fileName, { type: firstPhoto.file.type });
+              
+              const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadPayload });
+              imageUrl = file_url;
+            } else if (firstPhoto.preview && !firstPhoto.preview.startsWith('blob:')) {
+              imageUrl = firstPhoto.preview;
+            }
+          }
+
+          const customLabels = generalForm.customLabels
+            ? generalForm.customLabels.split(',').map(label => label.trim()).filter(Boolean)
+            : [];
+
+          const tags = generalForm.tags
+            ? generalForm.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+            : [];
+
+          const inventoryData = {
+            item_name: generalForm.title || "Untitled Item",
+            purchase_price: generalForm.cost ? parseFloat(generalForm.cost) : 0,
+            listing_price: generalForm.price ? parseFloat(generalForm.price) : 0,
+            purchase_date: new Date().toISOString().split('T')[0],
+            source: "Crosslist",
+            status: "available",
+            category: generalForm.category || "",
+            quantity: generalForm.quantity ? parseInt(generalForm.quantity, 10) : 1,
+            brand: generalForm.brand || "",
+            condition: generalForm.condition || "",
+            color1: generalForm.color1 || "",
+            color2: generalForm.color2 || "",
+            color3: generalForm.color3 || "",
+            sku: generalForm.sku || "",
+            zip_code: generalForm.zip || "",
+            size: generalForm.size || "",
+            package_details: generalForm.packageDetails || "",
+            package_weight: generalForm.packageWeight || "",
+            package_length: generalForm.packageLength || "",
+            package_width: generalForm.packageWidth || "",
+            package_height: generalForm.packageHeight || "",
+            custom_labels: generalForm.customLabels || "",
+            image_url: imageUrl,
+            notes: generalForm.description || "",
+          };
+
+          const createdItem = await base44.entities.InventoryItem.create(inventoryData);
+
+          if (createdItem?.id) {
+            const allLabels = [...customLabels, ...tags];
+            for (const label of allLabels) {
+              addTag(createdItem.id, label);
+            }
+            
+            // Update currentEditingItemId so future saves don't create duplicates
+            setCurrentEditingItemId(createdItem.id);
+          }
+
+          queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+
+          toast({
+            title: "General template saved",
+            description: "Your preferences have been saved, synced to marketplace forms, and the item has been added to inventory.",
+          });
+        } catch (error) {
+          console.error("Error saving item to inventory:", error);
+          toast({
+            title: "Template saved (inventory save failed)",
+            description: "Your preferences have been saved, but there was an error adding the item to inventory. You can add it manually later.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      } else {
+        // Existing item - just show success message
+        toast({
+          title: "General template saved",
+          description: "Your preferences have been saved and synced to marketplace forms with sync enabled.",
+        });
+      }
     } else {
       // Save individual marketplace template
       const marketplaceForm = templateForms[templateKey];
@@ -1835,6 +1962,7 @@ export default function CrosslistComposer() {
                         onClick={() => {
                           setGeneralCategoryPath([]);
                           handleGeneralChange("category", "");
+                          handleGeneralChange("categoryId", "");
                         }}
                         className="hover:text-foreground underline"
                       >
@@ -1851,6 +1979,9 @@ export default function CrosslistComposer() {
                               const lastCat = newPath[newPath.length - 1];
                               const fullPath = newPath.map(c => c.categoryName).join(" > ");
                               handleGeneralChange("category", fullPath);
+                              if (lastCat?.categoryId) {
+                                handleGeneralChange("categoryId", lastCat.categoryId);
+                              }
                             }}
                             className="hover:text-foreground underline"
                           >
@@ -1901,7 +2032,9 @@ export default function CrosslistComposer() {
                           } else {
                             // This is a leaf node - select it
                             const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                            const categoryId = category.categoryId;
                             handleGeneralChange("category", fullPath);
+                            handleGeneralChange("categoryId", categoryId);
                             setGeneralCategoryPath(newPath);
                           }
                         }
@@ -2082,6 +2215,13 @@ export default function CrosslistComposer() {
           {/* eBay Form */}
           {activeForm === "ebay" && (
             <div className="space-y-6">
+              {currentEditingItemId && (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Item ID:</span>
+                  <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">eBay listing specifics</h3>
@@ -2659,6 +2799,13 @@ export default function CrosslistComposer() {
           {/* Etsy Form */}
           {activeForm === "etsy" && (
             <div className="space-y-6">
+              {currentEditingItemId && (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Item ID:</span>
+                  <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">Etsy listing profile</h3>
@@ -2869,6 +3016,13 @@ export default function CrosslistComposer() {
           {/* Mercari Form */}
           {activeForm === "mercari" && (
             <div className="space-y-6">
+              {currentEditingItemId && (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Item ID:</span>
+                  <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">Mercari smart pricing</h3>
@@ -3048,6 +3202,13 @@ export default function CrosslistComposer() {
           {/* Facebook Form */}
           {activeForm === "facebook" && (
             <div className="space-y-6">
+              {currentEditingItemId && (
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                  <Package className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Item ID:</span>
+                  <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">Facebook Marketplace</h3>
@@ -3225,7 +3386,7 @@ export default function CrosslistComposer() {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-center gap-4 pt-6 border-t">
+        <div className="flex justify-end items-center gap-4 pt-6 border-t">
           <Button
             variant="outline"
             onClick={() => navigate(createPageUrl("Crosslist"))}
@@ -3233,42 +3394,6 @@ export default function CrosslistComposer() {
           >
             Cancel
           </Button>
-          <div className="flex gap-2">
-            <Button
-              className="bg-green-600 hover:bg-green-700"
-              disabled={isSaving || !generalForm.packageWeight || !generalForm.packageLength || !generalForm.packageWidth || !generalForm.packageHeight}
-              onClick={handleSaveToInventory}
-            >
-              {isSaving ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  Save to Inventory
-                  <Rocket className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-            <Button
-              className="bg-indigo-600 hover:bg-indigo-700"
-              disabled={isSaving}
-              onClick={() => handleCrosslist(["ebay", "etsy", "mercari", "facebook"])}
-            >
-              {isSaving ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Listing...
-                </>
-              ) : (
-                <>
-                  <Rocket className="w-4 h-4 mr-2" />
-                  Crosslist All
-                </>
-              )}
-            </Button>
-          </div>
         </div>
       </div>
 
