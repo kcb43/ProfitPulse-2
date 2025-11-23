@@ -846,7 +846,7 @@ export default function CrosslistComposer() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
                 <div className="mt-2 flex flex-wrap gap-3">
                   {generalForm.photos.map((photo) => (
-                    <div key={photo.id} className="relative h-32 w-32 overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted">
+                    <div key={photo.id} className="relative h-20 w-20 md:h-64 md:w-64 overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted">
                       <img src={photo.preview} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
                       <button
                         type="button"
@@ -862,7 +862,7 @@ export default function CrosslistComposer() {
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
                     disabled={isUploadingPhotos || (generalForm.photos?.length || 0) >= MAX_PHOTOS}
-                    className="flex h-32 w-32 flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/50 text-muted-foreground transition hover:border-foreground/80 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex h-20 w-20 md:h-64 md:w-64 flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/50 text-muted-foreground transition hover:border-foreground/80 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ImagePlus className="h-5 w-5" />
                     <span className="mt-1 text-[11px] font-medium">Add photos</span>
