@@ -381,6 +381,40 @@ export default function CrosslistComposer() {
     }
   }, []);
   
+  // Load saved templates from localStorage on mount (only if no item is being edited)
+  useEffect(() => {
+    if (!currentEditingItemId && bulkSelectedItems.length === 0) {
+      const savedGeneral = loadTemplateFromStorage('general');
+      const savedEbay = loadTemplateFromStorage('ebay');
+      const savedEtsy = loadTemplateFromStorage('etsy');
+      const savedMercari = loadTemplateFromStorage('mercari');
+      const savedFacebook = loadTemplateFromStorage('facebook');
+      
+      if (savedGeneral || savedEbay || savedEtsy || savedMercari || savedFacebook) {
+        setTemplateForms((prev) => {
+          const updated = { ...prev };
+          if (savedGeneral) {
+            updated.general = { ...prev.general, ...savedGeneral };
+          }
+          if (savedEbay) {
+            updated.ebay = { ...prev.ebay, ...savedEbay };
+          }
+          if (savedEtsy) {
+            updated.etsy = { ...prev.etsy, ...savedEtsy };
+          }
+          if (savedMercari) {
+            updated.mercari = { ...prev.mercari, ...savedMercari };
+          }
+          if (savedFacebook) {
+            updated.facebook = { ...prev.facebook, ...savedFacebook };
+          }
+          return updated;
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount
+  
   // Initialize template from first item if available
   useEffect(() => {
     if (bulkSelectedItems.length > 0) {
@@ -564,6 +598,82 @@ export default function CrosslistComposer() {
     });
   };
   
+  // Template storage keys
+  const TEMPLATE_STORAGE_KEYS = {
+    general: 'crosslist-template-general',
+    ebay: 'crosslist-template-ebay',
+    etsy: 'crosslist-template-etsy',
+    mercari: 'crosslist-template-mercari',
+    facebook: 'crosslist-template-facebook',
+  };
+
+  const saveTemplateToStorage = (templateKey, data) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const key = TEMPLATE_STORAGE_KEYS[templateKey];
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+    } catch (error) {
+      console.error(`Error saving ${templateKey} template:`, error);
+    }
+  };
+
+  const loadTemplateFromStorage = (templateKey) => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const key = TEMPLATE_STORAGE_KEYS[templateKey];
+      if (!key) return null;
+      const stored = localStorage.getItem(key);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error(`Error loading ${templateKey} template:`, error);
+      return null;
+    }
+  };
+
+  const copyGeneralFieldsToMarketplace = (generalData, marketplaceKey) => {
+    const copied = {};
+    
+    // Common fields that all marketplaces can use
+    if (generalData.title) copied.title = generalData.title;
+    if (generalData.description) copied.description = generalData.description;
+    if (generalData.brand) {
+      if (marketplaceKey === 'ebay') {
+        copied.ebayBrand = generalData.brand;
+      } else {
+        copied.brand = generalData.brand;
+      }
+    }
+    if (generalData.condition) copied.condition = generalData.condition;
+    if (generalData.quantity) copied.quantity = generalData.quantity;
+    if (generalData.photos) copied.photos = generalData.photos;
+    if (generalData.sku) copied.sku = generalData.sku;
+    
+    // Marketplace-specific field mappings
+    if (marketplaceKey === 'ebay') {
+      if (generalData.price) copied.buyItNowPrice = generalData.price;
+      if (generalData.zip) copied.shippingLocation = generalData.zip;
+      if (generalData.color1) copied.color = generalData.color1;
+    } else if (marketplaceKey === 'etsy') {
+      if (generalData.tags) copied.tags = generalData.tags;
+    } else if (marketplaceKey === 'mercari') {
+      if (generalData.price) {
+        copied.shippingPrice = Number(generalData.price) >= 100 ? "Free" : "Buyer pays";
+      }
+    } else if (marketplaceKey === 'facebook') {
+      if (generalData.zip) {
+        copied.meetUpLocation = generalData.zip ? `Meet near ${generalData.zip}` : "";
+      }
+      if (generalData.price) {
+        copied.shippingPrice = Number(generalData.price) >= 75 ? "Free shipping" : "";
+      }
+    }
+    
+    return copied;
+  };
+
   const handleReconnect = (templateKey) => {
     const label = TEMPLATE_DISPLAY_NAMES[templateKey] || "Marketplace";
     toast({
@@ -571,13 +681,55 @@ export default function CrosslistComposer() {
       description: "We'll refresh the integration and pull the latest account settings.",
     });
   };
-  
+
   const handleTemplateSave = (templateKey) => {
     const label = TEMPLATE_DISPLAY_NAMES[templateKey] || "Template";
-    toast({
-      title: `${label} template saved`,
-      description: "Your preferences will be used the next time you compose a listing.",
-    });
+    
+    if (templateKey === 'general') {
+      // Save general form
+      saveTemplateToStorage('general', generalForm);
+      
+      // Copy general fields to all marketplace forms
+      const updatedForms = { ...templateForms };
+      
+      // Update eBay form
+      const ebayUpdates = copyGeneralFieldsToMarketplace(generalForm, 'ebay');
+      updatedForms.ebay = { ...updatedForms.ebay, ...ebayUpdates };
+      saveTemplateToStorage('ebay', updatedForms.ebay);
+      
+      // Update Etsy form
+      const etsyUpdates = copyGeneralFieldsToMarketplace(generalForm, 'etsy');
+      updatedForms.etsy = { ...updatedForms.etsy, ...etsyUpdates };
+      saveTemplateToStorage('etsy', updatedForms.etsy);
+      
+      // Update Mercari form
+      const mercariUpdates = copyGeneralFieldsToMarketplace(generalForm, 'mercari');
+      updatedForms.mercari = { ...updatedForms.mercari, ...mercariUpdates };
+      saveTemplateToStorage('mercari', updatedForms.mercari);
+      
+      // Update Facebook form
+      const facebookUpdates = copyGeneralFieldsToMarketplace(generalForm, 'facebook');
+      updatedForms.facebook = { ...updatedForms.facebook, ...facebookUpdates };
+      saveTemplateToStorage('facebook', updatedForms.facebook);
+      
+      // Update state with copied fields
+      setTemplateForms(updatedForms);
+      
+      toast({
+        title: "General template saved",
+        description: "Your preferences have been saved and copied to all marketplace forms.",
+      });
+    } else {
+      // Save individual marketplace template
+      const marketplaceForm = templateForms[templateKey];
+      if (marketplaceForm) {
+        saveTemplateToStorage(templateKey, marketplaceForm);
+        toast({
+          title: `${label} template saved`,
+          description: "Your preferences will be used the next time you compose a listing.",
+        });
+      }
+    }
   };
   
   const validateEbayForm = () => {
