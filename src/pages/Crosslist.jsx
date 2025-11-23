@@ -463,7 +463,7 @@ export default function Crosslist() {
     const label = TEMPLATE_DISPLAY_NAMES[templateKey] || "Marketplace";
     toast({
       title: `${label} reconnected`,
-      description: "Weâ€™ll refresh the integration and pull the latest account settings.",
+      description: "We'll refresh the integration and pull the latest account settings.",
     });
   };
 
@@ -827,7 +827,7 @@ export default function Crosslist() {
                 <Search className="absolute left-2.5 top-9 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="q"
-                  placeholder="Item name, category, sourceâ€¦"
+                  placeholder="Item name, category, source…"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   className="pl-8 w-full"
@@ -918,7 +918,7 @@ export default function Crosslist() {
         </Card>
 
         {isLoading ? (
-          <div className="p-12 text-center text-muted-foreground">Loadingâ€¦</div>
+          <div className="p-12 text-center text-muted-foreground">Loading…</div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             No items match your filters.
@@ -950,7 +950,7 @@ export default function Crosslist() {
                     <div className="min-w-0 flex-1">
                       <div className="font-medium text-foreground truncate break-words">{it.item_name}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {it.category || "â€”"} â€¢ {it.source || "â€”"}
+                        {it.category || "—"} • {it.source || "—"}
                       </div>
 
                       <div className="flex flex-wrap gap-1 mt-1">
@@ -977,7 +977,7 @@ export default function Crosslist() {
                   <div className="col-span-6 sm:col-span-2 text-sm min-w-0">
                     <div className="text-foreground font-medium">${(it.purchase_price || 0).toFixed(2)}</div>
                     <div className="text-muted-foreground">
-                      {it.purchase_date ? format(parseISO(it.purchase_date), "MMM d, yyyy") : "â€”"}
+                      {it.purchase_date ? format(parseISO(it.purchase_date), "MMM d, yyyy") : "—"}
                     </div>
                   </div>
 
@@ -1030,7 +1030,7 @@ export default function Crosslist() {
                   </div>
                   <CardContent className="p-3">
                     <div className="font-semibold text-sm line-clamp-2 break-words">{it.item_name}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{it.category || "â€”"}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{it.category || "—"}</div>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {MARKETPLACES.map((m) => {
                         const isListed = map[m.id];
