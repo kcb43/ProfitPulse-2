@@ -3515,6 +3515,33 @@ export default function CrosslistComposer() {
                 </div>
               </div>
 
+              {/* Package Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Package Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    Package Details <span className="text-red-500">*</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                    onClick={() => setPackageDetailsDialogOpen(true)}
+                    className="w-full justify-start"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                      ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                      : "Enter weight & size"}
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <RefreshCw className="h-4 w-4" />
@@ -3859,6 +3886,33 @@ export default function CrosslistComposer() {
                     />
                     <Label htmlFor="mercari-local-pickup" className="text-sm">Offer local pickup</Label>
                   </div>
+                </div>
+              </div>
+
+              {/* Package Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Package Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    Package Details <span className="text-red-500">*</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                    onClick={() => setPackageDetailsDialogOpen(true)}
+                    className="w-full justify-start"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                      ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                      : "Enter weight & size"}
+                  </Button>
                 </div>
               </div>
 
@@ -4209,6 +4263,33 @@ export default function CrosslistComposer() {
                     />
                     <Label htmlFor="facebook-local-pickup" className="text-sm">Offer local pickup</Label>
                   </div>
+                </div>
+              </div>
+
+              {/* Package Details Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Package Details</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    Package Details <span className="text-red-500">*</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                    onClick={() => setPackageDetailsDialogOpen(true)}
+                    className="w-full justify-start"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                      ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                      : "Enter weight & size"}
+                  </Button>
                 </div>
               </div>
 
