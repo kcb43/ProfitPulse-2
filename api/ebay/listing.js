@@ -173,6 +173,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
     brand,
     itemType,
     shippingMethod,
+    shippingCostType,
     shippingCost,
     shippingService,
     handlingTime,
@@ -184,6 +185,8 @@ function buildAddFixedPriceItemXML(listingData, token) {
     duration,
     allowBestOffer,
     sku,
+    locationDescriptions,
+    shippingLocation,
   } = listingData;
 
   // Build photo URLs
