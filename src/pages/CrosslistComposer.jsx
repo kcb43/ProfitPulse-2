@@ -34,6 +34,9 @@ import {
   GripVertical,
   Sparkles,
   BarChart,
+  ExternalLink,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import ColorPickerDialog from "../components/ColorPickerDialog";
 import SoldLookupDialog from "../components/SoldLookupDialog";
@@ -44,6 +47,7 @@ import { useInventoryTags } from "@/hooks/useInventoryTags";
 import { useEbayCategoryTreeId, useEbayCategories, useEbayCategoryAspects } from "@/hooks/useEbayCategorySuggestions";
 import { TagInput } from "@/components/TagInput";
 import { DescriptionGenerator } from "@/components/DescriptionGenerator";
+import { getEbayItemUrl } from "@/utils/ebayHelpers";
 import {
   Command,
   CommandDialog,
@@ -452,6 +456,20 @@ export default function CrosslistComposer() {
             token_type: tokenData.token_type,
           };
           
+          // Restore theme IMMEDIATELY before any other operations
+          const preservedTheme = sessionStorage.getItem('preserved_theme');
+          if (preservedTheme) {
+            // Restore theme to localStorage immediately
+            localStorage.setItem('theme', preservedTheme);
+            // Update DOM immediately
+            const root = document.documentElement;
+            root.setAttribute('data-theme', preservedTheme);
+            // Trigger theme update
+            window.dispatchEvent(new Event('storage'));
+            // Clean up sessionStorage
+            sessionStorage.removeItem('preserved_theme');
+          }
+          
           // Store token securely
           localStorage.setItem('ebay_user_token', JSON.stringify(tokenToStore));
           setEbayToken(tokenToStore);
@@ -474,9 +492,6 @@ export default function CrosslistComposer() {
                 if (stateData.itemIds) {
                   const itemIdsArray = stateData.itemIds.split(',').filter(Boolean);
                   if (itemIdsArray.length > 0) {
-                    // Preserve theme preference from localStorage before navigation
-                    const savedTheme = localStorage.getItem('theme');
-                    
                     // Update URL to include item IDs so the page knows which items to show
                     const newUrl = new URL(window.location.href);
                     newUrl.searchParams.set('ids', stateData.itemIds);
@@ -484,23 +499,8 @@ export default function CrosslistComposer() {
                       newUrl.searchParams.set('autoSelect', String(stateData.autoSelect));
                     }
                     
-                    // Preserve theme before navigation
-                    const currentTheme = localStorage.getItem('theme') || 'default-light';
-                    
                     // Use navigate instead of reload to preserve theme and other preferences
                     navigate(newUrl.pathname + newUrl.search, { replace: true });
-                    
-                    // Restore theme immediately after navigation
-                    setTimeout(() => {
-                      if (localStorage.getItem('theme') !== currentTheme) {
-                        localStorage.setItem('theme', currentTheme);
-                        // Trigger theme update by dispatching storage event
-                        window.dispatchEvent(new Event('storage'));
-                        // Also update the root element directly
-                        const root = document.documentElement;
-                        root.setAttribute('data-theme', currentTheme);
-                      }
-                    }, 100);
                     
                     // Don't reload - let React handle the state restoration
                     return; // Exit early
@@ -1409,6 +1409,10 @@ export default function CrosslistComposer() {
   };
   
   const handleConnectEbay = () => {
+    // Save current theme to sessionStorage before OAuth redirect
+    const currentTheme = localStorage.getItem('theme') || 'default-light';
+    sessionStorage.setItem('preserved_theme', currentTheme);
+    
     // Save current form state before redirecting to OAuth
     const stateToSave = {
       templateForms,
@@ -1701,11 +1705,23 @@ export default function CrosslistComposer() {
         const result = await response.json();
 
         if (result.Ack === 'Success' || result.Ack === 'Warning') {
+          const listingItemId = result.ItemID;
+          
+          // Store listing ID
+          if (listingItemId) {
+            setEbayListingId(listingItemId);
+            // Store in localStorage associated with current item
+            if (currentEditingItemId) {
+              localStorage.setItem(`ebay_listing_${currentEditingItemId}`, listingItemId);
+            }
+          }
+          
           // Update inventory item status if we have a current item
           if (currentEditingItemId) {
             try {
               await base44.entities.InventoryItem.update(currentEditingItemId, {
                 status: 'listed',
+                ebay_listing_id: listingItemId || '',
               });
               queryClient.invalidateQueries(['inventoryItems']);
             } catch (updateError) {
@@ -1715,11 +1731,8 @@ export default function CrosslistComposer() {
 
           toast({
             title: "Listing created successfully!",
-            description: result.ItemID ? `eBay Item ID: ${result.ItemID}` : "Your item has been listed on eBay.",
+            description: listingItemId ? `eBay Item ID: ${listingItemId}` : "Your item has been listed on eBay.",
           });
-
-          // Optionally navigate back or clear form
-          // navigate(createPageUrl('Inventory'));
         } else {
           throw new Error(result.Errors?.join(', ') || 'Failed to create listing');
         }
@@ -3879,16 +3892,123 @@ export default function CrosslistComposer() {
                 </div>
               </div>
 
+              {/* eBay Listing Status - Show when item is listed */}
+              {ebayListingId && (
+                <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-green-600" />
+                      <Label className="text-sm font-semibold">Listing Active</Label>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1">eBay Listing ID</Label>
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm bg-background px-2 py-1 rounded border">{ebayListingId}</code>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => {
+                          const url = getEbayItemUrl(ebayListingId);
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        View Listing
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="gap-2"
+                        onClick={async () => {
+                          if (!confirm('Are you sure you want to end this eBay listing? This action cannot be undone.')) {
+                            return;
+                          }
+                          
+                          try {
+                            setIsSaving(true);
+                            const response = await fetch('/api/ebay/listing', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                operation: 'EndItem',
+                                itemId: ebayListingId,
+                                userToken: ebayToken?.access_token,
+                              }),
+                            });
 
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("ebay")}>
-                  <Save className="h-4 w-4" />
-                  Save
-                </Button>
-                <Button className="gap-2" onClick={() => handleListOnMarketplace("ebay")}>
-                  List on eBay
-                </Button>
-              </div>
+                            if (!response.ok) {
+                              const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                              throw new Error(errorData.error || errorData.details || `HTTP ${response.status}`);
+                            }
+
+                            const result = await response.json();
+                            
+                            if (result.Ack === 'Success' || result.Ack === 'Warning') {
+                              // Clear listing ID
+                              setEbayListingId(null);
+                              if (currentEditingItemId) {
+                                localStorage.removeItem(`ebay_listing_${currentEditingItemId}`);
+                              }
+                              
+                              // Update inventory item status
+                              if (currentEditingItemId) {
+                                try {
+                                  await base44.entities.InventoryItem.update(currentEditingItemId, {
+                                    status: 'available',
+                                    ebay_listing_id: '',
+                                  });
+                                  queryClient.invalidateQueries(['inventoryItems']);
+                                } catch (updateError) {
+                                  console.error('Error updating inventory item:', updateError);
+                                }
+                              }
+
+                              toast({
+                                title: "Listing ended",
+                                description: "Your eBay listing has been ended successfully.",
+                              });
+                            } else {
+                              throw new Error(result.Errors?.join(', ') || 'Failed to end listing');
+                            }
+                          } catch (error) {
+                            console.error('Error ending eBay listing:', error);
+                            toast({
+                              title: "Failed to end listing",
+                              description: error.message || "An error occurred while ending the listing. Please try again.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsSaving(false);
+                          }
+                        }}
+                      >
+                        <Unlock className="h-4 w-4" />
+                        Delist
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!ebayListingId && (
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("ebay")}>
+                    <Save className="h-4 w-4" />
+                    Save
+                  </Button>
+                  <Button className="gap-2" onClick={() => handleListOnMarketplace("ebay")}>
+                    List on eBay
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

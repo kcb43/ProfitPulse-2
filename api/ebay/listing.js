@@ -293,8 +293,59 @@ export default async function handler(req, res) {
 
       return res.status(200).json(result);
 
+    } else if (operation === 'EndItem') {
+      const { itemId } = req.body;
+
+      if (!itemId) {
+        return res.status(400).json({ error: 'itemId is required for EndItem' });
+      }
+
+      // Build XML request for EndItem
+      const xml = buildEndItemXML(itemId, token);
+
+      console.log('eBay Trading API request (EndItem):', {
+        baseUrl,
+        itemId,
+      });
+
+      const response = await fetch(baseUrl, {
+        method: 'POST',
+        headers: {
+          'X-EBAY-API-CALL-NAME': 'EndItem',
+          'X-EBAY-API-SITEID': '0', // 0 = US
+          'X-EBAY-API-COMPATIBILITY-LEVEL': '1193', // API version
+          'X-EBAY-API-DEV-NAME': devId,
+          'X-EBAY-API-APP-NAME': clientId || '',
+          'X-EBAY-API-CERT-NAME': clientSecret || '',
+          'X-EBAY-API-DETAIL-LEVEL': '0',
+          'Content-Type': 'text/xml',
+        },
+        body: xml,
+      });
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        console.error('eBay Trading API error:', response.status, responseText);
+        return res.status(response.status).json({
+          error: 'eBay Trading API error',
+          details: responseText,
+          status: response.status,
+        });
+      }
+
+      // Parse XML response
+      const result = parseTradingAPIResponse(responseText);
+
+      console.log('eBay Trading API success (EndItem):', {
+        itemId: result.ItemID,
+        endTime: result.EndTime,
+      });
+
+      return res.status(200).json(result);
+
     } else {
-      return res.status(400).json({ error: `Unknown operation: ${operation}. Supported operations: AddFixedPriceItem, GetItem` });
+      return res.status(400).json({ error: `Unknown operation: ${operation}. Supported operations: AddFixedPriceItem, GetItem, EndItem` });
     }
 
   } catch (err) {
@@ -584,6 +635,20 @@ function buildGetUserXML(token) {
 </GetUserRequest>`;
 
   return xml;
+}
+
+/**
+ * Build XML request for EndItem
+ */
+function buildEndItemXML(itemId, token) {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<EndItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
+  <RequesterCredentials>
+    <eBayAuthToken>${token}</eBayAuthToken>
+  </RequesterCredentials>
+  <ItemID>${itemId}</ItemID>
+  <EndingReason>NotAvailable</EndingReason>
+</EndItemRequest>`;
 }
 
 /**
