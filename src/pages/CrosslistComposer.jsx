@@ -1076,10 +1076,11 @@ export default function CrosslistComposer() {
     const aspectName = (aspect.localizedAspectName || aspect.aspectName || aspect.name || '').toLowerCase();
     const isBrand = aspectName === 'brand';
     const isModelOrType = aspectName.includes('model') || aspectName === 'type';
-    return isRequired && !isBrand && !isModelOrType;
+    const isItemsIncluded = aspectName.includes('items included') || aspectName.includes('what\'s included') || aspectName === 'included';
+    return isRequired && !isBrand && !isModelOrType && !isItemsIncluded;
   });
   
-  // Find "Items Included" aspect specifically
+  // Find "Items Included" aspect specifically (can be required or optional)
   const ebayItemsIncludedAspect = ebayCategoryAspects.find(aspect => {
     const aspectName = (aspect.localizedAspectName || aspect.aspectName || aspect.name || '').toLowerCase();
     return aspectName.includes('items included') || 
@@ -1087,6 +1088,9 @@ export default function CrosslistComposer() {
            aspectName === 'items included' ||
            aspectName === 'included';
   });
+  
+  // Check if Items Included is required
+  const isItemsIncludedRequired = ebayItemsIncludedAspect?.aspectConstraint?.aspectMode === 'REQUIRED';
 
   // For General form, also check if category is selected (fallback if aspects not available)
   const generalHasCategory = generalForm.category && generalForm.category.trim() !== '';
@@ -1655,6 +1659,21 @@ export default function CrosslistComposer() {
       errors.push("eBay Brand");
     }
     if (!generalForm.quantity) errors.push("Quantity");
+    
+    // Check required item specifics
+    if (isItemsIncludedRequired && !ebayForm.itemsIncluded) {
+      errors.push("Items Included");
+    }
+    // Check other required custom item specifics
+    if (ebayRequiredAspects.length > 0) {
+      ebayRequiredAspects.forEach(aspect => {
+        const aspectName = (aspect.localizedAspectName || aspect.aspectName || aspect.name || '').toLowerCase().replace(/\s+/g, '_');
+        if (!ebayForm.customItemSpecifics?.[aspectName]) {
+          errors.push(aspect.localizedAspectName || aspect.aspectName || aspect.name);
+        }
+      });
+    }
+    
     return errors;
   };
   

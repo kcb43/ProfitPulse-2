@@ -389,6 +389,8 @@ function buildAddFixedPriceItemXML(listingData, token) {
     sku,
     locationDescriptions,
     shippingLocation,
+    itemsIncluded,
+    customItemSpecifics,
   } = listingData;
 
   // Build photo URLs
