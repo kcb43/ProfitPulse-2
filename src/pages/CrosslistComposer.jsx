@@ -155,6 +155,8 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     condition: "",
     model: "",
     sku: "",
+    itemsIncluded: "",
+    customItemSpecifics: {}, // Store any other required item specifics dynamically
     shippingMethod: "",
     shippingCostType: "",
     shippingCost: "",
@@ -1066,6 +1068,26 @@ export default function CrosslistComposer() {
   const hasSizeAspect = !!sizeAspect;
   const hasEbaySizeAspect = !!ebaySizeAspect;
 
+  // Find all REQUIRED aspects for eBay (not just Model/Type)
+  const ebayRequiredAspects = ebayCategoryAspects.filter(aspect => {
+    const constraint = aspect.aspectConstraint;
+    const isRequired = constraint?.aspectMode === 'REQUIRED' || constraint?.aspectMode === 'RECOMMENDED';
+    // Exclude Brand and Model/Type as they're handled separately
+    const aspectName = (aspect.localizedAspectName || aspect.aspectName || aspect.name || '').toLowerCase();
+    const isBrand = aspectName === 'brand';
+    const isModelOrType = aspectName.includes('model') || aspectName === 'type';
+    return isRequired && !isBrand && !isModelOrType;
+  });
+  
+  // Find "Items Included" aspect specifically
+  const ebayItemsIncludedAspect = ebayCategoryAspects.find(aspect => {
+    const aspectName = (aspect.localizedAspectName || aspect.aspectName || aspect.name || '').toLowerCase();
+    return aspectName.includes('items included') || 
+           aspectName.includes('what\'s included') || 
+           aspectName === 'items included' ||
+           aspectName === 'included';
+  });
+
   // For General form, also check if category is selected (fallback if aspects not available)
   const generalHasCategory = generalForm.category && generalForm.category.trim() !== '';
   const shouldShowGeneralSize = generalHasCategory && (hasSizeAspect || generalForm.categoryId);
@@ -1680,6 +1702,8 @@ export default function CrosslistComposer() {
           sku: ebayForm.sku || generalForm.sku || '',
           locationDescriptions: ebayForm.locationDescriptions || '',
           shippingLocation: ebayForm.shippingLocation || generalForm.zip || '',
+          itemsIncluded: ebayForm.itemsIncluded || '',
+          customItemSpecifics: ebayForm.customItemSpecifics || {},
         };
 
         // Get user token - check if stored or use from request

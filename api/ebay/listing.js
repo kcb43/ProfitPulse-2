@@ -546,7 +546,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
     // For now, we'll include it in the Location field if provided
   }
 
-  // Build item specifics XML (brand, type, etc.)
+  // Build item specifics XML (brand, type, items included, and other custom item specifics)
   let itemSpecificsXML = '';
   const itemSpecifics = [];
   if (brand) {
@@ -555,6 +555,21 @@ function buildAddFixedPriceItemXML(listingData, token) {
   if (itemType) {
     // Use the actual aspect name from eBay (could be "Model", "Type", etc.)
     itemSpecifics.push(`<NameValueList><Name>${escapeXML(itemTypeAspectName)}</Name><Value>${escapeXML(itemType)}</Value></NameValueList>`);
+  }
+  if (listingData.itemsIncluded) {
+    itemSpecifics.push(`<NameValueList><Name>Items Included</Name><Value>${escapeXML(listingData.itemsIncluded)}</Value></NameValueList>`);
+  }
+  // Add any other custom item specifics
+  if (listingData.customItemSpecifics && typeof listingData.customItemSpecifics === 'object') {
+    Object.entries(listingData.customItemSpecifics).forEach(([key, value]) => {
+      if (value && String(value).trim()) {
+        // Convert key back to proper aspect name (e.g., "items_included" -> "Items Included")
+        const aspectName = key.split('_').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+        itemSpecifics.push(`<NameValueList><Name>${escapeXML(aspectName)}</Name><Value>${escapeXML(String(value))}</Value></NameValueList>`);
+      }
+    });
   }
   if (itemSpecifics.length > 0) {
     itemSpecificsXML = `<ItemSpecifics>${itemSpecifics.join('')}</ItemSpecifics>`;
