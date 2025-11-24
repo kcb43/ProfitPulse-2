@@ -751,7 +751,7 @@ export default function CrosslistComposer() {
   const { data: ebayCategoryAspectsData, isLoading: isLoadingEbayAspects, error: ebayAspectsError } = useEbayCategoryAspects(
     categoryTreeId || null, // Pass null if invalid to prevent API call
     ebayForm.categoryId,
-    isValidCategoryTreeId && isValidEbayCategoryId
+    !!(isValidCategoryTreeId && isValidEbayCategoryId) // Convert to strict boolean
   );
 
   // For General form - fetch aspects if categoryId is available
@@ -759,7 +759,7 @@ export default function CrosslistComposer() {
   const { data: generalCategoryAspectsData } = useEbayCategoryAspects(
     categoryTreeId,
     generalForm.categoryId,
-    (activeForm === "general" || activeForm === "etsy" || activeForm === "mercari" || activeForm === "facebook") && isValidCategoryTreeId && isValidGeneralCategoryId
+    !!((activeForm === "general" || activeForm === "etsy" || activeForm === "mercari" || activeForm === "facebook") && isValidCategoryTreeId && isValidGeneralCategoryId) // Convert to strict boolean
   );
 
   // Use appropriate aspects data based on active form
