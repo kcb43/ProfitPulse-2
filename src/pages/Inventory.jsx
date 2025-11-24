@@ -801,22 +801,22 @@ export default function InventoryPage() {
                           {statusLabels[item.status] || statusLabels.available}
                         </Badge>
                       </div>
+                      {/* Edit Photo Button */}
+                      {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="absolute bottom-2 right-2 z-10 h-7 px-2 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm"
+                          onClick={(e) => handleEditImage(e, item)}
+                        >
+                          <ImageIcon className="h-3 w-3" />
+                          Edit
+                        </Button>
+                      )}
                     </div>
                   </Link>
                     </div>
-                    {/* Edit Photo Button */}
-                    {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="absolute bottom-2 right-2 z-10 h-7 px-2 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm"
-                        onClick={(e) => handleEditImage(e, item)}
-                      >
-                        <ImageIcon className="h-3 w-3" />
-                        Edit
-                      </Button>
-                    )}
 
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between mb-2">
