@@ -228,7 +228,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
     condition,
     brand,
     itemType,
-    itemTypeAspectName = 'Type',
+    itemTypeAspectName = 'Model',
     shippingMethod,
     shippingCostType,
     shippingCost,
@@ -241,6 +241,8 @@ function buildAddFixedPriceItemXML(listingData, token) {
     returnRefundMethod,
     duration,
     allowBestOffer,
+    packageWeight,
+    postalCode,
     sku,
     locationDescriptions,
     shippingLocation,
@@ -437,6 +439,8 @@ function buildAddFixedPriceItemXML(listingData, token) {
     <ConditionID>${conditionId}</ConditionID>
     <DispatchTimeMax>${handlingDays}</DispatchTimeMax>
     ${locationXML}
+    ${postalCode ? `<PostalCode>${escapeXML(postalCode)}</PostalCode>` : ''}
+    ${packageWeight ? `<ShippingPackageDetails><WeightMajor unit="lbs">${escapeXML(parseFloat(packageWeight).toString())}</WeightMajor></ShippingPackageDetails>` : ''}
     <ProductListingDetails>
       <IncludeStockPhotoURL>true</IncludeStockPhotoURL>
       <IncludePrefilledItemInformation>true</IncludePrefilledItemInformation>
