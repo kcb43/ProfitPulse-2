@@ -22,22 +22,62 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { code, state, error } = req.query;
+    const { code, state, error, error_description } = req.query;
+
+    // Build frontend URL for redirects
+    let frontendUrl = null;
+    
+    // 1. Check for explicit BASE_URL environment variable (highest priority)
+    if (process.env.BASE_URL) {
+      frontendUrl = process.env.BASE_URL.replace(/\/$/, ''); // Remove trailing slash
+    }
+    // 2. Check for VERCEL_URL (provided by Vercel)
+    else if (process.env.VERCEL_URL) {
+      const vercelUrl = process.env.VERCEL_URL.replace(/^https?:\/\//, '');
+      frontendUrl = `https://${vercelUrl}`;
+    }
+    // 3. Use request headers
+    else if (req.headers.host) {
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      frontendUrl = `${protocol}://${req.headers.host}`;
+    }
+    // 4. Try referer header
+    else if (req.headers.referer) {
+      try {
+        frontendUrl = new URL(req.headers.referer).origin;
+      } catch (e) {
+        console.error('Error parsing referer:', e);
+      }
+    }
+    // 5. Last resort
+    else {
+      frontendUrl = 'http://localhost:5173';
+    }
+    
+    const redirectPath = '/CrosslistComposer';
 
     // Check for errors from eBay
     if (error) {
-      console.error('eBay OAuth error:', error);
+      console.error('eBay OAuth error:', error, error_description);
       // Redirect back to app with error
-      const frontendUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : (req.headers.referer ? new URL(req.headers.referer).origin : 'http://localhost:5173');
-      const redirectPath = '/CrosslistComposer';
-      return res.redirect(`${frontendUrl}${redirectPath}?ebay_auth_error=${encodeURIComponent(error)}`);
+      const errorMsg = error_description || error || 'Unknown OAuth error';
+      return res.redirect(`${frontendUrl}${redirectPath}?ebay_auth_error=${encodeURIComponent(errorMsg)}`);
     }
 
     // Check for authorization code
     if (!code) {
-      return res.status(400).json({ error: 'Authorization code not provided' });
+      // This might be a direct access to the callback URL or an incomplete OAuth flow
+      console.error('Callback accessed without authorization code. Query params:', req.query);
+      console.error('Headers:', {
+        referer: req.headers.referer,
+        host: req.headers.host,
+        userAgent: req.headers['user-agent'],
+      });
+      
+      // Redirect back to frontend with a helpful error instead of returning JSON
+      return res.redirect(
+        `${frontendUrl}${redirectPath}?ebay_auth_error=${encodeURIComponent('OAuth callback was accessed without authorization code. Please try connecting again.')}`
+      );
     }
 
     const clientId = process.env.VITE_EBAY_CLIENT_ID || process.env.EBAY_CLIENT_ID;
@@ -119,11 +159,15 @@ export default async function handler(req, res) {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('eBay OAuth token exchange error:', tokenResponse.status, errorText);
-      const frontendUrl = process.env.VERCEL_URL 
-        ? `https://${process.env.VERCEL_URL}` 
-        : (req.headers.referer ? new URL(req.headers.referer).origin : 'http://localhost:5173');
-      const redirectPath = '/CrosslistComposer';
-      return res.redirect(`${frontendUrl}${redirectPath}?ebay_auth_error=token_exchange_failed`);
+      let errorMsg = 'Failed to exchange authorization code for access token';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMsg = errorData.error_description || errorData.error || errorMsg;
+      } catch (e) {
+        // If errorText is not JSON, use it as-is
+        errorMsg = errorText || errorMsg;
+      }
+      return res.redirect(`${frontendUrl}${redirectPath}?ebay_auth_error=${encodeURIComponent(errorMsg)}`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -142,12 +186,6 @@ export default async function handler(req, res) {
       environment: useProduction ? 'production' : 'sandbox',
     });
 
-    // Redirect back to frontend with tokens in URL hash (more secure than query params)
-    // Frontend will extract and store securely
-    const frontendUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : (req.headers.referer ? new URL(req.headers.referer).origin : 'http://localhost:5173');
-    
     // Encode tokens to pass to frontend
     const tokenEncoded = encodeURIComponent(JSON.stringify({
       access_token: tokenData.access_token,
@@ -159,16 +197,32 @@ export default async function handler(req, res) {
 
     // Redirect to frontend page that will handle token storage
     // Redirect to CrosslistComposer page (route is /CrosslistComposer)
-    const redirectPath = '/CrosslistComposer';
     return res.redirect(`${frontendUrl}${redirectPath}?ebay_auth_success=1&token=${tokenEncoded}`);
 
   } catch (error) {
     console.error('Error in eBay OAuth callback:', error);
-    const frontendUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : (req.headers.referer ? new URL(req.headers.referer).origin : 'http://localhost:5173');
-    const redirectPath = '/CrosslistComposer';
-    return res.redirect(`${frontendUrl}${redirectPath}?ebay_auth_error=${encodeURIComponent(error.message)}`);
+    
+    // Build frontend URL for error redirect
+    let frontendUrl = null;
+    if (process.env.BASE_URL) {
+      frontendUrl = process.env.BASE_URL.replace(/\/$/, '');
+    } else if (process.env.VERCEL_URL) {
+      const vercelUrl = process.env.VERCEL_URL.replace(/^https?:\/\//, '');
+      frontendUrl = `https://${vercelUrl}`;
+    } else if (req.headers.host) {
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      frontendUrl = `${protocol}://${req.headers.host}`;
+    } else if (req.headers.referer) {
+      try {
+        frontendUrl = new URL(req.headers.referer).origin;
+      } catch (e) {
+        frontendUrl = 'http://localhost:5173';
+      }
+    } else {
+      frontendUrl = 'http://localhost:5173';
+    }
+    
+    return res.redirect(`${frontendUrl}/CrosslistComposer?ebay_auth_error=${encodeURIComponent(error.message)}`);
   }
 }
 
