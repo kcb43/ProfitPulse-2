@@ -5496,6 +5496,15 @@ export default function CrosslistComposer() {
         similarDescriptions={similarItems}
       />
 
+      {/* Image Editor */}
+      <ImageEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        imageSrc={imageToEdit.url}
+        onSave={handleSaveEditedImage}
+        fileName={`${imageToEdit.marketplace}-${imageToEdit.photoId || 'photo'}-edited.jpg`}
+      />
+
       {/* Sold Lookup Dialog */}
       <SoldLookupDialog
         open={soldDialogOpen}
