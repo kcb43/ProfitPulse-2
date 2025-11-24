@@ -97,12 +97,29 @@ export default async function handler(req, res) {
 
     // Check for authorization code
     if (!code) {
-      // This might be a direct access to the callback URL or an incomplete OAuth flow
-      console.error('Callback accessed without authorization code. Query params:', req.query);
-      console.error('Headers:', {
+      const userAgent = req.headers['user-agent'] || '';
+      const isBot = userAgent.includes('compatible') || 
+                    userAgent.includes('bot') || 
+                    userAgent.includes('crawler') ||
+                    userAgent.includes('spider') ||
+                    !userAgent ||
+                    userAgent.length < 10;
+      
+      // If it's likely a bot/health check, return a simple 400 response
+      if (isBot || Object.keys(req.query).length === 0) {
+        console.log('Callback accessed by bot/health check without authorization code');
+        return res.status(400).json({ 
+          error: 'Invalid request',
+          message: 'This endpoint requires OAuth authorization parameters'
+        });
+      }
+      
+      // This might be a direct access by a real user or an incomplete OAuth flow
+      console.warn('Callback accessed without authorization code. Query params:', req.query);
+      console.warn('Headers:', {
         referer: req.headers.referer,
         host: req.headers.host,
-        userAgent: req.headers['user-agent'],
+        userAgent: userAgent,
       });
       
       // Redirect back to frontend with a helpful error instead of returning JSON
