@@ -399,6 +399,20 @@ export default function CrosslistComposer() {
     }
     return null;
   });
+
+  // eBay username state
+  const [ebayUsername, setEbayUsername] = useState(() => {
+    // Load username from localStorage on mount
+    try {
+      const stored = localStorage.getItem('ebay_username');
+      if (stored) {
+        return stored;
+      }
+    } catch (e) {
+      console.error('Error loading eBay username:', e);
+    }
+    return null;
+  });
   
   // Handle OAuth callback from URL params
   useEffect(() => {
