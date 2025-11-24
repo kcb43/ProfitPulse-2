@@ -324,7 +324,6 @@ function buildAddFixedPriceItemXML(listingData, token) {
           <ShippingService>Pickup</ShippingService>
           <ShippingServiceCost>0.0</ShippingServiceCost>
         </ShippingServiceOptions>
-        <DispatchTimeMax>${handlingDays}</DispatchTimeMax>
       </ShippingDetails>`;
   } else if (isFlat && shippingCost) {
     // Flat rate shipping
@@ -336,10 +335,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
           <ShippingServicePriority>1</ShippingServicePriority>
           <ShippingService>${escapeXML(ebayServiceCode)}</ShippingService>
           <ShippingServiceCost>${escapeXML(shippingCost)}</ShippingServiceCost>
-          <ShippingServiceAdditionalCost>0.0</ShippingServiceAdditionalCost>
-          <ShippingSurcharge>0.0</ShippingSurcharge>
         </ShippingServiceOptions>
-        <DispatchTimeMax>${handlingDays}</DispatchTimeMax>
       </ShippingDetails>`;
   } else {
     // Calculated shipping (default)
@@ -350,11 +346,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
         <ShippingServiceOptions>
           <ShippingServicePriority>1</ShippingServicePriority>
           <ShippingService>${escapeXML(ebayServiceCode)}</ShippingService>
-          <ShippingServiceCost>0.0</ShippingServiceCost>
-          <ShippingServiceAdditionalCost>0.0</ShippingServiceAdditionalCost>
-          <ShippingSurcharge>0.0</ShippingSurcharge>
         </ShippingServiceOptions>
-        <DispatchTimeMax>${handlingDays}</DispatchTimeMax>
       </ShippingDetails>`;
   }
 
@@ -443,6 +435,7 @@ function buildAddFixedPriceItemXML(listingData, token) {
     <Country>${countryCode}</Country>
     <Currency>USD</Currency>
     <ConditionID>${conditionId}</ConditionID>
+    <DispatchTimeMax>${handlingDays}</DispatchTimeMax>
     ${locationXML}
     <ProductListingDetails>
       <IncludeStockPhotoURL>true</IncludeStockPhotoURL>
