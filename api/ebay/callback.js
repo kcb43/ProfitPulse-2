@@ -61,9 +61,36 @@ export default async function handler(req, res) {
     const useProduction = isProductionByEnv || isProductionByClientId;
 
     // Build callback URL (must match the redirect_uri used in auth.js)
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : (req.headers.referer ? new URL(req.headers.referer).origin : req.headers.host ? `https://${req.headers.host}` : 'http://localhost:5173');
+    // Use the same logic as auth.js for consistency
+    let baseUrl = null;
+    
+    // 1. Check for explicit BASE_URL environment variable (highest priority)
+    if (process.env.BASE_URL) {
+      baseUrl = process.env.BASE_URL.replace(/\/$/, ''); // Remove trailing slash
+    }
+    // 2. Check for VERCEL_URL (provided by Vercel)
+    else if (process.env.VERCEL_URL) {
+      // VERCEL_URL is just the domain, add https://
+      const vercelUrl = process.env.VERCEL_URL.replace(/^https?:\/\//, ''); // Remove protocol if present
+      baseUrl = `https://${vercelUrl}`;
+    }
+    // 3. Use request headers to determine URL
+    else if (req.headers.host) {
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      baseUrl = `${protocol}://${req.headers.host}`;
+    }
+    // 4. Try referer header as fallback
+    else if (req.headers.referer) {
+      try {
+        baseUrl = new URL(req.headers.referer).origin;
+      } catch (e) {
+        console.error('Error parsing referer:', e);
+      }
+    }
+    // 5. Last resort: localhost (for local development)
+    else {
+      baseUrl = 'http://localhost:5173';
+    }
     
     const redirectUri = `${baseUrl}/api/ebay/callback`;
 
