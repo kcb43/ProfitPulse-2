@@ -25,34 +25,65 @@ export default async function handler(req, res) {
     const { code, state, error, error_description } = req.query;
 
     // Build frontend URL for redirects
+    // Priority: BASE_URL > Production domain from host > VERCEL_URL > Headers
     let frontendUrl = null;
     
     // 1. Check for explicit BASE_URL environment variable (highest priority)
     if (process.env.BASE_URL) {
       frontendUrl = process.env.BASE_URL.replace(/\/$/, ''); // Remove trailing slash
     }
-    // 2. Check for VERCEL_URL (provided by Vercel)
+    // 2. Try to extract production domain from host header
+    // Vercel uses format: domain-{hash}-{team}.vercel.app for previews
+    // Production is just: domain.vercel.app
+    else if (req.headers.host) {
+      const host = req.headers.host;
+      // If it's a preview deployment, try to use production domain
+      if (host.includes('vercel.app') && host !== 'profit-pulse-2.vercel.app') {
+        // Extract production domain - remove the hash and team parts
+        const productionDomain = 'profit-pulse-2.vercel.app';
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        frontendUrl = `${protocol}://${productionDomain}`;
+      } else {
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        frontendUrl = `${protocol}://${host}`;
+      }
+    }
+    // 3. Use production domain as fallback if VERCEL_URL is a preview
     else if (process.env.VERCEL_URL) {
       const vercelUrl = process.env.VERCEL_URL.replace(/^https?:\/\//, '');
-      frontendUrl = `https://${vercelUrl}`;
-    }
-    // 3. Use request headers
-    else if (req.headers.host) {
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      frontendUrl = `${protocol}://${req.headers.host}`;
+      // If it's a preview deployment, use production domain instead
+      if (vercelUrl.includes('vercel.app') && !vercelUrl.startsWith('profit-pulse-2.vercel.app')) {
+        frontendUrl = 'https://profit-pulse-2.vercel.app';
+      } else {
+        frontendUrl = `https://${vercelUrl}`;
+      }
     }
     // 4. Try referer header
     else if (req.headers.referer) {
       try {
-        frontendUrl = new URL(req.headers.referer).origin;
+        const refererUrl = new URL(req.headers.referer);
+        // If referer is a preview deployment, use production domain
+        if (refererUrl.host.includes('vercel.app') && refererUrl.host !== 'profit-pulse-2.vercel.app') {
+          frontendUrl = 'https://profit-pulse-2.vercel.app';
+        } else {
+          frontendUrl = refererUrl.origin;
+        }
       } catch (e) {
         console.error('Error parsing referer:', e);
+        frontendUrl = 'https://profit-pulse-2.vercel.app'; // Fallback to production
       }
     }
-    // 5. Last resort
+    // 5. Last resort: use production domain
     else {
-      frontendUrl = 'http://localhost:5173';
+      frontendUrl = 'https://profit-pulse-2.vercel.app';
     }
+    
+    console.log('Frontend URL for redirect:', {
+      BASE_URL: process.env.BASE_URL,
+      VERCEL_URL: process.env.VERCEL_URL,
+      host: req.headers.host,
+      finalFrontendUrl: frontendUrl,
+    });
     
     const redirectPath = '/CrosslistComposer';
 
