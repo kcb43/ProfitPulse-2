@@ -699,10 +699,12 @@ export default function CrosslistComposer() {
   // For eBay form
   const isValidCategoryTreeId = categoryTreeId && categoryTreeId !== '0' && categoryTreeId !== 0 && String(categoryTreeId).trim() !== '';
   const isValidEbayCategoryId = ebayForm.categoryId && ebayForm.categoryId !== '0' && ebayForm.categoryId !== 0 && String(ebayForm.categoryId).trim() !== '';
+  // Fetch aspects whenever a category is selected (not just when form is active)
+  // This ensures aspects are loaded and ready when user switches to eBay form
   const { data: ebayCategoryAspectsData } = useEbayCategoryAspects(
     categoryTreeId,
     ebayForm.categoryId,
-    activeForm === "ebay" && isValidCategoryTreeId && isValidEbayCategoryId
+    isValidCategoryTreeId && isValidEbayCategoryId
   );
 
   // For General form - fetch aspects if categoryId is available
@@ -722,9 +724,20 @@ export default function CrosslistComposer() {
     aspect.localizedAspectName?.toLowerCase() === 'brand' ||
     aspect.aspectConstraint?.aspectDataType === 'STRING'
   );
-  const typeAspect = categoryAspects.find(aspect => 
-    aspect.localizedAspectName?.toLowerCase() === 'type'
-  );
+  
+  // Find Type/Model aspect - check for various naming patterns
+  const typeAspect = categoryAspects.find(aspect => {
+    const aspectName = aspect.localizedAspectName?.toLowerCase() || '';
+    return aspectName === 'type' || 
+           aspectName === 'model' ||
+           aspectName.includes('type') && aspectName.includes('model') ||
+           aspectName === 'model (type)' ||
+           aspectName === 'type (model)';
+  });
+  
+  // Check if Type aspect is required or recommended
+  const isTypeRequired = typeAspect?.aspectConstraint?.aspectMode === 'REQUIRED' || 
+                         typeAspect?.aspectConstraint?.aspectMode === 'RECOMMENDED';
   
   // Check if category has size-related aspects
   const sizeAspect = categoryAspects.find(aspect => {
@@ -749,6 +762,11 @@ export default function CrosslistComposer() {
 
   const ebayBrands = brandAspect?.aspectValues?.map(val => val.localizedValue) || [];
   const typeValues = typeAspect?.aspectValues?.map(val => val.localizedValue) || [];
+  
+  // Determine if we should show/require Type field for eBay
+  // Show if: category is selected AND (typeAspect exists OR aspects are still loading)
+  const shouldShowEbayType = ebayForm.categoryId && ebayForm.categoryId !== '0' && ebayForm.categoryId !== 0;
+  const shouldRequireEbayType = shouldShowEbayType && (isTypeRequired || typeAspect);
 
   const handleSaveShippingDefaults = () => {
     const defaults = {
@@ -1222,7 +1240,23 @@ export default function CrosslistComposer() {
     if (!ebayForm.buyItNowPrice) errors.push("Buy It Now Price");
     if (!ebayForm.color) errors.push("Color");
     if (!ebayForm.categoryId) errors.push("Category");
-    if (ebayForm.categoryId && !ebayForm.itemType) errors.push("Model (Type)");
+    // Only require Type if category is selected and aspects indicate it's required
+    if (ebayForm.categoryId && ebayForm.categoryId !== '0' && ebayForm.categoryId !== 0) {
+      // Check if aspects have loaded
+      if (ebayCategoryAspectsData?.aspects) {
+        // If we found a type aspect, it's likely required (most categories that have it require it)
+        if (typeAspect && !ebayForm.itemType) {
+          errors.push("Model (Type)");
+        }
+        // If aspects loaded but no type aspect found, don't require it
+      } else {
+        // Aspects haven't loaded yet - be conservative and require it
+        // This handles the case where aspects are still loading
+        if (!ebayForm.itemType) {
+          errors.push("Model (Type)");
+        }
+      }
+    }
     if (!ebayForm.condition) errors.push("Condition");
     if (!ebayForm.shippingCost) errors.push("Shipping Cost");
     // Only require return fields when Accept Returns is enabled
@@ -2887,30 +2921,6 @@ export default function CrosslistComposer() {
                     )}
                   </div>
                 )}
-                
-                {/* Type field - shown when category is selected */}
-                {ebayForm.categoryId && typeAspect && typeValues.length > 0 && (
-                  <div>
-                    <Label className="text-xs mb-1.5 block">
-                      Type <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={ebayForm.itemType || undefined}
-                      onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {typeValues.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
 
                 {/* Category Specifics Section */}
                 {ebayForm.categoryId && (
@@ -2933,27 +2943,35 @@ export default function CrosslistComposer() {
                     
                     {/* Type and Condition side by side */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Type/Model Dropdown */}
-                      {typeValues.length > 0 && (
+                      {/* Type/Model Field - Show if category is selected */}
+                      {shouldShowEbayType && (
                         <div>
                           <Label className="text-xs mb-1.5 block">
-                            Type <span className="text-red-500">*</span>
+                            {typeAspect?.localizedAspectName || 'Model (Type)'} <span className="text-red-500">*</span>
                           </Label>
-                          <Select
-                            value={ebayForm.itemType || undefined}
-                            onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {typeValues.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                  {type}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {typeValues.length > 0 ? (
+                            <Select
+                              value={ebayForm.itemType || undefined}
+                              onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {typeValues.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              placeholder="Enter model/type"
+                              value={ebayForm.itemType || ""}
+                              onChange={(e) => handleMarketplaceChange("ebay", "itemType", e.target.value)}
+                            />
+                          )}
                         </div>
                       )}
 
