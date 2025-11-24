@@ -263,13 +263,45 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       ctx.drawImage(image, 0, 0);
       
       // Test if canvas is tainted after drawing
+      let canManipulatePixels = true;
       try {
         ctx.getImageData(0, 0, 1, 1);
       } catch (e) {
         if (e.name === 'SecurityError' || e.code === 18) {
           throw new Error('Cannot edit this image due to CORS restrictions. Please use an image from your local device or ensure proper CORS headers are set on the image server.');
         }
-        throw e;
+        canManipulatePixels = false;
+      }
+
+      // Apply shadow adjustment if possible
+      if (shadows !== 0 && canManipulatePixels) {
+        try {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          const shadowAdjustment = shadows / 100;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            // Adjust RGB channels for shadow effect
+            if (shadowAdjustment < 0) {
+              // Darken (shadows)
+              const factor = 1 + shadowAdjustment;
+              data[i] = Math.max(0, Math.min(255, data[i] * factor)); // R
+              data[i + 1] = Math.max(0, Math.min(255, data[i + 1] * factor)); // G
+              data[i + 2] = Math.max(0, Math.min(255, data[i + 2] * factor)); // B
+            } else {
+              // Lighten (highlights)
+              const factor = shadowAdjustment;
+              data[i] = Math.max(0, Math.min(255, data[i] + (255 - data[i]) * factor)); // R
+              data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + (255 - data[i + 1]) * factor)); // G
+              data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + (255 - data[i + 2]) * factor)); // B
+            }
+          }
+          
+          ctx.putImageData(imageData, 0, 0);
+        } catch (e) {
+          console.warn('Could not apply shadow adjustment to final image:', e);
+          // Continue without shadow adjustment
+        }
       }
     } catch (error) {
       console.error('Error drawing image to canvas:', error);
@@ -325,7 +357,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         croppedAreaPixels,
         rotation,
         brightness,
-        contrast
+        contrast,
+        shadows
       );
 
       if (croppedImage && onSave) {
@@ -359,7 +392,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           {/* Crop Area */}
           <div className="relative flex-1 bg-black min-h-[400px]">
             <Cropper
-              image={imageSrc}
+              image={filteredImageSrc || imageSrc}
               crop={crop}
               zoom={zoom}
               rotation={rotation}
