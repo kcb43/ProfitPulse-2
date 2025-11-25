@@ -524,14 +524,14 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
           <DialogTitle>Edit Image</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           {/* Crop Area */}
-          <div className="relative flex-1 bg-black min-h-[400px]">
+          <div className="relative bg-black flex-shrink-0" style={{ height: '350px' }}>
             <Cropper
               image={filteredImageSrc || imageSrc}
               crop={crop}
@@ -546,8 +546,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             />
           </div>
 
-          {/* Controls */}
-          <div className="px-6 py-4 border-t space-y-4 overflow-y-auto max-h-[300px]">
+          {/* Controls - Scrollable with all editing options */}
+          <div className="px-6 py-4 border-t space-y-4 overflow-y-auto bg-background flex-1">
             {/* Aspect Ratio */}
             <div>
               <Label className="text-sm mb-2 block">Crop Aspect Ratio</Label>
@@ -730,12 +730,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t">
+        <DialogFooter className="px-6 py-4 border-t flex-shrink-0 bg-background">
           <Button type="button" variant="outline" onClick={handleCancel} disabled={isProcessing}>
             Cancel
           </Button>
           <Button type="button" onClick={handleSave} disabled={isProcessing || !croppedAreaPixels}>
-            {isProcessing ? 'Processing...' : 'Save Changes'}
+            {isProcessing ? 'Processing...' : 'Save Image'}
           </Button>
         </DialogFooter>
       </DialogContent>
