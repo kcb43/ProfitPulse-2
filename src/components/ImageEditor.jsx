@@ -524,14 +524,14 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-screen sm:max-h-[95vh] overflow-hidden flex flex-col p-0 w-[95vw] sm:w-full">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-          <DialogTitle>Edit Image</DialogTitle>
+      <DialogContent className="max-w-5xl max-h-screen sm:max-h-[95vh] overflow-hidden flex flex-col p-0 w-[95vw] sm:w-full overflow-x-hidden">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b flex-shrink-0">
+          <DialogTitle className="text-lg sm:text-xl">Edit Image</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden overflow-x-hidden">
           {/* Crop Area */}
-          <div className="relative bg-black flex-shrink-0 h-[250px] sm:h-[300px] md:h-[350px] max-h-[40vh] sm:max-h-[45vh] md:max-h-none">
+          <div className="relative bg-black flex-shrink-0 h-[250px] sm:h-[300px] md:h-[350px] max-h-[40vh] sm:max-h-[45vh] md:max-h-none w-full overflow-hidden">
             <Cropper
               image={filteredImageSrc || imageSrc}
               crop={crop}
@@ -547,7 +547,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
           {/* Controls - Scrollable with all editing options */}
-          <div className="px-4 sm:px-6 py-4 border-t space-y-4 overflow-y-auto bg-background flex-1 min-h-0">
+          <div className="px-4 sm:px-6 py-4 border-t space-y-4 overflow-y-auto overflow-x-hidden bg-background flex-1 min-h-0">
             {/* Aspect Ratio */}
             <div>
               <Label className="text-sm mb-2 block">Crop Aspect Ratio</Label>
