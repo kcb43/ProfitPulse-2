@@ -78,20 +78,88 @@ For description generation, GPT-5 Nano is **5x cheaper** for inputs and **5x che
 - **Terms of Service generator**: ~$100 one-time
 - **Privacy Policy generator**: ~$100 one-time
 
+### 6. Receipt Scanner / OCR API (NEW)
+
+**Options for Receipt Scanning (works with screenshots):**
+
+1. **ReceiptSnap** (Best Value) ⭐ Recommended
+   - Starter: $4.99 for 250 scans = **$0.02 per scan**
+   - Popular: $9.99 for 600 scans = **$0.017 per scan**
+   - One-time payment, no monthly fees
+   - Works with screenshots, receipts, invoices
+
+2. **JsonReceipt**
+   - Starter: $5 for 100 credits = **$0.05 per receipt**
+   - Developer Pro: $30 for 750 credits = **$0.04 per receipt**
+   - Credits never expire, no monthly fees
+
+3. **ReceiptOCR.app**
+   - Pay-as-you-go: **£0.06 per receipt** (~$0.08)
+   - Pro: £20/month for 500 scans = **£0.04 per scan** (~$0.05)
+
+4. **ReceiptReader AI**
+   - Starter: $5.99/month for 200 scans = **$0.03 per scan**
+   - Pro: $14.99/month for unlimited scans
+
+5. **TAGGUN**
+   - Pay-as-you-go: **$0.08 per scan** with $4/month minimum
+
+**Cost Estimation with 400 Users:**
+- Assume 30% of users scan receipts (120 users)
+- Average 5 receipts per active user per month
+- 120 users × 5 receipts = **600 receipts/month**
+
+**Using ReceiptSnap (Recommended):**
+- 600 receipts × $0.02 = **$12/month**
+- Or buy Popular plan: $9.99 for 600 scans = **$9.99/month**
+
+**Using JsonReceipt:**
+- 600 receipts × $0.05 = **$30/month**
+
+**Recommendation: ReceiptSnap** - Best value at $0.02/scan, works with screenshots
+
+### ⚠️ Important: Amazon Screenshot/OCR Legal Considerations
+
+**Using OCR on Amazon Order Screenshots:**
+
+**Legal Status:**
+- ✅ **Technically Legal**: Users own their order data and can screenshot their own orders
+- ⚠️ **ToS Gray Area**: Amazon's Terms of Service may restrict automated data extraction
+- ⚠️ **Risk**: Amazon could potentially claim you're circumventing their API restrictions
+
+**Recommendations:**
+1. **Position as "Receipt Scanner"** - Market it as a general receipt/invoice scanner, not specifically for Amazon
+2. **User Responsibility** - Add disclaimer: "Users are responsible for ensuring they have permission to extract data from screenshots"
+3. **Don't Mention Amazon** - Don't explicitly market it as "Amazon order extractor" in your app
+4. **Alternative**: Use general OCR APIs (Google Vision, AWS Textract) that don't specifically target Amazon
+
+**Safer Approach:**
+- Market as "Receipt & Invoice Scanner" that works with any screenshot
+- Users can screenshot Amazon orders, receipts, invoices, etc.
+- You're providing a tool; users decide what to scan
+- This is similar to how apps like Expensify work
+
+**If Concerned:**
+- Consult with a lawyer about ToS compliance
+- Consider using generic OCR (Google Cloud Vision, AWS Textract) instead of receipt-specific APIs
+- Generic OCR: ~$1.50 per 1,000 images (first 1,000 free/month)
+
 ## Total Estimated Costs
 
 ### Low End (Minimal features)
 - Fixed: $140/month
 - AI (GPT-5 Nano): $2/month
+- Receipt Scanner (ReceiptSnap): $10/month
 - Payment fees (if absorbed): $236/month
-- **Total: ~$378/month**
+- **Total: ~$388/month**
 
 ### High End (Full features)
 - Fixed: $245/month
 - AI (GPT-5 Nano): $5/month (higher usage)
+- Receipt Scanner (ReceiptSnap): $15/month (higher usage)
 - Payment fees: $236/month
 - Support tools: $50/month
-- **Total: ~$536/month**
+- **Total: ~$551/month**
 
 ## Pricing Strategy Recommendation
 
@@ -106,6 +174,7 @@ For description generation, GPT-5 Nano is **5x cheaper** for inputs and **5x che
 **Pro Tier: $9.99/month**
 - Unlimited listings
 - AI description generation (up to 50/month)
+- Receipt scanning (up to 20/month)
 - Priority support
 - Advanced features
 
@@ -114,8 +183,8 @@ For description generation, GPT-5 Nano is **5x cheaper** for inputs and **5x che
 - 320 free users
 - Revenue: 80 × $9.99 = $799/month
 - After Stripe fees (2.9% + $0.30): ~$760/month net
-- Costs: ~$380/month
-- **Profit: ~$380/month (50% margin)**
+- Costs: ~$390/month (includes receipt scanner)
+- **Profit: ~$370/month (49% margin)**
 
 ### Option 2: Tiered Pricing (More Sustainable)
 
@@ -127,6 +196,7 @@ For description generation, GPT-5 Nano is **5x cheaper** for inputs and **5x che
 **Pro: $9.99/month** (Most Popular)
 - Unlimited listings
 - 50 AI generations/month
+- 20 receipt scans/month
 - All features
 
 **Business: $19.99/month**
@@ -140,21 +210,23 @@ For description generation, GPT-5 Nano is **5x cheaper** for inputs and **5x che
 - 40 Starter ($200), 100 Pro ($1,000), 20 Business ($400)
 - Revenue: $1,600/month
 - After Stripe fees: ~$1,520/month net
-- Costs: ~$400/month
-- **Profit: ~$1,120/month (70% margin)**
+- Costs: ~$410/month (includes receipt scanner)
+- **Profit: ~$1,110/month (73% margin)**
 
 ## Key Recommendations
 
 1. **Use GPT-5 Nano** - Saves you $8,498/month vs GPT-5 Mini for minimal quality difference
-2. **Pass payment fees to customers** - Add $0.30 + 2.9% on top of subscription price
-3. **Start with Freemium** - Attract users, convert 15-25% to paid
-4. **Price at $9.99/month** - Sweet spot for SaaS (not too cheap, not too expensive)
-5. **Monitor usage** - Track AI generations per user to prevent abuse
+2. **Use ReceiptSnap for OCR** - Best value at $0.02/scan, works with screenshots
+3. **Pass payment fees to customers** - Add $0.30 + 2.9% on top of subscription price
+4. **Start with Freemium** - Attract users, convert 15-25% to paid
+5. **Price at $9.99/month** - Sweet spot for SaaS (not too cheap, not too expensive)
+6. **Monitor usage** - Track AI generations and receipt scans per user to prevent abuse
+7. **Market receipt scanner generically** - Don't specifically mention Amazon to avoid ToS issues
 
 ## Break-Even Analysis
 
 **At $9.99/month pricing:**
-- Need ~38 paying users to break even ($380 costs / $9.99 = ~38)
+- Need ~39 paying users to break even ($390 costs / $9.99 = ~39)
 - With 400 total users and 20% conversion = 80 paying users
 - **You'll be profitable from day 1** with this model
 
