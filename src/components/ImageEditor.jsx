@@ -547,7 +547,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
           {/* Controls - Scrollable with all editing options */}
-          <div className="px-6 py-4 border-t space-y-4 overflow-y-auto bg-background flex-1">
+          <div className="px-4 sm:px-6 py-4 border-t space-y-4 overflow-y-auto bg-background flex-1 min-h-0">
             {/* Aspect Ratio */}
             <div>
               <Label className="text-sm mb-2 block">Crop Aspect Ratio</Label>
