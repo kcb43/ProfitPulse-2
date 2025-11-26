@@ -117,12 +117,12 @@ export default function TipOfTheDay() {
       </CardHeader>
       <CardContent className="p-6 pt-0 flex flex-col h-full">
         {/* Tip of the Day Section */}
-        <div className="flex flex-col mb-0 lg:mb-[425px]">
+        <div className="flex flex-col">
           <p className="text-sm text-yellow-800 dark:text-yellow-300 line-clamp-3">"{tip}"</p>
         </div>
 
         {/* Quick Actions Section - Aligned with Tax Summary content, only on desktop */}
-        <div className="hidden lg:block border-t border-yellow-300 dark:border-yellow-700 pt-4">
+        <div className="hidden lg:block border-t border-yellow-300 dark:border-yellow-700 pt-4 lg:!mt-[395px] mt-auto">
           <p className="text-xs font-semibold text-yellow-900 dark:text-yellow-200 mb-2">Quick Actions</p>
           <div className="grid grid-cols-2 gap-2">
             {quickActions.map((action) => {
