@@ -358,15 +358,26 @@ export default function Dashboard() {
 
         {/* Dashboard cards: Your Progress, Tip of the Day (with Quick Actions), Market Intelligence */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
-          <TipOfTheDay />
-          <MarketIntelligence />
-        </div>
+          {/* Left column: Your Progress + Tax Summary */}
+          <div className="space-y-6">
+            <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
+            <div className="hidden lg:block">
+              <TaxSummary sales={sales} totalProfit={totalProfit} />
+            </div>
+          </div>
 
-        {/* Additional cards row - Desktop only */}
-        <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TaxSummary sales={sales} totalProfit={totalProfit} />
-          <ReportsExport sales={sales} totalProfit={totalProfit} totalSales={totalSales} />
+          {/* Middle column: Tip of Day + Reports Export */}
+          <div className="space-y-6">
+            <TipOfTheDay />
+            <div className="hidden lg:block">
+              <ReportsExport sales={sales} totalProfit={totalProfit} totalSales={totalSales} />
+            </div>
+          </div>
+
+          {/* Right column: Market Intelligence */}
+          <div>
+            <MarketIntelligence />
+          </div>
         </div>
 
         <div className="flex justify-start lg:justify-end mb-6">
