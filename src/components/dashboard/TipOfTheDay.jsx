@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -109,14 +109,16 @@ export default function TipOfTheDay() {
 
   return (
     <Card className="border-0 shadow-sm bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 h-full flex flex-col">
-      <CardContent className="p-6 lg:pt-6 lg:pb-6 pb-3 flex flex-col h-full">
+      <CardHeader>
+        <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Lightbulb className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          Tip of the Day
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 pt-0 space-y-4 flex flex-col h-full">
         {/* Tip of the Day Section */}
-        <div className="flex flex-col mb-3 lg:mb-2">
-          <div className="flex items-start gap-3 mb-2 lg:mb-2">
-            <Lightbulb className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-            <p className="font-semibold text-yellow-900 dark:text-yellow-200 text-base lg:text-lg">Tip of the Day</p>
-          </div>
-          <p className="text-xs lg:text-sm text-yellow-800 dark:text-yellow-300 line-clamp-2 lg:line-clamp-3">"{tip}"</p>
+        <div className="flex flex-col">
+          <p className="text-sm text-yellow-800 dark:text-yellow-300 line-clamp-3">"{tip}"</p>
         </div>
 
         {/* Quick Actions Section - Aligned with Tax Summary content, only on desktop */}
