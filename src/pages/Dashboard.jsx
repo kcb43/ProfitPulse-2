@@ -19,6 +19,8 @@ import RecentSales from "../components/dashboard/RecentSales";
 import Gamification from "../components/dashboard/Gamification";
 import TipOfTheDay from "../components/dashboard/TipOfTheDay";
 import MarketIntelligence from "../components/dashboard/MarketIntelligence";
+import ReportsExport from "../components/dashboard/ReportsExport";
+import TaxSummary from "../components/dashboard/TaxSummary";
 
 const SUPPORTED_MARKETPLACES = [
   {
@@ -359,6 +361,12 @@ export default function Dashboard() {
           <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
           <TipOfTheDay />
           <MarketIntelligence />
+        </div>
+
+        {/* Additional cards row - Desktop only */}
+        <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <TaxSummary sales={sales} totalProfit={totalProfit} />
+          <ReportsExport sales={sales} totalProfit={totalProfit} totalSales={totalSales} />
         </div>
 
         <div className="flex justify-start lg:justify-end mb-6">
