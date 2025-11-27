@@ -60,6 +60,19 @@ const platformNames = {
   offer_up: "OfferUp"
 };
 
+// Helper function to determine resale value based on profit/ROI
+const getResaleValue = (profit, roi) => {
+  if (roi === Infinity || (roi > 0 && profit > 100)) {
+    return { label: "High Resale Value", color: "rgb(34, 197, 94)" }; // green-600
+  } else if (roi > 50 || profit > 50) {
+    return { label: "Medium Resale Value", color: "rgb(20, 141, 250)" }; // blue-500
+  } else if (profit > 0) {
+    return { label: "Low Resale Value", color: "rgb(251, 146, 60)" }; // orange-400
+  } else {
+    return { label: "No Profit", color: "rgb(239, 68, 68)" }; // red-500
+  }
+};
+
 const PREDEFINED_CATEGORIES = [
   "Antiques",
   "Books, Movies & Music",
@@ -983,9 +996,9 @@ export default function SalesHistory() {
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">Loading...</div>
             ) : (
-              <div className="divide-y">
+              <div>
                 {filteredSales.length > 0 && (
-                  <div className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4 bg-gray-50/50 dark:bg-gray-800/30 min-w-0">
+                  <div className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4 bg-gray-50/50 dark:bg-gray-800/30 min-w-0 mb-4 rounded-lg">
                     <Checkbox
                       checked={selectedSales.length === filteredSales.length && filteredSales.length > 0}
                       onCheckedChange={handleSelectAll}
@@ -1021,170 +1034,281 @@ export default function SalesHistory() {
                       daysUntilPermanentDelete = differenceInDays(thirtyDaysAfterDelete, today);
                     }
                   }
+
+                  const resaleValue = getResaleValue(sale.profit || 0, sale.roi || 0);
+                  const totalCosts = ((sale.purchase_price || 0) + (sale.shipping_cost || 0) + (sale.platform_fees || 0) + (sale.other_costs || 0));
                   
                   return (
-                  <div key={sale.id} className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-200 min-w-0 ${isDeleted ? 'opacity-75 border-l-4 border-red-300 dark:border-red-700' : ''}`}>
-                    <Checkbox
-                      checked={selectedSales.includes(sale.id)}
-                      onCheckedChange={() => handleSelect(sale.id)}
-                      id={`select-${sale.id}`}
-                      className="mt-1 !h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 flex-shrink-0 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
-                    />
-                    <div className="flex-1 min-w-0 w-full">
-                      <div className="flex flex-col gap-3 sm:gap-4 min-w-0">
-                        <div className="flex-1 min-w-0 w-full">
-                          <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 mb-2 min-w-0">
-                            <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}`)} className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-foreground text-base sm:text-lg break-words hover:text-blue-500 dark:hover:text-blue-400 transition-colors cursor-pointer">{sale.item_name}</h3>
-                            </Link>
-                            <Badge className={`${platformColors[sale.platform]} border flex-shrink-0 text-xs sm:text-sm whitespace-nowrap`}>
-                              {platformIcons[sale.platform] && <img src={platformIcons[sale.platform]} alt={platformNames[sale.platform]} className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-1.5 rounded-sm object-contain flex-shrink-0" />}
-                              {platformNames[sale.platform]}
-                            </Badge>
-                          </div>
+                  <div key={sale.id} className={`product-list-item relative flex flex-col sm:flex-row items-start sm:items-center mb-6 min-w-0 ${isDeleted ? 'opacity-75' : ''}`}
+                    style={{
+                      minHeight: '248px',
+                      height: 'auto',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(51, 65, 85, 0.6)',
+                      background: 'rgb(30, 41, 59)',
+                      boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                      overflow: 'hidden'
+                    }}>
+                    {/* Checkbox - positioned absolutely */}
+                    <div className="absolute top-4 left-4 z-20">
+                      <Checkbox
+                        checked={selectedSales.includes(sale.id)}
+                        onCheckedChange={() => handleSelect(sale.id)}
+                        id={`select-${sale.id}`}
+                        className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
+                      />
+                    </div>
 
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm mb-3 min-w-0">
-                            <div className="min-w-0">
-                              <p className="text-muted-foreground break-words">Sale Date</p>
-                              <p className="font-medium text-foreground break-words">
-                                {format(parseISO(sale.sale_date), 'MMM dd, yyyy')}
-                              </p>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-muted-foreground break-words">Selling Price</p>
-                              <p className="font-medium text-foreground break-words">${sale.selling_price?.toFixed(2)}</p>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-muted-foreground break-words">Total Costs</p>
-                              <p className="font-medium text-foreground break-words">
-                                ${((sale.purchase_price || 0) + (sale.shipping_cost || 0) + (sale.platform_fees || 0) + (sale.other_costs || 0)).toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-muted-foreground break-words">Profit</p>
-                              <p className={`font-bold text-base sm:text-lg break-words ${sale.profit >= 0 ? 'text-green-400 dark:text-green-400' : 'text-red-600'} ${sale.profit >= 0 ? 'dark:[text-shadow:0_0_6px_rgba(34,197,94,0.5)]' : ''}`}>
-                                ${sale.profit?.toFixed(2) || '0.00'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-center mt-4 min-w-0">
-                            <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-2 text-xs sm:text-sm text-foreground min-w-0">
-                              <div className="flex items-center text-foreground min-w-0" title="Return on Investment">
-                                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-500 flex-shrink-0" />
-                                <span className="font-semibold whitespace-nowrap text-sm sm:text-base">ROI:</span>
-                                <span className="ml-2 font-bold text-blue-600 dark:text-blue-400 break-words text-sm sm:text-lg">
-                                  {isFinite(sale.roi) ? `${sale.roi.toFixed(1)}%` : (sale.roi > 0 ? '∞%' : '-∞%')}
-                                </span>
-                              </div>
-                              <div className="flex items-center text-foreground min-w-0" title="Sale Speed">
-                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-orange-500 flex-shrink-0" />
-                                <span className="font-semibold whitespace-nowrap text-sm sm:text-base">Sold in:</span>
-                                <span className="ml-2 font-bold text-orange-600 dark:text-orange-400 break-words text-sm sm:text-lg">
-                                  {sale.saleSpeed !== null ? `${sale.saleSpeed} day(s)` : 'N/A'}
-                                </span>
-                              </div>
-                              {sale.category && (
-                                <p className="break-words min-w-0 text-sm sm:text-base">
-                                  <span className="font-semibold">Category:</span> {sale.category}
-                                </p>
-                              )}
-                            </div>
-
-                          {(sale.image_url || safeNotes) && (
-                            <div className="flex flex-col md:flex-col md:items-end md:gap-3 gap-2 sm:gap-3">
-                              {sale.image_url && (
-                                <img
-                                  src={sale.image_url}
-                                  alt={sale.item_name}
-                                  className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 object-cover rounded-md border flex-shrink-0"
-                                />
-                              )}
-                              {safeNotes && (
-                                <p className="italic text-sm sm:text-base text-foreground md:max-w-xs md:text-right">
-                                  <span className="font-medium not-italic">Notes:</span> "{safeNotes}"
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          </div>
+                    {/* Product Image Section */}
+                    <div className="glass flex items-center justify-center relative flex-shrink-0 m-4"
+                      style={{
+                        width: '220px',
+                        minWidth: '220px',
+                        height: '210px',
+                        borderRadius: '12px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        padding: '16px'
+                      }}>
+                      {sale.image_url ? (
+                        <img 
+                          src={sale.image_url} 
+                          alt={sale.item_name}
+                          className="w-full h-full object-contain"
+                          style={{ maxHeight: '186px' }}
+                        />
+                      ) : (
+                        <Package className="w-24 h-24 text-gray-400" />
+                      )}
+                      {/* Platform Icon Overlay */}
+                      {platformIcons[sale.platform] && (
+                        <div className="glass absolute top-2 right-2 flex items-center justify-center z-10"
+                          style={{
+                            width: '43px',
+                            height: '55px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            padding: '8px'
+                          }}>
+                          <img 
+                            src={platformIcons[sale.platform]} 
+                            alt={platformNames[sale.platform]}
+                            className="w-6 h-6 object-contain"
+                            style={{ filter: sale.platform === 'ebay' ? 'none' : 'brightness(0) invert(1)' }}
+                          />
                         </div>
+                      )}
+                    </div>
 
-                        {isDeleted && daysUntilPermanentDelete !== null && (
-                          <div className="mb-3 p-2 bg-orange-100 dark:bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-800 dark:text-orange-200">
-                            <p className="font-semibold text-xs flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
-                            </p>
-                          </div>
-                        )}
+                    {/* Details Section */}
+                    <div className="flex-1 flex flex-col justify-between h-full px-4 sm:px-6 py-4 sm:py-6 border-l border-r min-w-0"
+                      style={{
+                        borderColor: 'rgba(51, 65, 85, 0.6)',
+                        minHeight: '210px'
+                      }}>
+                      {/* Resale Value Badge */}
+                      <div className="mb-3">
+                        <div className="glass inline-block px-4 sm:px-6 py-2 rounded-xl text-white text-xs sm:text-sm font-medium"
+                          style={{
+                            background: resaleValue.color,
+                            color: 'white',
+                            maxWidth: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                          {resaleValue.label}
+                        </div>
+                      </div>
 
-                        {isDeleted && daysUntilPermanentDelete === null && (
-                          <div className="mb-3 p-2 bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-800 dark:text-red-200">
-                            <p className="font-semibold text-xs">
-                              Will be permanently deleted soon
-                            </p>
-                          </div>
-                        )}
+                      {/* Title */}
+                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}`)} className="block mb-3">
+                        <h3 className="text-lg sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-2"
+                          style={{ letterSpacing: '0.5px' }}>
+                          {sale.item_name || 'Untitled Item'}
+                        </h3>
+                      </Link>
 
-                        <div className="flex flex-wrap items-center justify-start md:justify-end gap-1 sm:gap-2 md:gap-[10.4px] min-w-0 w-full border-t border-gray-200 dark:border-gray-700 pt-3">
-                          {isDeleted ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => recoverSaleMutation.mutate(sale)}
-                                disabled={recoverSaleMutation.isPending}
-                                className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
-                                title="Recover Sale"
-                              >
-                                <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  setSaleToPermanentDelete(sale);
-                                  setPermanentDeleteDialogOpen(true);
+                      {/* Description/Details */}
+                      <p className="text-gray-300 mb-4 text-xs sm:text-sm break-words line-clamp-2"
+                        style={{ 
+                          letterSpacing: '0.7px',
+                          lineHeight: '23.8px'
+                        }}>
+                        Sold on {format(parseISO(sale.sale_date), 'MMM dd, yyyy')} • ${sale.selling_price?.toFixed(2)} • 
+                        {sale.category && ` ${sale.category}`}
+                        {safeNotes && ` • ${safeNotes.substring(0, 50)}${safeNotes.length > 50 ? '...' : ''}`}
+                      </p>
+
+                      {/* Metrics */}
+                      <div className="mt-auto flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                        <div className="flex items-center text-white min-w-0">
+                          <TrendingUp className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+                          <span className="font-semibold">ROI:</span>
+                          <span className="ml-2 font-bold text-blue-400 break-words">
+                            {isFinite(sale.roi) ? `${sale.roi.toFixed(1)}%` : (sale.roi > 0 ? '∞%' : '-∞%')}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-white min-w-0">
+                          <Zap className="w-4 h-4 mr-2 text-orange-500 flex-shrink-0" />
+                          <span className="font-semibold">Sold in:</span>
+                          <span className="ml-2 font-bold text-orange-400 break-words">
+                            {sale.saleSpeed !== null ? `${sale.saleSpeed} day(s)` : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-white min-w-0">
+                          <span className="font-semibold">Profit:</span>
+                          <span className={`ml-2 font-bold text-lg sm:text-xl break-words ${sale.profit >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+                            {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(2) || '0.00'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Deletion Warnings */}
+                      {isDeleted && daysUntilPermanentDelete !== null && (
+                        <div className="mt-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200">
+                          <p className="font-semibold text-xs flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
+                          </p>
+                        </div>
+                      )}
+
+                      {isDeleted && daysUntilPermanentDelete === null && (
+                        <div className="mt-3 p-2 bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-200">
+                          <p className="font-semibold text-xs">
+                            Will be permanently deleted soon
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions Section */}
+                    <div className="flex flex-row sm:flex-col items-center justify-center gap-2 px-4 py-4 sm:py-6 flex-shrink-0 w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-gray-700"
+                      style={{
+                        width: '100%',
+                        minWidth: '271px',
+                        background: 'rgb(51, 65, 85)'
+                      }}>
+                      {/* Action Row - Price and Favorite */}
+                      <div className="flex items-center justify-between w-full sm:w-auto mb-0 sm:mb-2 gap-2">
+                        <div className="glass px-4 sm:px-6 py-2 rounded-xl text-white font-bold text-lg sm:text-xl text-center border border-gray-700 flex-1 sm:flex-none"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderColor: 'rgb(55, 69, 88)',
+                            minWidth: '120px'
+                          }}>
+                          ${sale.selling_price?.toFixed(2) || '0.00'}
+                        </div>
+                      </div>
+
+                      {/* View Details Button */}
+                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}`)} className="w-full sm:w-full flex-1 sm:flex-none">
+                        <Button 
+                          className="w-full bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-2 px-4 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-xs sm:text-sm"
+                          style={{ letterSpacing: '1px' }}
+                        >
+                          <span className="flex justify-center items-center gap-1.5">
+                            View Details
+                          </span>
+                        </Button>
+                      </Link>
+
+                      {/* Action Buttons Row */}
+                      <div className="flex items-center justify-center gap-2 w-auto">
+                        {isDeleted ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => recoverSaleMutation.mutate(sale)}
+                              disabled={recoverSaleMutation.isPending}
+                              className="glass text-green-400 hover:text-green-300 hover:bg-green-900/20 flex-shrink-0 h-10 w-10"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '12px'
+                              }}
+                              title="Recover Sale"
+                            >
+                              <ArchiveRestore className="w-5 h-5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSaleToPermanentDelete(sale);
+                                setPermanentDeleteDialogOpen(true);
+                              }}
+                              disabled={permanentDeleteSaleMutation.isPending}
+                              className="glass text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0 h-10 w-10"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '12px'
+                              }}
+                              title="Permanently Delete"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Link to={createPageUrl(`AddSale?id=${sale.id}`)} className="flex-shrink-0">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="glass text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-10 w-10"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.1)',
+                                  borderRadius: '12px'
                                 }}
-                                disabled={permanentDeleteSaleMutation.isPending}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
-                                title="Permanently Delete"
+                                title="Edit"
                               >
-                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                                <Pencil className="w-5 h-5" />
                               </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Link to={createPageUrl(`AddSale?id=${sale.id}`)} className="flex-shrink-0">
-                                <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
-                                  <Pencil className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                                </Button>
-                              </Link>
-                              <Link to={createPageUrl(`AddSale?copyId=${sale.id}`)} className="flex-shrink-0">
-                                <Button variant="ghost" size="icon" className="text-foreground hover:text-foreground/80 hover:bg-muted/50 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
-                                  <Copy className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleAddToInventory(sale)}
-                                className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
+                            </Link>
+                            <Link to={createPageUrl(`AddSale?copyId=${sale.id}`)} className="flex-shrink-0">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="glass text-white hover:text-gray-300 hover:bg-gray-700/50 h-10 w-10"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.1)',
+                                  borderRadius: '12px'
+                                }}
+                                title="Copy"
                               >
-                                <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                                <Copy className="w-5 h-5" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteClick(sale)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
-                              >
-                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleAddToInventory(sale)}
+                              className="glass text-green-400 hover:text-green-300 hover:bg-green-900/20 flex-shrink-0 h-10 w-10"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '12px'
+                              }}
+                              title="Add to Inventory"
+                            >
+                              <ArchiveRestore className="w-5 h-5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick(sale)}
+                              className="glass text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0 h-10 w-10"
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '12px'
+                              }}
+                              title="Delete"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
