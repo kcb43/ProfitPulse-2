@@ -6,10 +6,9 @@ import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { sortSalesByRecency } from "@/utils/sales";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, X, Lightbulb, Timer, Star } from "lucide-react";
+import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format, parseISO, differenceInDays, isAfter } from 'date-fns';
 
 import StatCard from "../components/dashboard/StatCard";
@@ -68,8 +67,6 @@ const SUPPORTED_MARKETPLACES = [
 export default function Dashboard() {
   const location = useLocation();
   const [profitChartRange, setProfitChartRange] = useState('14d');
-  const [showReturnBanner, setShowReturnBanner] = useState(true);
-  const [showStaleItemBanner, setShowStaleItemBanner] = useState(true);
 
   const { data: rawSales, isLoading: isLoadingSales } = useQuery({
     queryKey: ['sales'],
@@ -264,71 +261,83 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {itemsWithUpcomingReturns.length > 0 && showReturnBanner && (
-          <Alert className="relative mb-8 border border-yellow-300 bg-yellow-50/90 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-100">
-            <div className="flex items-start gap-3 pr-10">
-              <span className="inline-flex w-12 h-12 min-w-[3rem] min-h-[3rem] sm:w-12 sm:h-12 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 dark:bg-yellow-800/50 dark:text-yellow-300 shadow-sm">
-                <AlarmClock className="h-5 w-5" />
-              </span>
-              <div className="space-y-1">
-                <AlertTitle className="text-base font-semibold">Return Deadlines Approaching</AlertTitle>
-                <AlertDescription className="leading-relaxed">
-                  You have {itemsWithUpcomingReturns.length} item{itemsWithUpcomingReturns.length === 1 ? "" : "s"} with return deadlines within the next 10 days.
-                  <Link
-                    to={createPageUrl("Inventory?filter=returnDeadline")}
-                    className="font-semibold underline ml-2 text-yellow-800 hover:text-yellow-700 dark:text-yellow-100 dark:hover:text-yellow-50"
-                  >
-                    View Items
-                  </Link>
-                </AlertDescription>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowReturnBanner(false)}
-              className="absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-md border border-yellow-300/70 bg-yellow-100/80 text-yellow-800 hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2"
-            >
-              <X className="h-3.5 w-3.5" />
-              <span className="sr-only">Dismiss</span>
-            </button>
-          </Alert>
-        )}
-
-        {staleItems.length > 0 && showStaleItemBanner && (
-          <Alert className="relative mb-8 border border-blue-300 bg-blue-50/90 text-blue-900 dark:border-gray-700 dark:bg-gray-800/70 dark:text-gray-100">
-            <div className="flex items-start gap-3 pr-10">
-              <span className="inline-flex w-12 h-12 min-w-[3rem] min-h-[3rem] sm:w-12 sm:h-12 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-emerald-900/40 dark:text-emerald-300 shadow-sm">
-                <Lightbulb className="h-5 w-5" />
-              </span>
-              <div className="space-y-1">
-                <AlertTitle className="text-base font-semibold">Smart Reminder</AlertTitle>
-                <AlertDescription className="leading-relaxed">
-                  {staleItems.length === 1 ? (
-                    <>
-                      <span className="font-semibold text-blue-700 dark:text-emerald-300">"{staleItems[0].item_name}"</span> has been in inventory 10+ days and still isn’t listed.
-                    </>
-                  ) : (
-                    <>You have {staleItems.length} items 10+ days old that still aren’t listed.</>
-                  )}{" "}
-                  Set aside time today to get them live.
-                  <Link
-                    to={createPageUrl("Inventory?status=available")}
-                    className="font-semibold underline ml-2 text-blue-800 hover:text-blue-700 dark:text-emerald-300 dark:hover:text-emerald-200"
-                  >
-                    View unlisted items
-                  </Link>
-                </AlertDescription>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowStaleItemBanner(false)}
-              className="absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-md border border-blue-200/70 bg-blue-100/80 text-blue-700 hover:bg-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            >
-              <X className="h-3.5 w-3.5" />
-              <span className="sr-only">Dismiss</span>
-            </button>
-          </Alert>
+        {/* Return Deadlines and Smart Reminder Cards */}
+        {(itemsWithUpcomingReturns.length > 0 || staleItems.length > 0) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {itemsWithUpcomingReturns.length > 0 && (
+              <Link
+                to={createPageUrl("Inventory?filter=returnDeadline")}
+                className="relative rounded-2xl p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+              >
+                {/* Gradient glow on hover */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-4 mb-3">
+                    {/* Icon box */}
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/40">
+                      <AlarmClock className="w-8 h-8 text-white" />
+                    </div>
+                    
+                    {/* Text content */}
+                    <div className="flex-1">
+                      <div className="text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
+                        Return Deadlines
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {itemsWithUpcomingReturns.length}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="text-xs text-gray-500 dark:text-slate-500 mt-2 flex items-center gap-1">
+                    <span>View items to return</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            )}
+            
+            {staleItems.length > 0 && (
+              <Link
+                to={createPageUrl("Inventory?status=available")}
+                className="relative rounded-2xl p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+              >
+                {/* Gradient glow on hover */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                <div className="relative z-10">
+                  <div className="flex items-center gap-4 mb-3">
+                    {/* Icon box */}
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/40">
+                      <Lightbulb className="w-8 h-8 text-white" />
+                    </div>
+                    
+                    {/* Text content */}
+                    <div className="flex-1">
+                      <div className="text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
+                        Smart Reminder
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {staleItems.length}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="text-xs text-gray-500 dark:text-slate-500 mt-2 flex items-center gap-1">
+                    <span>Items need listing</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            )}
+          </div>
         )}
 
         {/* Updated grid layout for 3 stat cards instead of 6 */}
