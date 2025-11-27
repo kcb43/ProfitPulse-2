@@ -364,7 +364,7 @@ export default function Dashboard() {
         </div>
 
         {/* Dashboard cards: Your Progress (full-width), Quick Actions, Tip of the Day and Tax Summary side-by-side */}
-        <div className="space-y-6 mb-6">
+        <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
           {/* Full-width Your Progress section */}
           <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
           
