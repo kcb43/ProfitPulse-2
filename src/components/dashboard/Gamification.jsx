@@ -95,50 +95,50 @@ export default function Gamification({ sales, stats }) {
       <CardHeader className="relative z-10 bg-gray-50/50 dark:bg-gray-800/30 [data-theme='money-green-dark']:bg-gray-800/30 [data-theme='money-green-light']:bg-gray-50/50 rounded-t-lg">
         <CardTitle className="text-xl font-bold text-foreground">Your Progress</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 relative z-10 bg-gray-50/50 dark:bg-gray-800/30 [data-theme='money-green-dark']:bg-gray-800/30 [data-theme='money-green-light']:bg-gray-50/50 rounded-b-lg">
-        <div className="flex items-start justify-between gap-4">
+      <CardContent className="space-y-6 relative z-10 bg-gray-50/50 dark:bg-gray-800/30 [data-theme='money-green-dark']:bg-gray-800/30 [data-theme='money-green-light']:bg-gray-50/50 rounded-b-lg min-w-0">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 min-w-0">
           {/* Left side - Current Level */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              {renderIcon(currentLevel.icon, currentLevel.color)}
-              <div>
-                <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-gray-200">
-                  <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  {currentLevel.name}
+          <div className="flex-1 min-w-0 w-full sm:w-auto">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex-shrink-0">{renderIcon(currentLevel.icon, currentLevel.color)}</div>
+              <div className="min-w-0 flex-1">
+                <h3 className="flex flex-wrap items-center gap-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200 break-words">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                  <span className="break-words">{currentLevel.name}</span>
                 </h3>
                 {nextLevel ? (
-                  <p className="text-base text-gray-600 dark:text-gray-400 mt-1">Next: {nextLevel.name}</p>
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 break-words">Next: {nextLevel.name}</p>
                 ) : (
-                  <p className="text-base text-green-500 font-semibold mt-1">Max Level Reached!</p>
+                  <p className="text-sm sm:text-base text-green-500 font-semibold mt-1">Max Level Reached!</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Right side - Tier Badge (bigger) */}
-          <div className={`relative rounded-xl p-5 shadow-lg ${tierInfo.shadow} ${tierInfo.hoverShadow} transition-shadow duration-300 overflow-hidden group bg-gradient-to-br ${tierInfo.color} border ${tierInfo.border} flex-shrink-0`}>
+          <div className={`relative rounded-xl p-3 sm:p-5 shadow-lg ${tierInfo.shadow} ${tierInfo.hoverShadow} transition-shadow duration-300 overflow-hidden group bg-gradient-to-br ${tierInfo.color} border ${tierInfo.border} flex-shrink-0 w-full sm:w-auto`}>
             {/* Shine effect overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
             
-            <div className="relative flex items-center gap-3">
-              {/* Icon with rotating ring */}
-              <div className="relative flex-shrink-0">
-                {/* Rotating ring */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/30 to-transparent animate-spin-slow pointer-events-none" />
+              <div className="relative flex items-center gap-2 sm:gap-3 min-w-0">
+                {/* Icon with rotating ring */}
+                <div className="relative flex-shrink-0">
+                  {/* Rotating ring */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/30 to-transparent animate-spin-slow pointer-events-none" />
+                  
+                  {/* Icon container */}
+                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 group-hover:scale-110 transition-transform duration-300">
+                    <Medal className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-lg" />
+                  </div>
+                </div>
                 
-                {/* Icon container */}
-                <div className="relative w-16 h-16 rounded-full bg-white/20 dark:bg-white/10 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 group-hover:scale-110 transition-transform duration-300">
-                  <Medal className="w-8 h-8 text-white drop-shadow-lg" />
+                {/* Tier info - bigger */}
+                <div className="min-w-0 flex-1">
+                  <div className="text-white/70 text-[10px] sm:text-xs font-semibold uppercase tracking-wider leading-tight mb-0.5 break-words">Your Tier</div>
+                  <h4 className="text-white text-lg sm:text-xl font-black tracking-tight drop-shadow-lg leading-tight break-words">{tierInfo.name}</h4>
+                  <div className="text-white/80 text-xs sm:text-sm font-medium leading-tight">{points.toLocaleString()}</div>
                 </div>
               </div>
-              
-              {/* Tier info - bigger */}
-              <div className="min-w-0">
-                <div className="text-white/70 text-xs font-semibold uppercase tracking-wider leading-tight mb-0.5">Your Tier</div>
-                <h4 className="text-white text-xl font-black tracking-tight drop-shadow-lg leading-tight">{tierInfo.name}</h4>
-                <div className="text-white/80 text-sm font-medium leading-tight">{points.toLocaleString()}</div>
-              </div>
-            </div>
           </div>
         </div>
         

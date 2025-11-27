@@ -185,8 +185,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto min-w-0">
+    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
+      <div className="max-w-7xl mx-auto min-w-0 w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 min-w-0">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-foreground break-words">Dashboard</h1>
@@ -264,11 +264,11 @@ export default function Dashboard() {
 
         {/* Return Deadlines and Smart Reminder Cards */}
         {(itemsWithUpcomingReturns.length > 0 || staleItems.length > 0) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8 min-w-0">
             {itemsWithUpcomingReturns.length > 0 && (
               <Link
                 to={createPageUrl("Inventory?filter=returnDeadline")}
-                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-red-500/50 dark:border-red-500/50 hover:border-red-500/70 dark:hover:border-red-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-red-500/50 dark:border-red-500/50 hover:border-red-500/70 dark:hover:border-red-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden min-w-0"
               >
                 {/* Gradient glow on hover */}
                 <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-red-500/20 to-rose-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -305,7 +305,7 @@ export default function Dashboard() {
             {staleItems.length > 0 && (
               <Link
                 to={createPageUrl("Inventory?status=available")}
-                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden min-w-0"
               >
                 {/* Gradient glow on hover */}
                 <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -342,7 +342,7 @@ export default function Dashboard() {
         )}
 
         {/* Updated grid layout for 3 stat cards instead of 6 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 min-w-0">
           <StatCard
             title="Total Profit"
             value={`$${totalProfit.toFixed(2)}`}
@@ -365,7 +365,7 @@ export default function Dashboard() {
         </div>
 
         {/* Dashboard cards: Your Progress (full-width), Quick Actions, Tip of the Day and Tax Summary side-by-side */}
-        <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
+        <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6 min-w-0">
           {/* Full-width Your Progress section */}
           <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
           
@@ -385,7 +385,7 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-w-0">
           {/* Profit Chart (Mobile: 1st, Desktop: Row 1, Col 1-4) */}
           <div className="lg:col-span-4 lg:row-start-1">
             <ProfitChart 
