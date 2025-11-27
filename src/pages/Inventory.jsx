@@ -811,31 +811,31 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
       <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Inventory</h1>
+        <div className="max-w-7xl mx-auto min-w-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 min-w-0">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">Inventory</h1>
               <p className="text-sm text-muted-foreground mt-1">Track items you have for sale.</p>
             </div>
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto min-w-0">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+                className="w-full sm:w-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30 min-w-0"
                 disabled
               >
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Discover Items
-                <span className="ml-2 text-xs opacity-60">(Feed API)</span>
+                <TrendingUp className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="break-words">Discover Items</span>
+                <span className="ml-2 text-xs opacity-60 hidden sm:inline">(Feed API)</span>
               </Button>
               <Link
                 to={createPageUrl("AddInventoryItem")}
                 state={returnStateForInventory}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto min-w-0"
               >
                 <Button className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-md w-full sm:w-auto">
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus className="w-5 h-5 mr-2 flex-shrink-0" />
                   Add Item
                 </Button>
               </Link>
@@ -933,13 +933,13 @@ export default function InventoryPage() {
                   </Select>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 min-w-0">
+                <div className="text-xs text-muted-foreground min-w-0 break-words">
                   {showDeletedOnly 
                     ? "Recover deleted items within 30 days. Items older than 30 days are permanently deleted."
                     : "Favorites let you flag items for quick actions such as returns."}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap min-w-0">
                   <Button
                     variant={showDeletedOnly ? "default" : "outline"}
                     size="sm"
@@ -947,12 +947,12 @@ export default function InventoryPage() {
                       setShowDeletedOnly((prev) => !prev);
                       setShowFavoritesOnly(false); // Disable favorites when showing deleted
                     }}
-                    className="flex items-center gap-2 whitespace-nowrap"
+                    className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
                   >
-                    <Archive className={`w-4 h-4 ${showDeletedOnly ? "" : ""}`} />
-                    {showDeletedOnly ? "Showing Deleted" : "Show Deleted"}
+                    <Archive className={`w-4 h-4 flex-shrink-0 ${showDeletedOnly ? "" : ""}`} />
+                    <span className="truncate">{showDeletedOnly ? "Showing Deleted" : "Show Deleted"}</span>
                     {deletedCount > 0 && !showDeletedOnly && (
-                      <span className="text-xs font-normal opacity-80">({deletedCount})</span>
+                      <span className="text-xs font-normal opacity-80 flex-shrink-0">({deletedCount})</span>
                     )}
                   </Button>
                   {!showDeletedOnly && (
@@ -960,12 +960,12 @@ export default function InventoryPage() {
                       variant={showFavoritesOnly ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowFavoritesOnly((prev) => !prev)}
-                      className="flex items-center gap-2 whitespace-nowrap"
+                      className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
                     >
-                      <Star className={`w-4 h-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
-                      {showFavoritesOnly ? "Showing Favorites" : "Show Favorites"}
+                      <Star className={`w-4 h-4 flex-shrink-0 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                      <span className="truncate">{showFavoritesOnly ? "Showing Favorites" : "Show Favorites"}</span>
                       {favoritesCount > 0 && (
-                        <span className="text-xs font-normal opacity-80">({favoritesCount})</span>
+                        <span className="text-xs font-normal opacity-80 flex-shrink-0">({favoritesCount})</span>
                       )}
                     </Button>
                   )}
@@ -975,11 +975,11 @@ export default function InventoryPage() {
           </Card>
 
           {selectedItems.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg mb-4">
-              <span className="text-sm font-medium">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg mb-4 min-w-0">
+              <span className="text-sm font-medium min-w-0 break-words">
                 {selectedItems.length} item{selectedItems.length === 1 ? "" : "s"} selected
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 min-w-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -988,20 +988,20 @@ export default function InventoryPage() {
                     setBulkUpdateDialogOpen(true);
                   }}
                   disabled={bulkUpdateMutation.isPending}
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap flex-shrink-0"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-                  {bulkUpdateMutation.isPending ? "Updating..." : "Bulk Update"}
+                  <Edit className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{bulkUpdateMutation.isPending ? "Updating..." : "Bulk Update"}</span>
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setBulkDeleteDialogOpen(true)}
                   disabled={bulkDeleteMutation.isPending}
-                  className="whitespace-nowrap"
+                  className="whitespace-nowrap flex-shrink-0"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+                  <Trash2 className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}</span>
                 </Button>
               </div>
             </div>

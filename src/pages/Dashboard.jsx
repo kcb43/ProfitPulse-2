@@ -185,16 +185,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Track your business performance</p>
+    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto min-w-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 min-w-0">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-foreground break-words">Dashboard</h1>
+            <p className="text-muted-foreground mt-1 break-words">Track your business performance</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link to={createPageUrl("AddSale")}>
-              <Button className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-md">
+          <div className="flex flex-col sm:flex-row gap-3 min-w-0">
+            <Link to={createPageUrl("AddSale")} className="w-full sm:w-auto">
+              <Button className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-md w-full sm:w-auto">
                 <Plus className="w-5 h-5 mr-2" />
                 Add Sale
               </Button>
@@ -202,8 +202,9 @@ export default function Dashboard() {
             <Link
               to={createPageUrl("AddInventoryItem")}
               state={{ from: location.pathname || "/Dashboard" }}
+              className="w-full sm:w-auto"
             >
-              <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-md">
+              <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-md w-full sm:w-auto">
                 <Package className="w-5 h-5 mr-2" />
                 Add Inventory
               </Button>
@@ -215,12 +216,12 @@ export default function Dashboard() {
         <div className="mb-8">
           <Card className="border border-gray-200/70 dark:border-gray-800/70 bg-white/90 dark:bg-gray-900/70 backdrop-blur rounded-2xl shadow-sm">
             <CardContent className="p-5 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+                <div className="space-y-1 min-w-0">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">Marketplace Support</p>
                   <h2 className="text-lg sm:text-xl font-semibold text-foreground">List and track your inventory across the marketplaces you already sell on.</h2>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                <div className="flex flex-wrap items-center gap-3 sm:justify-end min-w-0">
                   {SUPPORTED_MARKETPLACES.map((marketplace) => {
                     const isUnavailable = marketplace.available === false;
                     return (
@@ -246,7 +247,7 @@ export default function Dashboard() {
                             loading="lazy"
                           />
                         </span>
-                        <span className="text-sm font-medium whitespace-nowrap">{marketplace.name}</span>
+                        <span className="text-sm font-medium break-words">{marketplace.name}</span>
                         {isUnavailable && (
                           <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900/90 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                             Coming soon

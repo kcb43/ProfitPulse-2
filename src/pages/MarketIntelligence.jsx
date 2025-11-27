@@ -19,22 +19,22 @@ import {
 
 export default function MarketIntelligence() {
   return (
-    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Market Intelligence</h1>
-          <p className="text-muted-foreground mt-1">Discover new inventory opportunities using eBay Feed APIs</p>
+    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto min-w-0">
+        <div className="mb-8 min-w-0">
+          <h1 className="text-3xl font-bold text-foreground break-words">Market Intelligence</h1>
+          <p className="text-muted-foreground mt-1 break-words">Discover new inventory opportunities using eBay Feed APIs</p>
         </div>
 
         <Card className="border-2 border-dashed border-purple-300 dark:border-purple-700 bg-gradient-to-br from-purple-50/50 to-indigo-50/50 dark:from-purple-950/20 dark:to-indigo-950/20">
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  Market Intelligence
+            <div className="flex items-start justify-between min-w-0">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="flex items-center gap-2 text-lg break-words">
+                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <span className="break-words">Market Intelligence</span>
                 </CardTitle>
-                <CardDescription className="mt-1">
+                <CardDescription className="mt-1 break-words">
                   Discover new inventory opportunities using eBay Feed APIs
                 </CardDescription>
               </div>
