@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { stripCustomFeeNotes } from "@/utils/customFees";
+import { useToast } from "@/components/ui/use-toast";
 
 const platformIcons = {
   ebay: "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg",
@@ -333,14 +334,17 @@ export default function SalesHistory() {
     },
   });
 
+  // NEW BULK DELETE FOR SALES - Simple and direct
   const bulkDeleteMutation = useMutation({
     mutationFn: async (saleIds) => {
       const salesToDelete = salesWithMetrics.filter(s => saleIds.includes(s.id));
       const deletedAt = new Date().toISOString();
       
-      // Soft delete: set deleted_at timestamp instead of deleting
-      const updatePromises = saleIds.map(id => 
-        base44.entities.Sale.update(id, { deleted_at: deletedAt })
+      // Soft delete all sales
+      await Promise.all(
+        saleIds.map(id => 
+          base44.entities.Sale.update(id, { deleted_at: deletedAt })
+        )
       );
       
       // Update inventory items
@@ -361,17 +365,46 @@ export default function SalesHistory() {
         }
       }
       
-      return Promise.all(updatePromises);
+      return saleIds;
     },
-    onSuccess: () => {
+    onMutate: async (saleIds) => {
+      // IMMEDIATELY update cache - sales disappear right away
+      await queryClient.cancelQueries({ queryKey: ['sales'] });
+      
+      const previousData = queryClient.getQueryData(['sales']);
+      const deletedAt = new Date().toISOString();
+      
+      queryClient.setQueryData(['sales'], (old = []) => {
+        return old.map(s => 
+          saleIds.includes(s.id) ? { ...s, deleted_at: deletedAt } : s
+        );
+      });
+      
+      // Clear selected sales
+      setSelectedSales([]);
+      
+      return { previousData };
+    },
+    onSuccess: (saleIds) => {
+      toast({
+        title: `✅ ${saleIds.length} Sale${saleIds.length > 1 ? 's' : ''} Deleted`,
+        description: `All selected sales have been moved to deleted items. You can recover them within 30 days.`,
+      });
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
-      setSelectedSales([]);
       setBulkDeleteDialogOpen(false);
     },
-    onError: (error) => {
-      console.error("Failed to bulk delete sales:", error);
-      alert("Failed to delete sales. Please try again.");
+    onError: (error, saleIds, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['sales'], context.previousData);
+      }
+      toast({
+        title: "❌ Bulk Delete Failed",
+        description: `Failed to delete sales: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
+      setBulkDeleteDialogOpen(false);
     },
   });
 
