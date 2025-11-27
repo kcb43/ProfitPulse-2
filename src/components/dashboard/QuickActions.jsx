@@ -1,68 +1,74 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Package, Layers, BarChart3, FileText } from "lucide-react";
+import { Plus, Package, Layers, BarChart3 } from "lucide-react";
 
 export default function QuickActions() {
   const actions = [
     {
       title: "Add Inventory",
+      description: "Add new items",
       icon: Package,
       link: createPageUrl("AddInventoryItem"),
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20"
+      gradient: "from-blue-500 via-indigo-500 to-purple-600",
+      shadow: "shadow-blue-500/30"
     },
     {
       title: "Add Sale",
+      description: "Record a sale",
       icon: Plus,
       link: createPageUrl("AddSale"),
-      color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-50 dark:bg-green-900/20"
+      gradient: "from-green-500 via-emerald-500 to-teal-600",
+      shadow: "shadow-green-500/30"
     },
     {
       title: "Create Listing",
+      description: "Cross-list items",
       icon: Layers,
       link: createPageUrl("Crosslist"),
-      color: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-50 dark:bg-purple-900/20"
+      gradient: "from-purple-500 via-indigo-500 to-pink-600",
+      shadow: "shadow-purple-500/30"
     },
     {
       title: "View Reports",
+      description: "See analytics",
       icon: BarChart3,
       link: createPageUrl("Reports"),
-      color: "text-orange-600 dark:text-orange-400",
-      bgColor: "bg-orange-50 dark:bg-orange-900/20"
+      gradient: "from-orange-500 via-amber-500 to-yellow-600",
+      shadow: "shadow-orange-500/30"
     }
   ];
 
   return (
-    <Card className="border-0 shadow-sm bg-white dark:bg-gray-900 h-full">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold text-foreground">Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6 pt-0">
-        <div className="grid grid-cols-2 gap-3">
-          {actions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link key={action.title} to={action.link}>
-                <Button
-                  variant="outline"
-                  className={`w-full h-auto flex flex-col items-center justify-center gap-2 p-4 hover:shadow-md transition-all ${action.bgColor} border-2 hover:border-opacity-50`}
-                >
-                  <Icon className={`w-5 h-5 ${action.color}`} />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    {action.title}
-                  </span>
-                </Button>
-              </Link>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-foreground">Quick Actions</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <Link
+              key={action.title}
+              to={action.link}
+              className="relative rounded-xl p-12 backdrop-blur-[10px] bg-slate-800/80 dark:bg-slate-800/80 border border-indigo-500/50 dark:border-indigo-500/50 hover:border-indigo-500/70 dark:hover:border-indigo-500/70 shadow-[rgba(0,0,0,0.3)_0px_20px_40px] hover:shadow-[rgba(0,0,0,0.4)_0px_25px_50px] transition-all duration-300 text-center group"
+            >
+              {/* Icon with gradient background */}
+              <div className={`w-14 h-14 mx-auto mb-4 rounded-xl flex items-center justify-center bg-gradient-to-br ${action.gradient} shadow-lg ${action.shadow}`}>
+                <Icon className="w-8 h-8 text-white" />
+              </div>
+              
+              {/* Title */}
+              <div className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                {action.title}
+              </div>
+              
+              {/* Description */}
+              <div className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                {action.description}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }
-

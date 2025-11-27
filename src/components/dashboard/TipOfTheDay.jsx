@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Lightbulb, Plus, Package, Layers, BarChart3 } from "lucide-react";
+import { Lightbulb } from "lucide-react";
 
 const tips = [
   "Remember: Price high, offer low, and flip like you mean it.",
@@ -76,37 +76,6 @@ export default function TipOfTheDay() {
     setTip(randomTip);
   }, []);
 
-  const quickActions = [
-    {
-      title: "Add Inventory",
-      icon: Package,
-      link: createPageUrl("AddInventoryItem"),
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20"
-    },
-    {
-      title: "Add Sale",
-      icon: Plus,
-      link: createPageUrl("AddSale"),
-      color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-50 dark:bg-green-900/20"
-    },
-    {
-      title: "Create Listing",
-      icon: Layers,
-      link: createPageUrl("Crosslist"),
-      color: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-50 dark:bg-purple-900/20"
-    },
-    {
-      title: "View Reports",
-      icon: BarChart3,
-      link: createPageUrl("Reports"),
-      color: "text-orange-600 dark:text-orange-400",
-      bgColor: "bg-orange-50 dark:bg-orange-900/20"
-    }
-  ];
-
   return (
     <Card className="border-0 shadow-sm bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 lg:h-auto h-full flex flex-col">
       <CardHeader>
@@ -119,29 +88,6 @@ export default function TipOfTheDay() {
         {/* Tip of the Day Section */}
         <div className="flex flex-col">
           <p className="text-sm text-yellow-800 dark:text-yellow-300 line-clamp-3">"{tip}"</p>
-        </div>
-
-        {/* Quick Actions Section - Visible on all screen sizes */}
-        <div className="border-t border-yellow-300 dark:border-yellow-700 pt-4 mt-4 lg:mt-4 lg:!mt-0">
-          <p className="text-xs font-semibold text-yellow-900 dark:text-yellow-200 mb-2">Quick Actions</p>
-          <div className="grid grid-cols-2 gap-2">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link key={action.title} to={action.link}>
-                  <Button
-                    variant="outline"
-                    className={`w-full h-auto flex flex-col items-center justify-center gap-1.5 p-2.5 hover:shadow-md transition-all ${action.bgColor} border-2 hover:border-opacity-50 text-xs`}
-                  >
-                    <Icon className={`w-4 h-4 ${action.color}`} />
-                    <span className="font-semibold text-gray-700 dark:text-gray-300 leading-tight">
-                      {action.title}
-                    </span>
-                  </Button>
-                </Link>
-              );
-            })}
-          </div>
         </div>
       </CardContent>
     </Card>

@@ -19,6 +19,7 @@ import RecentSales from "../components/dashboard/RecentSales";
 import Gamification from "../components/dashboard/Gamification";
 import TipOfTheDay from "../components/dashboard/TipOfTheDay";
 import TaxSummary from "../components/dashboard/TaxSummary";
+import QuickActions from "../components/dashboard/QuickActions";
 
 const SUPPORTED_MARKETPLACES = [
   {
@@ -354,10 +355,13 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Dashboard cards: Your Progress (full-width), Tip of the Day and Tax Summary side-by-side */}
+        {/* Dashboard cards: Your Progress (full-width), Quick Actions, Tip of the Day and Tax Summary side-by-side */}
         <div className="space-y-6 mb-6">
           {/* Full-width Your Progress section */}
           <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
+          
+          {/* Quick Actions section */}
+          <QuickActions />
           
           {/* Tip of Day and Tax Summary side-by-side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
