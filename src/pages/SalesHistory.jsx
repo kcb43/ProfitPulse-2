@@ -1047,42 +1047,63 @@ export default function SalesHistory() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {/* NEW DELETE DIALOG FOR SALES - Clear confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) setSaleToDelete(null);
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Sale?</AlertDialogTitle>
-            <AlertDialogDescription className="break-words">
-              Are you sure you want to delete "{saleToDelete?.item_name}"? This action cannot be undone.
+            <AlertDialogTitle className="text-red-600 dark:text-red-400">
+              🗑️ Delete Sale?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base break-words">
+              Are you sure you want to delete the sale for <strong>"{saleToDelete?.item_name || 'this item'}"</strong>?
+              <br /><br />
+              This sale will be moved to deleted items and can be recovered within 30 days.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteSaleMutation.mutate(saleToDelete)}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={confirmDeleteSale}
+              disabled={deleteSaleMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Delete
+              {deleteSaleMutation.isPending ? 'Deleting...' : 'Yes, Delete Sale'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* NEW BULK DELETE DIALOG FOR SALES - Clear confirmation */}
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Multiple Sales?</AlertDialogTitle>
-            <AlertDialogDescription className="break-words">
-              Are you sure you want to delete the {selectedSales.length} selected sales? This action cannot be undone.
+            <AlertDialogTitle className="text-red-600 dark:text-red-400">
+              🗑️ Delete {selectedSales.length} Sale{selectedSales.length > 1 ? 's' : ''}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base break-words">
+              Are you sure you want to delete <strong>{selectedSales.length} selected sale{selectedSales.length > 1 ? 's' : ''}</strong>?
+              <br /><br />
+              These sales will be moved to deleted items and can be recovered within 30 days.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => bulkDeleteMutation.mutate(selectedSales)}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                setBulkDeleteDialogOpen(false);
+                toast({
+                  title: `🗑️ Deleting ${selectedSales.length} Sale${selectedSales.length > 1 ? 's' : ''}...`,
+                  description: `Removing selected sales from your sales history...`,
+                });
+                bulkDeleteMutation.mutate(selectedSales);
+              }}
               disabled={bulkDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+              {bulkDeleteMutation.isPending ? 'Deleting...' : `Yes, Delete ${selectedSales.length} Sale${selectedSales.length > 1 ? 's' : ''}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
