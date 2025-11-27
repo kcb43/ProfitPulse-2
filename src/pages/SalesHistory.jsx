@@ -256,6 +256,7 @@ export default function SalesHistory() {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Verify the update was successful by fetching the sale
+      let actualDeletedAt = deletedAt;
       try {
         const updatedSale = await base44.entities.Sale.get(sale.id);
         console.log("Sale after update:", updatedSale);
@@ -270,9 +271,13 @@ export default function SalesHistory() {
         }
         
         // Use whichever format was saved
-        const actualDeletedAt = updatedSale.deleted_at || updatedSale.deletedAt;
-        
-        // Update inventory item quantity
+        actualDeletedAt = updatedSale.deleted_at || updatedSale.deletedAt;
+      } catch (verifyError) {
+        console.error("Failed to verify deletion on server:", verifyError);
+        throw new Error("Failed to verify deletion was saved to server: " + verifyError.message);
+      }
+      
+      // Update inventory item quantity
       if (sale.inventory_id) {
         try {
           const inventoryItem = await base44.entities.InventoryItem.get(sale.inventory_id);
@@ -288,7 +293,7 @@ export default function SalesHistory() {
         }
       }
       
-      return { saleId: sale.id, deletedAt };
+      return { saleId: sale.id, deletedAt: actualDeletedAt };
     },
     onMutate: async (sale) => {
       // IMMEDIATELY update cache - sale disappears right away
