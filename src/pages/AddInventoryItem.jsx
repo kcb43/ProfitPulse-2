@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Copy as CopyIcon, BarChart, Camera, Scan } from "lucide-react";
+import { ArrowLeft, Save, Copy as CopyIcon, BarChart, Camera, Scan, ImageIcon } from "lucide-react";
 import { addDays, format, parseISO } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import ClearableDateInput from "../components/ClearableDateInput";
 import SoldLookupDialog from "../components/SoldLookupDialog";
 import ReceiptScannerDialog from "@/components/ReceiptScannerDialog";
 import EbaySearchDialog from "@/components/EbaySearchDialog";
+import { ImageEditor } from "@/components/ImageEditor";
 import { scanReceiptPlaceholder } from "@/api/receiptScanner";
 import imageCompression from "browser-image-compression";
 
@@ -112,6 +113,8 @@ export default function AddInventoryItem() {
   const [isReceiptScanning, setIsReceiptScanning] = useState(false);
   const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
   const [ebaySearchInitialQuery, setEbaySearchInitialQuery] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [imageToEdit, setImageToEdit] = useState({ url: null });
 
   const { data: existingItem, isLoading: isLoadingItem } = useQuery({
     queryKey: ['inventoryItem', itemId],
@@ -307,6 +310,31 @@ export default function AddInventoryItem() {
     }
   };
 
+  const handleEditImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (formData.image_url) {
+      setImageToEdit({ url: formData.image_url });
+      setEditorOpen(true);
+    }
+  };
+
+  const handleSaveEditedImage = async (editedFile) => {
+    setIsUploading(true);
+    try {
+      const uploadPayload = editedFile instanceof File ? editedFile : new File([editedFile], editedFile.name || 'edited-image.jpg', { type: editedFile.type || 'image/jpeg' });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadPayload });
+      handleChange('image_url', file_url);
+      setEditorOpen(false);
+      setImageToEdit({ url: null });
+    } catch (error) {
+      console.error("Error uploading edited image:", error);
+      alert("Failed to upload edited image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleReceiptScan = async (file) => {
     setIsReceiptScanning(true);
     try {
@@ -463,14 +491,26 @@ export default function AddInventoryItem() {
                           {isUploading ? 'Uploading...' : formData.image_url ? 'Change image' : 'Upload image'}
                         </Button>
                         {formData.image_url && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleChange('image_url', '')}
-                          >
-                            Remove
-                          </Button>
+                          <>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleEditImage}
+                              className="flex items-center gap-2"
+                            >
+                              <ImageIcon className="w-4 h-4" />
+                              Edit Photo
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleChange('image_url', '')}
+                            >
+                              Remove
+                            </Button>
+                          </>
                         )}
                         <Button
                           type="button"

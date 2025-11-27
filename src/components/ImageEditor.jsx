@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { RotateCw, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
+import { RotateCw, RotateCcw, ZoomIn, ZoomOut, FlipHorizontal, FlipVertical } from 'lucide-react';
 
 /**
  * Image Editor Component
@@ -23,8 +23,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   const [rotation, setRotation] = useState(0);
   const [brightness, setBrightness] = useState(100); // 0-200, 100 = normal
   const [contrast, setContrast] = useState(100); // 0-200, 100 = normal
+  const [saturation, setSaturation] = useState(100); // 0-200, 100 = normal
   const [shadows, setShadows] = useState(0); // -100 to 100, 0 = normal
   const [sharpness, setSharpness] = useState(0); // -100 to 100, 0 = normal
+  const [inversion, setInversion] = useState(false); // true/false
+  const [flipHorizontal, setFlipHorizontal] = useState(false); // true/false
+  const [flipVertical, setFlipVertical] = useState(false); // true/false
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [aspect, setAspect] = useState(1); // Default to 1:1 (square) as recommended
   const [isProcessing, setIsProcessing] = useState(false);
@@ -41,8 +45,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setRotation(0);
     setBrightness(100);
     setContrast(100);
+    setSaturation(100);
     setShadows(0);
     setSharpness(0);
+    setInversion(false);
+    setFlipHorizontal(false);
+    setFlipVertical(false);
     setAspect(1); // Reset to recommended square
   };
 
@@ -84,17 +92,36 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           return;
         }
 
-        // Apply brightness, contrast, shadows, and sharpness
+        // Apply brightness, contrast, saturation, inversion, and flip
         const brightnessValue = brightness / 100;
         const contrastValue = contrast / 100;
-        // Shadows: negative values darken, positive values lighten
-        const shadowAdjustment = shadows / 100;
-        // Sharpness: positive values sharpen, negative values blur
-        const sharpnessValue = sharpness / 100;
+        const saturationValue = saturation / 100;
         
-        // Apply filters
-        ctx.filter = `brightness(${brightnessValue}) contrast(${contrastValue})`;
+        // Apply filters first (brightness, contrast, saturation, inversion)
+        let filterString = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue})`;
+        if (inversion) {
+          filterString += ' invert(1)';
+        }
+        ctx.filter = filterString;
+        
+        // Apply flip transformations before drawing
+        if (flipHorizontal || flipVertical) {
+          ctx.save();
+          if (flipHorizontal) {
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+          }
+          if (flipVertical) {
+            ctx.translate(0, canvas.height);
+            ctx.scale(1, -1);
+          }
+        }
+        
         ctx.drawImage(image, 0, 0);
+        
+        if (flipHorizontal || flipVertical) {
+          ctx.restore();
+        }
         
         // Apply sharpness using convolution
         if (sharpnessValue !== 0) {
@@ -208,7 +235,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     };
 
     createFilteredPreview();
-  }, [imageSrc, brightness, contrast, shadows, sharpness]);
+  }, [imageSrc, brightness, contrast, saturation, shadows, sharpness, inversion, flipHorizontal, flipVertical]);
 
   // Convert blob URL to data URL to avoid CORS issues
   const blobToDataURL = (blobUrl) => {
@@ -300,7 +327,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     };
   };
 
-  const getCroppedImg = async (imageSrc, pixelCrop, rotation = 0, brightness = 100, contrast = 100, shadows = 0, sharpness = 0) => {
+  const getCroppedImg = async (imageSrc, pixelCrop, rotation = 0, brightness = 100, contrast = 100, saturation = 100, shadows = 0, sharpness = 0, inversion = false, flipH = false, flipV = false) => {
     let image;
     try {
       image = await createImage(imageSrc);
@@ -330,14 +357,36 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     ctx.rotate(rotRad);
     ctx.translate(-image.width / 2, -image.height / 2);
 
-    // Apply brightness and contrast filters
+    // Apply flip transformations before drawing
+    if (flipH || flipV) {
+      ctx.save();
+      if (flipH) {
+        ctx.translate(image.width, 0);
+        ctx.scale(-1, 1);
+      }
+      if (flipV) {
+        ctx.translate(0, image.height);
+        ctx.scale(1, -1);
+      }
+    }
+
+    // Apply brightness, contrast, saturation, and inversion filters
     const brightnessValue = brightness / 100; // Convert 0-200 to 0-2
     const contrastValue = contrast / 100; // Convert 0-200 to 0-2
-    ctx.filter = `brightness(${brightnessValue}) contrast(${contrastValue})`;
+    const saturationValue = saturation / 100; // Convert 0-200 to 0-2
+    let filterString = `brightness(${brightnessValue}) contrast(${contrastValue}) saturate(${saturationValue})`;
+    if (inversion) {
+      filterString += ' invert(1)';
+    }
+    ctx.filter = filterString;
 
     // Draw the rotated image
     try {
       ctx.drawImage(image, 0, 0);
+      
+      if (flipH || flipV) {
+        ctx.restore();
+      }
       
       // Test if canvas is tainted after drawing
       let canManipulatePixels = true;
@@ -498,8 +547,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         rotation,
         brightness,
         contrast,
+        saturation,
         shadows,
-        sharpness
+        sharpness,
+        inversion,
+        flipHorizontal,
+        flipVertical
       );
 
       if (croppedImage && onSave) {
@@ -686,6 +739,20 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               <div className="text-xs text-muted-foreground text-center mt-1">{contrast}%</div>
             </div>
 
+            {/* Saturation */}
+            <div>
+              <Label className="text-sm mb-2 block">Saturation</Label>
+              <Slider
+                value={[saturation]}
+                onValueChange={([value]) => setSaturation(value)}
+                min={0}
+                max={200}
+                step={1}
+                className="w-full"
+              />
+              <div className="text-xs text-muted-foreground text-center mt-1">{saturation}%</div>
+            </div>
+
             {/* Shadows */}
             <div>
               <Label className="text-sm mb-2 block">Shadows</Label>
@@ -715,6 +782,50 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               />
               <div className="text-xs text-muted-foreground text-center mt-1">
                 {sharpness > 0 ? `+${sharpness}` : sharpness} (Left: Blur, Right: Sharpen)
+              </div>
+            </div>
+
+            {/* Inversion */}
+            <div>
+              <Label className="text-sm mb-2 block">Inversion</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="inversion"
+                  checked={inversion}
+                  onChange={(e) => setInversion(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="inversion" className="text-sm text-muted-foreground">
+                  Invert colors
+                </label>
+              </div>
+            </div>
+
+            {/* Flip */}
+            <div>
+              <Label className="text-sm mb-2 block">Flip</Label>
+              <div className="flex gap-2 items-center justify-center">
+                <Button
+                  type="button"
+                  variant={flipHorizontal ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFlipHorizontal(!flipHorizontal)}
+                  className="flex items-center gap-2"
+                >
+                  <FlipHorizontal className="h-4 w-4" />
+                  Horizontal
+                </Button>
+                <Button
+                  type="button"
+                  variant={flipVertical ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFlipVertical(!flipVertical)}
+                  className="flex items-center gap-2"
+                >
+                  <FlipVertical className="h-4 w-4" />
+                  Vertical
+                </Button>
               </div>
             </div>
 
