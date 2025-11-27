@@ -615,22 +615,40 @@ export default function SalesHistory() {
                 </>
               ) : (
                 <>
-                  <CardTitle className="text-white break-words">All Sales ({filteredSales.length})</CardTitle>
+                  <CardTitle className="text-white break-words">
+                    {showDeletedOnly ? `Deleted Sales (${filteredSales.length})` : `All Sales (${filteredSales.length})`}
+                  </CardTitle>
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0 w-full sm:w-auto">
-                    <Label htmlFor="sort-by" className="text-xs sm:text-sm font-medium text-white whitespace-nowrap">
-                      Sort by:
-                    </Label>
-                    <Select value={sort.by} onValueChange={(v) => setSort({ by: v })}>
-                      <SelectTrigger id="sort-by" className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sale_date">Most Recent</SelectItem>
-                        <SelectItem value="profit">Highest Profit</SelectItem>
-                        <SelectItem value="roi">Highest ROI</SelectItem>
-                        <SelectItem value="sale_speed">Fastest Sale</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Button
+                      variant={showDeletedOnly ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowDeletedOnly((prev) => !prev)}
+                      className="flex items-center gap-2 whitespace-nowrap text-xs sm:text-sm"
+                    >
+                      <Archive className="w-4 h-4" />
+                      {showDeletedOnly ? "Showing Deleted" : "Show Deleted"}
+                      {deletedCount > 0 && !showDeletedOnly && (
+                        <span className="text-xs font-normal opacity-80">({deletedCount})</span>
+                      )}
+                    </Button>
+                    {!showDeletedOnly && (
+                      <>
+                        <Label htmlFor="sort-by" className="text-xs sm:text-sm font-medium text-white whitespace-nowrap">
+                          Sort by:
+                        </Label>
+                        <Select value={sort.by} onValueChange={(v) => setSort({ by: v })}>
+                          <SelectTrigger id="sort-by" className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Sort by" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sale_date">Most Recent</SelectItem>
+                            <SelectItem value="profit">Highest Profit</SelectItem>
+                            <SelectItem value="roi">Highest ROI</SelectItem>
+                            <SelectItem value="sale_speed">Fastest Sale</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
                   </div>
                 </>
               )}
