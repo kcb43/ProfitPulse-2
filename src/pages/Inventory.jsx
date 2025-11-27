@@ -677,7 +677,12 @@ export default function InventoryPage() {
 
   const confirmDelete = () => {
     if (itemToDelete) {
-      deleteItemMutation.mutate(itemToDelete.id);
+      // Close dialog immediately for instant feedback
+      setDeleteDialogOpen(false);
+      const itemId = itemToDelete.id;
+      setItemToDelete(null);
+      // Trigger mutation (optimistic update will happen in onMutate)
+      deleteItemMutation.mutate(itemId);
     }
   };
 
