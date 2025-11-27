@@ -210,7 +210,7 @@ export default function InventoryPage() {
       // Snapshot the previous value
       const previousItems = queryClient.getQueryData(['inventoryItems']);
 
-      // Optimistically update to the new value
+      // Optimistically update to the new value - immediately mark as deleted
       queryClient.setQueryData(['inventoryItems'], (old = []) => {
         if (!Array.isArray(old)) return old;
         return old.map((item) =>
@@ -219,6 +219,9 @@ export default function InventoryPage() {
             : item
         );
       });
+
+      // Also remove from selected items if it's selected
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
 
       // Return a context object with the snapshotted value
       return { previousItems };
