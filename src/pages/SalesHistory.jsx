@@ -1385,6 +1385,52 @@ export default function SalesHistory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Permanent Delete Dialog */}
+      <AlertDialog open={permanentDeleteDialogOpen} onOpenChange={setPermanentDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete Sale?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete "{saleToPermanentDelete?.item_name || 'this sale'}"? 
+              This action cannot be undone. The sale will be removed from your records forever.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={permanentDeleteSaleMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => permanentDeleteSaleMutation.mutate(saleToPermanentDelete)}
+              disabled={permanentDeleteSaleMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {permanentDeleteSaleMutation.isPending ? "Deleting..." : "Permanently Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Permanent Delete Dialog */}
+      <AlertDialog open={bulkPermanentDeleteDialogOpen} onOpenChange={setBulkPermanentDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete {selectedSales.length} Sale{selectedSales.length !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete {selectedSales.length} selected sale{selectedSales.length !== 1 ? 's' : ''}? 
+              This action cannot be undone. These sales will be removed from your records forever.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkPermanentDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkPermanentDeleteMutation.mutate(selectedSales)}
+              disabled={bulkPermanentDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {bulkPermanentDeleteMutation.isPending ? "Deleting..." : `Permanently Delete ${selectedSales.length} Sale${selectedSales.length !== 1 ? 's' : ''}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
