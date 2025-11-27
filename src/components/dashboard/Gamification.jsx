@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Award, Trophy, Star, Box, Wrench, Gem, Crown, TrendingUp, Medal } from "lucide-react";
+import narutoIcon from "@/assets/naruto-icon.svg?url";
 
 const levels = [
   { name: "Newbie Flipper", minProfit: 0, icon: Box, color: "text-gray-500" },
   { name: "Garage Hustler", minProfit: 100, icon: Wrench, color: "text-orange-500" },
   { name: "Side Hustle Pro", minProfit: 500, icon: "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/abe917726_boy.png", color: "text-blue-500" },
-  { name: "Marketplace Mogul", minProfit: 2500, icon: Gem, color: "text-purple-500" },
+  { name: "Marketplace Mogul", minProfit: 2500, icon: narutoIcon, color: "text-purple-500" },
   { name: "Reselling Royalty", minProfit: 10000, icon: Crown, color: "text-amber-500" },
 ];
 
