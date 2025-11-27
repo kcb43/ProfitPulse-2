@@ -79,7 +79,7 @@ module.exports = {
   				}
   			},
   			'shake-alarm': {
-  				'0%': {
+  				'0%, 100%': {
   					transform: 'translateX(0) rotate(0deg)'
   				},
   				'3%, 7%, 11%, 15%, 19%': {
@@ -91,7 +91,7 @@ module.exports = {
   				'9.68%': {
   					transform: 'translateX(0) rotate(0deg)'
   				},
-  				'9.69%, 100%': {
+  				'9.69%, 99.99%': {
   					transform: 'translateX(0) rotate(0deg)'
   				}
   			}
