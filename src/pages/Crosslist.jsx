@@ -924,82 +924,147 @@ export default function Crosslist() {
             No items match your filters.
           </div>
         ) : layout === "rows" ? (
-          <div className="divide-y rounded-md border bg-card overflow-x-auto">
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-xs text-muted-foreground">
-              <div className="col-span-6">Item</div>
-              <div className="col-span-2">Purchase</div>
-              <div className="col-span-2">Status</div>
-              <div className="col-span-2 text-right">Actions</div>
-            </div>
-
+          <div className="space-y-6">
             {filtered.map((it) => {
               const map = computeListingState(it);
+              const listedCount = Object.values(map).filter(Boolean).length;
+              
               return (
-                <div key={it.id} className="grid grid-cols-12 gap-4 px-4 py-4 items-center min-w-0">
-                  <div className="col-span-12 sm:col-span-6 flex items-center gap-3 min-w-0">
+                <div key={it.id} className="product-list-item relative flex flex-col sm:flex-row items-start sm:items-center min-w-0"
+                  style={{
+                    minHeight: '248px',
+                    height: 'auto',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(51, 65, 85, 0.6)',
+                    background: 'rgb(30, 41, 59)',
+                    boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                    overflow: 'hidden'
+                  }}>
+                  {/* Checkbox - positioned absolutely */}
+                  <div className="absolute top-4 left-4 z-20">
                     <Checkbox
                       checked={selected.includes(it.id)}
                       onCheckedChange={() => toggleSelect(it.id)}
-                      className="!h-6 !w-6 !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 flex-shrink-0 [&_svg]:!h-6 [&_svg]:!w-6"
+                      className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
                     />
+                  </div>
+
+                  {/* Product Image Section */}
+                  <div className="glass flex items-center justify-center relative flex-shrink-0 m-4"
+                    style={{
+                      width: '220px',
+                      minWidth: '220px',
+                      height: '210px',
+                      borderRadius: '12px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      padding: '16px'
+                    }}>
                     <img
                       src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
                       alt={it.item_name}
-                      className="w-14 h-14 md:w-36 md:h-36 rounded-md object-cover flex-shrink-0"
+                      className="w-full h-full object-contain"
+                      style={{ maxHeight: '186px' }}
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-foreground truncate break-words">{it.item_name}</div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {it.category || "—"} • {it.source || "—"}
-                      </div>
+                  </div>
 
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {MARKETPLACES.map((m) => {
-                          const isListed = map[m.id];
-                          return (
-                            <div
-                              key={m.id}
-                              className={`inline-flex items-center justify-center w-7 h-7 rounded border transition-all ${
-                                isListed
-                                  ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700 opacity-100"
-                                  : "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-700 opacity-40"
-                              }`}
-                              title={isListed ? `Listed on ${m.label}` : `Not listed on ${m.label}`}
-                            >
-                              {renderMarketplaceIcon(m, "w-4 h-4")}
-                            </div>
-                          );
-                        })}
-                      </div>
+                  {/* Details Section */}
+                  <div className="flex-1 flex flex-col justify-between h-full px-4 sm:px-6 py-4 sm:py-6 border-l border-r min-w-0"
+                    style={{
+                      borderColor: 'rgba(51, 65, 85, 0.6)',
+                      minHeight: '210px'
+                    }}>
+                    {/* Status Badge */}
+                    <div className="mb-3">
+                      <Badge className={`${STATUS_COLORS[it.status] || STATUS_COLORS.available} glass px-4 sm:px-6 py-2 rounded-xl text-sm font-medium`}
+                        style={{
+                          background: it.status === 'listed' ? 'rgba(250, 204, 21, 0.2)' : it.status === 'sold' ? 'rgba(156, 163, 175, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                        {STATUS_LABELS[it.status] || STATUS_LABELS.available}
+                      </Badge>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-lg sm:text-xl font-bold text-white break-words line-clamp-2 mb-2"
+                      style={{ letterSpacing: '0.5px' }}>
+                      {it.item_name || 'Untitled Item'}
+                    </h3>
+
+                    {/* Category and Source */}
+                    <p className="text-gray-300 mb-4 text-xs sm:text-sm break-words"
+                      style={{ 
+                        letterSpacing: '0.7px',
+                        lineHeight: '23.8px'
+                      }}>
+                      {it.category || "—"} • {it.source || "—"}
+                      {it.purchase_date && ` • ${format(parseISO(it.purchase_date), "MMM d, yyyy")}`}
+                    </p>
+
+                    {/* Marketplace Icons */}
+                    <div className="mt-auto flex flex-wrap items-center gap-2">
+                      {MARKETPLACES.map((m) => {
+                        const isListed = map[m.id];
+                        return (
+                          <div
+                            key={m.id}
+                            className={`glass inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
+                              isListed
+                                ? "bg-green-500/20 border-green-400/50 opacity-100"
+                                : "bg-gray-500/10 border-gray-600/50 opacity-40"
+                            }`}
+                            style={{
+                              backdropFilter: 'blur(10px)',
+                              borderRadius: '8px'
+                            }}
+                            title={isListed ? `Listed on ${m.label}` : `Not listed on ${m.label}`}
+                          >
+                            {renderMarketplaceIcon(m, "w-4 h-4")}
+                          </div>
+                        );
+                      })}
+                      {listedCount > 0 && (
+                        <span className="text-xs text-gray-400 ml-2">
+                          {listedCount} of {MARKETPLACES.length} listed
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Purchase Price */}
+                    <div className="mt-3 flex items-center text-white">
+                      <span className="text-xs sm:text-sm font-semibold mr-2">Purchase Price:</span>
+                      <span className="text-sm sm:text-base font-bold text-white">
+                        ${(it.purchase_price || 0).toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="col-span-6 sm:col-span-2 text-sm min-w-0">
-                    <div className="text-foreground font-medium">${(it.purchase_price || 0).toFixed(2)}</div>
-                    <div className="text-muted-foreground">
-                      {it.purchase_date ? format(parseISO(it.purchase_date), "MMM d, yyyy") : "—"}
-                    </div>
-                  </div>
-
-                  <div className="col-span-6 sm:col-span-2">
-                    <Badge className={`${STATUS_COLORS[it.status] || STATUS_COLORS.available}`}>
-                      {STATUS_LABELS[it.status] || STATUS_LABELS.available}
-                    </Badge>
-                  </div>
-
-                  <div className="col-span-12 sm:col-span-2 flex sm:justify-end gap-2 flex-wrap">
+                  {/* Actions Section */}
+                  <div className="flex flex-col items-stretch justify-center gap-2 px-3 py-3 flex-shrink-0 w-full sm:w-[200px] border-t sm:border-t-0 sm:border-l border-gray-700"
+                    style={{
+                      background: 'rgb(51, 65, 85)'
+                    }}>
+                    {/* Crosslist Button */}
                     <Button
-                      variant="outline"
                       onClick={() => openComposer([it.id], false)}
-                      className="w-full sm:w-auto whitespace-nowrap"
+                      className="w-full bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-1.5 px-3 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-xs"
+                      style={{ letterSpacing: '1px' }}
                     >
-                      Crosslist
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      <span className="flex justify-center items-center gap-1">
+                        Crosslist
+                        <ArrowRight className="w-4 h-4" />
+                      </span>
                     </Button>
+
+                    {/* Edit Button */}
                     <Button
                       variant="ghost"
                       onClick={() => navigate(createPageUrl(`AddInventoryItem?id=${it.id}`))}
-                      className="w-full sm:w-auto whitespace-nowrap"
+                      className="w-full glass text-white hover:text-gray-300 hover:bg-gray-700/50 py-1.5 px-3 rounded-xl text-xs font-semibold"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: '12px'
+                      }}
                     >
                       Edit
                     </Button>
@@ -1069,3 +1134,4 @@ export default function Crosslist() {
     </div>
   );
 }
+
