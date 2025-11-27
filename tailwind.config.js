@@ -82,16 +82,19 @@ module.exports = {
   				'0%, 100%': {
   					transform: 'translateX(0) rotate(0deg)'
   				},
-  				'5%, 15%, 25%': {
+  				'1.25%, 5%, 8.75%, 12.5%': {
   					transform: 'translateX(-2px) rotate(-1deg)'
   				},
-  				'10%, 20%, 30%': {
+  				'3.75%, 7.5%, 11.25%, 15%': {
   					transform: 'translateX(2px) rotate(1deg)'
   				},
-  				'33.33%': {
+  				'2.5%, 6.25%, 10%, 13.75%, 17.5%': {
   					transform: 'translateX(0) rotate(0deg)'
   				},
-  				'33.34%, 77.78%, 99.99%': {
+  				'18.75%': {
+  					transform: 'translateX(0) rotate(0deg)'
+  				},
+  				'18.76%, 68.75%, 99.99%': {
   					transform: 'translateX(0) rotate(0deg)'
   				}
   			}
@@ -99,7 +102,7 @@ module.exports = {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'shake-alarm': 'shake-alarm 4.5s ease-in-out infinite'
+  			'shake-alarm': 'shake-alarm 4s ease-in-out infinite'
   		}
   	}
   },
