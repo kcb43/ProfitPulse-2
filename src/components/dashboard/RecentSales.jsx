@@ -92,8 +92,8 @@ export default function RecentSales({ sales }) {
                                 const profitValue = sale.profit ?? 0;
                                 const profitPositive = profitValue >= 0;
                                 const profitClass = profitPositive
-                                  ? "bg-green-600/90 text-white border-green-500 shadow-lg dark:[text-shadow:0_0_6px_rgba(34,197,94,0.5)]"
-                                  : "bg-red-600 text-white border-red-500 shadow-lg";
+                                  ? "bg-green-600/90 hover:!bg-green-600/90 text-white border-green-500 shadow-lg dark:[text-shadow:0_0_6px_rgba(34,197,94,0.5)]"
+                                  : "bg-red-600 hover:!bg-red-600 text-white border-red-500 shadow-lg";
                                 const formattedProfit = `${profitPositive ? "" : "-"}$${Math.abs(profitValue).toFixed(2)}`;
                                 return (
                                   <Badge className={profitClass}>
