@@ -40,29 +40,29 @@ export default function QuickActions() {
   ];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <h2 className="text-lg sm:text-xl font-bold text-foreground">Quick Actions</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {actions.map((action) => {
           const Icon = action.icon;
           return (
             <Link
               key={action.title}
               to={action.link}
-              className="relative rounded-xl p-12 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-indigo-500/30 dark:border-indigo-500/50 hover:border-indigo-500/50 dark:hover:border-indigo-500/70 shadow-[rgba(0,0,0,0.08)_0px_4px_12px] dark:shadow-[rgba(0,0,0,0.15)_0px_8px_16px] hover:shadow-[rgba(0,0,0,0.12)_0px_6px_16px] dark:hover:shadow-[rgba(0,0,0,0.2)_0px_10px_20px] transition-all duration-300 text-center group hover:scale-[1.02] hover:-translate-y-1"
+              className="relative rounded-xl p-4 sm:p-8 lg:p-12 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-indigo-500/30 dark:border-indigo-500/50 hover:border-indigo-500/50 dark:hover:border-indigo-500/70 shadow-[rgba(0,0,0,0.08)_0px_4px_12px] dark:shadow-[rgba(0,0,0,0.15)_0px_8px_16px] hover:shadow-[rgba(0,0,0,0.12)_0px_6px_16px] dark:hover:shadow-[rgba(0,0,0,0.2)_0px_10px_20px] transition-all duration-300 text-center group hover:scale-[1.02] hover:-translate-y-1"
             >
               {/* Icon with gradient background */}
-              <div className={`w-14 h-14 mx-auto mb-4 rounded-xl flex items-center justify-center bg-gradient-to-br ${action.gradient} shadow-lg ${action.shadow}`}>
-                <Icon className="w-8 h-8 text-white" />
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 mx-auto mb-2 sm:mb-3 lg:mb-4 rounded-xl flex items-center justify-center bg-gradient-to-br ${action.gradient} shadow-lg ${action.shadow}`}>
+                <Icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" />
               </div>
               
               {/* Title */}
-              <div className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+              <div className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                 {action.title}
               </div>
               
               {/* Description */}
-              <div className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+              <div className="text-[10px] sm:text-xs text-gray-600 dark:text-slate-400 mt-0.5 sm:mt-1 hidden sm:block">
                 {action.description}
               </div>
             </Link>

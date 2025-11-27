@@ -263,37 +263,37 @@ export default function Dashboard() {
 
         {/* Return Deadlines and Smart Reminder Cards */}
         {(itemsWithUpcomingReturns.length > 0 || staleItems.length > 0) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             {itemsWithUpcomingReturns.length > 0 && (
               <Link
                 to={createPageUrl("Inventory?filter=returnDeadline")}
-                className="relative rounded-2xl p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-red-500/50 dark:border-red-500/50 hover:border-red-500/70 dark:hover:border-red-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-red-500/50 dark:border-red-500/50 hover:border-red-500/70 dark:hover:border-red-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
               >
                 {/* Gradient glow on hover */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-500/20 to-rose-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-red-500/20 to-rose-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 
                 <div className="relative z-10">
-                  <div className="flex items-center gap-4 mb-3">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
                     {/* Icon box */}
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-rose-500 shadow-lg shadow-red-500/40">
-                      <AlarmClock className="w-8 h-8 text-white animate-shake-alarm" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-rose-500 shadow-lg shadow-red-500/40 flex-shrink-0">
+                      <AlarmClock className="w-6 h-6 sm:w-8 sm:h-8 text-white animate-shake-alarm" />
                     </div>
                     
                     {/* Text content */}
-                    <div className="flex-1">
-                      <div className="text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] sm:text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
                         Return Deadlines
                       </div>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                      <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                         {itemsWithUpcomingReturns.length}
                       </div>
                     </div>
                   </div>
                   
                   {/* Description */}
-                  <div className="text-xs text-gray-500 dark:text-slate-500 mt-2 flex items-center gap-1">
-                    <span>View items to return</span>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-500 mt-1 sm:mt-2 flex items-center gap-1">
+                    <span className="truncate">View items to return</span>
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -304,33 +304,33 @@ export default function Dashboard() {
             {staleItems.length > 0 && (
               <Link
                 to={createPageUrl("Inventory?status=available")}
-                className="relative rounded-2xl p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
               >
                 {/* Gradient glow on hover */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 
                 <div className="relative z-10">
-                  <div className="flex items-center gap-4 mb-3">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
                     {/* Icon box */}
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/40">
-                      <Lightbulb className="w-8 h-8 text-white" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/40 flex-shrink-0">
+                      <Lightbulb className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                     
                     {/* Text content */}
-                    <div className="flex-1">
-                      <div className="text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] sm:text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
                         Smart Reminder
                       </div>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                      <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                         {staleItems.length}
                       </div>
                     </div>
                   </div>
                   
                   {/* Description */}
-                  <div className="text-xs text-gray-500 dark:text-slate-500 mt-2 flex items-center gap-1">
-                    <span>Items need listing</span>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-500 mt-1 sm:mt-2 flex items-center gap-1">
+                    <span className="truncate">Items need listing</span>
+                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -341,7 +341,7 @@ export default function Dashboard() {
         )}
 
         {/* Updated grid layout for 3 stat cards instead of 6 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatCard
             title="Total Profit"
             value={`$${totalProfit.toFixed(2)}`}
