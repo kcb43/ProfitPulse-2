@@ -45,24 +45,76 @@ export default function BulkActionsMenu({ selectedItems = [], onActionComplete }
   const handleBulkDelete = async () => {
     setIsProcessing(true);
     try {
-      // Delete all selected items
-      const deletePromises = selectedItems.map(itemId =>
-        base44.entities.InventoryItem.delete(itemId)
-      );
-      await Promise.all(deletePromises);
+      const deletedAt = new Date().toISOString();
+      const results = [];
+      
+      // Soft delete all selected items with verification
+      for (const itemId of selectedItems) {
+        try {
+          await base44.entities.InventoryItem.update(itemId, {
+            deleted_at: deletedAt
+          });
+          // Verify the update was successful
+          const updatedItem = await base44.entities.InventoryItem.get(itemId);
+          if (!updatedItem.deleted_at) {
+            throw new Error("Server did not save deleted_at field");
+          }
+          results.push({ id: itemId, success: true });
+        } catch (error) {
+          console.error(`Failed to delete item ${itemId}:`, error);
+          results.push({ id: itemId, success: false, error: error.message });
+        }
+      }
 
-      toast({
-        title: "Items deleted",
-        description: `${selectedItems.length} item${selectedItems.length === 1 ? '' : 's'} deleted successfully.`,
-      });
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
 
-      queryClient.invalidateQueries(['inventoryItems']);
+      // Wait a moment, then refetch to verify server state
+      setTimeout(async () => {
+        try {
+          await queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+          // Verify all successfully deleted items have deleted_at set on server
+          const successfulIds = results.filter(r => r.success).map(r => r.id);
+          for (const id of successfulIds) {
+            try {
+              const updatedItem = await base44.entities.InventoryItem.get(id);
+              if (updatedItem.deleted_at) {
+                // Ensure cache has the correct deleted_at value
+                queryClient.setQueryData(['inventoryItems'], (old = []) => {
+                  if (!Array.isArray(old)) return old;
+                  return old.map(item => 
+                    item.id === id ? { ...item, deleted_at: updatedItem.deleted_at } : item
+                  );
+                });
+              }
+            } catch (error) {
+              console.error(`Error verifying deletion for item ${id}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error("Error verifying bulk deletion on server:", error);
+        }
+      }, 500);
+
+      if (failCount === 0) {
+        toast({
+          title: `✅ ${successCount} Item${successCount > 1 ? 's' : ''} Deleted`,
+          description: `All selected items have been moved to deleted items. You can recover them within 30 days.`,
+        });
+      } else {
+        toast({
+          title: `⚠️ Partial Delete Complete`,
+          description: `${successCount} item${successCount > 1 ? 's' : ''} deleted. ${failCount} failed.`,
+          variant: "destructive",
+        });
+      }
+
       if (onActionComplete) onActionComplete();
       setDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting items:', error);
       toast({
-        title: "Error deleting items",
+        title: "❌ Delete Failed",
         description: error.message || "Failed to delete items. Please try again.",
         variant: "destructive",
       });
