@@ -192,69 +192,51 @@ export default function InventoryPage() {
     cleanupOldDeletedItems();
   }, [cleanupOldDeletedItems]);
 
+  // NEW DELETE FUNCTIONALITY - Simple and direct
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId) => {
-      try {
-        // Soft delete: set deleted_at timestamp instead of deleting
-        await base44.entities.InventoryItem.update(itemId, {
-          deleted_at: new Date().toISOString()
-        });
-        return itemId;
-      } catch (error) {
-        throw new Error(`Failed to delete item: ${error.message}`);
-      }
+      const deletedAt = new Date().toISOString();
+      await base44.entities.InventoryItem.update(itemId, {
+        deleted_at: deletedAt
+      });
+      return { itemId, deletedAt };
     },
     onMutate: async (itemId) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      // IMMEDIATELY update the cache before server responds
       await queryClient.cancelQueries({ queryKey: ['inventoryItems'] });
-
-      // Snapshot the previous value
-      const previousItems = queryClient.getQueryData(['inventoryItems']);
-
-      // Optimistically update to the new value - immediately mark as deleted
+      
+      const previousData = queryClient.getQueryData(['inventoryItems']);
       const deletedAt = new Date().toISOString();
+      
+      // Update cache immediately - item disappears right away
       queryClient.setQueryData(['inventoryItems'], (old = []) => {
-        if (!Array.isArray(old)) return old;
-        // Create a completely new array with new object references
-        return old.map((item) =>
-          item.id === itemId
-            ? { ...item, deleted_at: deletedAt }
-            : item
+        return old.map(item => 
+          item.id === itemId ? { ...item, deleted_at: deletedAt } : item
         );
       });
-
-      // Also remove from selected items if it's selected
+      
+      // Remove from selected items
       setSelectedItems(prev => prev.filter(id => id !== itemId));
-
-      // Return a context object with the snapshotted value
-      return { previousItems };
+      
+      return { previousData };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "✅ Item Deleted Successfully",
+        description: `"${itemToDelete?.item_name || 'Item'}" has been moved to deleted items. You can recover it within 30 days.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
     },
     onError: (error, itemId, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousItems) {
-        queryClient.setQueryData(['inventoryItems'], context.previousItems);
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['inventoryItems'], context.previousData);
       }
-      console.error("Delete error:", error);
       toast({
-        title: "Error Deleting Item",
-        description: error.message || "Failed to delete item. Please try again.",
+        title: "❌ Delete Failed",
+        description: `Failed to delete item: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
-      setDeleteDialogOpen(false);
-    },
-    onSuccess: (deletedId) => {
-      // Invalidate to refetch and ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
-      toast({
-        title: "Item Deleted",
-        description: "The item has been moved to deleted items. You can recover it within 30 days.",
-      });
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
     },
   });
 
@@ -286,13 +268,14 @@ export default function InventoryPage() {
     },
   });
 
+  // NEW BULK DELETE - Simple and direct
   const bulkDeleteMutation = useMutation({
     mutationFn: async (itemIds) => {
-      const results = [];
       const deletedAt = new Date().toISOString();
+      const results = [];
+      
       for (const id of itemIds) {
         try {
-          // Soft delete: set deleted_at timestamp instead of deleting
           await base44.entities.InventoryItem.update(id, {
             deleted_at: deletedAt
           });
@@ -301,66 +284,58 @@ export default function InventoryPage() {
           results.push({ id, success: false, error: error.message });
         }
       }
+      
       return results;
     },
     onMutate: async (itemIds) => {
-      // Cancel any outgoing refetches
+      // IMMEDIATELY update cache - items disappear right away
       await queryClient.cancelQueries({ queryKey: ['inventoryItems'] });
-
-      // Snapshot the previous value
-      const previousItems = queryClient.getQueryData(['inventoryItems']);
-
-      // Optimistically update to the new value
+      
+      const previousData = queryClient.getQueryData(['inventoryItems']);
       const deletedAt = new Date().toISOString();
+      
       queryClient.setQueryData(['inventoryItems'], (old = []) => {
-        if (!Array.isArray(old)) return old;
-        return old.map((item) =>
-          itemIds.includes(item.id)
-            ? { ...item, deleted_at: deletedAt }
-            : item
+        return old.map(item => 
+          itemIds.includes(item.id) ? { ...item, deleted_at: deletedAt } : item
         );
       });
-
-      // Return a context object with the snapshotted value
-      return { previousItems };
+      
+      // Clear selected items
+      setSelectedItems([]);
+      
+      return { previousData };
     },
     onSuccess: (results) => {
       const successCount = results.filter(r => r.success).length;
       const failCount = results.filter(r => !r.success).length;
       
-      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
-      setSelectedItems([]);
       setBulkDeleteDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
       
       if (failCount === 0) {
         toast({
-          title: "Items Deleted",
-          description: `${successCount} selected items have been moved to deleted items. You can recover them within 30 days.`,
+          title: `✅ ${successCount} Item${successCount > 1 ? 's' : ''} Deleted`,
+          description: `All selected items have been moved to deleted items. You can recover them within 30 days.`,
         });
       } else {
         toast({
-          title: "Bulk Delete Completed",
-          description: `Deleted ${successCount} items. ${failCount} items failed to delete.`,
-          variant: failCount === results.length ? "destructive" : "default",
+          title: `⚠️ Partial Delete Complete`,
+          description: `${successCount} item${successCount > 1 ? 's' : ''} deleted. ${failCount} failed.`,
+          variant: "destructive",
         });
       }
     },
     onError: (error, itemIds, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousItems) {
-        queryClient.setQueryData(['inventoryItems'], context.previousItems);
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['inventoryItems'], context.previousData);
       }
-      console.error("Bulk delete error:", error);
       toast({
-        title: "Error Deleting Items",
-        description: "Failed to delete items. Please try again.",
+        title: "❌ Bulk Delete Failed",
+        description: `Failed to delete items: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
       setBulkDeleteDialogOpen(false);
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
     },
   });
 
@@ -679,15 +654,25 @@ export default function InventoryPage() {
     setDeleteDialogOpen(true);
   };
 
+  // NEW DELETE CONFIRMATION - Clear and immediate
   const confirmDelete = () => {
-    if (itemToDelete) {
-      // Close dialog immediately for instant feedback
-      setDeleteDialogOpen(false);
-      const itemId = itemToDelete.id;
-      setItemToDelete(null);
-      // Trigger mutation (optimistic update will happen in onMutate)
-      deleteItemMutation.mutate(itemId);
-    }
+    if (!itemToDelete) return;
+    
+    const itemId = itemToDelete.id;
+    const itemName = itemToDelete.item_name || 'this item';
+    
+    // Close dialog immediately
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+    
+    // Show immediate feedback
+    toast({
+      title: "🗑️ Deleting Item...",
+      description: `Removing "${itemName}" from your inventory...`,
+    });
+    
+    // Trigger delete - optimistic update happens in onMutate
+    deleteItemMutation.mutate(itemId);
   };
 
   const confirmBulkDelete = () => {
@@ -1272,22 +1257,30 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {/* NEW DELETE DIALOG - Clear confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) setItemToDelete(null);
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{itemToDelete?.item_name}"? This is permanent.
+            <AlertDialogTitle className="text-red-600 dark:text-red-400">
+              🗑️ Delete Inventory Item?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Are you sure you want to delete <strong>"{itemToDelete?.item_name || 'this item'}"</strong>?
+              <br /><br />
+              This item will be moved to deleted items and can be recovered within 30 days.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
               disabled={deleteItemMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {deleteItemMutation.isPending ? 'Deleting...' : 'Delete'}
+              {deleteItemMutation.isPending ? 'Deleting...' : 'Yes, Delete Item'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

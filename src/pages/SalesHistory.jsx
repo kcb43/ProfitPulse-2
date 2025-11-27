@@ -230,14 +230,17 @@ export default function SalesHistory() {
     cleanupOldDeletedSales();
   }, [cleanupOldDeletedSales]);
 
+  // NEW DELETE FUNCTIONALITY FOR SALES - Simple and direct
   const deleteSaleMutation = useMutation({
     mutationFn: async (sale) => {
-      // Soft delete: set deleted_at timestamp instead of deleting
+      const deletedAt = new Date().toISOString();
+      
+      // Soft delete: set deleted_at timestamp
       await base44.entities.Sale.update(sale.id, {
-        deleted_at: new Date().toISOString()
+        deleted_at: deletedAt
       });
       
-      // Still update inventory item quantity
+      // Update inventory item quantity
       if (sale.inventory_id) {
         try {
           const inventoryItem = await base44.entities.InventoryItem.get(sale.inventory_id);
@@ -253,18 +256,44 @@ export default function SalesHistory() {
         }
       }
       
-      return sale.id;
+      return { saleId: sale.id, deletedAt };
     },
-    onSuccess: () => {
+    onMutate: async (sale) => {
+      // IMMEDIATELY update cache - sale disappears right away
+      await queryClient.cancelQueries({ queryKey: ['sales'] });
+      
+      const previousData = queryClient.getQueryData(['sales']);
+      const deletedAt = new Date().toISOString();
+      
+      queryClient.setQueryData(['sales'], (old = []) => {
+        return old.map(s => 
+          s.id === sale.id ? { ...s, deleted_at: deletedAt } : s
+        );
+      });
+      
+      return { previousData };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "✅ Sale Deleted Successfully",
+        description: `"${saleToDelete?.item_name || 'Sale'}" has been moved to deleted items. You can recover it within 30 days.`,
+      });
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
       setDeleteDialogOpen(false);
       setSaleToDelete(null);
-      alert("The sale has been moved to deleted items. You can recover it within 30 days.");
     },
-    onError: (error) => {
-      console.error("Failed to delete sale:", error);
-      alert("Failed to delete sale. Please try again.");
+    onError: (error, sale, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['sales'], context.previousData);
+      }
+      toast({
+        title: "❌ Delete Failed",
+        description: `Failed to delete sale: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
     },
   });
 
@@ -497,9 +526,31 @@ export default function SalesHistory() {
     }
   };
 
+  // NEW DELETE HANDLER - Clear and immediate
   const handleDeleteClick = (sale) => {
     setSaleToDelete(sale);
     setDeleteDialogOpen(true);
+  };
+
+  // NEW DELETE CONFIRMATION - Clear and immediate
+  const confirmDeleteSale = () => {
+    if (!saleToDelete) return;
+    
+    const sale = saleToDelete;
+    const saleName = sale.item_name || 'this sale';
+    
+    // Close dialog immediately
+    setDeleteDialogOpen(false);
+    setSaleToDelete(null);
+    
+    // Show immediate feedback
+    toast({
+      title: "🗑️ Deleting Sale...",
+      description: `Removing "${saleName}" from your sales history...`,
+    });
+    
+    // Trigger delete - optimistic update happens in onMutate
+    deleteSaleMutation.mutate(sale);
   };
 
   const handleBulkUpdateConfirm = () => {
