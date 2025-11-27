@@ -267,15 +267,15 @@ export default function Dashboard() {
             {itemsWithUpcomingReturns.length > 0 && (
               <Link
                 to={createPageUrl("Inventory?filter=returnDeadline")}
-                className="relative rounded-2xl p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
+                className="relative rounded-2xl p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-red-500/50 dark:border-red-500/50 hover:border-red-500/70 dark:hover:border-red-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden"
               >
                 {/* Gradient glow on hover */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-500/20 to-rose-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 
                 <div className="relative z-10">
                   <div className="flex items-center gap-4 mb-3">
                     {/* Icon box */}
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/40">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-rose-500 shadow-lg shadow-red-500/40">
                       <AlarmClock className="w-8 h-8 text-white animate-shake-alarm" />
                     </div>
                     
