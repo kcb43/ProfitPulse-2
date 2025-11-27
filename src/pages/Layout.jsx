@@ -53,9 +53,9 @@ const navigationCategories = [
     title: "Analytics",
     icon: BarChart3,
     items: [
-      { title: "Reports", url: createPageUrl("Reports"), icon: BarChart3 },
       { title: "Profit Calendar", url: createPageUrl("ProfitCalendar"), icon: CalendarDays },
       { title: "Showcase", url: createPageUrl("Gallery"), icon: GalleryHorizontal },
+      { title: "Reports", url: createPageUrl("Reports"), icon: BarChart3 },
     ]
   }
 ];
