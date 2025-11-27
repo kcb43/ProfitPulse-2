@@ -1,11 +1,19 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, parseISO, subDays, compareAsc } from 'date-fns';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import ReportsExportPopup from "./ReportsExportPopup";
 
-export default function ProfitChart({ sales, range, onRangeChange }) {
+export default function ProfitChart({ sales, range, onRangeChange, totalProfit, totalSales }) {
   const { chartData, baseTitle, badgeLabel, badgeClass } = React.useMemo(() => {
     const badgeConfig = {
       '14d': { label: 'Last 14 Days', className: 'bg-emerald-500' },
@@ -76,13 +84,25 @@ export default function ProfitChart({ sales, range, onRangeChange }) {
                 </span>
               ) : null}
             </CardTitle>
-            <Tabs value={range} onValueChange={onRangeChange}>
-              <TabsList>
-                <TabsTrigger value="14d">14 Days</TabsTrigger>
-                <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                <TabsTrigger value="yearly">Yearly</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <ReportsExportPopup sales={sales} totalProfit={totalProfit} totalSales={totalSales} />
+                </PopoverContent>
+              </Popover>
+              <Tabs value={range} onValueChange={onRangeChange}>
+                <TabsList>
+                  <TabsTrigger value="14d">14 Days</TabsTrigger>
+                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                  <TabsTrigger value="yearly">Yearly</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
         </div>
       </CardHeader>
       <CardContent>

@@ -18,8 +18,6 @@ import PlatformBreakdown from "../components/dashboard/PlatformBreakdown";
 import RecentSales from "../components/dashboard/RecentSales";
 import Gamification from "../components/dashboard/Gamification";
 import TipOfTheDay from "../components/dashboard/TipOfTheDay";
-import MarketIntelligence from "../components/dashboard/MarketIntelligence";
-import ReportsExport from "../components/dashboard/ReportsExport";
 import TaxSummary from "../components/dashboard/TaxSummary";
 
 const SUPPORTED_MARKETPLACES = [
@@ -356,27 +354,17 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Dashboard cards: Your Progress, Tip of the Day (with Quick Actions), Market Intelligence */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Left column: Your Progress + Tax Summary */}
-          <div className="flex flex-col space-y-6">
-            <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
+        {/* Dashboard cards: Your Progress (full-width), Tip of the Day and Tax Summary side-by-side */}
+        <div className="space-y-6 mb-6">
+          {/* Full-width Your Progress section */}
+          <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
+          
+          {/* Tip of Day and Tax Summary side-by-side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TipOfTheDay />
             <div className="hidden lg:block">
               <TaxSummary sales={sales} totalProfit={totalProfit} />
             </div>
-          </div>
-
-          {/* Middle column: Tip of Day + Reports Export */}
-          <div className="space-y-6">
-            <TipOfTheDay />
-            <div className="hidden lg:block">
-              <ReportsExport sales={sales} totalProfit={totalProfit} totalSales={totalSales} />
-            </div>
-          </div>
-
-          {/* Right column: Market Intelligence */}
-          <div>
-            <MarketIntelligence />
           </div>
         </div>
 
@@ -392,7 +380,13 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
           {/* Profit Chart (Mobile: 1st, Desktop: Row 1, Col 1-4) */}
           <div className="lg:col-span-4 lg:row-start-1">
-            <ProfitChart sales={sales} range={profitChartRange} onRangeChange={setProfitChartRange} />
+            <ProfitChart 
+              sales={sales} 
+              range={profitChartRange} 
+              onRangeChange={setProfitChartRange}
+              totalProfit={totalProfit}
+              totalSales={totalSales}
+            />
           </div>
 
           {/* Recent Sales (Mobile: 2nd, Desktop: Row 2, Col 1-6) */}

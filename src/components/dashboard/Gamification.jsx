@@ -53,11 +53,14 @@ export default function Gamification({ sales, stats }) {
   };
 
   return (
-    <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
-      <CardHeader>
+    <Card className="border-0 shadow-sm bg-white dark:bg-gray-900 relative overflow-hidden">
+      {/* Gradient blur effect - positioned like the example */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full blur-[64px] pointer-events-none" style={{ bottom: '-108px' }} />
+      
+      <CardHeader className="relative z-10">
         <CardTitle className="text-xl font-bold text-foreground">Your Progress</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 relative z-10">
         <div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Current Level</p>
           <div className="flex items-center gap-3 mb-3">

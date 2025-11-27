@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, Plus, History, Package, BarChart3, GalleryHorizontal, Palette, Check, CalendarDays, Settings, FileText } from "lucide-react";
+import { LayoutDashboard, Plus, History, Package, BarChart3, GalleryHorizontal, Palette, Check, CalendarDays, Settings, FileText, TrendingUp } from "lucide-react";
 import CrossSquareIcon from "@/components/icons/CrossSquareIcon";
 import {
   Sidebar,
@@ -46,6 +46,7 @@ const navigationCategories = [
     items: [
       { title: "Crosslist", url: createPageUrl("Crosslist"), icon: CrossSquareIcon },
       { title: "Add Sale", url: createPageUrl("AddSale"), icon: Plus },
+      { title: "Market Intelligence", url: createPageUrl("MarketIntelligence"), icon: TrendingUp },
     ]
   },
   {
