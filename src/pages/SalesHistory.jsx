@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Trash2, Package, Pencil, Copy, ArchiveRestore, TrendingUp, Zap, CalendarIcon as Calendar } from "lucide-react";
+import { Search, Filter, Trash2, Package, Pencil, Copy, ArchiveRestore, TrendingUp, Zap, CalendarIcon as Calendar, Archive } from "lucide-react";
 import { format, parseISO, differenceInDays, endOfDay } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -98,6 +98,7 @@ export default function SalesHistory() {
   const [selectedSales, setSelectedSales] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [saleToDelete, setSaleToDelete] = useState(null);
+  const [showDeletedOnly, setShowDeletedOnly] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false);
   const [bulkUpdateForm, setBulkUpdateForm] = useState({
@@ -213,7 +214,14 @@ export default function SalesHistory() {
   const bulkDeleteMutation = useMutation({
     mutationFn: async (saleIds) => {
       const salesToDelete = salesWithMetrics.filter(s => saleIds.includes(s.id));
+      const deletedAt = new Date().toISOString();
       
+      // Soft delete: set deleted_at timestamp instead of deleting
+      const updatePromises = saleIds.map(id => 
+        base44.entities.Sale.update(id, { deleted_at: deletedAt })
+      );
+      
+      // Update inventory items
       for (const sale of salesToDelete) {
         if (sale.inventory_id) {
           try {
@@ -231,7 +239,7 @@ export default function SalesHistory() {
         }
       }
       
-      return Promise.all(saleIds.map(id => base44.entities.Sale.delete(id)));
+      return Promise.all(updatePromises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
@@ -331,21 +339,39 @@ export default function SalesHistory() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const filteredSales = salesWithMetrics.filter(sale => {
-    const matchesSearch = sale.item_name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-                         sale.category?.toLowerCase().includes(filters.searchTerm.toLowerCase());
-    const matchesPlatform = filters.platform === "all" || sale.platform === filters.platform;
+  const filteredSales = React.useMemo(() => {
+    return salesWithMetrics.filter(sale => {
+      // Filter deleted sales based on showDeletedOnly state
+      const deletedMatch = showDeletedOnly 
+        ? sale.deleted_at !== null && sale.deleted_at !== undefined
+        : !sale.deleted_at;
 
-    const profit = sale.profit || 0;
-    const matchesMinProfit = filters.minProfit === "" || profit >= parseFloat(filters.minProfit);
-    const matchesMaxProfit = filters.maxProfit === "" || profit <= parseFloat(filters.maxProfit);
+      // If showing deleted sales, skip other filters except search
+      if (showDeletedOnly) {
+        const matchesSearch = !filters.searchTerm || 
+          (sale.item_name?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+           sale.category?.toLowerCase().includes(filters.searchTerm.toLowerCase()));
+        return deletedMatch && matchesSearch;
+      }
 
-    const saleDate = parseISO(sale.sale_date);
-    const matchesStartDate = !filters.startDate || saleDate >= filters.startDate;
-    const matchesEndDate = !filters.endDate || saleDate <= endOfDay(filters.endDate);
+      // For non-deleted sales, apply all filters
+      if (!deletedMatch) return false;
 
-    return matchesSearch && matchesPlatform && matchesMinProfit && matchesMaxProfit && matchesStartDate && matchesEndDate;
-  });
+      const matchesSearch = sale.item_name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+                           sale.category?.toLowerCase().includes(filters.searchTerm.toLowerCase());
+      const matchesPlatform = filters.platform === "all" || sale.platform === filters.platform;
+
+      const profit = sale.profit || 0;
+      const matchesMinProfit = filters.minProfit === "" || profit >= parseFloat(filters.minProfit);
+      const matchesMaxProfit = filters.maxProfit === "" || profit <= parseFloat(filters.maxProfit);
+
+      const saleDate = parseISO(sale.sale_date);
+      const matchesStartDate = !filters.startDate || saleDate >= filters.startDate;
+      const matchesEndDate = !filters.endDate || saleDate <= endOfDay(filters.endDate);
+
+      return matchesSearch && matchesPlatform && matchesMinProfit && matchesMaxProfit && matchesStartDate && matchesEndDate;
+    });
+  }, [salesWithMetrics, showDeletedOnly, filters]);
 
   const bulkPayloadEmpty = Object.keys(buildBulkUpdatePayload()).length === 0;
 
@@ -634,33 +660,65 @@ export default function SalesHistory() {
                           </div>
                         </div>
 
+                        {isDeleted && daysUntilPermanentDelete !== null && (
+                          <div className="mb-3 p-2 bg-orange-100 dark:bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-800 dark:text-orange-200">
+                            <p className="font-semibold text-xs flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
+                            </p>
+                          </div>
+                        )}
+
+                        {isDeleted && daysUntilPermanentDelete === null && (
+                          <div className="mb-3 p-2 bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-800 dark:text-red-200">
+                            <p className="font-semibold text-xs">
+                              Will be permanently deleted soon
+                            </p>
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center justify-start md:justify-end gap-1 sm:gap-2 md:gap-[10.4px] min-w-0 w-full border-t border-gray-200 dark:border-gray-700 pt-3">
-                          <Link to={createPageUrl(`AddSale?id=${sale.id}`)} className="flex-shrink-0">
-                            <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
-                              <Pencil className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                          {isDeleted ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => recoverSaleMutation.mutate(sale)}
+                              disabled={recoverSaleMutation.isPending}
+                              className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
+                              title="Recover Sale"
+                            >
+                              <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
                             </Button>
-                          </Link>
-                          <Link to={createPageUrl(`AddSale?copyId=${sale.id}`)} className="flex-shrink-0">
-                            <Button variant="ghost" size="icon" className="text-foreground hover:text-foreground/80 hover:bg-muted/50 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
-                              <Copy className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleAddToInventory(sale)}
-                            className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
-                          >
-                            <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteClick(sale)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
-                          >
-                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                          </Button>
+                          ) : (
+                            <>
+                              <Link to={createPageUrl(`AddSale?id=${sale.id}`)} className="flex-shrink-0">
+                                <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
+                                  <Pencil className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                                </Button>
+                              </Link>
+                              <Link to={createPageUrl(`AddSale?copyId=${sale.id}`)} className="flex-shrink-0">
+                                <Button variant="ghost" size="icon" className="text-foreground hover:text-foreground/80 hover:bg-muted/50 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]">
+                                  <Copy className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleAddToInventory(sale)}
+                                className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
+                              >
+                                <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteClick(sale)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
+                              >
+                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
