@@ -505,13 +505,15 @@ export default function InventoryPage() {
     return { totalInvested, totalQuantity };
   }, [inventoryItems]);
 
-  const filteredItems = inventoryItems.filter(item => {
-    const today = new Date();
+  const filteredItems = React.useMemo(() => {
+    if (!Array.isArray(inventoryItems)) return [];
+    return inventoryItems.filter(item => {
+      const today = new Date();
 
-    // Filter deleted items based on showDeletedOnly state
-    const deletedMatch = showDeletedOnly 
-      ? item.deleted_at !== null && item.deleted_at !== undefined
-      : !item.deleted_at;
+      // Filter deleted items based on showDeletedOnly state
+      // Check for truthy deleted_at (null, undefined, or empty string means not deleted)
+      const isDeleted = item.deleted_at !== null && item.deleted_at !== undefined && item.deleted_at !== '';
+      const deletedMatch = showDeletedOnly ? isDeleted : !isDeleted;
 
     // If showing deleted items, skip other filters
     if (showDeletedOnly) {
@@ -552,8 +554,9 @@ export default function InventoryPage() {
       }
     }
     
-    return statusMatch && searchMatch && daysInStockMatch && favoriteMatch;
-  });
+      return statusMatch && searchMatch && daysInStockMatch && favoriteMatch;
+    });
+  }, [inventoryItems, showDeletedOnly, showFavoritesOnly, filters, isFavorite]);
 
   const deletedCount = React.useMemo(() => {
     if (!Array.isArray(inventoryItems)) return 0;
