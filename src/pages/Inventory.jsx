@@ -214,19 +214,12 @@ export default function InventoryPage() {
       const deletedAt = new Date().toISOString();
       queryClient.setQueryData(['inventoryItems'], (old = []) => {
         if (!Array.isArray(old)) return old;
-        const updated = old.map((item) =>
+        // Create a completely new array with new object references
+        return old.map((item) =>
           item.id === itemId
             ? { ...item, deleted_at: deletedAt }
             : item
         );
-        // Force a re-render by creating a new array reference
-        return [...updated];
-      });
-
-      // Force React Query to notify all subscribers
-      await queryClient.invalidateQueries({ 
-        queryKey: ['inventoryItems'],
-        refetchType: 'none' // Don't refetch, just notify
       });
 
       // Also remove from selected items if it's selected
