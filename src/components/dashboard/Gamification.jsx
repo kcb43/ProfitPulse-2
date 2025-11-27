@@ -62,10 +62,10 @@ export default function Gamification({ sales, stats }) {
 
   const renderIcon = (iconOrUrl, className) => {
     if (typeof iconOrUrl === 'string') {
-      return <img src={iconOrUrl} alt="Level icon" className={`w-8 h-8 object-contain ${className}`} />;
+      return <img src={iconOrUrl} alt="Level icon" className={`w-14 h-14 object-contain ${className}`} />;
     }
     const IconComponent = iconOrUrl;
-    return <IconComponent className={`w-8 h-8 ${className}`} />;
+    return <IconComponent className={`w-14 h-14 ${className}`} />;
   };
 
   const tierInfo = React.useMemo(() => getTierInfo(stats.totalProfit), [stats.totalProfit]);
