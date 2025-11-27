@@ -79,21 +79,24 @@ module.exports = {
   				}
   			},
   			'shake-alarm': {
-  				'0%, 100%': {
+  				'0%, 33%': {
   					transform: 'translateX(0) rotate(0deg)'
   				},
-  				'10%, 30%, 50%, 70%, 90%': {
+  				'3%, 9%, 15%, 21%, 27%': {
   					transform: 'translateX(-2px) rotate(-1deg)'
   				},
-  				'20%, 40%, 60%, 80%': {
+  				'6%, 12%, 18%, 24%, 30%': {
   					transform: 'translateX(2px) rotate(1deg)'
+  				},
+  				'34%, 100%': {
+  					transform: 'translateX(0) rotate(0deg)'
   				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'shake-alarm': 'shake-alarm 2s ease-in-out infinite'
+  			'shake-alarm': 'shake-alarm 3s ease-in-out infinite'
   		}
   	}
   },
