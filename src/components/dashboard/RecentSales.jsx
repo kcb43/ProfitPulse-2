@@ -73,7 +73,7 @@ export default function RecentSales({ sales }) {
                             
                             {isFirst && (
                               <div className="absolute top-2 left-2 z-10">
-                                <Badge className="bg-blue-600 text-white border-blue-500 shadow-lg">
+                                <Badge className="bg-blue-600 hover:!bg-blue-600 text-white border-blue-500 shadow-lg">
                                   Recent Sale
                                 </Badge>
                               </div>
@@ -81,7 +81,7 @@ export default function RecentSales({ sales }) {
                             
                             {isLast && (
                               <div className="absolute top-2 left-2 z-10">
-                                <Badge className="bg-red-600 text-white border-red-500 shadow-lg">
+                                <Badge className="bg-red-600 hover:!bg-red-600 text-white border-red-500 shadow-lg">
                                   Leaving Soon
                                 </Badge>
                               </div>
