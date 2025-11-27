@@ -101,6 +101,9 @@ export default function SalesHistory() {
   const [saleToDelete, setSaleToDelete] = useState(null);
   const [showDeletedOnly, setShowDeletedOnly] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [permanentDeleteDialogOpen, setPermanentDeleteDialogOpen] = useState(false);
+  const [saleToPermanentDelete, setSaleToPermanentDelete] = useState(null);
+  const [bulkPermanentDeleteDialogOpen, setBulkPermanentDeleteDialogOpen] = useState(false);
   const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false);
   const [bulkUpdateForm, setBulkUpdateForm] = useState({
     platform: "",
@@ -383,11 +386,113 @@ export default function SalesHistory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
-      alert("The sale has been restored.");
+      toast({
+        title: "Sale Restored",
+        description: "The sale has been restored to your sales history.",
+      });
     },
     onError: (error) => {
       console.error("Failed to recover sale:", error);
-      alert("Failed to recover sale. Please try again.");
+      toast({
+        title: "Error Restoring Sale",
+        description: error.message || "Failed to restore sale. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Permanent delete mutation (hard delete)
+  const permanentDeleteSaleMutation = useMutation({
+    mutationFn: async (sale) => {
+      // First update inventory item quantity if needed
+      if (sale.inventory_id) {
+        try {
+          const inventoryItem = await base44.entities.InventoryItem.get(sale.inventory_id);
+          const quantitySoldInSale = sale.quantity_sold || 1;
+          const newQuantitySold = Math.max(0, (inventoryItem.quantity_sold || 0) - quantitySoldInSale);
+          
+          await base44.entities.InventoryItem.update(sale.inventory_id, {
+            quantity_sold: newQuantitySold,
+            status: newQuantitySold === 0 ? "available" : (newQuantitySold < inventoryItem.quantity ? inventoryItem.status : "sold")
+          });
+        } catch (error) {
+          console.error("Failed to update inventory item on permanent deletion:", error);
+        }
+      }
+      
+      // Hard delete the sale
+      await base44.entities.Sale.delete(sale.id);
+      return sale.id;
+    },
+    onSuccess: (saleId) => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+      setPermanentDeleteDialogOpen(false);
+      setSaleToPermanentDelete(null);
+      toast({
+        title: "✅ Sale Permanently Deleted",
+        description: "The sale has been permanently deleted and cannot be recovered.",
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to permanently delete sale:", error);
+      toast({
+        title: "❌ Delete Failed",
+        description: `Failed to permanently delete sale: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
+      setPermanentDeleteDialogOpen(false);
+    },
+  });
+
+  // Bulk permanent delete mutation
+  const bulkPermanentDeleteMutation = useMutation({
+    mutationFn: async (saleIds) => {
+      const salesToDelete = salesWithMetrics.filter(s => saleIds.includes(s.id));
+      
+      // Update inventory items first
+      for (const sale of salesToDelete) {
+        if (sale.inventory_id) {
+          try {
+            const inventoryItem = await base44.entities.InventoryItem.get(sale.inventory_id);
+            const quantitySoldInSale = sale.quantity_sold || 1;
+            const newQuantitySold = Math.max(0, (inventoryItem.quantity_sold || 0) - quantitySoldInSale);
+            
+            await base44.entities.InventoryItem.update(sale.inventory_id, {
+              quantity_sold: newQuantitySold,
+              status: newQuantitySold === 0 ? "available" : (newQuantitySold < inventoryItem.quantity ? inventoryItem.status : "sold")
+            });
+          } catch (error) {
+            console.error("Failed to update inventory item on bulk permanent deletion:", error);
+          }
+        }
+      }
+      
+      // Hard delete all sales
+      await Promise.all(
+        saleIds.map(id => base44.entities.Sale.delete(id))
+      );
+      
+      return saleIds;
+    },
+    onSuccess: (saleIds) => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+      setSelectedSales([]);
+      setBulkPermanentDeleteDialogOpen(false);
+      toast({
+        title: `✅ ${saleIds.length} Sales Permanently Deleted`,
+        description: "Selected sales have been permanently deleted and cannot be recovered.",
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to bulk permanently delete sales:", error);
+      toast({
+        title: "❌ Bulk Delete Failed",
+        description: `Failed to permanently delete sales: ${error.message || 'Unknown error'}`,
+        variant: "destructive",
+      });
+      setBulkPermanentDeleteDialogOpen(false);
     },
   });
 
@@ -792,15 +897,27 @@ export default function SalesHistory() {
                     >
                       {bulkUpdateMutation.isPending ? "Updating..." : "Bulk Update"}
                     </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => setBulkDeleteDialogOpen(true)}
-                      disabled={bulkDeleteMutation.isPending}
-                      className="w-full sm:w-auto"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
-                    </Button>
+                    {showDeletedOnly ? (
+                      <Button
+                        variant="destructive"
+                        onClick={() => setBulkPermanentDeleteDialogOpen(true)}
+                        disabled={bulkPermanentDeleteMutation.isPending}
+                        className="w-full sm:w-auto"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {bulkPermanentDeleteMutation.isPending ? "Permanently Deleting..." : "Permanently Delete Selected"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        onClick={() => setBulkDeleteDialogOpen(true)}
+                        disabled={bulkDeleteMutation.isPending}
+                        className="w-full sm:w-auto"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
+                      </Button>
+                    )}
                   </div>
                 </>
               ) : (
@@ -821,6 +938,24 @@ export default function SalesHistory() {
                         <span className="text-xs font-normal opacity-80">({deletedCount})</span>
                       )}
                     </Button>
+                    {showDeletedOnly && (
+                      <Label htmlFor="sort-by" className="text-xs sm:text-sm font-medium text-white whitespace-nowrap">
+                        Sort by:
+                      </Label>
+                    )}
+                    {showDeletedOnly && (
+                      <Select value={sort.by} onValueChange={(v) => setSort({ by: v })}>
+                        <SelectTrigger id="sort-by" className="w-full sm:w-[180px]">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sale_date">Most Recent</SelectItem>
+                          <SelectItem value="profit">Highest Profit</SelectItem>
+                          <SelectItem value="roi">Highest ROI</SelectItem>
+                          <SelectItem value="sale_speed">Fastest Sale</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                     {!showDeletedOnly && (
                       <>
                         <Label htmlFor="sort-by" className="text-xs sm:text-sm font-medium text-white whitespace-nowrap">
@@ -994,16 +1129,31 @@ export default function SalesHistory() {
 
                         <div className="flex flex-wrap items-center justify-start md:justify-end gap-1 sm:gap-2 md:gap-[10.4px] min-w-0 w-full border-t border-gray-200 dark:border-gray-700 pt-3">
                           {isDeleted ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => recoverSaleMutation.mutate(sale)}
-                              disabled={recoverSaleMutation.isPending}
-                              className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
-                              title="Recover Sale"
-                            >
-                              <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => recoverSaleMutation.mutate(sale)}
+                                disabled={recoverSaleMutation.isPending}
+                                className="text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
+                                title="Recover Sale"
+                              >
+                                <ArchiveRestore className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSaleToPermanentDelete(sale);
+                                  setPermanentDeleteDialogOpen(true);
+                                }}
+                                disabled={permanentDeleteSaleMutation.isPending}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 md:h-[52px] md:w-[52px]"
+                                title="Permanently Delete"
+                              >
+                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-[26px] md:h-[26px]" />
+                              </Button>
+                            </>
                           ) : (
                             <>
                               <Link to={createPageUrl(`AddSale?id=${sale.id}`)} className="flex-shrink-0">
