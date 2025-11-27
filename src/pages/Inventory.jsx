@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, differenceInDays, isAfter } from "date-fns";
-import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database, ImageIcon } from "lucide-react";
+import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database, ImageIcon, ArchiveRestore, Archive } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
@@ -83,6 +83,7 @@ export default function InventoryPage() {
   const [tagEditorFor, setTagEditorFor] = useState(null);
   const [tagDrafts, setTagDrafts] = useState({});
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [showDeletedOnly, setShowDeletedOnly] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState({ url: null, itemId: null });
 
@@ -160,10 +161,43 @@ export default function InventoryPage() {
     }
   }, [location.state]);
 
+  // Cleanup function to hard delete items older than 30 days
+  const cleanupOldDeletedItems = React.useCallback(async () => {
+    if (!Array.isArray(inventoryItems)) return;
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const itemsToHardDelete = inventoryItems.filter(item => {
+      if (!item.deleted_at) return false;
+      const deletedDate = parseISO(item.deleted_at);
+      return deletedDate < thirtyDaysAgo;
+    });
+
+    if (itemsToHardDelete.length > 0) {
+      try {
+        await Promise.all(
+          itemsToHardDelete.map(item => base44.entities.InventoryItem.delete(item.id))
+        );
+        queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+      } catch (error) {
+        console.error("Error cleaning up old deleted items:", error);
+      }
+    }
+  }, [inventoryItems, queryClient]);
+
+  // Run cleanup on mount and when inventoryItems change
+  useEffect(() => {
+    cleanupOldDeletedItems();
+  }, [cleanupOldDeletedItems]);
+
   const deleteItemMutation = useMutation({
     mutationFn: async (itemId) => {
       try {
-        await base44.entities.InventoryItem.delete(itemId);
+        // Soft delete: set deleted_at timestamp instead of deleting
+        await base44.entities.InventoryItem.update(itemId, {
+          deleted_at: new Date().toISOString()
+        });
         return itemId;
       } catch (error) {
         throw new Error(`Failed to delete item: ${error.message}`);
@@ -175,7 +209,7 @@ export default function InventoryPage() {
       setItemToDelete(null);
       toast({
         title: "Item Deleted",
-        description: "The inventory item has been successfully removed.",
+        description: "The item has been moved to deleted items. You can recover it within 30 days.",
       });
     },
     onError: (error) => {
@@ -189,12 +223,44 @@ export default function InventoryPage() {
     },
   });
 
+  const recoverItemMutation = useMutation({
+    mutationFn: async (itemId) => {
+      try {
+        await base44.entities.InventoryItem.update(itemId, {
+          deleted_at: null
+        });
+        return itemId;
+      } catch (error) {
+        throw new Error(`Failed to recover item: ${error.message}`);
+      }
+    },
+    onSuccess: (recoveredId) => {
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+      toast({
+        title: "Item Recovered",
+        description: "The item has been restored to your inventory.",
+      });
+    },
+    onError: (error) => {
+      console.error("Recover error:", error);
+      toast({
+        title: "Error Recovering Item",
+        description: error.message || "Failed to recover item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const bulkDeleteMutation = useMutation({
     mutationFn: async (itemIds) => {
       const results = [];
+      const deletedAt = new Date().toISOString();
       for (const id of itemIds) {
         try {
-          await base44.entities.InventoryItem.delete(id);
+          // Soft delete: set deleted_at timestamp instead of deleting
+          await base44.entities.InventoryItem.update(id, {
+            deleted_at: deletedAt
+          });
           results.push({ id, success: true });
         } catch (error) {
           results.push({ id, success: false, error: error.message });
@@ -213,7 +279,7 @@ export default function InventoryPage() {
       if (failCount === 0) {
         toast({
           title: "Items Deleted",
-          description: `${successCount} selected items have been successfully removed.`,
+          description: `${successCount} selected items have been moved to deleted items. You can recover them within 30 days.`,
         });
       } else {
         toast({
@@ -385,6 +451,22 @@ export default function InventoryPage() {
   const filteredItems = inventoryItems.filter(item => {
     const today = new Date();
 
+    // Filter deleted items based on showDeletedOnly state
+    const deletedMatch = showDeletedOnly 
+      ? item.deleted_at !== null && item.deleted_at !== undefined
+      : !item.deleted_at;
+
+    // If showing deleted items, skip other filters
+    if (showDeletedOnly) {
+      const searchMatch = item.item_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        item.category?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        item.source?.toLowerCase().includes(filters.search.toLowerCase());
+      return deletedMatch && searchMatch;
+    }
+
+    // For non-deleted items, apply all filters
+    if (!deletedMatch) return false;
+
     const statusMatch = filters.status === "all" ||
       (filters.status === "not_sold" && item.status !== "sold") ||
       item.status === filters.status;
@@ -415,6 +497,18 @@ export default function InventoryPage() {
     
     return statusMatch && searchMatch && daysInStockMatch && favoriteMatch;
   });
+
+  const deletedCount = React.useMemo(() => {
+    if (!Array.isArray(inventoryItems)) return 0;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return inventoryItems.filter(item => {
+      if (!item.deleted_at) return false;
+      const deletedDate = parseISO(item.deleted_at);
+      return deletedDate >= thirtyDaysAgo; // Only count items within 30 days
+    }).length;
+  }, [inventoryItems]);
 
   const favoritesCount = React.useMemo(() => {
     if (!Array.isArray(inventoryItems)) return 0;
@@ -458,6 +552,20 @@ export default function InventoryPage() {
   };
 
   const sortedItems = React.useMemo(() => {
+    // If showing deleted items, sort by deletion date (newest deleted first)
+    if (showDeletedOnly) {
+      const sorted = [...filteredItems].sort((a, b) => {
+        if (!a.deleted_at && !b.deleted_at) return 0;
+        if (!a.deleted_at) return 1;
+        if (!b.deleted_at) return -1;
+        const dateA = parseISO(a.deleted_at);
+        const dateB = parseISO(b.deleted_at);
+        return dateB - dateA; // Newest first
+      });
+      return sorted;
+    }
+    
+    // Regular sorting for non-deleted items
     return [...filteredItems].sort((a, b) => {
       switch (sort) {
         case "newest":
@@ -686,20 +794,41 @@ export default function InventoryPage() {
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                 <div className="text-xs text-muted-foreground">
-                  Favorites let you flag items for quick actions such as returns.
+                  {showDeletedOnly 
+                    ? "Recover deleted items within 30 days. Items older than 30 days are permanently deleted."
+                    : "Favorites let you flag items for quick actions such as returns."}
                 </div>
-                <Button
-                  variant={showFavoritesOnly ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowFavoritesOnly((prev) => !prev)}
-                  className="flex items-center gap-2 whitespace-nowrap"
-                >
-                  <Star className={`w-4 h-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
-                  {showFavoritesOnly ? "Showing Favorites" : "Show Favorites"}
-                  {favoritesCount > 0 && (
-                    <span className="text-xs font-normal opacity-80">({favoritesCount})</span>
+                <div className="flex gap-2">
+                  <Button
+                    variant={showDeletedOnly ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setShowDeletedOnly((prev) => !prev);
+                      setShowFavoritesOnly(false); // Disable favorites when showing deleted
+                    }}
+                    className="flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <Archive className={`w-4 h-4 ${showDeletedOnly ? "" : ""}`} />
+                    {showDeletedOnly ? "Showing Deleted" : "Show Deleted"}
+                    {deletedCount > 0 && !showDeletedOnly && (
+                      <span className="text-xs font-normal opacity-80">({deletedCount})</span>
+                    )}
+                  </Button>
+                  {!showDeletedOnly && (
+                    <Button
+                      variant={showFavoritesOnly ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowFavoritesOnly((prev) => !prev)}
+                      className="flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <Star className={`w-4 h-4 ${showFavoritesOnly ? "fill-current" : ""}`} />
+                      {showFavoritesOnly ? "Showing Favorites" : "Show Favorites"}
+                      {favoritesCount > 0 && (
+                        <span className="text-xs font-normal opacity-80">({favoritesCount})</span>
+                      )}
+                    </Button>
                   )}
-                </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -767,6 +896,18 @@ export default function InventoryPage() {
                 const favoriteMarked = isFavorite(item.id);
                 const tagDraftValue = tagDrafts[item.id] ?? "";
                 const favoriteButtonLabel = favoriteMarked ? "Remove from favorites" : "Add to favorites";
+                
+                // Calculate days until permanent deletion for deleted items
+                const isDeleted = item.deleted_at !== null && item.deleted_at !== undefined;
+                let daysUntilPermanentDelete = null;
+                if (isDeleted) {
+                  const deletedDate = parseISO(item.deleted_at);
+                  const thirtyDaysAfterDelete = new Date(deletedDate);
+                  thirtyDaysAfterDelete.setDate(thirtyDaysAfterDelete.getDate() + 30);
+                  if (isAfter(thirtyDaysAfterDelete, today)) {
+                    daysUntilPermanentDelete = differenceInDays(thirtyDaysAfterDelete, today);
+                  }
+                }
 
             const truncatedTitle = (() => {
               const words = (item.item_name || "").split(/\s+/).filter(Boolean);
@@ -775,7 +916,7 @@ export default function InventoryPage() {
             })();
 
             return (
-                  <Card key={item.id} className="group overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
+                  <Card key={item.id} className={`group overflow-hidden shadow-sm hover:shadow-lg transition-shadow ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : ''}`}>
                     <div className="relative">
                       <div className="absolute top-2 left-2 z-10">
                         <Checkbox
@@ -953,7 +1094,7 @@ export default function InventoryPage() {
                         </div>
                       )}
 
-                      {daysRemaining !== null && (
+                      {daysRemaining !== null && !isDeleted && (
                         <div className="mb-3 p-1.5 bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-800 dark:text-red-200">
                           <p className="font-semibold text-[10px] flex items-center gap-1">
                             <AlarmClock className="w-3 h-3" />
@@ -962,57 +1103,87 @@ export default function InventoryPage() {
                         </div>
                       )}
 
+                      {isDeleted && daysUntilPermanentDelete !== null && (
+                        <div className="mb-3 p-1.5 bg-orange-100 dark:bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-800 dark:text-orange-200">
+                          <p className="font-semibold text-[10px] flex items-center gap-1">
+                            <AlarmClock className="w-3 h-3" />
+                            {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
+                          </p>
+                        </div>
+                      )}
+
+                      {isDeleted && daysUntilPermanentDelete === null && (
+                        <div className="mb-3 p-1.5 bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-800 dark:text-red-200">
+                          <p className="font-semibold text-[10px]">
+                            Will be permanently deleted soon
+                          </p>
+                        </div>
+                      )}
+
                       <div className="space-y-1.5">
-                        {!isSoldOut && item.status !== 'sold' && availableToSell > 0 && (
+                        {isDeleted ? (
                           <Button 
-                            onClick={() => handleMarkAsSold(item)} 
+                            onClick={() => recoverItemMutation.mutate(item.id)} 
+                            disabled={recoverItemMutation.isPending}
                             className="w-full bg-green-600 hover:bg-green-700 h-8 text-xs"
                           >
-                            <ShoppingCart className="w-3 h-3 mr-1.5" />
-                            Mark Sold
+                            <ArchiveRestore className="w-3 h-3 mr-1.5" />
+                            {recoverItemMutation.isPending ? "Recovering..." : "Recover Item"}
                           </Button>
+                        ) : (
+                          <>
+                            {!isSoldOut && item.status !== 'sold' && availableToSell > 0 && (
+                              <Button 
+                                onClick={() => handleMarkAsSold(item)} 
+                                className="w-full bg-green-600 hover:bg-green-700 h-8 text-xs"
+                              >
+                                <ShoppingCart className="w-3 h-3 mr-1.5" />
+                                Mark Sold
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSoldDialogName(item.item_name || "");
+                                setSoldDialogOpen(true);
+                              }}
+                              className="w-full h-8 text-xs"
+                            >
+                              <BarChart className="w-3.5 h-3.5 mr-2" />
+                              Search Sold
+                            </Button>
+                            <div className="grid grid-cols-3 gap-1">
+                              <Link
+                                to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
+                                state={returnStateForInventory}
+                                className="flex-1"
+                              >
+                                <Button variant="outline" size="sm" className="w-full h-7 px-2">
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                              </Link>
+                              <Link
+                                to={createPageUrl(`AddInventoryItem?copyId=${item.id}`)}
+                                state={returnStateForInventory}
+                                className="flex-1"
+                              >
+                                <Button variant="outline" size="sm" className="w-full h-7 px-2">
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </Link>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleDeleteClick(item)} 
+                                disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 px-2"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSoldDialogName(item.item_name || "");
-                            setSoldDialogOpen(true);
-                          }}
-                          className="w-full h-8 text-xs"
-                        >
-                          <BarChart className="w-3.5 h-3.5 mr-2" />
-                          Search Sold
-                        </Button>
-                        <div className="grid grid-cols-3 gap-1">
-                          <Link
-                            to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
-                            state={returnStateForInventory}
-                            className="flex-1"
-                          >
-                            <Button variant="outline" size="sm" className="w-full h-7 px-2">
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </Link>
-                          <Link
-                            to={createPageUrl(`AddInventoryItem?copyId=${item.id}`)}
-                            state={returnStateForInventory}
-                            className="flex-1"
-                          >
-                            <Button variant="outline" size="sm" className="w-full h-7 px-2">
-                              <Copy className="w-3 h-3" />
-                            </Button>
-                          </Link>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleDeleteClick(item)} 
-                            disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 px-2"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
                       </div>
                     </CardContent>
                   </Card>
