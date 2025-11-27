@@ -77,11 +77,23 @@ module.exports = {
   				to: {
   					height: '0'
   				}
+  			},
+  			'shake-alarm': {
+  				'0%, 100%': {
+  					transform: 'translateX(0) rotate(0deg)'
+  				},
+  				'10%, 30%, 50%, 70%, 90%': {
+  					transform: 'translateX(-2px) rotate(-1deg)'
+  				},
+  				'20%, 40%, 60%, 80%': {
+  					transform: 'translateX(2px) rotate(1deg)'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'shake-alarm': 'shake-alarm 0.5s ease-in-out infinite'
   		}
   	}
   },
