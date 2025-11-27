@@ -145,7 +145,12 @@ export default function Layout({ children }) {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'default-light';
-    setTheme(savedTheme);
+    // Migrate retro-console-light to default-light if it exists
+    const themeToUse = savedTheme === 'retro-console-light' ? 'default-light' : savedTheme;
+    if (themeToUse !== savedTheme) {
+      localStorage.setItem('theme', themeToUse);
+    }
+    setTheme(themeToUse);
   }, []);
 
   useEffect(() => {
