@@ -821,15 +821,6 @@ export default function InventoryPage() {
               <p className="text-sm text-muted-foreground mt-1">Track items you have for sale.</p>
             </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto min-w-0">
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/30 min-w-0"
-                disabled
-              >
-                <TrendingUp className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="break-words">Discover Items</span>
-                <span className="ml-2 text-xs opacity-60 hidden sm:inline">(Feed API)</span>
-              </Button>
               <Link
                 to={createPageUrl("AddInventoryItem")}
                 state={returnStateForInventory}
