@@ -993,11 +993,11 @@ export default function SalesHistory() {
               )}
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-hidden">
             {isLoading ? (
               <div className="p-8 text-center text-muted-foreground">Loading...</div>
             ) : (
-              <div>
+              <div className="w-full min-w-0 max-w-full overflow-x-hidden">
                 {filteredSales.length > 0 && (
                   <div className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4 bg-gray-50/50 dark:bg-gray-800/30 min-w-0 mb-4 rounded-lg">
                     <Checkbox
@@ -1040,7 +1040,7 @@ export default function SalesHistory() {
                   const totalCosts = ((sale.purchase_price || 0) + (sale.shipping_cost || 0) + (sale.platform_fees || 0) + (sale.other_costs || 0));
                   
                   return (
-                  <div key={sale.id} className={`product-list-item relative flex flex-row sm:flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 ${isDeleted ? 'opacity-75' : ''}`}
+                  <div key={sale.id} className={`product-list-item relative flex flex-row sm:flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full ${isDeleted ? 'opacity-75' : ''}`}
                     style={{
                       minHeight: 'auto',
                       height: 'auto',
@@ -1048,7 +1048,8 @@ export default function SalesHistory() {
                       border: '1px solid rgba(51, 65, 85, 0.6)',
                       background: 'rgb(30, 41, 59)',
                       boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      maxWidth: '100%'
                     }}>
                     {/* Checkbox - positioned absolutely, right on mobile, left on desktop */}
                     <div className="absolute top-3 right-3 sm:top-4 sm:left-4 sm:right-auto z-20">
@@ -1111,7 +1112,7 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Details Section */}
-                    <div className="flex-1 flex flex-col justify-between h-full px-2 sm:px-6 py-3 sm:py-6 border-l border-r min-w-0"
+                    <div className="flex-1 flex flex-col justify-between h-full px-2 sm:px-6 py-3 sm:py-6 border-l border-r min-w-0 max-w-full overflow-hidden"
                       style={{
                         borderColor: 'rgba(51, 65, 85, 0.6)'
                       }}>
@@ -1148,24 +1149,6 @@ export default function SalesHistory() {
                         {safeNotes && <span className="hidden sm:inline"> • {safeNotes.substring(0, 50)}{safeNotes.length > 50 ? '...' : ''}</span>}
                       </p>
 
-                      {/* Metrics - Desktop Only */}
-                      <div className="mt-auto hidden sm:flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
-                        <div className="flex items-center text-white min-w-0">
-                          <TrendingUp className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
-                          <span className="font-semibold">ROI:</span>
-                          <span className="ml-2 font-bold text-blue-400 break-words">
-                            {isFinite(sale.roi) ? `${sale.roi.toFixed(1)}%` : (sale.roi > 0 ? '∞%' : '-∞%')}
-                          </span>
-                        </div>
-                        <div className="flex items-center text-white min-w-0">
-                          <Zap className="w-4 h-4 mr-2 text-orange-500 flex-shrink-0" />
-                          <span className="font-semibold">Sold in:</span>
-                          <span className="ml-2 font-bold text-orange-400 break-words">
-                            {sale.saleSpeed !== null ? `${sale.saleSpeed} day(s)` : 'N/A'}
-                          </span>
-                        </div>
-                      </div>
-
                       {/* Deletion Warnings */}
                       {isDeleted && daysUntilPermanentDelete !== null && (
                         <div className="mt-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200">
@@ -1186,9 +1169,12 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Actions Section */}
-                    <div className="flex flex-col items-stretch justify-center gap-2 px-2 sm:px-3 py-2 sm:py-3 flex-shrink-0 w-full sm:w-[200px] border-t sm:border-t-0 sm:border-l border-gray-700"
+                    <div className="flex flex-col items-stretch justify-center gap-2 px-2 sm:px-3 py-2 sm:py-3 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700"
                       style={{
-                        background: 'rgb(51, 65, 85)'
+                        background: 'rgb(51, 65, 85)',
+                        minWidth: 0,
+                        width: '100%',
+                        maxWidth: '100%'
                       }}>
                       {/* Profit Display - Desktop Only */}
                       <div className="hidden sm:block glass px-3 py-1.5 rounded-xl text-white font-bold text-base text-center border border-gray-700"
@@ -1203,19 +1189,19 @@ export default function SalesHistory() {
                       </div>
 
                       {/* View Details Button */}
-                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full">
+                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full min-w-0 block">
                         <Button 
-                          className="w-full bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-1.5 px-3 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-xs"
-                          style={{ letterSpacing: '1px' }}
+                          className="w-full bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-1.5 px-2 sm:px-3 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-xs min-w-0 max-w-full"
+                          style={{ letterSpacing: '1px', width: '100%', boxSizing: 'border-box' }}
                         >
-                          <span className="flex justify-center items-center gap-1">
+                          <span className="flex justify-center items-center gap-1 truncate w-full">
                             View Details
                           </span>
                         </Button>
                       </Link>
 
                       {/* Action Buttons Row */}
-                      <div className="flex items-center justify-center gap-1.5">
+                      <div className="flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap max-w-full w-full">
                         {isDeleted ? (
                           <>
                             <Button
@@ -1223,14 +1209,16 @@ export default function SalesHistory() {
                               size="icon"
                               onClick={() => recoverSaleMutation.mutate(sale)}
                               disabled={recoverSaleMutation.isPending}
-                              className="glass text-green-400 hover:text-green-300 hover:bg-green-900/20 flex-shrink-0 h-8 w-8"
+                              className="glass text-green-400 hover:text-green-300 hover:bg-green-900/20 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8"
                               style={{
                                 background: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px'
+                                borderRadius: '8px',
+                                minWidth: '28px',
+                                minHeight: '28px'
                               }}
                               title="Recover Sale"
                             >
-                              <ArchiveRestore className="w-4 h-4" />
+                              <ArchiveRestore className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -1240,14 +1228,16 @@ export default function SalesHistory() {
                                 setPermanentDeleteDialogOpen(true);
                               }}
                               disabled={permanentDeleteSaleMutation.isPending}
-                              className="glass text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0 h-8 w-8"
+                              className="glass text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8"
                               style={{
                                 background: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px'
+                                borderRadius: '8px',
+                                minWidth: '28px',
+                                minHeight: '28px'
                               }}
                               title="Permanently Delete"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </Button>
                           </>
                         ) : (
@@ -1256,55 +1246,63 @@ export default function SalesHistory() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="glass text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-8 w-8"
+                                className="glass text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 h-7 w-7 sm:h-8 sm:w-8"
                                 style={{
                                   background: 'rgba(255, 255, 255, 0.1)',
-                                  borderRadius: '8px'
+                                  borderRadius: '8px',
+                                  minWidth: '28px',
+                                  minHeight: '28px'
                                 }}
                                 title="Edit"
                               >
-                                <Pencil className="w-4 h-4" />
+                                <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               </Button>
                             </Link>
                             <Link to={createPageUrl(`AddSale?copyId=${sale.id}`)} className="flex-shrink-0">
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="glass text-white hover:text-gray-300 hover:bg-gray-700/50 h-8 w-8"
+                                className="glass text-white hover:text-gray-300 hover:bg-gray-700/50 h-7 w-7 sm:h-8 sm:w-8"
                                 style={{
                                   background: 'rgba(255, 255, 255, 0.1)',
-                                  borderRadius: '8px'
+                                  borderRadius: '8px',
+                                  minWidth: '28px',
+                                  minHeight: '28px'
                                 }}
                                 title="Copy"
                               >
-                                <Copy className="w-4 h-4" />
+                                <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               </Button>
                             </Link>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleAddToInventory(sale)}
-                              className="glass text-green-400 hover:text-green-300 hover:bg-green-900/20 flex-shrink-0 h-8 w-8"
+                              className="glass text-green-400 hover:text-green-300 hover:bg-green-900/20 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8"
                               style={{
                                 background: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px'
+                                borderRadius: '8px',
+                                minWidth: '28px',
+                                minHeight: '28px'
                               }}
                               title="Add to Inventory"
                             >
-                              <ArchiveRestore className="w-4 h-4" />
+                              <ArchiveRestore className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeleteClick(sale)}
-                              className="glass text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0 h-8 w-8"
+                              className="glass text-red-400 hover:text-red-300 hover:bg-red-900/20 flex-shrink-0 h-7 w-7 sm:h-8 sm:w-8"
                               style={{
                                 background: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px'
+                                borderRadius: '8px',
+                                minWidth: '28px',
+                                minHeight: '28px'
                               }}
                               title="Delete"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </Button>
                           </>
                         )}
