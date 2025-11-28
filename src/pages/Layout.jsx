@@ -256,6 +256,10 @@ export default function Layout({ children }) {
                   </ul>
                 </div>
 
+                {/* Category Divider (except for last category) */}
+                {categoryIndex < navigationCategories.length - 1 && (
+                  <div className="h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent mx-4 my-2" />
+                )}
               </React.Fragment>
             ))}
           </SidebarContent>
