@@ -258,7 +258,10 @@ export default function Layout({ children }) {
 
                 {/* Category Divider (except for last category) */}
                 {categoryIndex < navigationCategories.length - 1 && (
-                  <div className="h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent mx-4 my-2" />
+                  <div 
+                    className="h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent mx-4 my-2"
+                    style={{ scale: 1, outline: 'none' }}
+                  />
                 )}
               </React.Fragment>
             ))}
