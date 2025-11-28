@@ -1194,12 +1194,12 @@ export default function SalesHistory() {
                       </div>
 
                       {/* View Details Button */}
-                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full min-w-0 block">
+                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full min-w-0 flex justify-center">
                         <Button 
-                          className="w-[calc(100%-4px)] sm:w-full bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-1 sm:py-1.5 px-1.5 sm:px-3 rounded-lg sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[10px] sm:text-xs min-w-0 mx-auto"
-                          style={{ letterSpacing: '0.5px', boxSizing: 'border-box', fontSize: '10px', display: 'block' }}
+                          className="bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-1 sm:py-1.5 px-2 sm:px-3 rounded-lg sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[9px] sm:text-xs"
+                          style={{ letterSpacing: '0.3px', fontSize: '9px', width: 'auto', minWidth: '75px', maxWidth: '85px', boxSizing: 'border-box' }}
                         >
-                          <span className="flex justify-center items-center gap-0.5 truncate w-full whitespace-nowrap">
+                          <span className="whitespace-nowrap">
                             View Details
                           </span>
                         </Button>
