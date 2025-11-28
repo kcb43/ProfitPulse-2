@@ -1130,7 +1130,7 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Details Section */}
-                    <div className="flex-1 flex flex-col justify-between h-full px-2 sm:px-6 py-1.5 sm:py-6 border-l border-r min-w-0 overflow-hidden"
+                    <div className="flex-1 flex flex-col justify-start px-2 sm:px-6 py-1.5 sm:py-6 border-l border-r min-w-0 overflow-hidden"
                       style={{
                         borderColor: 'rgba(51, 65, 85, 0.6)',
                         flexShrink: 1,
@@ -1153,13 +1153,21 @@ export default function SalesHistory() {
 
                       {/* Title - Now starts right after image on mobile */}
                       <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block mb-1 sm:mb-3">
-                        <h3 className="text-xs sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-1 sm:line-clamp-2"
-                          style={{ letterSpacing: '0.5px' }}>
+                        <h3 className="text-xs sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-2 sm:line-clamp-2"
+                          style={{ letterSpacing: '0.5px', lineHeight: '1.3' }}>
                           {sale.item_name || 'Untitled Item'}
                         </h3>
                       </Link>
 
-                      {/* Description/Details - Desktop only (mobile shows under image) */}
+                      {/* Sold Price - Under title on mobile */}
+                      <div className="mb-1 sm:hidden">
+                        <p className="text-gray-300 text-[10px] break-words leading-[14px]"
+                          style={{ letterSpacing: '0.5px' }}>
+                          <span className="font-semibold">Sold Price:</span> ${sale.selling_price?.toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Description/Details - Desktop only (mobile shows under image and under title) */}
                       <p className="hidden sm:block text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm break-words line-clamp-1 sm:line-clamp-2 leading-[18px] sm:leading-[23.8px]"
                         style={{ 
                           letterSpacing: '0.7px'
