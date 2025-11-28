@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Trash2, Package, Pencil, Copy, ArchiveRestore, TrendingUp, Zap, CalendarIcon as Calendar, Archive } from "lucide-react";
+import { Search, Filter, Trash2, Package, Pencil, Copy, ArchiveRestore, TrendingUp, Zap, CalendarIcon as Calendar, Archive, Check, X } from "lucide-react";
 import { format, parseISO, differenceInDays, endOfDay } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -1055,64 +1055,78 @@ export default function SalesHistory() {
                       boxSizing: 'border-box',
                       flexShrink: 0
                     }}>
-                    {/* Checkbox - positioned absolutely, right on mobile, left on desktop */}
-                    <div className="absolute top-3 right-3 sm:top-4 sm:left-4 sm:right-auto z-20">
-                      <Checkbox
-                        checked={selectedSales.includes(sale.id)}
-                        onCheckedChange={() => handleSelect(sale.id)}
-                        id={`select-${sale.id}`}
-                        className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
-                      />
-                    </div>
-
-                    {/* Product Image Section */}
-                    <div className="glass flex items-center justify-center relative flex-shrink-0 m-1.5 sm:m-4 w-[90px] sm:w-[220px] min-w-[90px] sm:min-w-[220px] max-w-[90px] sm:max-w-[220px] h-[90px] sm:h-[210px] p-1.5 sm:p-4"
-                      style={{
-                        borderRadius: '12px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        flexShrink: 0
-                      }}>
-                      {sale.image_url ? (
-                        <OptimizedImage
-                          src={sale.image_url}
-                          alt={sale.item_name}
-                          className="w-full h-full object-contain"
-                          style={{ maxHeight: '100%' }}
-                          lazy={true}
-                        />
-                      ) : (
-                        <Package className="w-10 h-10 sm:w-24 sm:h-24 text-gray-400" />
-                      )}
-                      {/* Platform Icon Overlay - hidden on mobile */}
-                      {platformIcons[sale.platform] && (
-                        <div className="glass absolute top-2 right-2 hidden sm:flex items-center justify-center z-10"
-                          style={{
-                            width: '43px',
-                            height: '55px',
-                            borderRadius: '12px',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            padding: '8px'
-                          }}>
-                          <img 
-                            src={platformIcons[sale.platform]} 
-                            alt={platformNames[sale.platform]}
-                            className="w-6 h-6 object-contain"
-                            style={{ filter: sale.platform === 'ebay' ? 'none' : 'brightness(0) invert(1)' }}
+                    {/* Image and Description Container - Mobile stacked, desktop side-by-side */}
+                    <div className="flex flex-col sm:block flex-shrink-0 m-1.5 sm:m-4">
+                      {/* Product Image Section - Clickable */}
+                      <div 
+                        onClick={() => handleSelect(sale.id)}
+                        className={`glass flex items-center justify-center relative w-[90px] sm:w-[220px] min-w-[90px] sm:min-w-[220px] max-w-[90px] sm:max-w-[220px] h-[90px] sm:h-[210px] p-1.5 sm:p-4 cursor-pointer transition-all duration-200 ${selectedSales.includes(sale.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
+                        style={{
+                          borderRadius: '12px',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: selectedSales.includes(sale.id) ? '2px solid rgba(34, 197, 94, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          flexShrink: 0
+                        }}>
+                        {sale.image_url ? (
+                          <OptimizedImage
+                            src={sale.image_url}
+                            alt={sale.item_name}
+                            className="w-full h-full object-contain"
+                            style={{ maxHeight: '100%' }}
+                            lazy={true}
                           />
+                        ) : (
+                          <Package className="w-10 h-10 sm:w-24 sm:h-24 text-gray-400" />
+                        )}
+                        {/* Platform Icon Overlay - hidden on mobile */}
+                        {platformIcons[sale.platform] && (
+                          <div className="glass absolute top-2 right-2 hidden sm:flex items-center justify-center z-10"
+                            style={{
+                              width: '43px',
+                              height: '55px',
+                              borderRadius: '12px',
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              padding: '8px'
+                            }}>
+                            <img 
+                              src={platformIcons[sale.platform]} 
+                              alt={platformNames[sale.platform]}
+                              className="w-6 h-6 object-contain"
+                              style={{ filter: sale.platform === 'ebay' ? 'none' : 'brightness(0) invert(1)' }}
+                            />
+                          </div>
+                        )}
+                        {/* Selection Indicator - Top center when selected */}
+                        {selectedSales.includes(sale.id) && (
+                          <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
+                            <div className="bg-green-600 rounded-full p-1 shadow-lg">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          </div>
+                        )}
+                        {/* Profit Badge - Mobile Only, bottom-right of image */}
+                        <div className="absolute bottom-0.5 right-0.5 sm:hidden z-10">
+                          <div className="px-1.5 py-0.5 rounded text-white text-[10px] font-semibold"
+                            style={{
+                              background: sale.profit >= 0 ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)',
+                              color: 'white',
+                              backdropFilter: 'blur(10px)'
+                            }}>
+                            {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(0) || '0'}
+                          </div>
                         </div>
-                      )}
-                      {/* Profit Badge - Mobile Only, bottom-right of image */}
-                      <div className="absolute bottom-0.5 right-0.5 sm:hidden z-10">
-                        <div className="px-1.5 py-0.5 rounded text-white text-[10px] font-semibold"
-                          style={{
-                            background: sale.profit >= 0 ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)',
-                            color: 'white',
-                            backdropFilter: 'blur(10px)'
+                      </div>
+
+                      {/* Description/Details - Under image on mobile */}
+                      <div className="flex flex-col sm:hidden mt-1.5 px-0.5 min-w-0">
+                        <p className="text-gray-300 text-xs break-words line-clamp-1 leading-[18px]"
+                          style={{ 
+                            letterSpacing: '0.7px'
                           }}>
-                          {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(0) || '0'}
-                        </div>
+                          Sold on {format(parseISO(sale.sale_date), 'MMM dd, yyyy')} • ${sale.selling_price?.toFixed(2)}
+                          {sale.category && ` • ${sale.category}`}
+                        </p>
                       </div>
                     </div>
 
@@ -1146,8 +1160,8 @@ export default function SalesHistory() {
                         </h3>
                       </Link>
 
-                      {/* Description/Details */}
-                      <p className="text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm break-words line-clamp-1 sm:line-clamp-2 leading-[18px] sm:leading-[23.8px]"
+                      {/* Description/Details - Desktop only (mobile shows under image) */}
+                      <p className="hidden sm:block text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm break-words line-clamp-1 sm:line-clamp-2 leading-[18px] sm:leading-[23.8px]"
                         style={{ 
                           letterSpacing: '0.7px'
                         }}>
