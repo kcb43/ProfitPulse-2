@@ -266,8 +266,6 @@ export default function Layout({ children }) {
               </React.Fragment>
             ))}
           </SidebarContent>
-            ))}
-          </SidebarContent>
 
           <SidebarFooter className="border-t border-gray-100 dark:border-gray-800 p-4">
             <div className="flex items-center justify-between">
