@@ -1040,9 +1040,9 @@ export default function SalesHistory() {
                   const totalCosts = ((sale.purchase_price || 0) + (sale.shipping_cost || 0) + (sale.platform_fees || 0) + (sale.other_costs || 0));
                   
                   return (
-                  <div key={sale.id} className={`product-list-item relative flex flex-col sm:flex-row items-start sm:items-center mb-6 min-w-0 ${isDeleted ? 'opacity-75' : ''}`}
+                  <div key={sale.id} className={`product-list-item relative flex flex-row sm:flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 ${isDeleted ? 'opacity-75' : ''}`}
                     style={{
-                      minHeight: '248px',
+                      minHeight: 'auto',
                       height: 'auto',
                       borderRadius: '16px',
                       border: '1px solid rgba(51, 65, 85, 0.6)',
@@ -1050,8 +1050,8 @@ export default function SalesHistory() {
                       boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                       overflow: 'hidden'
                     }}>
-                    {/* Checkbox - positioned absolutely */}
-                    <div className="absolute top-4 left-4 z-20">
+                    {/* Checkbox - positioned absolutely, right on mobile, left on desktop */}
+                    <div className="absolute top-3 right-3 sm:top-4 sm:left-4 sm:right-auto z-20">
                       <Checkbox
                         checked={selectedSales.includes(sale.id)}
                         onCheckedChange={() => handleSelect(sale.id)}
@@ -1061,30 +1061,26 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Product Image Section */}
-                    <div className="glass flex items-center justify-center relative flex-shrink-0 m-4"
+                    <div className="glass flex items-center justify-center relative flex-shrink-0 m-3 sm:m-4 w-[120px] sm:w-[220px] min-w-[120px] sm:min-w-[220px] h-[120px] sm:h-[210px] p-2 sm:p-4"
                       style={{
-                        width: '220px',
-                        minWidth: '220px',
-                        height: '210px',
                         borderRadius: '12px',
                         background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        padding: '16px'
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
                       }}>
                       {sale.image_url ? (
                         <OptimizedImage
                           src={sale.image_url}
                           alt={sale.item_name}
                           className="w-full h-full object-contain"
-                          style={{ maxHeight: '186px' }}
+                          style={{ maxHeight: '100%' }}
                           lazy={true}
                         />
                       ) : (
-                        <Package className="w-24 h-24 text-gray-400" />
+                        <Package className="w-12 h-12 sm:w-24 sm:h-24 text-gray-400" />
                       )}
-                      {/* Platform Icon Overlay */}
+                      {/* Platform Icon Overlay - hidden on mobile */}
                       {platformIcons[sale.platform] && (
-                        <div className="glass absolute top-2 right-2 flex items-center justify-center z-10"
+                        <div className="glass absolute top-2 right-2 hidden sm:flex items-center justify-center z-10"
                           style={{
                             width: '43px',
                             height: '55px',
@@ -1101,16 +1097,26 @@ export default function SalesHistory() {
                           />
                         </div>
                       )}
+                      {/* Profit Badge - Mobile Only, bottom-right of image */}
+                      <div className="absolute bottom-1 right-1 sm:hidden z-10">
+                        <div className="px-2 py-1 rounded-lg text-white text-xs font-semibold"
+                          style={{
+                            background: sale.profit >= 0 ? 'rgba(34, 197, 94, 0.95)' : 'rgba(239, 68, 68, 0.95)',
+                            color: 'white',
+                            backdropFilter: 'blur(10px)'
+                          }}>
+                          {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(0) || '0'}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Details Section */}
-                    <div className="flex-1 flex flex-col justify-between h-full px-4 sm:px-6 py-4 sm:py-6 border-l border-r min-w-0"
+                    <div className="flex-1 flex flex-col justify-between h-full px-2 sm:px-6 py-3 sm:py-6 border-l border-r min-w-0"
                       style={{
-                        borderColor: 'rgba(51, 65, 85, 0.6)',
-                        minHeight: '210px'
+                        borderColor: 'rgba(51, 65, 85, 0.6)'
                       }}>
-                      {/* Resale Value Badge */}
-                      <div className="mb-3">
+                      {/* Resale Value Badge - Desktop Only */}
+                      <div className="mb-3 hidden sm:block">
                         <div className="glass inline-block px-4 sm:px-6 py-2 rounded-xl text-white text-xs sm:text-sm font-medium"
                           style={{
                             background: resaleValue.color,
@@ -1124,27 +1130,26 @@ export default function SalesHistory() {
                         </div>
                       </div>
 
-                      {/* Title */}
-                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block mb-3">
-                        <h3 className="text-lg sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-2"
+                      {/* Title - Now starts right after image on mobile */}
+                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block mb-2 sm:mb-3">
+                        <h3 className="text-sm sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-2"
                           style={{ letterSpacing: '0.5px' }}>
                           {sale.item_name || 'Untitled Item'}
                         </h3>
                       </Link>
 
                       {/* Description/Details */}
-                      <p className="text-gray-300 mb-4 text-xs sm:text-sm break-words line-clamp-2"
+                      <p className="text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm break-words line-clamp-1 sm:line-clamp-2 leading-[18px] sm:leading-[23.8px]"
                         style={{ 
-                          letterSpacing: '0.7px',
-                          lineHeight: '23.8px'
+                          letterSpacing: '0.7px'
                         }}>
-                        Sold on {format(parseISO(sale.sale_date), 'MMM dd, yyyy')} • ${sale.selling_price?.toFixed(2)} • 
-                        {sale.category && ` ${sale.category}`}
-                        {safeNotes && ` • ${safeNotes.substring(0, 50)}${safeNotes.length > 50 ? '...' : ''}`}
+                        Sold on {format(parseISO(sale.sale_date), 'MMM dd, yyyy')} • ${sale.selling_price?.toFixed(2)}
+                        {sale.category && ` • ${sale.category}`}
+                        {safeNotes && <span className="hidden sm:inline"> • {safeNotes.substring(0, 50)}{safeNotes.length > 50 ? '...' : ''}</span>}
                       </p>
 
-                      {/* Metrics */}
-                      <div className="mt-auto flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                      {/* Metrics - Desktop Only */}
+                      <div className="mt-auto hidden sm:flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
                         <div className="flex items-center text-white min-w-0">
                           <TrendingUp className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
                           <span className="font-semibold">ROI:</span>
@@ -1181,12 +1186,12 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Actions Section */}
-                    <div className="flex flex-col items-stretch justify-center gap-2 px-3 py-3 flex-shrink-0 w-full sm:w-[200px] border-t sm:border-t-0 sm:border-l border-gray-700"
+                    <div className="flex flex-col items-stretch justify-center gap-2 px-2 sm:px-3 py-2 sm:py-3 flex-shrink-0 w-full sm:w-[200px] border-t sm:border-t-0 sm:border-l border-gray-700"
                       style={{
                         background: 'rgb(51, 65, 85)'
                       }}>
-                      {/* Profit Display */}
-                      <div className="glass px-3 py-1.5 rounded-xl text-white font-bold text-base text-center border border-gray-700"
+                      {/* Profit Display - Desktop Only */}
+                      <div className="hidden sm:block glass px-3 py-1.5 rounded-xl text-white font-bold text-base text-center border border-gray-700"
                         style={{
                           background: 'rgba(255, 255, 255, 0.1)',
                           borderColor: 'rgb(55, 69, 88)'
