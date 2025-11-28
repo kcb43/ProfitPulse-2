@@ -223,7 +223,7 @@ export default function Dashboard() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
                 <div className="space-y-1 min-w-0">
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">Marketplace Support</p>
-                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">Manage and track your inventory everywhere you sell.</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">Track and list your inventory on every marketplace.</h2>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 sm:justify-end min-w-0">
                   {SUPPORTED_MARKETPLACES.map((marketplace) => {
