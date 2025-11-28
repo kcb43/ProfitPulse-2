@@ -1119,26 +1119,25 @@ export default function SalesHistory() {
                       </div>
 
                       {/* Description/Details - Under image on mobile */}
-                      <div className="flex flex-col sm:hidden mt-1.5 px-0.5 min-w-0">
-                        <p className="text-gray-300 text-xs break-words line-clamp-1 leading-[18px]"
+                      <div className="flex flex-col sm:hidden mt-1.5 px-0.5 min-w-0 w-full">
+                        <p className="text-gray-300 text-[10px] break-words line-clamp-1 leading-[14px]"
                           style={{ 
-                            letterSpacing: '0.7px'
+                            letterSpacing: '0.5px'
                           }}>
-                          Sold on {format(parseISO(sale.sale_date), 'MMM dd, yyyy')} • ${sale.selling_price?.toFixed(2)}
-                          {sale.category && ` • ${sale.category}`}
+                          Sold {format(parseISO(sale.sale_date), 'MM/dd/yyyy')} • ${sale.selling_price?.toFixed(2)}
                         </p>
                       </div>
                     </div>
 
                     {/* Details Section */}
-                    <div className="flex-1 flex flex-col justify-between h-full px-2 sm:px-6 py-2 sm:py-6 border-l border-r min-w-0 overflow-hidden"
+                    <div className="flex-1 flex flex-col justify-between h-full px-2 sm:px-6 py-1.5 sm:py-6 border-l border-r min-w-0 overflow-hidden"
                       style={{
                         borderColor: 'rgba(51, 65, 85, 0.6)',
                         flexShrink: 1,
                         minWidth: 0
                       }}>
                       {/* Resale Value Badge - Desktop Only */}
-                      <div className="mb-3 hidden sm:block">
+                      <div className="mb-2 sm:mb-3 hidden sm:block">
                         <div className="glass inline-block px-4 sm:px-6 py-2 rounded-xl text-white text-xs sm:text-sm font-medium"
                           style={{
                             background: resaleValue.color,
@@ -1153,8 +1152,8 @@ export default function SalesHistory() {
                       </div>
 
                       {/* Title - Now starts right after image on mobile */}
-                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block mb-2 sm:mb-3">
-                        <h3 className="text-sm sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-2"
+                      <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block mb-1 sm:mb-3">
+                        <h3 className="text-xs sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-1 sm:line-clamp-2"
                           style={{ letterSpacing: '0.5px' }}>
                           {sale.item_name || 'Untitled Item'}
                         </h3>
@@ -1165,8 +1164,7 @@ export default function SalesHistory() {
                         style={{ 
                           letterSpacing: '0.7px'
                         }}>
-                        Sold on {format(parseISO(sale.sale_date), 'MMM dd, yyyy')} • ${sale.selling_price?.toFixed(2)}
-                        {sale.category && ` • ${sale.category}`}
+                        Sold {format(parseISO(sale.sale_date), 'MM/dd/yyyy')} • ${sale.selling_price?.toFixed(2)}
                         {safeNotes && <span className="hidden sm:inline"> • {safeNotes.substring(0, 50)}{safeNotes.length > 50 ? '...' : ''}</span>}
                       </p>
 
@@ -1190,7 +1188,7 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Actions Section */}
-                    <div className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-2 sm:py-3 mr-2 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[90px] sm:w-[200px] min-w-[90px] sm:min-w-[200px] max-w-[90px] sm:max-w-[200px]"
+                    <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 sm:py-3 mr-2 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[90px] sm:w-[200px] min-w-[90px] sm:min-w-[200px] max-w-[90px] sm:max-w-[200px]"
                       style={{
                         background: 'rgb(51, 65, 85)',
                         flexShrink: 0
@@ -1210,8 +1208,8 @@ export default function SalesHistory() {
                       {/* View Details Button */}
                       <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full min-w-0 flex justify-center">
                         <Button 
-                          className="bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-1 sm:py-1.5 px-2 sm:px-3 rounded-lg sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[9px] sm:text-xs"
-                          style={{ letterSpacing: '0.3px', fontSize: '9px', width: 'auto', minWidth: '75px', maxWidth: '85px', boxSizing: 'border-box' }}
+                          className="bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-0.5 sm:py-1.5 px-1.5 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[8px] sm:text-xs"
+                          style={{ letterSpacing: '0.3px', fontSize: '8px', width: 'auto', minWidth: '70px', maxWidth: '80px', boxSizing: 'border-box' }}
                         >
                           <span className="whitespace-nowrap">
                             View Details
