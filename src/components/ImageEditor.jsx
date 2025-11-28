@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Cropper from 'cropperjs';
-import 'cropperjs/dist/cropper.css';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
