@@ -1320,7 +1320,6 @@ export default function SalesHistory() {
           </CardContent>
         </Card>
         </div>
-      </div>
 
       <Dialog
         open={bulkUpdateDialogOpen}
@@ -1553,7 +1552,7 @@ export default function SalesHistory() {
               disabled={bulkPermanentDeleteMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {bulkPermanentDeleteMutation.isPending ? "Deleting..." : `Permanently Delete ${selectedSales.length} Sale${selectedSales.length !== 1 ? 's' : ''}`}
+              {bulkPermanentDeleteMutation.isPending ? "Deleting..." : `Permanently Delete ${selectedSales.length} Sale${selectedSales.length !== 1 ? "s" : ""}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
