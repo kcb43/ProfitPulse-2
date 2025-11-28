@@ -5,6 +5,8 @@ export const Sale = base44.entities.Sale;
 
 export const InventoryItem = base44.entities.InventoryItem;
 
+export const ImageEditorTemplate = base44.entities.ImageEditorTemplate;
+
 
 
 // auth sdk:
