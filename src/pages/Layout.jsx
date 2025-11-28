@@ -196,7 +196,7 @@ export default function Layout({ children }) {
               <React.Fragment key={category.title}>
                 {/* Divider line between sections */}
                 {categoryIndex > 0 && (
-                  <div className="mx-2 my-0.5 border-t border-gray-200 dark:border-gray-700" />
+                  <div className="h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent mx-4 my-2" />
                 )}
                 {/* Category */}
                 <div className={categoryIndex === navigationCategories.length - 1 ? "" : "mb-0.5"}>
