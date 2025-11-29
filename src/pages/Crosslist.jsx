@@ -806,10 +806,10 @@ export default function Crosslist() {
             <Button
               variant="outline"
               onClick={() => setLayout((l) => (l === "rows" ? "grid" : "rows"))}
-              className="hidden sm:inline-flex whitespace-nowrap"
+              className="whitespace-nowrap"
             >
               {layout === "rows" ? <Grid2X2 className="w-4 h-4 mr-2" /> : <Rows className="w-4 h-4 mr-2" />}
-              {layout === "rows" ? "Grid View" : "Row View"}
+              {layout === "rows" ? "Grid View" : "List View"}
             </Button>
           </div>
         </div>
@@ -1077,40 +1077,67 @@ export default function Crosslist() {
             })}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filtered.map((it) => {
               const map = computeListingState(it);
+              const listedCount = Object.values(map).filter(Boolean).length;
               return (
-                <Card key={it.id} className="overflow-hidden">
-                  <div className="relative">
+                <Card 
+                  key={it.id} 
+                  className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] border-slate-700/50"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(51, 65, 85) 100%)',
+                    borderRadius: '16px',
+                    boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                  }}
+                >
+                  <div className="relative aspect-square overflow-hidden"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                    }}
+                  >
                     <OptimizedImage
                       src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
                       alt={it.item_name}
                       fallback="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"
-                      className="aspect-square w-full object-cover md:h-[38rem]"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       lazy={true}
                     />
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 left-2 z-10">
                       <Checkbox
                         checked={selected.includes(it.id)}
                         onCheckedChange={() => toggleSelect(it.id)}
-                        className="!h-6 !w-6 !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-6 [&_svg]:!w-6"
+                        className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px] backdrop-blur-sm"
                       />
                     </div>
+                    {selected.includes(it.id) && (
+                      <div className="absolute top-2 right-2 z-20">
+                        <div className="bg-green-600 rounded-full p-1 shadow-lg">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <div className="px-2 py-1 rounded-lg text-white text-xs font-semibold backdrop-blur-sm bg-black/60">
+                        Listed on {listedCount} platform{listedCount !== 1 ? 's' : ''}
+                      </div>
+                    </div>
                   </div>
-                  <CardContent className="p-3">
-                    <div className="font-semibold text-sm line-clamp-2 break-words">{it.item_name}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{it.category || "—"}</div>
-                    <div className="flex flex-wrap gap-1 mt-2">
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">
+                      {it.item_name}
+                    </h3>
+                    <div className="text-xs text-gray-300 mb-3">{it.category || "—"}</div>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
                       {MARKETPLACES.map((m) => {
                         const isListed = map[m.id];
                         return (
                           <div
                             key={m.id}
-                            className={`inline-flex items-center justify-center w-7 h-7 rounded border transition-all ${
+                            className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all backdrop-blur-sm ${
                               isListed
-                                ? "bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700 opacity-100"
-                                : "bg-gray-100 border-gray-300 dark:bg-gray-800 dark:border-gray-700 opacity-40"
+                                ? "bg-green-600/30 border-green-500/50 opacity-100"
+                                : "bg-slate-700/50 border-slate-600/50 opacity-40"
                             }`}
                             title={isListed ? `Listed on ${m.label}` : `Not listed on ${m.label}`}
                           >
@@ -1119,11 +1146,20 @@ export default function Crosslist() {
                         );
                       })}
                     </div>
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" className="w-full whitespace-nowrap" onClick={() => openComposer([it.id], false)}>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs" 
+                        onClick={() => openComposer([it.id], false)}
+                      >
                         Crosslist
                       </Button>
-                      <Button size="sm" variant="outline" className="w-full whitespace-nowrap" onClick={() => navigate(createPageUrl(`AddInventoryItem?id=${it.id}`))}>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 border-slate-600 text-gray-300 hover:bg-slate-700/50 text-xs" 
+                        onClick={() => navigate(createPageUrl(`AddInventoryItem?id=${it.id}`))}
+                      >
                         Edit
                       </Button>
                     </div>

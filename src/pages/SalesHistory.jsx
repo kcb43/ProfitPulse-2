@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Trash2, Package, Pencil, Copy, ArchiveRestore, TrendingUp, Zap, CalendarIcon as Calendar, Archive, Check, X } from "lucide-react";
-import { format, parseISO, differenceInDays, endOfDay } from 'date-fns';
+import { Search, Filter, Trash2, Package, Pencil, Copy, ArchiveRestore, TrendingUp, Zap, CalendarIcon as Calendar, Archive, Check, X, Grid2X2, Rows } from "lucide-react";
+import { format, parseISO, differenceInDays, endOfDay, isAfter } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -125,6 +125,7 @@ export default function SalesHistory() {
     customCategory: "",
     sale_date: "",
   });
+  const [viewMode, setViewMode] = useState("list"); // "list" or "grid"
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -809,9 +810,19 @@ export default function SalesHistory() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full" style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
       <div className="p-4 md:p-6 lg:p-8 w-full" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
         <div className="max-w-7xl mx-auto min-w-0 w-full" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-        <div className="mb-8 min-w-0">
-          <h1 className="text-3xl font-bold text-foreground break-words">Sales History</h1>
-          <p className="text-muted-foreground mt-1 break-words">View and manage all your sales</p>
+        <div className="mb-8 min-w-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground break-words">Sales History</h1>
+            <p className="text-muted-foreground mt-1 break-words">View and manage all your sales</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+            className="flex-shrink-0"
+          >
+            {viewMode === "list" ? <Grid2X2 className="w-4 h-4 mr-2" /> : <Rows className="w-4 h-4 mr-2" />}
+            {viewMode === "list" ? "Grid View" : "List View"}
+          </Button>
         </div>
 
         <Card className="border-0 shadow-lg mb-6">
@@ -1021,7 +1032,128 @@ export default function SalesHistory() {
                     </p>
                   </div>
                 )}
-                {filteredSales.map((sale) => {
+                {viewMode === "grid" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {filteredSales.map((sale) => {
+                      const safeNotes = stripCustomFeeNotes(sale.notes || "");
+                      const isDeleted = sale.deleted_at !== null && sale.deleted_at !== undefined;
+                      const resaleValue = getResaleValue(sale.profit || 0, sale.roi || 0);
+                      
+                      let daysUntilPermanentDelete = null;
+                      if (isDeleted) {
+                        const deletedDate = parseISO(sale.deleted_at);
+                        const thirtyDaysAfterDelete = new Date(deletedDate);
+                        thirtyDaysAfterDelete.setDate(thirtyDaysAfterDelete.getDate() + 30);
+                        if (isAfter(thirtyDaysAfterDelete, new Date())) {
+                          daysUntilPermanentDelete = differenceInDays(thirtyDaysAfterDelete, new Date());
+                        }
+                      }
+
+                      return (
+                        <Card 
+                          key={sale.id} 
+                          className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-slate-700/50'}`}
+                          style={{
+                            background: 'linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(51, 65, 85) 100%)',
+                            borderRadius: '16px',
+                            boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                          }}
+                        >
+                          <div className="relative">
+                            <div 
+                              onClick={() => handleSelect(sale.id)}
+                              className={`relative aspect-square overflow-hidden cursor-pointer transition-all duration-200 ${selectedSales.includes(sale.id) ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                              }}
+                            >
+                              {sale.image_url ? (
+                                <OptimizedImage
+                                  src={sale.image_url}
+                                  alt={sale.item_name}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  lazy={true}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-16 h-16 text-gray-400" />
+                                </div>
+                              )}
+                              {selectedSales.includes(sale.id) && (
+                                <div className="absolute top-2 left-2 z-20">
+                                  <div className="bg-green-600 rounded-full p-1 shadow-lg">
+                                    <Check className="w-4 h-4 text-white" />
+                                  </div>
+                                </div>
+                              )}
+                              {platformIcons[sale.platform] && (
+                                <div className="absolute top-2 right-2 z-10 bg-black/60 backdrop-blur-sm rounded-lg p-1.5">
+                                  <img 
+                                    src={platformIcons[sale.platform]} 
+                                    alt={platformNames[sale.platform]}
+                                    className="w-5 h-5 object-contain"
+                                    style={{ filter: sale.platform === 'ebay' ? 'none' : 'brightness(0) invert(1)' }}
+                                  />
+                                </div>
+                              )}
+                              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                                <div className="px-2 py-1 rounded-lg text-white text-xs font-semibold backdrop-blur-sm"
+                                  style={{
+                                    background: resaleValue.color,
+                                  }}>
+                                  {resaleValue.label}
+                                </div>
+                                <div className={`px-2 py-1 rounded-lg text-white text-xs font-bold backdrop-blur-sm ${sale.profit >= 0 ? 'bg-green-600/90' : 'bg-red-600/90'}`}>
+                                  {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(0) || '0'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <CardContent className="p-4">
+                            <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)}>
+                              <h3 className="font-bold text-white text-sm mb-2 line-clamp-2 hover:text-blue-400 transition-colors">
+                                {sale.item_name || 'Untitled Item'}
+                              </h3>
+                            </Link>
+                            <div className="space-y-1.5 text-xs mb-3">
+                              <div className="flex justify-between text-gray-300">
+                                <span>Sold Price:</span>
+                                <span className="font-semibold text-white">${sale.selling_price?.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-gray-300">
+                                <span>Date:</span>
+                                <span className="text-white">{format(parseISO(sale.sale_date), 'MM/dd/yyyy')}</span>
+                              </div>
+                              <div className="flex justify-between text-gray-300">
+                                <span>Profit:</span>
+                                <span className={`font-bold ${sale.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(2) || '0.00'}
+                                </span>
+                              </div>
+                            </div>
+                            {isDeleted && daysUntilPermanentDelete !== null && (
+                              <div className="mb-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200 text-xs">
+                                <p className="font-semibold flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until deletion
+                                </p>
+                              </div>
+                            )}
+                            <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block">
+                              <Button 
+                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs"
+                              >
+                                View Details
+                              </Button>
+                            </Link>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div>
+                    {filteredSales.map((sale) => {
                   const safeNotes = stripCustomFeeNotes(sale.notes || "");
                   const isDeleted = sale.deleted_at !== null && sale.deleted_at !== undefined;
                   
@@ -1335,7 +1467,9 @@ export default function SalesHistory() {
                       </div>
                     </div>
                   </div>
-                )})}
+                    )})}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

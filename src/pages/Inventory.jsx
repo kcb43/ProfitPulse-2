@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, differenceInDays, isAfter } from "date-fns";
-import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database, ImageIcon, ArchiveRestore, Archive } from "lucide-react";
+import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database, ImageIcon, ArchiveRestore, Archive, Grid2X2, Rows, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
@@ -87,6 +87,7 @@ export default function InventoryPage() {
   const [showDeletedOnly, setShowDeletedOnly] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState({ url: null, itemId: null });
+  const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
 
   const {
     toggleFavorite,
@@ -821,6 +822,14 @@ export default function InventoryPage() {
               <p className="text-sm text-muted-foreground mt-1">Track items you have for sale.</p>
             </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto min-w-0">
+              <Button
+                variant="outline"
+                onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+                className="flex-shrink-0"
+              >
+                {viewMode === "list" ? <Grid2X2 className="w-4 h-4 mr-2" /> : <Rows className="w-4 h-4 mr-2" />}
+                {viewMode === "list" ? "Grid View" : "List View"}
+              </Button>
               <Link
                 to={createPageUrl("AddInventoryItem")}
                 state={returnStateForInventory}
@@ -1016,7 +1025,231 @@ export default function InventoryPage() {
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground">Loading...</div>
           ) : sortedItems.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+            viewMode === "list" ? (
+              <div className="space-y-4 sm:space-y-6">
+                {sortedItems.map(item => {
+                  const today = new Date();
+                  const deadline = item.return_deadline ? parseISO(item.return_deadline) : null;
+                  const daysRemaining = deadline && isAfter(deadline, today) ? differenceInDays(deadline, today) + 1 : null;
+                  const perItemPrice = item.purchase_price / (item.quantity > 0 ? item.quantity : 1);
+                  const quantitySold = item.quantity_sold || 0;
+                  const isSoldOut = quantitySold >= item.quantity;
+                  const availableToSell = item.quantity - quantitySold;
+                  const itemTags = getTags(item.id);
+                  const favoriteMarked = isFavorite(item.id);
+                  const isDeleted = item.deleted_at !== null && item.deleted_at !== undefined;
+                  
+                  let daysUntilPermanentDelete = null;
+                  if (isDeleted) {
+                    const deletedDate = parseISO(item.deleted_at);
+                    const thirtyDaysAfterDelete = new Date(deletedDate);
+                    thirtyDaysAfterDelete.setDate(thirtyDaysAfterDelete.getDate() + 30);
+                    if (isAfter(thirtyDaysAfterDelete, today)) {
+                      daysUntilPermanentDelete = differenceInDays(thirtyDaysAfterDelete, today);
+                    }
+                  }
+
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={`product-list-item relative flex flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full ${isDeleted ? 'opacity-75' : ''}`}
+                      style={{
+                        minHeight: 'auto',
+                        height: 'auto',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(51, 65, 85, 0.6)',
+                        background: 'rgb(30, 41, 59)',
+                        boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                        overflow: 'hidden',
+                        maxWidth: '100%',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        flexShrink: 0
+                      }}
+                    >
+                      <div className="absolute top-4 left-4 z-20">
+                        <Checkbox
+                          checked={selectedItems.includes(item.id)}
+                          onCheckedChange={() => handleSelect(item.id)}
+                          className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
+                        />
+                      </div>
+
+                      <div className="flex flex-col sm:block flex-shrink-0 m-1 sm:m-4">
+                        <Link
+                          to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
+                          state={returnStateForInventory}
+                          className={`glass flex items-center justify-center relative w-[62px] sm:w-[220px] min-w-[62px] sm:min-w-[220px] max-w-[62px] sm:max-w-[220px] h-[62px] sm:h-[210px] p-1 sm:p-4 cursor-pointer transition-all duration-200 ${selectedItems.includes(item.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
+                          style={{
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            border: selectedItems.includes(item.id) ? '2px solid rgba(34, 197, 94, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
+                            flexShrink: 0
+                          }}
+                        >
+                          <OptimizedImage
+                            src={item.image_url || DEFAULT_IMAGE_URL}
+                            alt={item.item_name}
+                            fallback={DEFAULT_IMAGE_URL}
+                            className="w-full h-full object-contain"
+                            style={{ maxHeight: '100%' }}
+                            lazy={true}
+                          />
+                          {selectedItems.includes(item.id) && (
+                            <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-20">
+                              <div className="bg-green-600 rounded-full p-0.5 shadow-lg">
+                                <Check className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            </div>
+                          )}
+                          <div className="absolute top-2 right-2 z-10">
+                            <Badge variant="outline" className={`${statusColors[item.status]} text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.5`}>
+                              {statusLabels[item.status] || statusLabels.available}
+                            </Badge>
+                          </div>
+                        </Link>
+                      </div>
+
+                      <div className="flex-1 flex flex-col justify-start px-1.5 sm:px-6 py-1 sm:py-6 border-r min-w-0 overflow-hidden relative"
+                        style={{
+                          borderColor: 'rgba(51, 65, 85, 0.6)',
+                          flexShrink: 1,
+                          minWidth: 0
+                        }}
+                      >
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-[60%] sm:h-full sm:top-0 sm:translate-y-0 bg-slate-600/60"></div>
+                        
+                        <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block mb-0.5 sm:mb-3">
+                          <h3 className="text-xs sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2"
+                            style={{ letterSpacing: '0.5px', lineHeight: '1.25' }}>
+                            {item.item_name || 'Untitled Item'}
+                          </h3>
+                        </Link>
+
+                        <div className="mb-0 sm:hidden space-y-0.5">
+                          <p className="text-gray-300 text-[9px] break-words leading-[12px]">
+                            <span className="font-semibold">Price:</span> ${item.purchase_price.toFixed(2)}
+                            {item.quantity > 1 && <span className="text-gray-400"> (${perItemPrice.toFixed(2)} ea)</span>}
+                          </p>
+                          <p className="text-gray-300 text-[9px] break-words leading-[12px]">
+                            <span className="font-semibold">Qty:</span> {item.quantity}
+                            {quantitySold > 0 && (
+                              <span className={isSoldOut ? 'text-red-400' : 'text-blue-400'}>
+                                {isSoldOut ? ' (Sold Out)' : ` (${quantitySold} sold)`}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="hidden sm:block space-y-1.5 text-xs sm:text-sm mb-2 sm:mb-4 text-gray-300 break-words">
+                          <div className="flex justify-between">
+                            <span>Price:</span>
+                            <span className="font-medium text-white">
+                              ${item.purchase_price.toFixed(2)}
+                              {item.quantity > 1 && <span className="text-gray-400 ml-1">(${perItemPrice.toFixed(2)} ea)</span>}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span>Qty:</span>
+                            <span className="font-medium text-white">
+                              {item.quantity}
+                              {quantitySold > 0 && (
+                                <span className={`ml-1 ${isSoldOut ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
+                                  {isSoldOut ? '(Sold Out)' : `(${quantitySold} sold)`}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Purchase Date:</span>
+                            <span className="font-medium text-white">
+                              {item.purchase_date ? format(parseISO(item.purchase_date), 'MMM dd, yyyy') : '—'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {itemTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2 sm:mb-3">
+                            {itemTags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="flex items-center gap-1 text-[9px] sm:text-[11px]">
+                                {tag}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveTagFromItem(item.id, tag)}
+                                  className="inline-flex h-3 w-3 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-black/10 text-muted-foreground hover:bg-black/20"
+                                >
+                                  <X className="h-2 w-2 sm:h-3 sm:w-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {isDeleted && daysUntilPermanentDelete !== null && (
+                          <div className="mt-2 sm:mt-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200">
+                            <p className="font-semibold text-xs flex items-center gap-1">
+                              <AlarmClock className="w-3 h-3" />
+                              {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-1 sm:py-3 mr-1.5 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[75px] sm:w-[200px] min-w-[75px] sm:min-w-[200px] max-w-[75px] sm:max-w-[200px]"
+                        style={{
+                          background: 'rgb(51, 65, 85)',
+                          flexShrink: 0
+                        }}
+                      >
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center w-full">
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(item.id)}
+                            className={`inline-flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-md border border-transparent transition ${
+                              favoriteMarked
+                                ? "bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
+                                : "text-muted-foreground hover:text-amber-500 hover:bg-muted/40"
+                            }`}
+                          >
+                            <Star className={`h-3 w-3 sm:h-4 sm:w-4 ${favoriteMarked ? "fill-current" : ""}`} />
+                          </button>
+                          {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="h-6 w-6 sm:h-7 sm:px-2 text-xs gap-1 p-0 sm:p-2"
+                              onClick={(e) => handleEditImage(e, item)}
+                            >
+                              <ImageIcon className="h-3 w-3" />
+                              <span className="hidden sm:inline">Edit</span>
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-6 w-6 sm:h-7 sm:px-2 text-xs gap-1 p-0 sm:p-2"
+                            onClick={() => handleTagEditorToggle(item.id)}
+                          >
+                            <Tag className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                            <span className="hidden sm:inline">{tagEditorFor === item.id ? "Close" : "Add Tag"}</span>
+                          </Button>
+                        </div>
+                        <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="w-full min-w-0 flex justify-center mt-1 sm:mt-2">
+                          <Button 
+                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-0.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[7px] sm:text-xs w-full sm:w-auto"
+                          >
+                            <span className="whitespace-nowrap">View Details</span>
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {sortedItems.map(item => {
                 const today = new Date();
                 const deadline = item.return_deadline ? parseISO(item.return_deadline) : null;
@@ -1049,138 +1282,142 @@ export default function InventoryPage() {
             })();
 
             return (
-                  <Card key={item.id} className={`group overflow-hidden shadow-sm hover:shadow-lg transition-shadow ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : ''}`}>
-                    <div className="relative">
-                      <div className="absolute top-2 left-2 z-10">
-                        <Checkbox
-                          checked={selectedItems.includes(item.id)}
-                          onCheckedChange={() => handleSelect(item.id)}
-                          id={`select-${item.id}`}
-                          className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&[data-state=checked]]:!bg-green-600 [&[data-state=checked]]:!border-green-600 backdrop-blur [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
-                        />
-                      </div>
-                      
+              <Card 
+                key={item.id} 
+                className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-slate-700/50'}`}
+                style={{
+                  background: 'linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(51, 65, 85) 100%)',
+                  borderRadius: '16px',
+                  boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                }}
+              >
+                <div className="relative aspect-square overflow-hidden"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                  }}
+                >
                   <Link
                     to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
                     state={returnStateForInventory}
+                    className="block w-full h-full"
                   >
-                    <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
-                      <OptimizedImage
-                        src={item.image_url || DEFAULT_IMAGE_URL}
-                        alt={item.item_name}
-                        fallback={DEFAULT_IMAGE_URL}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        lazy={true}
-                      />
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="outline" className={`${statusColors[item.status]} text-[10px] px-1.5 py-0.5`}>
-                          {statusLabels[item.status] || statusLabels.available}
-                        </Badge>
-                      </div>
-                      {/* Edit Photo Button - Desktop only */}
-                      {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="absolute bottom-2 right-2 z-10 h-7 px-2 text-xs gap-1 bg-background/90 backdrop-blur-sm hidden md:inline-flex"
-                          onClick={(e) => handleEditImage(e, item)}
-                        >
-                          <ImageIcon className="h-3 w-3" />
-                          Edit
-                        </Button>
-                      )}
-                    </div>
+                    <OptimizedImage
+                      src={item.image_url || DEFAULT_IMAGE_URL}
+                      alt={item.item_name}
+                      fallback={DEFAULT_IMAGE_URL}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      lazy={true}
+                    />
                   </Link>
+                  <div className="absolute top-2 left-2 z-10">
+                    <Checkbox
+                      checked={selectedItems.includes(item.id)}
+                      onCheckedChange={() => handleSelect(item.id)}
+                      id={`select-${item.id}`}
+                      className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px] backdrop-blur-sm"
+                    />
+                  </div>
+                  {selectedItems.includes(item.id) && (
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="bg-green-600 rounded-full p-1 shadow-lg">
+                        <Check className="w-4 h-4 text-white" />
+                      </div>
                     </div>
+                  )}
+                  <div className="absolute top-2 right-2 z-10">
+                    <Badge variant="outline" className={`${statusColors[item.status]} text-[10px] px-1.5 py-0.5 backdrop-blur-sm`}>
+                      {statusLabels[item.status] || statusLabels.available}
+                    </Badge>
+                  </div>
+                </div>
 
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between mb-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
                         <button
                           type="button"
                           onClick={() => toggleFavorite(item.id)}
                           className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent transition ${
                             favoriteMarked
                               ? "bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
-                              : "text-muted-foreground hover:text-amber-500 hover:bg-muted/40"
+                              : "text-gray-300 hover:text-amber-500 hover:bg-amber-500/10"
                           }`}
                         >
                           <Star className={`h-4 w-4 ${favoriteMarked ? "fill-current" : ""}`} />
                           <span className="sr-only">{favoriteButtonLabel}</span>
                         </button>
-                        {/* Edit Photo Button - Mobile only */}
-                        {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
+                        <div className="flex items-center gap-2">
+                          {/* Edit Photo Button */}
+                          {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="h-7 px-2 text-xs gap-1 bg-slate-700/50 hover:bg-slate-600/50 text-white border-slate-600"
+                              onClick={(e) => handleEditImage(e, item)}
+                            >
+                              <ImageIcon className="h-3 w-3" />
+                              Edit
+                            </Button>
+                          )}
+                          {/* Add Tag Button */}
                           <Button
                             type="button"
-                            variant="secondary"
+                            variant="outline"
                             size="sm"
-                            className="h-7 px-2 text-xs gap-1 md:hidden"
-                            onClick={(e) => handleEditImage(e, item)}
+                            className="h-7 px-2 text-xs gap-1 border-slate-600 text-gray-300 hover:bg-slate-700/50"
+                            onClick={() => handleTagEditorToggle(item.id)}
                           >
-                            <ImageIcon className="h-3 w-3" />
-                            Edit
+                            <Tag className="h-3.5 w-3.5" />
+                            {tagEditorFor === item.id ? "Close" : "Add Tag"}
                           </Button>
-                        )}
-                        {/* Add Tag Button - Desktop only */}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 text-xs gap-1 hidden md:inline-flex"
-                          onClick={() => handleTagEditorToggle(item.id)}
-                        >
-                          <Tag className="h-3.5 w-3.5" />
-                          {tagEditorFor === item.id ? "Close" : "Add Tag"}
-                        </Button>
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setTitlePreview(item.item_name)}
-                        className="font-semibold text-sm leading-tight mb-2 min-h-[2.5rem] text-foreground text-left hover:text-primary transition-colors group/item focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 rounded"
-                        aria-label={`View full title for ${item.item_name}`}
+                      <Link
+                        to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
+                        state={returnStateForInventory}
                       >
-                        <span className="block line-clamp-2 break-words">
-                          {truncatedTitle}
-                        </span>
-                      </button>
+                        <h3 className="font-bold text-white text-sm mb-3 line-clamp-2 hover:text-blue-400 transition-colors">
+                          {item.item_name || 'Untitled Item'}
+                        </h3>
+                      </Link>
                       
                       <div className="space-y-1.5 text-xs mb-3">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Price:</span>
-                          <span className="font-medium text-foreground">
+                        <div className="flex justify-between text-gray-300">
+                          <span>Price:</span>
+                          <span className="font-semibold text-white">
                             ${item.purchase_price.toFixed(2)}
                             {item.quantity > 1 && (
-                              <span className="text-muted-foreground ml-1">(${perItemPrice.toFixed(2)} ea)</span>
+                              <span className="text-gray-400 ml-1">(${perItemPrice.toFixed(2)} ea)</span>
                             )}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Qty:</span>
-                          <span className="font-medium text-foreground">
+                        <div className="flex justify-between items-center text-gray-300">
+                          <span>Qty:</span>
+                          <span className="font-semibold text-white">
                             {item.quantity}
                             {quantitySold > 0 && (
-                              <span className={`ml-1 ${isSoldOut ? 'text-red-600 font-bold' : 'text-blue-600'}`}>
+                              <span className={`ml-1 ${isSoldOut ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
                                 {isSoldOut ? '(Sold Out)' : `(${quantitySold} sold)`}
                               </span>
                             )}
                           </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Purchase Date:</span>
-                          <span className="font-medium text-foreground">{item.purchase_date ? format(parseISO(item.purchase_date), 'MMM dd, yyyy') : '—'}</span>
+                        <div className="flex justify-between text-gray-300">
+                          <span>Purchase Date:</span>
+                          <span className="text-white">{item.purchase_date ? format(parseISO(item.purchase_date), 'MMM dd, yyyy') : '—'}</span>
                         </div>
                       </div>
 
                       {itemTags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-3">
                           {itemTags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="flex items-center gap-1 text-[11px]">
+                            <Badge key={tag} variant="secondary" className="flex items-center gap-1 text-[11px] bg-slate-700/50 text-gray-300 border-slate-600">
                               {tag}
                               <button
                                 type="button"
                                 onClick={() => handleRemoveTagFromItem(item.id, tag)}
-                                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-black/10 text-muted-foreground hover:bg-black/20"
+                                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-black/20 text-gray-400 hover:bg-black/30"
                               >
                                 <X className="h-3 w-3" />
                                 <span className="sr-only">Remove tag</span>
@@ -1269,7 +1506,14 @@ export default function InventoryPage() {
                         </div>
                       )}
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
+                        <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block">
+                          <Button 
+                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs"
+                          >
+                            View Details
+                          </Button>
+                        </Link>
                         {isDeleted ? (
                           <Button 
                             onClick={() => recoverItemMutation.mutate(item.id)} 
@@ -1280,13 +1524,13 @@ export default function InventoryPage() {
                             {recoverItemMutation.isPending ? "Recovering..." : "Recover Item"}
                           </Button>
                         ) : (
-                          <>
+                          <div className="grid grid-cols-2 gap-2">
                             {!isSoldOut && item.status !== 'sold' && availableToSell > 0 && (
                               <Button 
                                 onClick={() => handleMarkAsSold(item)} 
-                                className="w-full bg-green-600 hover:bg-green-700 h-8 text-xs"
+                                className="bg-green-600 hover:bg-green-700 h-8 text-xs"
                               >
-                                <ShoppingCart className="w-3 h-3 mr-1.5" />
+                                <ShoppingCart className="w-3 h-3 mr-1" />
                                 Mark Sold
                               </Button>
                             )}
@@ -1297,52 +1541,32 @@ export default function InventoryPage() {
                                 setSoldDialogName(item.item_name || "");
                                 setSoldDialogOpen(true);
                               }}
-                              className="w-full h-8 text-xs"
+                              className="h-8 text-xs border-slate-600 text-gray-300 hover:bg-slate-700/50"
                             >
-                              <BarChart className="w-3.5 h-3.5 mr-2" />
+                              <BarChart className="w-3.5 h-3.5 mr-1" />
                               Search Sold
                             </Button>
-                            {/* Add Tag Button - Mobile only */}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleTagEditorToggle(item.id)}
-                              className="w-full h-8 text-xs gap-1 md:hidden"
+                            <Link
+                              to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
+                              state={returnStateForInventory}
+                              className="flex-1"
                             >
-                              <Tag className="h-3.5 w-3.5" />
-                              {tagEditorFor === item.id ? "Close" : "Add Tag"}
-                            </Button>
-                            <div className="grid grid-cols-3 gap-1">
-                              <Link
-                                to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
-                                state={returnStateForInventory}
-                                className="flex-1"
-                              >
-                                <Button variant="outline" size="sm" className="w-full h-7 px-2">
-                                  <Edit className="w-3 h-3" />
-                                </Button>
-                              </Link>
-                              <Link
-                                to={createPageUrl(`AddInventoryItem?copyId=${item.id}`)}
-                                state={returnStateForInventory}
-                                className="flex-1"
-                              >
-                                <Button variant="outline" size="sm" className="w-full h-7 px-2">
-                                  <Copy className="w-3 h-3" />
-                                </Button>
-                              </Link>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleDeleteClick(item)} 
-                                disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-7 px-2"
-                              >
-                                <Trash2 className="w-3 h-3" />
+                              <Button variant="outline" size="sm" className="w-full h-8 text-xs border-slate-600 text-gray-300 hover:bg-slate-700/50">
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
                               </Button>
-                            </div>
-                          </>
+                            </Link>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleDeleteClick(item)} 
+                              disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 text-xs border-red-600/50"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -1350,6 +1574,7 @@ export default function InventoryPage() {
                 );
               })}
             </div>
+            )
           ) : (
             <div className="text-center py-20">
               <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
