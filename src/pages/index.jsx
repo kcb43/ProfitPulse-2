@@ -23,6 +23,7 @@ import CrosslistComposer from "./CrosslistComposer";
 import MarketIntelligence from "./MarketIntelligence";
 import Settings from "./Settings";
 import DevErrorBoundary from "../components/DevErrorBoundary";
+import ScrollToTop from "../components/ScrollToTop";
 
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 
@@ -75,8 +76,10 @@ function PagesContent() {
     const currentPage = _getCurrentPage(location.pathname);
     
     return (
-        <Layout currentPageName={currentPage}>
-            <Routes>            
+        <>
+            <ScrollToTop />
+            <Layout currentPageName={currentPage}>
+                <Routes>            
                 
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 
@@ -119,8 +122,9 @@ function PagesContent() {
                 
                 <Route path="/Settings" element={<Settings />} />
                 
-            </Routes>
-        </Layout>
+                </Routes>
+            </Layout>
+        </>
     );
 }
 
