@@ -1077,13 +1077,13 @@ export default function InventoryPage() {
                           {statusLabels[item.status] || statusLabels.available}
                         </Badge>
                       </div>
-                      {/* Edit Photo Button */}
+                      {/* Edit Photo Button - Desktop only */}
                       {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
                         <Button
                           type="button"
                           variant="secondary"
                           size="sm"
-                          className="absolute bottom-2 right-2 z-10 h-7 px-2 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm"
+                          className="absolute bottom-2 right-2 z-10 h-7 px-2 text-xs gap-1 bg-background/90 backdrop-blur-sm hidden md:inline-flex"
                           onClick={(e) => handleEditImage(e, item)}
                         >
                           <ImageIcon className="h-3 w-3" />
@@ -1108,11 +1108,25 @@ export default function InventoryPage() {
                           <Star className={`h-4 w-4 ${favoriteMarked ? "fill-current" : ""}`} />
                           <span className="sr-only">{favoriteButtonLabel}</span>
                         </button>
+                        {/* Edit Photo Button - Mobile only */}
+                        {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 md:hidden"
+                            onClick={(e) => handleEditImage(e, item)}
+                          >
+                            <ImageIcon className="h-3 w-3" />
+                            Edit
+                          </Button>
+                        )}
+                        {/* Add Tag Button - Desktop only */}
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="h-7 px-2 text-xs gap-1"
+                          className="h-7 px-2 text-xs gap-1 hidden md:inline-flex"
                           onClick={() => handleTagEditorToggle(item.id)}
                         >
                           <Tag className="h-3.5 w-3.5" />
@@ -1287,6 +1301,17 @@ export default function InventoryPage() {
                             >
                               <BarChart className="w-3.5 h-3.5 mr-2" />
                               Search Sold
+                            </Button>
+                            {/* Add Tag Button - Mobile only */}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleTagEditorToggle(item.id)}
+                              className="w-full h-8 text-xs gap-1 md:hidden"
+                            >
+                              <Tag className="h-3.5 w-3.5" />
+                              {tagEditorFor === item.id ? "Close" : "Add Tag"}
                             </Button>
                             <div className="grid grid-cols-3 gap-1">
                               <Link
