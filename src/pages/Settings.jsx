@@ -252,89 +252,19 @@ export default function Settings() {
   };
 
   const loginWithFacebook = () => {
-    console.log('loginWithFacebook called', { sdkReady, hasFB: !!window.FB, fbInstance });
+    // Use OAuth redirect method which has proper Marketplace scopes configured
+    // This redirects to /api/facebook/auth which has the correct scopes:
+    // - pages_manage_metadata
+    // - pages_manage_posts
+    // - business_management
+    // - pages_read_engagement
     
-    // Wait a bit if SDK isn't ready yet
-    if (!sdkReady) {
-      if (!window.FB) {
-        toast({
-          title: 'Facebook SDK Not Ready',
-          description: 'Please wait for Facebook SDK to load...',
-          variant: 'destructive',
-        });
-        return;
-      }
-      // If window.FB exists but hook says not ready, initialize it
-      try {
-        if (!window.FB.getAuthResponse) {
-          window.FB.init({
-            appId: '1855278678430851',
-            cookie: true,
-            xfbml: true,
-            version: 'v17.0'
-          });
-        }
-      } catch (e) {
-        console.error('Error initializing FB:', e);
-      }
-    }
-
-    // Use fbInstance from hook if available, otherwise try window.FB
-    const FB = fbInstance || window.FB;
-
-    if (!FB) {
-      toast({
-        title: 'Facebook SDK Not Loaded',
-        description: 'Facebook SDK failed to load. Please refresh the page and try again.',
-        variant: 'destructive',
-      });
-      console.error('Facebook SDK (FB) is not available');
-      return;
-    }
-
-    try {
-      console.log('Calling FB.login...', FB);
-      FB.login(function(response) {
-        console.log('FB.login response:', response);
-        
-        if (response.authResponse) {
-          console.log('Logged in!', response.authResponse);
-          // Save response.authResponse.accessToken to your server if needed
-          const accessToken = response.authResponse.accessToken;
-          
-          // Store token locally
-          const tokenData = {
-            access_token: accessToken,
-            expires_at: Date.now() + (response.authResponse.expiresIn * 1000),
-            expires_in: response.authResponse.expiresIn,
-          };
-          localStorage.setItem('facebook_access_token', JSON.stringify(tokenData));
-          
-          // Reload accounts and check status
-          loadMarketplaceAccounts();
-          checkFacebookStatus();
-          
-          toast({
-            title: 'Facebook Connected',
-            description: 'Your Facebook account has been successfully connected.',
-          });
-        } else {
-          console.log('User cancelled login or did not fully authorize.', response);
-          toast({
-            title: 'Login Cancelled',
-            description: 'Facebook login was cancelled.',
-            variant: 'destructive',
-          });
-        }
-      }, {scope: 'public_profile,email'});
-    } catch (error) {
-      console.error('Error calling FB.login:', error);
-      toast({
-        title: 'Login Error',
-        description: error.message || 'An error occurred during Facebook login.',
-        variant: 'destructive',
-      });
-    }
+    // Save current theme before redirect
+    const currentTheme = localStorage.getItem('theme') || 'default-light';
+    sessionStorage.setItem('preserved_theme', currentTheme);
+    
+    // Redirect to OAuth endpoint
+    window.location.href = '/api/facebook/auth';
   };
 
   const handleMarketplaceConnect = (marketplaceId) => {
