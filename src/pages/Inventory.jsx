@@ -1288,7 +1288,11 @@ export default function InventoryPage() {
                         </div>
                         <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="w-full min-w-0 flex justify-center mt-1 sm:mt-2">
                           <Button 
-                            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold py-0.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[7px] sm:text-xs w-full sm:w-auto"
+                            className={`text-white font-semibold py-0.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md text-[7px] sm:text-xs w-full sm:w-auto ${
+                              item.status === 'listed' 
+                                ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
+                                : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
+                            }`}
                           >
                             <span className="whitespace-nowrap">View Details</span>
                           </Button>
@@ -1559,7 +1563,11 @@ export default function InventoryPage() {
                       <div className="space-y-2">
                         <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block">
                           <Button 
-                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs"
+                            className={`w-full text-white font-semibold text-xs shadow-md ${
+                              item.status === 'listed' 
+                                ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
+                                : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
+                            }`}
                           >
                             View Details
                           </Button>
@@ -1604,10 +1612,10 @@ export default function InventoryPage() {
                                 setSoldDialogName(item.item_name || "");
                                 setSoldDialogOpen(true);
                               }}
-                              className="h-8 text-xs border-slate-600 text-gray-300 hover:bg-slate-700/50"
+                              className="w-full dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white text-xs h-8"
                             >
                               <BarChart className="w-3.5 h-3.5 mr-1" />
-                              Search Sold
+                              Search
                             </Button>
                             <Link
                               to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
