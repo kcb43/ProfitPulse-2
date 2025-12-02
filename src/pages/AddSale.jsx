@@ -364,6 +364,43 @@ export default function AddSale() {
         }
       }
 
+      // Create a new inventory item if sale was NOT from inventory (and not editing/copying)
+      if (!inventoryId && !saleId && !copyId) {
+        try {
+          const quantitySold = parseInt(formData.quantity_sold, 10) || 1;
+          const newInventoryItem = {
+            item_name: formData.item_name,
+            purchase_price: parseFloat(formData.purchase_price) || 0,
+            purchase_date: formData.purchase_date,
+            source: formData.source || "",
+            category: formData.category || "",
+            image_url: formData.image_url || "",
+            quantity: quantitySold,
+            quantity_sold: quantitySold,
+            status: "sold",
+            created_date: new Date().toISOString(),
+          };
+
+          const createdItem = await base44.entities.InventoryItem.create(newInventoryItem);
+
+          // Update the cache with the new inventory item
+          queryClient.setQueryData(['inventoryItems'], (old = []) => {
+            if (!Array.isArray(old)) return old;
+            return [...old, createdItem];
+          });
+
+          // Link the sale to the newly created inventory item
+          if (result && result.id) {
+            await base44.entities.Sale.update(result.id, {
+              inventory_id: createdItem.id
+            });
+          }
+        } catch (error) {
+          console.error("Failed to create inventory item from sale:", error);
+          // Don't alert here - sale was still created successfully
+        }
+      }
+
       navigate(createPageUrl(saleId || copyId ? "SalesHistory" : "Dashboard"));
     },
     onSettled: () => {
