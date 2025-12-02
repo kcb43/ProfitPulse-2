@@ -261,43 +261,43 @@ export default function ProfitCalendar() {
               })}
             </div>
           </CardContent>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 p-4 md:px-6 md:pb-6">
+            <Card className="border-0 shadow-sm md:bg-[#111b2d] md:border md:border-white/5 md:rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3 md:px-6 md:py-5">
+                <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg md:bg-emerald-500/10 md:border md:border-emerald-400/40">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 md:text-emerald-300" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 md:text-slate-400">This Month</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 [.dark_&]:!text-white md:text-white">${monthlyProfit.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm md:bg-[#111b2d] md:border md:border-white/5 md:rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3 md:px-6 md:py-5">
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg md:bg-blue-500/10 md:border md:border-blue-400/40">
+                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 md:text-blue-300" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 md:text-slate-400">Sales Count</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 [.dark_&]:!text-white md:text-white">{monthlySalesCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm md:bg-[#111b2d] md:border md:border-white/5 md:rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3 md:px-6 md:py-5">
+                <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg md:bg-purple-500/10 md:border md:border-purple-400/40">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 md:text-purple-300" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 md:text-slate-400">Avg Daily</p>
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 [.dark_&]:!text-white md:text-white">${avgDailyProfit.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </Card>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          <Card className="border-0 shadow-sm md:bg-[#111b2d] md:border md:border-white/5 md:rounded-2xl">
-            <CardContent className="p-4 flex items-center gap-3 md:px-6 md:py-5">
-              <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg md:bg-emerald-500/10 md:border md:border-emerald-400/40">
-                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 md:text-emerald-300" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 md:text-slate-400">This Month</p>
-                <p className="text-lg sm:text-xl font-bold text-gray-900 [.dark_&]:!text-white md:text-white">${monthlyProfit.toFixed(2)}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm md:bg-[#111b2d] md:border md:border-white/5 md:rounded-2xl">
-            <CardContent className="p-4 flex items-center gap-3 md:px-6 md:py-5">
-              <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg md:bg-blue-500/10 md:border md:border-blue-400/40">
-                <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 md:text-blue-300" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 md:text-slate-400">Sales Count</p>
-                <p className="text-lg sm:text-xl font-bold text-gray-900 [.dark_&]:!text-white md:text-white">{monthlySalesCount}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm md:bg-[#111b2d] md:border md:border-white/5 md:rounded-2xl">
-            <CardContent className="p-4 flex items-center gap-3 md:px-6 md:py-5">
-              <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg md:bg-purple-500/10 md:border md:border-purple-400/40">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 md:text-purple-300" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 md:text-slate-400">Avg Daily</p>
-                <p className="text-lg sm:text-xl font-bold text-gray-900 [.dark_&]:!text-white md:text-white">${avgDailyProfit.toFixed(2)}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
