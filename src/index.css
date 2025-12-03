@@ -594,14 +594,11 @@ input[type="range"].slider::-moz-range-thumb:hover {
   cursor: not-allowed;
 }
 
-/* SortableJS ghost element - overlays on target position */
+/* SortableJS ghost element - completely hidden */
 .sortable-ghost {
-  opacity: 0.4 !important;
-  background: rgba(59, 130, 246, 0.15) !important;
-  border: 2px dashed rgb(59, 130, 246) !important;
-  border-radius: 0.5rem !important;
-}
-
-.sortable-ghost > * {
-  visibility: visible !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  display: none !important;
 }
