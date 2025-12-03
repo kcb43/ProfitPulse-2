@@ -459,6 +459,7 @@ export default function AddInventoryItem() {
 
   // Drag and drop handlers
   const [draggedPhotoId, setDraggedPhotoId] = useState(null);
+  const [dragOverMainPhoto, setDragOverMainPhoto] = useState(false);
 
   const handleDragStart = (e, photoId) => {
     setDraggedPhotoId(photoId);
@@ -470,8 +471,23 @@ export default function AddInventoryItem() {
     e.dataTransfer.dropEffect = 'move';
   };
 
+  const handleDragEnterMain = (e) => {
+    e.preventDefault();
+    const mainPhoto = formData.photos.find(p => p.isMain);
+    // Only show preview if dragging a non-main photo over the main photo
+    if (draggedPhotoId && mainPhoto && draggedPhotoId !== mainPhoto.id) {
+      setDragOverMainPhoto(true);
+    }
+  };
+
+  const handleDragLeaveMain = (e) => {
+    e.preventDefault();
+    setDragOverMainPhoto(false);
+  };
+
   const handleDrop = (e, targetPhotoId) => {
     e.preventDefault();
+    setDragOverMainPhoto(false);
     
     if (!draggedPhotoId || draggedPhotoId === targetPhotoId) {
       setDraggedPhotoId(null);
@@ -648,6 +664,8 @@ export default function AddInventoryItem() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, formData.photos.find(p => p.isMain).id)}
                       onDragOver={handleDragOver}
+                      onDragEnter={handleDragEnterMain}
+                      onDragLeave={handleDragLeaveMain}
                       onDrop={(e) => handleDrop(e, formData.photos.find(p => p.isMain).id)}
                       style={{
                         opacity: draggedPhotoId === formData.photos.find(p => p.isMain).id ? 0.5 : 1,
@@ -659,6 +677,23 @@ export default function AddInventoryItem() {
                         alt="Main photo"
                         className="h-full w-full object-cover pointer-events-none"
                       />
+                      
+                      {/* Drag Preview Overlay */}
+                      {dragOverMainPhoto && draggedPhotoId && (
+                        <div className="absolute inset-0 bg-black/30 pointer-events-none">
+                          <img
+                            src={formData.photos.find(p => p.id === draggedPhotoId)?.imageUrl}
+                            alt="Preview"
+                            className="h-full w-full object-cover opacity-60"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Badge className="bg-blue-500 text-white text-sm px-3 py-1">
+                              Drop to set as main
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+                      
                       <Badge className="absolute top-2 left-2">MAIN</Badge>
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
