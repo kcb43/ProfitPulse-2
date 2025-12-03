@@ -575,14 +575,12 @@ export default function AddInventoryItem() {
                   
                   {/* Main Photo - Large */}
                   {formData.photos.length > 0 && formData.photos.find(p => p.isMain) && (
-                    <div className="relative group">
-                      <div className="aspect-square w-full max-w-md rounded-lg border-2 border-blue-500 overflow-hidden">
-                        <img
-                          src={formData.photos.find(p => p.isMain).imageUrl}
-                          alt="Main photo"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
+                    <div className="relative group aspect-square w-full max-w-md rounded-lg border-2 border-blue-500 overflow-hidden">
+                      <img
+                        src={formData.photos.find(p => p.isMain).imageUrl}
+                        alt="Main photo"
+                        className="h-full w-full object-cover"
+                      />
                       <Badge className="absolute top-2 left-2">MAIN</Badge>
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
