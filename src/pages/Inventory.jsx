@@ -713,6 +713,18 @@ export default function InventoryPage() {
     return inventoryItems.reduce((count, item) => count + (isFavorite(item.id) ? 1 : 0), 0);
   }, [inventoryItems, isFavorite]);
 
+  const dismissedReturnsCount = React.useMemo(() => {
+    if (!Array.isArray(inventoryItems)) return 0;
+    const today = new Date();
+    return inventoryItems.filter(item => {
+      if (!item.return_deadline || !item.return_deadline_dismissed) return false;
+      const deadline = parseISO(item.return_deadline);
+      const daysUntilDeadline = differenceInDays(deadline, today);
+      // Only count items with return deadline within 10 days that are dismissed
+      return daysUntilDeadline >= 0 && daysUntilDeadline <= 10;
+    }).length;
+  }, [inventoryItems]);
+
   const handleTagEditorToggle = (itemId) => {
     setTagEditorFor((prev) => (prev === itemId ? null : itemId));
     setTagDrafts((prev) => ({ ...prev, [itemId]: prev[itemId] || "" }));
@@ -1041,7 +1053,7 @@ export default function InventoryPage() {
                   >
                     <Archive className={`w-4 h-4 flex-shrink-0 ${showDeletedOnly ? "" : ""}`} />
                     <span className="truncate">{showDeletedOnly ? "Showing Deleted" : "Show Deleted"}</span>
-                    {deletedCount > 0 && !showDeletedOnly && (
+                    {deletedCount > 0 && (
                       <span className="text-xs font-normal opacity-80 flex-shrink-0">({deletedCount})</span>
                     )}
                   </Button>
@@ -1054,6 +1066,9 @@ export default function InventoryPage() {
                     >
                       <AlarmClock className={`w-4 h-4 flex-shrink-0 ${showDismissedReturns ? "" : ""}`} />
                       <span className="truncate">{showDismissedReturns ? "Showing Dismissed" : "Show Dismissed"}</span>
+                      {dismissedReturnsCount > 0 && (
+                        <span className="text-xs font-normal opacity-80 flex-shrink-0">({dismissedReturnsCount})</span>
+                      )}
                     </Button>
                   )}
                   {!showDeletedOnly && (
@@ -1074,6 +1089,43 @@ export default function InventoryPage() {
               </div>
             </CardContent>
           </Card>
+
+          {(showDeletedOnly || showDismissedReturns) && (
+            <div className="sticky top-0 z-40 mb-4 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-lg shadow-lg border border-blue-400 dark:border-blue-500">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {showDeletedOnly && (
+                    <>
+                      <Archive className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold text-sm sm:text-base">
+                        Viewing Deleted Items ({deletedCount})
+                      </span>
+                    </>
+                  )}
+                  {showDismissedReturns && !showDeletedOnly && (
+                    <>
+                      <AlarmClock className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold text-sm sm:text-base">
+                        Viewing Dismissed Return Reminders ({dismissedReturnsCount})
+                      </span>
+                    </>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (showDeletedOnly) setShowDeletedOnly(false);
+                    if (showDismissedReturns) setShowDismissedReturns(false);
+                  }}
+                  className="text-white hover:bg-white/20 flex-shrink-0"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">Clear Filter</span>
+                </Button>
+              </div>
+            </div>
+          )}
 
           {selectedItems.length > 0 && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg mb-4 min-w-0">
