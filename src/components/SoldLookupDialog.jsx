@@ -35,9 +35,6 @@ export default function SoldLookupDialog({ open, onOpenChange, itemName = "", on
   const etsyGoogle = q
     ? `https://www.google.com/search?q=${encodeURIComponent(q + " site:etsy.com sold")}`
     : "https://www.google.com";
-  const allMarkets = q
-    ? `https://www.google.com/search?q=${encodeURIComponent(q)}`
-    : "https://www.google.com/search";
   const comparePrices = q
     ? `https://www.google.com/search?q=${encodeURIComponent(q)}`
     : "https://www.google.com/search";
@@ -101,12 +98,6 @@ export default function SoldLookupDialog({ open, onOpenChange, itemName = "", on
             <a href={etsyGoogle} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2">
               <img src={ETSY_ICON_URL} alt="Etsy" className="w-4 h-4 object-contain" />
               Etsy
-            </a>
-          </Button>
-          <Button asChild variant="outline" className="col-span-2 sm:col-span-1 w-full">
-            <a href={allMarkets} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2">
-              <GlobeIcon className="w-4 h-4" />
-              All Markets
             </a>
           </Button>
         </div>
