@@ -1205,13 +1205,6 @@ export default function Crosslist() {
                   selectedItems={selected}
                   onActionComplete={() => setSelected([])}
                 />
-                <Button
-                  onClick={() => setShowListDialog(true)}
-                  className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap w-auto"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Item
-                </Button>
                 {selected.length > 0 && (
                   <Button
                     variant="outline"
@@ -1422,17 +1415,6 @@ export default function Crosslist() {
                       </span>
                     </Button>
 
-                    {/* Facebook Autofill Button */}
-                    <Button
-                      onClick={() => {
-                        populateTemplates(it);
-                        sendToExtension();
-                      }}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-3 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 text-xs"
-                    >
-                      Send to Facebook Autofill
-                    </Button>
-
                     {/* Edit Button */}
                     <Button
                       variant="ghost"
@@ -1568,16 +1550,6 @@ export default function Crosslist() {
                         onClick={() => openComposer([it.id], false)}
                       >
                         Crosslist
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs" 
-                        onClick={() => {
-                          populateTemplates(it);
-                          sendToExtension();
-                        }}
-                      >
-                        Send to Facebook Autofill
                       </Button>
                       <Button 
                         size="sm" 
