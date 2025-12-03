@@ -90,6 +90,7 @@ export default function InventoryPage() {
   const [tagDrafts, setTagDrafts] = useState({});
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showDeletedOnly, setShowDeletedOnly] = useState(false);
+  const [showDismissedReturns, setShowDismissedReturns] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState({ url: null, itemId: null });
   const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
@@ -546,6 +547,33 @@ export default function InventoryPage() {
     },
   });
 
+  // Mutation for dismissing/undismissing return deadline
+  const toggleReturnDeadlineDismissMutation = useMutation({
+    mutationFn: async ({ itemId, dismissed }) => {
+      await base44.entities.InventoryItem.update(itemId, {
+        return_deadline_dismissed: dismissed
+      });
+      return { itemId, dismissed };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+      toast({
+        title: data.dismissed ? "Return Reminder Dismissed" : "Return Reminder Restored",
+        description: data.dismissed 
+          ? "This item will no longer appear in return deadline alerts." 
+          : "This item will now appear in return deadline alerts.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error toggling return deadline dismiss:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update return deadline status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleEditImage = (e, item) => {
     e.preventDefault();
     e.stopPropagation();
@@ -652,7 +680,12 @@ export default function InventoryPage() {
         if (item.return_deadline) {
           const deadline = parseISO(item.return_deadline);
           const daysUntilDeadline = differenceInDays(deadline, today);
-          daysInStockMatch = daysUntilDeadline >= 0 && daysUntilDeadline <= 10;
+          const isWithinDeadline = daysUntilDeadline >= 0 && daysUntilDeadline <= 10;
+          const isDismissed = item.return_deadline_dismissed === true;
+          
+          // If showing dismissed items, show all items within deadline
+          // If not showing dismissed, only show non-dismissed items
+          daysInStockMatch = isWithinDeadline && (showDismissedReturns || !isDismissed);
         } else {
           daysInStockMatch = false;
         }
@@ -661,7 +694,7 @@ export default function InventoryPage() {
     
       return statusMatch && searchMatch && daysInStockMatch && favoriteMatch;
     });
-  }, [inventoryItems, showDeletedOnly, showFavoritesOnly, filters, isFavorite]);
+  }, [inventoryItems, showDeletedOnly, showFavoritesOnly, showDismissedReturns, filters, isFavorite]);
 
   const deletedCount = React.useMemo(() => {
     if (!Array.isArray(inventoryItems)) return 0;
@@ -851,6 +884,13 @@ export default function InventoryPage() {
     navigate(createPageUrl(`AddInventoryItem?${params.toString()}`));
   };
 
+  const handleToggleReturnDeadlineDismiss = (itemId, currentDismissed) => {
+    toggleReturnDeadlineDismissMutation.mutate({ 
+      itemId, 
+      dismissed: !currentDismissed 
+    });
+  };
+
   const handleQuantityDialogConfirm = () => {
     const availableToSell = itemToSell.quantity - (itemToSell.quantity_sold || 0);
     if (itemToSell && quantityToSell > 0 && quantityToSell <= availableToSell) {
@@ -1005,6 +1045,17 @@ export default function InventoryPage() {
                       <span className="text-xs font-normal opacity-80 flex-shrink-0">({deletedCount})</span>
                     )}
                   </Button>
+                  {!showDeletedOnly && filters.daysInStock === "returnDeadline" && (
+                    <Button
+                      variant={showDismissedReturns ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowDismissedReturns((prev) => !prev)}
+                      className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                    >
+                      <AlarmClock className={`w-4 h-4 flex-shrink-0 ${showDismissedReturns ? "" : ""}`} />
+                      <span className="truncate">{showDismissedReturns ? "Showing Dismissed" : "Show Dismissed"}</span>
+                    </Button>
+                  )}
                   {!showDeletedOnly && (
                     <Button
                       variant={showFavoritesOnly ? "default" : "outline"}
@@ -1551,10 +1602,26 @@ export default function InventoryPage() {
 
                       {daysRemaining !== null && !isDeleted && (
                         <div className="mb-3 p-1.5 bg-red-100 dark:bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-800 dark:text-red-200">
-                          <p className="font-semibold text-[10px] flex items-center gap-1">
-                            <AlarmClock className="w-3 h-3" />
-                            {daysRemaining}d to return
-                          </p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-semibold text-[10px] flex items-center gap-1">
+                              <AlarmClock className="w-3 h-3" />
+                              {daysRemaining}d to return
+                            </p>
+                            {filters.daysInStock === "returnDeadline" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleToggleReturnDeadlineDismiss(item.id, item.return_deadline_dismissed);
+                                }}
+                                className="h-5 px-2 py-0 text-[10px] text-red-700 hover:text-red-900 hover:bg-red-200 dark:text-red-300 dark:hover:text-red-100 dark:hover:bg-red-800"
+                              >
+                                {item.return_deadline_dismissed ? 'Restore' : 'Dismiss'}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       )}
 
