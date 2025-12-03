@@ -38,6 +38,7 @@ import { ImageEditor } from "@/components/ImageEditor";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { FacebookListingDialog } from "@/components/FacebookListingDialog";
 import { isConnected } from "@/api/facebookClient";
+import EbaySearchDialog from "@/components/EbaySearchDialog";
 
 const sourceIcons = {
   "Amazon": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/af08cfed1_Logo.png",
@@ -94,6 +95,8 @@ export default function InventoryPage() {
   const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
   const [facebookListingDialogOpen, setFacebookListingDialogOpen] = useState(false);
   const [itemForFacebookListing, setItemForFacebookListing] = useState(null);
+  const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
+  const [ebaySearchInitialQuery, setEbaySearchInitialQuery] = useState("");
 
   const {
     toggleFavorite,
@@ -834,6 +837,18 @@ export default function InventoryPage() {
     } else if (availableToSell === 1) {
       proceedToAddSale(item, 1);
     }
+  };
+
+  const handleEbayItemSelect = (inventoryData) => {
+    // Navigate to Add Inventory page with pre-filled data
+    const params = new URLSearchParams();
+    if (inventoryData.item_name) params.set('name', inventoryData.item_name);
+    if (inventoryData.purchase_price) params.set('price', inventoryData.purchase_price);
+    if (inventoryData.image_url) params.set('imageUrl', inventoryData.image_url);
+    if (inventoryData.category) params.set('category', inventoryData.category);
+    if (inventoryData.source) params.set('source', inventoryData.source);
+    
+    navigate(createPageUrl(`AddInventoryItem?${params.toString()}`));
   };
 
   const handleQuantityDialogConfirm = () => {
@@ -1909,6 +1924,17 @@ export default function InventoryPage() {
         open={soldDialogOpen}
         onOpenChange={setSoldDialogOpen}
         itemName={soldDialogName}
+        onEbaySearch={() => {
+          setEbaySearchInitialQuery(soldDialogName || "");
+          setEbaySearchDialogOpen(true);
+        }}
+      />
+
+      <EbaySearchDialog
+        open={ebaySearchDialogOpen}
+        onOpenChange={setEbaySearchDialogOpen}
+        onSelectItem={handleEbayItemSelect}
+        initialSearchQuery={ebaySearchInitialQuery}
       />
 
       <FacebookListingDialog
