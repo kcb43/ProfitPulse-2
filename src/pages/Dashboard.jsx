@@ -119,6 +119,7 @@ export default function Dashboard() {
 
     return inventoryItems.filter(item => {
       if (!item.return_deadline || item.status === 'sold') return false; // Only consider unsold items with a deadline
+      if (item.return_deadline_dismissed === true) return false; // Exclude dismissed items
       
       try {
         const deadline = parseISO(item.return_deadline);
