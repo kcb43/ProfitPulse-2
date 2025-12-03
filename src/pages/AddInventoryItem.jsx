@@ -326,10 +326,11 @@ export default function AddInventoryItem() {
   };
 
   const handleEditImage = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (formData.image_url) {
-      setImageToEdit({ url: formData.image_url });
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    const mainPhoto = formData.photos.find(p => p.isMain);
+    if (mainPhoto) {
+      setImageToEdit({ url: mainPhoto.imageUrl });
       setEditorOpen(true);
     }
   };
@@ -339,7 +340,19 @@ export default function AddInventoryItem() {
     try {
       const uploadPayload = editedFile instanceof File ? editedFile : new File([editedFile], editedFile.name || 'edited-image.jpg', { type: editedFile.type || 'image/jpeg' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadPayload });
-      handleChange('image_url', file_url);
+      
+      // Update the main photo in the photos array
+      setFormData(prev => {
+        const updatedPhotos = prev.photos.map(p => 
+          p.isMain ? { ...p, imageUrl: file_url } : p
+        );
+        return {
+          ...prev,
+          photos: updatedPhotos,
+          image_url: file_url
+        };
+      });
+      
       setEditorOpen(false);
       setImageToEdit({ url: null });
     } catch (error) {
@@ -557,98 +570,145 @@ export default function AddInventoryItem() {
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Add up to {MAX_PHOTOS} photos. The main photo will have a blue border.
+                    Upload up to {MAX_PHOTOS} photos. First photo will be the main image.
                   </p>
                   
+                  {/* Main Photo - Large */}
+                  {formData.photos.length > 0 && formData.photos.find(p => p.isMain) && (
+                    <div className="relative group">
+                      <div className="aspect-square w-full max-w-md rounded-lg border-2 border-blue-500 overflow-hidden">
+                        <img
+                          src={formData.photos.find(p => p.isMain).imageUrl}
+                          alt="Main photo"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <Badge className="absolute top-2 left-2">MAIN</Badge>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleEditImage}
+                        >
+                          <ImageIcon className="w-4 h-4 mr-1" />
+                          Edit photo
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleRemovePhoto(formData.photos.find(p => p.isMain).id)}
+                        >
+                          Remove photo
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Additional Photos Grid + Add Button */}
                   {formData.photos.length > 0 && (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                      {formData.photos.map((photo, index) => (
-                        <div key={photo.id} className="relative group">
-                          <div className={`aspect-square rounded-lg border-2 overflow-hidden ${photo.isMain ? 'ring-2 ring-blue-500' : ''}`}
-                            style={{ borderColor: photo.isMain ? 'rgb(59, 130, 246)' : 'transparent' }}>
+                    <div className="grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                      {formData.photos.filter(p => !p.isMain).map((photo, index) => (
+                        <div key={photo.id} className="relative group aspect-square">
+                          <div className="aspect-square rounded-lg border overflow-hidden">
                             <img
                               src={photo.imageUrl}
-                              alt={`Photo ${index + 1}`}
+                              alt={`Photo ${index + 2}`}
                               className="w-full h-full object-cover"
                             />
                           </div>
-                          {photo.isMain && (
-                            <Badge className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5">Main</Badge>
-                          )}
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                            {!photo.isMain && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => handleSetMainPhoto(photo.id)}
-                                className="text-xs h-7 px-2"
-                              >
-                                Set Main
-                              </Button>
-                            )}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleSetMainPhoto(photo.id)}
+                              className="text-[10px] h-6 px-2 w-full"
+                            >
+                              Set Main
+                            </Button>
                             <Button
                               type="button"
                               size="sm"
                               variant="destructive"
                               onClick={() => handleRemovePhoto(photo.id)}
-                              className="h-7 w-7 p-0"
+                              className="text-[10px] h-6 px-2 w-full"
                             >
-                              <X className="w-3 h-3" />
+                              Remove
                             </Button>
                           </div>
                         </div>
                       ))}
+                      
+                      {/* Add Photos Button in Grid */}
+                      {formData.photos.length < MAX_PHOTOS && (
+                        <button
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          disabled={uploadingPhotos}
+                          className="flex aspect-square flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/50 text-muted-foreground transition hover:border-foreground/80 hover:text-foreground disabled:opacity-50"
+                        >
+                          {uploadingPhotos ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <>
+                              <Camera className="w-5 h-5 mb-1" />
+                              <span className="text-[10px]">Add photos</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )}
 
-                  {formData.photos.length < MAX_PHOTOS && (
-                    <div className="space-y-2">
-                      <input
-                        ref={photoInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                        disabled={uploadingPhotos}
-                      />
+                  {/* Initial Upload Button (when no photos) */}
+                  {formData.photos.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={uploadingPhotos}
+                      className="flex aspect-square w-full max-w-md flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/50 text-muted-foreground transition hover:border-foreground/80 hover:text-foreground disabled:opacity-50"
+                    >
+                      {uploadingPhotos ? (
+                        <Loader2 className="w-8 h-8 animate-spin" />
+                      ) : (
+                        <>
+                          <Camera className="w-8 h-8 mb-2" />
+                          <span className="text-sm font-medium">Add photos</span>
+                          <span className="text-xs text-muted-foreground/70 mt-1">Upload up to {MAX_PHOTOS} photos</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Additional Actions */}
+                  {formData.photos.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => photoInputRef.current?.click()}
+                        size="sm"
+                        onClick={() => setReceiptDialogOpen(true)}
                         disabled={uploadingPhotos}
-                        className="w-full"
+                        className="flex items-center gap-2"
                       >
-                        {uploadingPhotos ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Uploading photos...
-                          </>
-                        ) : (
-                          <>
-                            <Camera className="w-4 h-4 mr-2" />
-                            {formData.photos.length === 0 ? 'Upload Photos' : 'Add More Photos'}
-                          </>
-                        )}
+                        <Scan className="w-4 h-4" />
+                        Scan Receipt
                       </Button>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setReceiptDialogOpen(true)}
-                          disabled={uploadingPhotos}
-                          className="flex items-center gap-2"
-                        >
-                          <Scan className="w-4 h-4" />
-                          Scan Receipt
-                        </Button>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">Supports JPG or PNG. Images will be compressed.</p>
                     </div>
                   )}
-                  {/* Keep old image input hidden for backward compatibility */}
+
+                  {/* Hidden file inputs */}
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                    disabled={uploadingPhotos}
+                  />
                   <input
                     ref={imageInputRef}
                     id="image-upload-input"
