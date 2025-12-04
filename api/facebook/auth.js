@@ -78,17 +78,20 @@ export default async function handler(req, res) {
     // Facebook OAuth authorization URL
     const authUrl = 'https://www.facebook.com/v18.0/dialog/oauth';
 
-    // Required OAuth scopes for Marketplace
-    // Note: Marketplace API requires app review and business verification
-    // These scopes are required for listing management:
-    // - pages_manage_metadata: Manage page metadata
-    // - pages_manage_posts: Create and manage posts (needed for listings)
-    // - business_management: Manage business assets
-    // - pages_read_engagement: Read page engagement (optional but useful)
+    // OAuth scopes for Facebook integration
+    // NOTE: For Development Mode testing, we use basic permissions that don't require app review
+    // These work immediately for admins/developers/test users:
+    // - public_profile: Basic profile info (always available)
+    // - pages_show_list: List pages user manages (no review needed)
+    // - pages_read_engagement: Read page engagement data (available in dev mode)
+    // 
+    // LATER: For production/marketplace posting, you'll need to apply for App Review to get:
+    // - pages_manage_metadata
+    // - pages_manage_posts
+    // - business_management
     const scope = [
-      'pages_manage_metadata',
-      'pages_manage_posts',
-      'business_management',
+      'public_profile',
+      'pages_show_list',
       'pages_read_engagement',
     ].join(',');
 
