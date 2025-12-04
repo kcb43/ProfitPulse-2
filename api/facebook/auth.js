@@ -79,21 +79,17 @@ export default async function handler(req, res) {
     const authUrl = 'https://www.facebook.com/v18.0/dialog/oauth';
 
     // OAuth scopes for Facebook integration
-    // NOTE: For Development Mode testing, we use basic permissions that don't require app review
-    // These work immediately for admins/developers/test users:
-    // - public_profile: Basic profile info (always available)
-    // - pages_show_list: List pages user manages (no review needed)
-    // - pages_read_engagement: Read page engagement data (available in dev mode)
+    // Using minimal permissions to connect personal Facebook account (like Vendoo)
+    // This won't ask users to choose pages - just connects their personal account
     // 
-    // LATER: For production/marketplace posting, you'll need to apply for App Review to get:
-    // - pages_manage_metadata
-    // - pages_manage_posts
-    // - business_management
-    const scope = [
-      'public_profile',
-      'pages_show_list',
-      'pages_read_engagement',
-    ].join(',');
+    // Currently requesting:
+    // - public_profile: Basic profile info (always available, no review needed)
+    // 
+    // NOTE: For programmatic Marketplace posting via API, Facebook requires:
+    // - Business verification
+    // - App review for pages_manage_posts, pages_manage_metadata, etc.
+    // However, most reseller tools (like Vendoo) use alternative methods rather than direct API posting
+    const scope = 'public_profile';
 
     // Build authorization URL with parameters
     const authParams = new URLSearchParams({
