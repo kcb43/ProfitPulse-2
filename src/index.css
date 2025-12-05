@@ -346,13 +346,18 @@ input[type="range"].slider::-moz-range-thumb:hover {
   bottom: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  -ms-touch-action: none;
-  touch-action: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  -ms-touch-action: none !important;
+  touch-action: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
   overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+.cropper-container * {
+  pointer-events: none !important;
 }
 
 .cropper-container img {
@@ -511,6 +516,7 @@ input[type="range"].slider::-moz-range-thumb:hover {
 .cropper-line {
   background-color: #39f;
   opacity: 0.75;
+  pointer-events: all !important;
 }
 
 .cropper-line.line-e {
@@ -549,6 +555,7 @@ input[type="range"].slider::-moz-range-thumb:hover {
   opacity: 1;
   width: 30px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  pointer-events: all !important;
 }
 
 .cropper-point.point-e {
