@@ -713,21 +713,14 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                    {[
-                      { id: 'crop', icon: Crop, label: 'Crop' },
-                      { id: 'rotate_left', icon: RotateCcw, label: 'Rotate Left' },
-                      { id: 'rotate_right', icon: RotateCw, label: 'Rotate Right' },
-                    ].map(({ id, icon: Icon, label }) => (
-                      <button
-                        key={id}
-                        onClick={() => handleTransform(id)}
-                        className="p-2 sm:p-3 rounded-lg border bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2"
-                      >
-                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="text-[10px] sm:text-xs">{label}</span>
-                      </button>
-                    ))}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => handleTransform('crop')}
+                      className="w-full p-2 sm:p-3 rounded-lg border bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2"
+                    >
+                      <Crop className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="text-[10px] sm:text-xs">Crop</span>
+                    </button>
                   </div>
                 )}
 
@@ -824,37 +817,35 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         filter: `brightness(${filters.brightness}%) 
                                   contrast(${filters.contrast}%) 
                                   saturate(${filters.saturate}%)`,
-                        transform: isCropping ? 'none' : `rotate(${transform.rotate}deg) scale(${transform.flip_x}, ${transform.flip_y})`
+                        transform: `rotate(${transform.rotate}deg) scale(${transform.flip_x}, ${transform.flip_y})`
                       }}
                     />
                     
-                    {/* Rotate buttons overlay when cropping */}
-                    {isCropping && (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '16px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        display: 'flex',
-                        gap: '12px',
-                        zIndex: 1000
-                      }}>
-                        <button
-                          onClick={() => handleTransform('rotate_left')}
-                          className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
-                          title="Rotate Left"
-                        >
-                          <RotateCcw className="w-5 h-5 text-blue-600" />
-                        </button>
-                        <button
-                          onClick={() => handleTransform('rotate_right')}
-                          className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
-                          title="Rotate Right"
-                        >
-                          <RotateCw className="w-5 h-5 text-blue-600" />
-                        </button>
-                      </div>
-                    )}
+                    {/* Rotate buttons overlay - always visible */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '16px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      gap: '12px',
+                      zIndex: 1000
+                    }}>
+                      <button
+                        onClick={() => handleTransform('rotate_left')}
+                        className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
+                        title="Rotate Left"
+                      >
+                        <RotateCcw className="w-5 h-5 text-blue-600" />
+                      </button>
+                      <button
+                        onClick={() => handleTransform('rotate_right')}
+                        className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
+                        title="Rotate Right"
+                      >
+                        <RotateCw className="w-5 h-5 text-blue-600" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
