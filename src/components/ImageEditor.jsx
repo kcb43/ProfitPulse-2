@@ -147,8 +147,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           movable: false,
           rotatable: false,
           wheelZoomRatio: 0,
-          minContainerWidth: img.naturalWidth,
-          minContainerHeight: img.naturalHeight,
+          initialAspectRatio: NaN,
         });
         
         // Disable all wheel events on the cropper
