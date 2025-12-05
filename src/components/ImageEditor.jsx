@@ -15,8 +15,6 @@ import {
   Crop,
   RotateCcw, 
   RotateCw, 
-  MoveHorizontal, 
-  MoveVertical,
   Sun as BrightnessIcon,
   Contrast,
   Palette,
@@ -608,37 +606,37 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     </button>
                   ))}
                 </div>
-              </div>
-            </div>
 
-              {/* Filters Section */}
-              <div className="space-y-2 sm:space-y-3">
-                <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Filters
-                </h3>
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                  {[
-                    { id: 'brightness', icon: BrightnessIcon, label: 'Brightness' },
-                    { id: 'contrast', icon: Contrast, label: 'Contrast' },
-                    { id: 'saturate', icon: Palette, label: 'Saturation' },
-                    { id: 'shadows', icon: Droplets, label: 'Shadows' },
-                  ].map(({ id, icon: Icon, label }) => (
-                    <button
-                      key={id}
-                      onClick={() => handleFilterClick(id)}
-                      className={`p-2 sm:p-3 rounded-lg border transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2 ${
-                        activeFilter === id
-                          ? 'bg-indigo-600 border-indigo-400 text-white'
-                          : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span className="text-[10px] sm:text-xs">{label}</span>
-                    </button>
-                  ))}
+                {/* Filters Section */}
+                <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
+                  <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    Filters
+                  </h3>
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                    {[
+                      { id: 'brightness', icon: BrightnessIcon, label: 'Brightness' },
+                      { id: 'contrast', icon: Contrast, label: 'Contrast' },
+                      { id: 'saturate', icon: Palette, label: 'Saturation' },
+                      { id: 'shadows', icon: Droplets, label: 'Shadows' },
+                    ].map(({ id, icon: Icon, label }) => (
+                      <button
+                        key={id}
+                        onClick={() => handleFilterClick(id)}
+                        className={`p-2 sm:p-3 rounded-lg border transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2 ${
+                          activeFilter === id
+                            ? 'bg-indigo-600 border-indigo-400 text-white'
+                            : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="text-[10px] sm:text-xs">{label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </div>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-900/50 overflow-hidden min-w-0 max-h-full">
