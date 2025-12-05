@@ -121,17 +121,17 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           aspectRatio: getAspectRatioValue(),
           viewMode: 3,
           dragMode: 'none',
-          autoCropArea: 0.8,
+          autoCropArea: 0.7,
           restore: false,
-          guides: true,
-          center: true,
+          guides: false,
+          center: false,
           highlight: false,
           cropBoxMovable: true,
           cropBoxResizable: true,
           toggleDragModeOnDblclick: false,
           responsive: false,
           checkOrientation: false,
-          modal: true,
+          modal: false,
           background: false,
           zoomable: false,
           zoomOnTouch: false,
@@ -779,8 +779,17 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col bg-slate-900/50 overflow-hidden min-w-0 max-h-full p-2 sm:p-4">
-              <div className="w-full flex-1 rounded-lg bg-slate-950 border border-slate-700 overflow-hidden" style={{ position: 'relative', minHeight: '600px', height: '100%' }}>
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0 max-h-full p-2 sm:p-4" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
+              <div 
+                className="w-full flex-1 rounded-lg overflow-hidden flex items-center justify-center" 
+                style={{ 
+                  position: 'relative', 
+                  minHeight: '600px', 
+                  height: '100%',
+                  background: isCropping ? '#ffffff' : '#0f172a',
+                  border: isCropping ? '2px solid #e2e8f0' : '1px solid #334155'
+                }}
+              >
                 {imgSrc && (
                 <img
                   ref={imageRef}
@@ -788,8 +797,10 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                   alt="Editor Preview"
                   style={{
                     display: 'block',
-                    width: '100%',
-                    height: '100%',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    width: isCropping ? 'auto' : '100%',
+                    height: isCropping ? 'auto' : '100%',
                     objectFit: 'contain',
                     filter: isCropping ? 'none' : `brightness(${filters.brightness}%) 
                               contrast(${filters.contrast}%) 
@@ -800,8 +811,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 )}
               </div>
               {isCropping && (
-                <div className="mt-3 text-center text-slate-300 text-sm">
-                  <p>📐 Drag the crop box to adjust your selection. Use the controls on the left to apply or cancel.</p>
+                <div className="mt-3 text-center text-slate-700 text-sm bg-white px-4 py-2 rounded-lg border border-slate-200">
+                  <p className="font-medium">✨ Adjust the crop box by dragging the corners or edges</p>
                 </div>
               )}
             </div>
