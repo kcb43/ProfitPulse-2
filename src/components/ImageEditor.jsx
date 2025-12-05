@@ -665,7 +665,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
           <div className="flex flex-col md:flex-row h-[calc(90vh-120px)] sm:h-[calc(90vh-140px)] overflow-hidden">
             {/* Sidebar */}
-            <div className="w-full md:w-[300px] bg-slate-800/50 backdrop-blur-sm border-r border-slate-700/50 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-3 sm:space-y-6 max-h-full">
+            <div className="w-full md:w-[300px] bg-slate-800/50 backdrop-blur-sm border-r border-slate-700/50 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-3 sm:space-y-6 max-h-[40vh] md:max-h-full">
               {/* Template Section */}
               <div className="space-y-2 sm:space-y-3">
                 <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
@@ -875,10 +875,11 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden min-w-0 max-h-full p-2 sm:p-4" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0 min-h-[300px] md:min-h-0 p-2 sm:p-4" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
               <div 
                 className="w-full flex-1 rounded-lg overflow-hidden flex items-center justify-center" 
                 style={{ 
+                  minHeight: '300px',
                   maxHeight: 'calc(90vh - 200px)',
                   background: isCropping ? '#ffffff' : '#0f172a',
                   border: isCropping ? '2px solid #e2e8f0' : '1px solid #334155'
