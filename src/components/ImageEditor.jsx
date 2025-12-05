@@ -50,8 +50,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   });
   const [activeFilter, setActiveFilter] = useState('brightness');
   const [cropper, setCropper] = useState(null);
-  const [showCropBtn, setShowCropBtn] = useState(false);
-  const [croppedPreview, setCroppedPreview] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
@@ -92,18 +91,6 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       // Reset all settings (don't load template on image change)
       resetAll();
-      
-      // Wait for image to load before initializing cropper
-      if (imageRef.current) {
-        const img = imageRef.current;
-        if (img.complete) {
-          setTimeout(() => initCropper(), 100);
-        } else {
-          img.onload = () => {
-            setTimeout(() => initCropper(), 100);
-          };
-        }
-      }
     }
     return () => {
       if (cropperInstanceRef.current) {
@@ -132,9 +119,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       try {
         cropperInstanceRef.current = new Cropper(imageRef.current, {
           aspectRatio: getAspectRatioValue(),
-          viewMode: 0,
-          dragMode: 'crop',
-          autoCropArea: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.8,
           restore: false,
           guides: true,
           center: true,
@@ -146,18 +133,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           checkOrientation: false,
           modal: true,
           background: true,
-          ready() {
-            // Maximize the crop box on initialization
-            const containerData = this.cropper.getContainerData();
-            this.cropper.setCropBoxData({
-              left: 10,
-              top: 10,
-              width: containerData.width - 20,
-              height: containerData.height - 20
-            });
-          }
         });
         setCropper(cropperInstanceRef.current);
+        setIsCropping(true);
       } catch (error) {
         console.error('Error initializing cropper:', error);
       }
@@ -196,7 +174,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   // Update image filter styles (for preview only)
   useEffect(() => {
-    if (imageRef.current && cropperInstanceRef.current) {
+    if (imageRef.current && !isCropping) {
       const filterStyle = `brightness(${filters.brightness}%) 
                           contrast(${filters.contrast}%) 
                           saturate(${filters.saturate}%)`;
@@ -208,14 +186,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       // Note: Shadows are applied during final save, not in preview
     }
-  }, [filters, transform]);
-
-  // Update aspect ratio when it changes
-  useEffect(() => {
-    if (cropperInstanceRef.current) {
-      handleAspectRatioChange(aspectRatio);
-    }
-  }, [aspectRatio]);
+  }, [filters, transform, isCropping]);
 
   // Get slider max value based on active filter
   const getSliderMax = () => {
@@ -263,7 +234,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   // Handle aspect ratio change
   const handleAspectRatioChange = (newRatio) => {
     setAspectRatio(newRatio);
-    if (cropperInstanceRef.current) {
+    
+    // If cropper is active, update its aspect ratio immediately
+    if (cropperInstanceRef.current && isCropping) {
       const ratioValue = newRatio === 'free' ? NaN : 
                          newRatio === 'square' ? 1 :
                          newRatio === '4:3' ? 4 / 3 :
@@ -300,7 +273,19 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   // Enable crop mode
   const enableCropMode = () => {
-    setShowCropBtn(true);
+    if (!cropperInstanceRef.current) {
+      setTimeout(() => initCropper(), 100);
+    }
+  };
+
+  // Cancel crop mode
+  const cancelCrop = () => {
+    if (cropperInstanceRef.current) {
+      cropperInstanceRef.current.destroy();
+      cropperInstanceRef.current = null;
+      setCropper(null);
+      setIsCropping(false);
+    }
   };
 
   // Apply the crop
@@ -320,26 +305,15 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       if (canvas) {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        const oldCropper = cropperInstanceRef.current;
         
-        oldCropper.destroy();
+        // Destroy cropper
+        cropperInstanceRef.current.destroy();
         cropperInstanceRef.current = null;
-        setShowCropBtn(false);
+        setCropper(null);
+        setIsCropping(false);
         
+        // Update image source
         setImgSrc(dataUrl);
-        
-        setTimeout(() => {
-          if (imageRef.current) {
-            const img = imageRef.current;
-            if (img.complete) {
-              initCropper();
-            } else {
-              img.onload = () => {
-                initCropper();
-              };
-            }
-          }
-        }, 100);
       }
     } catch (error) {
       console.error('Error cropping image:', error);
@@ -361,10 +335,16 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       flip_y: 1
     });
     setActiveFilter('brightness');
-    setCroppedPreview(null);
-    setShowCropBtn(false);
     setSelectedTemplate(null);
     setAspectRatio('free');
+    
+    // Cancel crop mode if active
+    if (cropperInstanceRef.current) {
+      cropperInstanceRef.current.destroy();
+      cropperInstanceRef.current = null;
+      setCropper(null);
+      setIsCropping(false);
+    }
   };
 
   // Handle file upload
@@ -650,40 +630,78 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                   Transform
                 </h3>
                 
-                {/* Aspect Ratio Selector */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-slate-400">Crop Aspect Ratio</Label>
-                  <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
-                    <SelectTrigger className="w-full bg-slate-700/50 border-slate-600 text-slate-300 text-xs sm:text-sm h-8 sm:h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free (No Constraint)</SelectItem>
-                      <SelectItem value="square">Square (1:1)</SelectItem>
-                      <SelectItem value="4:3">Landscape (4:3)</SelectItem>
-                      <SelectItem value="16:9">Widescreen (16:9)</SelectItem>
-                      <SelectItem value="4:5">Portrait (4:5)</SelectItem>
-                      <SelectItem value="9:16">Vertical (9:16)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Aspect Ratio Selector - shown when cropping or before cropping */}
+                {!isCropping && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-slate-400">Crop Aspect Ratio</Label>
+                    <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
+                      <SelectTrigger className="w-full bg-slate-700/50 border-slate-600 text-slate-300 text-xs sm:text-sm h-8 sm:h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="free">Free (No Constraint)</SelectItem>
+                        <SelectItem value="square">Square (1:1)</SelectItem>
+                        <SelectItem value="4:3">Landscape (4:3)</SelectItem>
+                        <SelectItem value="16:9">Widescreen (16:9)</SelectItem>
+                        <SelectItem value="4:5">Portrait (4:5)</SelectItem>
+                        <SelectItem value="9:16">Vertical (9:16)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                  {[
-                    { id: 'crop', icon: Crop, label: 'Crop' },
-                    { id: 'rotate_left', icon: RotateCcw, label: 'Rotate Left' },
-                    { id: 'rotate_right', icon: RotateCw, label: 'Rotate Right' },
-                  ].map(({ id, icon: Icon, label }) => (
-                    <button
-                      key={id}
-                      onClick={() => handleTransform(id)}
-                      className="p-2 sm:p-3 rounded-lg border bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2"
-                    >
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span className="text-[10px] sm:text-xs">{label}</span>
-                    </button>
-                  ))}
-                </div>
+                {isCropping ? (
+                  // When cropping, show aspect ratio selector and crop controls
+                  <div className="space-y-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-slate-400">Crop Aspect Ratio</Label>
+                      <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
+                        <SelectTrigger className="w-full bg-slate-700/50 border-slate-600 text-slate-300 text-xs sm:text-sm h-8 sm:h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free (No Constraint)</SelectItem>
+                          <SelectItem value="square">Square (1:1)</SelectItem>
+                          <SelectItem value="4:3">Landscape (4:3)</SelectItem>
+                          <SelectItem value="16:9">Widescreen (16:9)</SelectItem>
+                          <SelectItem value="4:5">Portrait (4:5)</SelectItem>
+                          <SelectItem value="9:16">Vertical (9:16)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={cancelCrop}
+                        className="flex-1 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm h-9"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={applyCrop}
+                        className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs sm:text-sm h-9"
+                      >
+                        ✓ Apply
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                    {[
+                      { id: 'crop', icon: Crop, label: 'Crop' },
+                      { id: 'rotate_left', icon: RotateCcw, label: 'Rotate Left' },
+                      { id: 'rotate_right', icon: RotateCw, label: 'Rotate Right' },
+                    ].map(({ id, icon: Icon, label }) => (
+                      <button
+                        key={id}
+                        onClick={() => handleTransform(id)}
+                        className="p-2 sm:p-3 rounded-lg border bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2"
+                      >
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="text-[10px] sm:text-xs">{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Filters Section */}
                 <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
@@ -718,31 +736,26 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col bg-slate-900/50 overflow-hidden min-w-0 max-h-full p-2 sm:p-4">
-              <div className="w-full flex-1 rounded-lg bg-slate-950 border border-slate-700 overflow-hidden" style={{ minHeight: '500px' }}>
+              <div className="w-full flex-1 rounded-lg bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center" style={{ minHeight: '500px' }}>
                 {imgSrc && (
                 <img
                   ref={imageRef}
                   src={imgSrc}
                   alt="Editor Preview"
-                  className="block w-full h-auto"
+                  className="block max-w-full max-h-full"
                     style={{
-                      filter: `brightness(${filters.brightness}%) 
+                      filter: isCropping ? 'none' : `brightness(${filters.brightness}%) 
                               contrast(${filters.contrast}%) 
                               saturate(${filters.saturate}%)`,
-                      transform: `rotate(${transform.rotate}deg) scale(${transform.flip_x}, ${transform.flip_y})`,
-                      maxWidth: '100%',
-                      maxHeight: 'none'
+                      transform: isCropping ? 'none' : `rotate(${transform.rotate}deg) scale(${transform.flip_x}, ${transform.flip_y})`
                     }}
                   />
                 )}
               </div>
-              {showCropBtn && (
-                <Button
-                  onClick={applyCrop}
-                  className="mt-3 bg-green-600 hover:bg-green-500 text-white self-center px-8 text-base font-semibold"
-                >
-                  ✓ Apply Crop
-                </Button>
+              {isCropping && (
+                <div className="mt-3 text-center text-slate-300 text-sm">
+                  <p>📐 Drag the crop box to adjust your selection. Use the controls on the left to apply or cancel.</p>
+                </div>
               )}
             </div>
           </div>
