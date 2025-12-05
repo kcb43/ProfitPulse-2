@@ -56,6 +56,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState('free');
   
   const imageRef = useRef(null);
   const cropperInstanceRef = useRef(null);
@@ -112,15 +113,28 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     };
   }, [open, imageSrc]);
 
+  // Get aspect ratio value based on selection
+  const getAspectRatioValue = () => {
+    switch (aspectRatio) {
+      case 'square': return 1; // 1:1
+      case '4:3': return 4 / 3;
+      case '16:9': return 16 / 9;
+      case '9:16': return 9 / 16;
+      case '4:5': return 4 / 5;
+      case 'free': return NaN;
+      default: return NaN;
+    }
+  };
+
   // Initialize Cropper.js
   const initCropper = () => {
     if (imageRef.current && !cropperInstanceRef.current) {
       try {
         cropperInstanceRef.current = new Cropper(imageRef.current, {
-          aspectRatio: NaN,
-          viewMode: 2,
+          aspectRatio: getAspectRatioValue(),
+          viewMode: 1,
           dragMode: 'move',
-          autoCropArea: 1,
+          autoCropArea: 0.95,
           restore: false,
           guides: true,
           center: true,
@@ -128,6 +142,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           cropBoxMovable: true,
           cropBoxResizable: true,
           toggleDragModeOnDblclick: false,
+          minContainerWidth: 200,
+          minContainerHeight: 200,
         });
         setCropper(cropperInstanceRef.current);
       } catch (error) {
@@ -182,6 +198,13 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     }
   }, [filters, transform]);
 
+  // Update aspect ratio when it changes
+  useEffect(() => {
+    if (cropperInstanceRef.current) {
+      handleAspectRatioChange(aspectRatio);
+    }
+  }, [aspectRatio]);
+
   // Get slider max value based on active filter
   const getSliderMax = () => {
     switch (activeFilter) {
@@ -223,6 +246,20 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       ...prev,
       [activeFilter]: value
     }));
+  };
+
+  // Handle aspect ratio change
+  const handleAspectRatioChange = (newRatio) => {
+    setAspectRatio(newRatio);
+    if (cropperInstanceRef.current) {
+      const ratioValue = newRatio === 'free' ? NaN : 
+                         newRatio === 'square' ? 1 :
+                         newRatio === '4:3' ? 4 / 3 :
+                         newRatio === '16:9' ? 16 / 9 :
+                         newRatio === '9:16' ? 9 / 16 :
+                         newRatio === '4:5' ? 4 / 5 : NaN;
+      cropperInstanceRef.current.setAspectRatio(ratioValue);
+    }
   };
 
   // Handle transform buttons
@@ -306,6 +343,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setCroppedPreview(null);
     setShowCropBtn(false);
     setSelectedTemplate(null);
+    setAspectRatio('free');
   };
 
   // Handle file upload
@@ -590,6 +628,25 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                   <Crop className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Transform
                 </h3>
+                
+                {/* Aspect Ratio Selector */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-slate-400">Crop Aspect Ratio</Label>
+                  <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
+                    <SelectTrigger className="w-full bg-slate-700/50 border-slate-600 text-slate-300 text-xs sm:text-sm h-8 sm:h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free (No Constraint)</SelectItem>
+                      <SelectItem value="square">Square (1:1)</SelectItem>
+                      <SelectItem value="4:3">Landscape (4:3)</SelectItem>
+                      <SelectItem value="16:9">Widescreen (16:9)</SelectItem>
+                      <SelectItem value="4:5">Portrait (4:5)</SelectItem>
+                      <SelectItem value="9:16">Vertical (9:16)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   {[
                     { id: 'crop', icon: Crop, label: 'Crop' },
