@@ -352,6 +352,7 @@ input[type="range"].slider::-moz-range-thumb:hover {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  overflow: hidden !important;
 }
 
 .cropper-container img {
@@ -402,6 +403,11 @@ input[type="range"].slider::-moz-range-thumb:hover {
 .cropper-drag-box {
   background-color: #fff;
   opacity: 0;
+  overflow: hidden;
+}
+
+.cropper-modal {
+  overflow: hidden;
 }
 
 .cropper-modal {
