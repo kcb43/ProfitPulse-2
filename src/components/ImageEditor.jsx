@@ -37,6 +37,7 @@ import {
  */
 export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg' }) {
   const [imgSrc, setImgSrc] = useState(null);
+  const [originalImgSrc, setOriginalImgSrc] = useState(null);
   const [filters, setFilters] = useState({
     brightness: 100,
     contrast: 100,
@@ -82,6 +83,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   useEffect(() => {
     if (open && imageSrc) {
       setImgSrc(imageSrc);
+      setOriginalImgSrc(imageSrc); // Store original for reset
       
       // Clean up existing cropper
       if (cropperInstanceRef.current) {
@@ -206,7 +208,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   // Update image filter styles (for preview only)
   useEffect(() => {
-    if (imageRef.current && !isCropping) {
+    if (imageRef.current) {
       const filterStyle = `brightness(${filters.brightness}%) 
                           contrast(${filters.contrast}%) 
                           saturate(${filters.saturate}%)`;
@@ -218,7 +220,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       // Note: Shadows are applied during final save, not in preview
     }
-  }, [filters, transform, isCropping]);
+  }, [filters, transform]);
 
   // Get slider max value based on active filter
   const getSliderMax = () => {
@@ -375,6 +377,11 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   // Reset all filters and transforms
   const resetAll = () => {
+    // Restore original image (undoes any crops)
+    if (originalImgSrc) {
+      setImgSrc(originalImgSrc);
+    }
+    
     setFilters({
       brightness: 100,
       contrast: 100,
@@ -814,12 +821,40 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         width: 'auto',
                         height: 'auto',
                         objectFit: 'contain',
-                        filter: isCropping ? 'none' : `brightness(${filters.brightness}%) 
+                        filter: `brightness(${filters.brightness}%) 
                                   contrast(${filters.contrast}%) 
                                   saturate(${filters.saturate}%)`,
                         transform: isCropping ? 'none' : `rotate(${transform.rotate}deg) scale(${transform.flip_x}, ${transform.flip_y})`
                       }}
                     />
+                    
+                    {/* Rotate buttons overlay when cropping */}
+                    {isCropping && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '16px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        gap: '12px',
+                        zIndex: 1000
+                      }}>
+                        <button
+                          onClick={() => handleTransform('rotate_left')}
+                          className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
+                          title="Rotate Left"
+                        >
+                          <RotateCcw className="w-5 h-5 text-blue-600" />
+                        </button>
+                        <button
+                          onClick={() => handleTransform('rotate_right')}
+                          className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
+                          title="Rotate Right"
+                        >
+                          <RotateCw className="w-5 h-5 text-blue-600" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
