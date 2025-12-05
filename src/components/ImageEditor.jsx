@@ -34,8 +34,10 @@ import {
  * @param {string} imageSrc - Source URL of the image to edit (blob URL or URL)
  * @param {function} onSave - Callback when user saves edited image (receives File object)
  * @param {string} fileName - Optional filename for the saved image
+ * @param {Array} allImages - Optional array of all images to apply filters to
+ * @param {function} onApplyToAll - Optional callback to apply filters to all images
  */
-export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg' }) {
+export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [originalImgSrc, setOriginalImgSrc] = useState(null);
   const [filters, setFilters] = useState({
@@ -91,7 +93,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         cropperInstanceRef.current = null;
       }
       
-      // Reset all settings (don't load template on image change)
+      // Reset all settings
       resetAll();
     }
     return () => {
@@ -448,6 +450,84 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setShowTemplateDialog(true);
   };
 
+  // Apply current filters to all images
+  const handleApplyFiltersToAll = async () => {
+    if (!onApplyToAll || !allImages || allImages.length === 0) {
+      alert('No images available to apply filters to.');
+      return;
+    }
+
+    const confirmed = confirm(`Apply current filter settings to all ${allImages.length} image(s)?`);
+    if (!confirmed) return;
+
+    try {
+      const processedImages = [];
+      
+      for (const imageItem of allImages) {
+        // Get the image URL - handle different structures
+        const imageUrl = imageItem.imageUrl || imageItem.url || imageItem;
+        
+        // Load and process the image
+        const processedFile = await applyFiltersToImage(imageUrl);
+        processedImages.push({
+          ...imageItem,
+          file: processedFile
+        });
+      }
+      
+      // Call the callback with all processed images
+      onApplyToAll(processedImages, filters);
+      alert(`✓ Filters applied to ${processedImages.length} image(s)!`);
+    } catch (error) {
+      console.error('Error applying filters to all images:', error);
+      alert('Failed to apply filters to all images. Please try again.');
+    }
+  };
+
+  // Apply filters to a single image and return a File object
+  const applyFiltersToImage = async (imageUrl) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+
+          // Apply filters
+          ctx.filter = `brightness(${filters.brightness}%) 
+                       contrast(${filters.contrast}%) 
+                       saturate(${filters.saturate}%)`;
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Apply shadows if needed
+          if (filters.shadows !== 0) {
+            applyShadows(ctx, canvas.width, canvas.height, filters.shadows);
+          }
+
+          // Convert to blob and create File
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const file = new File([blob], `filtered-${Date.now()}.jpg`, { type: 'image/jpeg' });
+              resolve(file);
+            } else {
+              reject(new Error('Failed to create blob'));
+            }
+          }, 'image/jpeg', 0.9);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = imageUrl;
+    });
+  };
+
   // Save template to database
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
@@ -782,6 +862,14 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       </button>
                     ))}
                   </div>
+                  {allImages && allImages.length > 0 && onApplyToAll && (
+                    <Button
+                      onClick={handleApplyFiltersToAll}
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm h-8 sm:h-9"
+                    >
+                      Apply Filters to All Images ({allImages.length})
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
