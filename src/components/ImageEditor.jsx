@@ -120,7 +120,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         cropperInstanceRef.current = new Cropper(imageRef.current, {
           aspectRatio: getAspectRatioValue(),
           viewMode: 3,
-          dragMode: 'none',
+          dragMode: 'move',
           autoCropArea: 0.7,
           restore: false,
           guides: false,

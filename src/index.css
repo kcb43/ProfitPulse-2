@@ -392,7 +392,7 @@ input[type="range"].slider::-moz-range-thumb:hover {
 
 .cropper-face {
   pointer-events: all !important;
-  cursor: default !important;
+  cursor: move !important;
 }
 
 .cropper-wrap-box,
