@@ -2122,6 +2122,7 @@ export default function InventoryPage() {
         fileName={`${imageToEdit.itemId}-edited.jpg`}
         allImages={imageToEdit.itemId ? (inventoryItems.find(i => i.id === imageToEdit.itemId)?.images || []) : []}
         onApplyToAll={handleApplyFiltersToAll}
+        itemId={imageToEdit.itemId}
       />
 
       <SoldLookupDialog

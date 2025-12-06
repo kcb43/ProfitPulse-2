@@ -39,8 +39,9 @@ import {
  * @param {string} fileName - Optional filename for the saved image
  * @param {Array} allImages - Optional array of all images to apply filters to
  * @param {function} onApplyToAll - Optional callback to apply filters to all images
+ * @param {string} itemId - Optional item ID to track editing history
  */
-export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll }) {
+export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll, itemId }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [originalImgSrc, setOriginalImgSrc] = useState(null);
   const [filters, setFilters] = useState({
@@ -72,6 +73,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   const imageRef = useRef(null);
   const cropperInstanceRef = useRef(null);
   const queryClient = useQueryClient();
+  
+  // Store editing history per image URL to remember settings
+  const imageEditHistoryRef = useRef(new Map());
   
   // Normalize images array - memoized to prevent recalculation
   const normalizedImages = useMemo(() => {
@@ -158,18 +162,30 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           cropperInstanceRef.current = null;
         }
         
-        // Reset all settings
-        setFilters({
-          brightness: 100,
-          contrast: 100,
-          saturate: 100,
-          shadows: 0
-        });
-        setTransform({
-          rotate: 0,
-          flip_x: 1,
-          flip_y: 1
-        });
+        // Check if this image has saved editing settings
+        const historyKey = itemId ? `${itemId}_0` : null;
+        const savedSettings = historyKey ? imageEditHistoryRef.current.get(historyKey) : null;
+        
+        if (savedSettings) {
+          // Load previously saved settings
+          console.log('Loading saved settings for image:', savedSettings);
+          setFilters(savedSettings.filters);
+          setTransform(savedSettings.transform);
+        } else {
+          // Reset to defaults for new image
+          setFilters({
+            brightness: 100,
+            contrast: 100,
+            saturate: 100,
+            shadows: 0
+          });
+          setTransform({
+            rotate: 0,
+            flip_x: 1,
+            flip_y: 1
+          });
+        }
+        
         setActiveFilter('brightness');
         setSelectedTemplate(null);
         setAspectRatio('free');
@@ -201,8 +217,17 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setIsCropping(false);
         }
         
-        // Reset settings when changing to unedited images
-        if (!editedImages.has(currentImageIndex)) {
+        // Check if this image has saved editing settings (keyed by itemId + index)
+        const historyKey = itemId ? `${itemId}_${currentImageIndex}` : null;
+        const savedSettings = historyKey ? imageEditHistoryRef.current.get(historyKey) : null;
+        
+        if (savedSettings) {
+          // Load previously saved settings for this image
+          console.log(`Loading saved settings for image ${currentImageIndex}:`, savedSettings);
+          setFilters(savedSettings.filters);
+          setTransform(savedSettings.transform);
+        } else {
+          // Reset to defaults for images without saved settings
           setFilters({
             brightness: 100,
             contrast: 100,
@@ -214,10 +239,11 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             flip_x: 1,
             flip_y: 1
           });
-          setActiveFilter('brightness');
-          setSelectedTemplate(null);
-          setAspectRatio('free');
         }
+        
+        setActiveFilter('brightness');
+        setSelectedTemplate(null);
+        setAspectRatio('free');
       }
     }
   }, [currentImageIndex, normalizedImages, open]);
@@ -522,6 +548,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setAspectRatio('free');
     setAppliedToAll(false); // Reset applied to all state
     
+    // Clear the editing history for this image
+    if (itemId) {
+      const historyKey = `${itemId}_${currentImageIndex}`;
+      imageEditHistoryRef.current.delete(historyKey);
+    }
+    
     // Cancel crop mode if active
     if (cropperInstanceRef.current) {
       cropperInstanceRef.current.destroy();
@@ -793,6 +825,16 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], fileName, { type: 'image/jpeg' });
+          
+          // Store the editing settings for this image (keyed by itemId + index)
+          if (itemId) {
+            const historyKey = `${itemId}_${currentImageIndex}`;
+            imageEditHistoryRef.current.set(historyKey, {
+              filters: { ...filters },
+              transform: { ...transform },
+              timestamp: Date.now()
+            });
+          }
           
           // Mark this image as edited
           setEditedImages(prev => new Set([...prev, currentImageIndex]));
