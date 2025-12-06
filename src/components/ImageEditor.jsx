@@ -274,7 +274,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
         cropperInstanceRef.current = new Cropper(imageRef.current, {
           aspectRatio: getAspectRatioValue(),
-          viewMode: 0,
+          viewMode: 1, // Restrict crop box to not exceed the canvas (image) boundaries
           dragMode: 'none',
           autoCropArea: 1.0, // Start with crop box at 100% of image size
           restore: false,
