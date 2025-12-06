@@ -956,10 +956,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       ref={imageRef}
                       src={imgSrc}
                       alt="Editor Preview"
-                      className="block object-contain max-w-[90%] max-h-[90%] md:max-w-[70%] md:max-h-[70%]"
+                      className="block object-contain max-w-[90%] max-h-[90%]"
                       style={{
                         width: 'auto',
                         height: 'auto',
+                        maxWidth: window.innerWidth >= 768 ? '60%' : '90%',
+                        maxHeight: window.innerWidth >= 768 ? '60vh' : '90%',
                         filter: `brightness(${filters.brightness}%) 
                                   contrast(${filters.contrast}%) 
                                   saturate(${filters.saturate}%)`,
