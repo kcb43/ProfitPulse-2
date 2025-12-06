@@ -190,7 +190,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           aspectRatio: getAspectRatioValue(),
           viewMode: 0,
           dragMode: 'none',
-          autoCropArea: 0.9, // Start with crop box at 90% of image size
+          autoCropArea: 1.0, // Start with crop box at 100% of image size
           restore: false,
           guides: true,
           center: true,
