@@ -720,7 +720,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[92vw] sm:w-[90vw] max-w-[95vw] max-h-[90vh] p-0 overflow-y-auto md:overflow-hidden overflow-x-hidden bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
+        <DialogContent className="w-[92vw] sm:w-[90vw] max-w-[95vw] max-h-[90vh] p-0 overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 flex flex-col">
           <DialogHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-base sm:text-xl font-semibold text-white flex items-center gap-2">
@@ -730,7 +730,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             </div>
           </DialogHeader>
 
-          <div className="flex flex-col md:flex-row h-auto md:h-[calc(90vh-140px)] overflow-visible md:overflow-hidden">
+          <div className="flex flex-col md:flex-row h-auto md:flex-1 overflow-y-auto md:overflow-hidden min-h-0">
             {/* Sidebar */}
             <div className="w-full md:w-[300px] bg-slate-800/50 backdrop-blur-sm md:border-r border-slate-700/50 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-3 sm:space-y-6 max-h-none md:max-h-full">
               {/* Template Section */}
@@ -1006,7 +1006,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
           {/* Footer */}
-          <div className="px-3 sm:px-5 py-2 sm:py-4 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
+          <div className="px-3 sm:px-5 py-3 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
             <Button
               onClick={resetAll}
               className="flex-1 bg-red-600 hover:bg-red-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
