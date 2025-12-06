@@ -178,27 +178,42 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     }
   };
 
-  // Apply shadows using canvas manipulation
+  // Apply shadows using canvas manipulation - targets darker areas of the image
   const applyShadows = (ctx, width, height, shadowValue) => {
     try {
       const imageData = ctx.getImageData(0, 0, width, height);
       const data = imageData.data;
       
-      // Shadow adjustment: -100 (darken) to +100 (lighten)
+      // Shadow adjustment: -100 (darken shadows) to +100 (lighten shadows)
+      // This specifically targets darker pixels (shadows)
       const adjustment = shadowValue / 100;
       
       for (let i = 0; i < data.length; i += 4) {
-        if (adjustment < 0) {
-          // Darken shadows
-          const factor = 1 + adjustment;
-          data[i] = Math.max(0, Math.min(255, data[i] * factor)); // R
-          data[i + 1] = Math.max(0, Math.min(255, data[i + 1] * factor)); // G
-          data[i + 2] = Math.max(0, Math.min(255, data[i + 2] * factor)); // B
-        } else {
-          // Lighten shadows
-          data[i] = Math.max(0, Math.min(255, data[i] + (255 - data[i]) * adjustment)); // R
-          data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + (255 - data[i + 1]) * adjustment)); // G
-          data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + (255 - data[i + 2]) * adjustment)); // B
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        
+        // Calculate luminance (perceived brightness)
+        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+        
+        // Only affect darker pixels (shadows) - threshold at 128 (midpoint)
+        // The darker the pixel, the more it's affected
+        const shadowWeight = Math.max(0, (128 - luminance) / 128);
+        
+        if (shadowWeight > 0) {
+          if (adjustment < 0) {
+            // Darken shadows - multiply by factor
+            const factor = 1 + (adjustment * shadowWeight);
+            data[i] = Math.max(0, Math.min(255, r * factor));
+            data[i + 1] = Math.max(0, Math.min(255, g * factor));
+            data[i + 2] = Math.max(0, Math.min(255, b * factor));
+          } else {
+            // Lighten shadows - add light
+            const lightBoost = adjustment * shadowWeight * 80; // Scale factor for visible effect
+            data[i] = Math.max(0, Math.min(255, r + lightBoost));
+            data[i + 1] = Math.max(0, Math.min(255, g + lightBoost));
+            data[i + 2] = Math.max(0, Math.min(255, b + lightBoost));
+          }
         }
       }
       
@@ -450,14 +465,28 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setShowTemplateDialog(true);
   };
 
-  // Apply current filters to all images
+  // Apply current filters and transforms to all images
   const handleApplyFiltersToAll = async () => {
     if (!onApplyToAll || !allImages || allImages.length === 0) {
-      alert('No images available to apply filters to.');
+      alert('No images available to apply edits to.');
       return;
     }
 
-    const confirmed = confirm(`Apply current filter settings to all ${allImages.length} image(s)?`);
+    const hasChanges = 
+      filters.brightness !== 100 || 
+      filters.contrast !== 100 || 
+      filters.saturate !== 100 || 
+      filters.shadows !== 0 ||
+      transform.rotate !== 0 ||
+      transform.flip_x !== 1 ||
+      transform.flip_y !== 1;
+
+    if (!hasChanges) {
+      alert('No edits have been made to apply.');
+      return;
+    }
+
+    const confirmed = confirm(`Apply current edits (filters, adjustments, and transforms) to all ${allImages.length} image(s)?`);
     if (!confirmed) return;
 
     try {
@@ -476,15 +505,15 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       }
       
       // Call the callback with all processed images
-      onApplyToAll(processedImages, filters);
-      alert(`✓ Filters applied to ${processedImages.length} image(s)!`);
+      onApplyToAll(processedImages, { filters, transform });
+      alert(`✓ Edits applied to ${processedImages.length} image(s)!`);
     } catch (error) {
-      console.error('Error applying filters to all images:', error);
-      alert('Failed to apply filters to all images. Please try again.');
+      console.error('Error applying edits to all images:', error);
+      alert('Failed to apply edits to all images. Please try again.');
     }
   };
 
-  // Apply filters to a single image and return a File object
+  // Apply filters and transforms to a single image and return a File object
   const applyFiltersToImage = async (imageUrl) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -494,16 +523,40 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         try {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
+          
+          // Calculate rotated dimensions
+          const rotation = (transform.rotate % 360) * Math.PI / 180;
+          const isRotated90 = Math.abs(transform.rotate % 180) === 90;
+          
+          if (isRotated90) {
+            canvas.width = img.naturalHeight;
+            canvas.height = img.naturalWidth;
+          } else {
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+          }
+
+          // Apply transforms
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.scale(transform.flip_x, transform.flip_y);
+          ctx.rotate(rotation);
 
           // Apply filters
           ctx.filter = `brightness(${filters.brightness}%) 
                        contrast(${filters.contrast}%) 
                        saturate(${filters.saturate}%)`;
 
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(
+            img,
+            -img.naturalWidth / 2,
+            -img.naturalHeight / 2,
+            img.naturalWidth,
+            img.naturalHeight
+          );
 
+          // Reset transforms for shadow application
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          
           // Apply shadows if needed
           if (filters.shadows !== 0) {
             applyShadows(ctx, canvas.width, canvas.height, filters.shadows);
@@ -512,7 +565,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           // Convert to blob and create File
           canvas.toBlob((blob) => {
             if (blob) {
-              const file = new File([blob], `filtered-${Date.now()}.jpg`, { type: 'image/jpeg' });
+              const file = new File([blob], `edited-${Date.now()}.jpg`, { type: 'image/jpeg' });
               resolve(file);
             } else {
               reject(new Error('Failed to create blob'));
@@ -582,25 +635,39 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      
+      // Calculate rotated dimensions
+      const rotation = (transform.rotate % 360) * Math.PI / 180;
+      const isRotated90 = Math.abs(transform.rotate % 180) === 90;
+      
+      if (isRotated90) {
+        canvas.width = img.naturalHeight;
+        canvas.height = img.naturalWidth;
+      } else {
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+      }
+
+      // Apply transforms
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(transform.flip_x, transform.flip_y);
+      ctx.rotate(rotation);
 
       // Apply filters
       ctx.filter = `brightness(${filters.brightness}%) 
                    contrast(${filters.contrast}%) 
                    saturate(${filters.saturate}%)`;
 
-      // Apply transforms
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.scale(transform.flip_x, transform.flip_y);
-      ctx.rotate((transform.rotate * Math.PI) / 180);
       ctx.drawImage(
         img,
-        -canvas.width / 2,
-        -canvas.height / 2,
-        canvas.width,
-        canvas.height
+        -img.naturalWidth / 2,
+        -img.naturalHeight / 2,
+        img.naturalWidth,
+        img.naturalHeight
       );
+
+      // Reset transforms for shadow application
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
 
       // Apply shadows
       if (filters.shadows !== 0) {
@@ -865,9 +932,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                   {allImages && allImages.length > 0 && onApplyToAll && (
                     <Button
                       onClick={handleApplyFiltersToAll}
-                      className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm h-8 sm:h-9"
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm h-8 sm:h-9 mt-3"
                     >
-                      Apply Filters to All Images ({allImages.length})
+                      ✨ Apply All Edits to {allImages.length} Image{allImages.length > 1 ? 's' : ''}
                     </Button>
                   )}
                 </div>
@@ -875,23 +942,26 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             </div>
 
             {/* Main Content */}
-            <div className="w-full md:flex-1 flex flex-col min-w-0 p-2 sm:p-4 h-[350px] md:h-auto overflow-hidden" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
+            <div className="w-full md:flex-1 flex flex-col min-w-0 p-2 sm:p-4 h-[400px] md:h-full overflow-hidden" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
               <div 
                 className="w-full h-full rounded-lg overflow-hidden flex items-center justify-center" 
                 style={{ 
-                  maxHeight: '600px',
                   background: isCropping ? '#ffffff' : '#0f172a',
                   border: isCropping ? '2px solid #e2e8f0' : '1px solid #334155'
                 }}
               >
                 {imgSrc && (
-                  <div className="relative inline-block max-w-full max-h-full">
+                  <div className="relative inline-block max-w-full max-h-full w-full h-full flex items-center justify-center">
                     <img
                       ref={imageRef}
                       src={imgSrc}
                       alt="Editor Preview"
-                      className="block w-auto h-auto object-contain max-w-full max-h-full"
+                      className="block object-contain"
                       style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
                         filter: `brightness(${filters.brightness}%) 
                                   contrast(${filters.contrast}%) 
                                   saturate(${filters.saturate}%)`,

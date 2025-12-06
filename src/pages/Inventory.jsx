@@ -36,6 +36,7 @@ import SoldLookupDialog from "../components/SoldLookupDialog";
 import { useInventoryTags } from "@/hooks/useInventoryTags";
 import { ImageEditor } from "@/components/ImageEditor";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import { ImageCarousel } from "@/components/ImageCarousel";
 import { FacebookListingDialog } from "@/components/FacebookListingDialog";
 import { isConnected } from "@/api/facebookClient";
 import EbaySearchDialog from "@/components/EbaySearchDialog";
@@ -1268,14 +1269,21 @@ export default function InventoryPage() {
                             flexShrink: 0
                           }}
                         >
-                          <OptimizedImage
-                            src={item.image_url || DEFAULT_IMAGE_URL}
-                            alt={item.item_name}
-                            fallback={DEFAULT_IMAGE_URL}
-                            className="w-full h-full object-contain"
-                            style={{ maxHeight: '100%' }}
-                            lazy={true}
-                          />
+                          {item.images && item.images.length > 1 ? (
+                            <ImageCarousel
+                              images={item.images.map(img => img.imageUrl || img.url || img)}
+                              imageClassName="object-contain"
+                            />
+                          ) : (
+                            <OptimizedImage
+                              src={item.image_url || DEFAULT_IMAGE_URL}
+                              alt={item.item_name}
+                              fallback={DEFAULT_IMAGE_URL}
+                              className="w-full h-full object-contain"
+                              style={{ maxHeight: '100%' }}
+                              lazy={true}
+                            />
+                          )}
                           {selectedItems.includes(item.id) && (
                             <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-20">
                               <div className="bg-green-600 rounded-full p-0.5 shadow-lg">
@@ -1502,13 +1510,20 @@ export default function InventoryPage() {
                     state={returnStateForInventory}
                     className="block w-full h-full"
                   >
-                    <OptimizedImage
-                      src={item.image_url || DEFAULT_IMAGE_URL}
-                      alt={item.item_name}
-                      fallback={DEFAULT_IMAGE_URL}
-                      className="w-full h-full object-cover"
-                      lazy={true}
-                    />
+                    {item.images && item.images.length > 1 ? (
+                      <ImageCarousel
+                        images={item.images.map(img => img.imageUrl || img.url || img)}
+                        imageClassName="object-cover"
+                      />
+                    ) : (
+                      <OptimizedImage
+                        src={item.image_url || DEFAULT_IMAGE_URL}
+                        alt={item.item_name}
+                        fallback={DEFAULT_IMAGE_URL}
+                        className="w-full h-full object-cover"
+                        lazy={true}
+                      />
+                    )}
                   </Link>
                   <div className="absolute top-2 left-2 z-10">
                     <Checkbox
