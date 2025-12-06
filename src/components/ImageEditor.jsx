@@ -976,9 +976,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     </Button>
                   )}
                 </div>
-                )}
-              </div>
+              )}
             </div>
+          </div>
 
             {/* Main Content */}
             <div className="w-full md:flex-1 flex flex-col min-w-0 p-2 sm:p-4 h-[400px] md:h-full overflow-hidden" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
