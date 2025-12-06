@@ -939,6 +939,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     />
                   </div>
                 </div>
+                )}
 
                 {/* Filters Section - Hidden when cropping */}
                 {!isCropping && (
