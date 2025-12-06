@@ -894,7 +894,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       ref={imageRef}
                       src={imgSrc}
                       alt="Editor Preview"
-                      className="max-w-full max-h-[300px] md:max-h-full w-auto h-auto object-contain"
+                      className="max-w-full max-h-[300px] md:max-h-[500px] md:max-w-[700px] w-auto h-auto object-contain"
                       style={{
                         display: 'block',
                         filter: `brightness(${filters.brightness}%) 

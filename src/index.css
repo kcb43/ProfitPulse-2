@@ -362,6 +362,13 @@ input[type="range"].slider::-moz-range-thumb:hover {
   width: auto !important;
 }
 
+@media (min-width: 768px) {
+  .cropper-container img {
+    max-height: 500px !important;
+    max-width: 700px !important;
+  }
+}
+
 .cropper-wrap-box,
 .cropper-canvas,
 .cropper-drag-box,
