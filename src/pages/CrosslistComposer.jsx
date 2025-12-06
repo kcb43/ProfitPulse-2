@@ -2674,6 +2674,59 @@ export default function CrosslistComposer() {
     }
   };
 
+  const handleApplyFiltersToAll = async (processedImages, settings) => {
+    if (!imageToEdit.marketplace) return;
+
+    try {
+      // Update all photos in the current marketplace form with the processed images
+      setTemplateForms((prev) => {
+        const updated = { ...prev };
+        const formPhotos = imageToEdit.marketplace === 'general' 
+          ? updated.general.photos 
+          : updated[imageToEdit.marketplace]?.photos || [];
+        
+        // Update each photo with the processed version
+        const updatedPhotos = formPhotos.map((photo, idx) => {
+          const processedImage = processedImages[idx];
+          if (processedImage?.file) {
+            return {
+              ...photo,
+              file: processedImage.file,
+              preview: URL.createObjectURL(processedImage.file),
+            };
+          }
+          return photo;
+        });
+
+        if (imageToEdit.marketplace === 'general') {
+          updated.general = {
+            ...updated.general,
+            photos: updatedPhotos,
+          };
+        } else {
+          updated[imageToEdit.marketplace] = {
+            ...updated[imageToEdit.marketplace],
+            photos: updatedPhotos,
+          };
+        }
+
+        return updated;
+      });
+
+      toast({
+        title: "Filters Applied to All",
+        description: `Successfully applied edits to all ${processedImages.length} images.`,
+      });
+    } catch (error) {
+      console.error("Error applying filters to all:", error);
+      toast({
+        title: "Error Applying Filters",
+        description: "Failed to apply filters to all images. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handlePhotoReorder = (dragIndex, dropIndex, marketplace = 'general') => {
     setTemplateForms((prev) => {
       const photos = marketplace === 'general'
@@ -6177,6 +6230,12 @@ export default function CrosslistComposer() {
         imageSrc={imageToEdit.url}
         onSave={handleSaveEditedImage}
         fileName={`${imageToEdit.marketplace}-${imageToEdit.photoId || 'photo'}-edited.jpg`}
+        allImages={
+          imageToEdit.marketplace === 'general' 
+            ? (templateForms.general?.photos || []).map(p => p.preview || p.imageUrl || p.url)
+            : (templateForms[imageToEdit.marketplace]?.photos || []).map(p => p.preview || p.imageUrl || p.url)
+        }
+        onApplyToAll={handleApplyFiltersToAll}
       />
 
       {/* Sold Lookup Dialog */}

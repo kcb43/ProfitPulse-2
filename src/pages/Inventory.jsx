@@ -520,13 +520,28 @@ export default function InventoryPage() {
 
   // Mutation for updating item image
   const updateImageMutation = useMutation({
-    mutationFn: async ({ itemId, file }) => {
+    mutationFn: async ({ itemId, file, imageIndex }) => {
       // Upload the edited image
       const uploadPayload = file instanceof File ? file : new File([file], file.name || 'edited-image.jpg', { type: file.type || 'image/jpeg' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadPayload });
       
-      // Update the item with new image URL
-      await base44.entities.InventoryItem.update(itemId, { image_url: file_url });
+      // Get the current item
+      const item = inventoryItems.find(i => i.id === itemId);
+      
+      // If item has multiple images, update the images array
+      if (item && item.images && item.images.length > 1 && imageIndex !== undefined) {
+        const updatedImages = [...item.images];
+        updatedImages[imageIndex] = file_url;
+        
+        await base44.entities.InventoryItem.update(itemId, { 
+          images: updatedImages,
+          image_url: updatedImages[0] // First image is main
+        });
+      } else {
+        // Single image - just update image_url
+        await base44.entities.InventoryItem.update(itemId, { image_url: file_url });
+      }
+      
       return file_url;
     },
     onSuccess: (fileUrl, variables) => {
@@ -535,8 +550,12 @@ export default function InventoryPage() {
         title: "Image Updated",
         description: "The item image has been successfully updated.",
       });
-      setEditorOpen(false);
-      setImageToEdit({ url: null, itemId: null });
+      // Don't close editor if multiple images - let user continue editing
+      const item = inventoryItems.find(i => i.id === variables.itemId);
+      if (!item?.images || item.images.length <= 1) {
+        setEditorOpen(false);
+        setImageToEdit({ url: null, itemId: null });
+      }
     },
     onError: (error) => {
       console.error("Error updating image:", error);
@@ -590,38 +609,58 @@ export default function InventoryPage() {
     }
   };
 
-  const handleSaveEditedImage = (editedFile) => {
+  const handleSaveEditedImage = (editedFile, imageIndex) => {
     if (imageToEdit.itemId) {
-      updateImageMutation.mutate({ itemId: imageToEdit.itemId, file: editedFile });
+      updateImageMutation.mutate({ 
+        itemId: imageToEdit.itemId, 
+        file: editedFile,
+        imageIndex: imageIndex 
+      });
     }
   };
 
   // Apply filters to all images for an inventory item
-  const handleApplyFiltersToAll = async (processedImages, filters) => {
+  const handleApplyFiltersToAll = async (processedImages, settings) => {
     if (!imageToEdit.itemId) return;
     
     try {
       // Find the item from inventory
       const item = inventoryItems.find(i => i.id === imageToEdit.itemId);
-      if (!item || !item.photos || item.photos.length === 0) {
+      if (!item || !item.images || item.images.length === 0) {
         alert('No images found for this item.');
         return;
       }
 
-      // Process each photo
+      // Upload all processed images
+      const uploadedUrls = [];
       for (let i = 0; i < processedImages.length; i++) {
         const processedItem = processedImages[i];
-        await updateImageMutation.mutateAsync({ 
-          itemId: imageToEdit.itemId, 
-          file: processedItem.file,
-          photoIndex: i 
-        });
+        if (processedItem.file) {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: processedItem.file });
+          uploadedUrls.push(file_url);
+        }
       }
       
-      alert(`✓ Successfully applied filters to ${processedImages.length} image(s)!`);
+      // Update the inventory item with new images
+      await base44.entities.InventoryItem.update(imageToEdit.itemId, {
+        images: uploadedUrls,
+        image_url: uploadedUrls[0] || item.image_url
+      });
+      
+      // Invalidate and refetch
+      queryClient.invalidateQueries(['inventoryItems']);
+      
+      toast({
+        title: "Filters Applied",
+        description: `✓ Successfully applied edits to ${processedImages.length} image(s)!`,
+      });
     } catch (error) {
       console.error("Error applying filters to all images:", error);
-      alert("Failed to apply filters to all images. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to apply filters to all images. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -2081,7 +2120,7 @@ export default function InventoryPage() {
         imageSrc={imageToEdit.url}
         onSave={handleSaveEditedImage}
         fileName={`${imageToEdit.itemId}-edited.jpg`}
-        allImages={imageToEdit.itemId ? (inventoryItems.find(i => i.id === imageToEdit.itemId)?.photos || []) : []}
+        allImages={imageToEdit.itemId ? (inventoryItems.find(i => i.id === imageToEdit.itemId)?.images || []) : []}
         onApplyToAll={handleApplyFiltersToAll}
       />
 

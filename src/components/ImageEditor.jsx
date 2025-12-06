@@ -732,12 +732,17 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setHasUnsavedChanges(false);
           
           if (onSave) {
-            onSave(file);
+            onSave(file, currentImageIndex);
           }
           
           // Only close if single image, otherwise stay open for multi-image editing
           if (!hasMultipleImages) {
             onOpenChange(false);
+          }
+          
+          // Show success toast for multi-image
+          if (hasMultipleImages) {
+            alert(`✓ Image ${currentImageIndex + 1} saved! ${editedImages.size + 1}/${normalizedImages.length} images edited.`);
           }
         }
       }, 'image/jpeg', 0.9);
