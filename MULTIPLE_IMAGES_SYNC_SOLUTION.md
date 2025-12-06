@@ -17,32 +17,16 @@ This document explains the complete solution for saving multiple images across a
 ```json
 "images": {
   "type": "array",
-  "description": "Array of image objects for the item",
+  "description": "Array of image URLs for the item",
   "items": {
-    "type": "object",
-    "properties": {
-      "id": {
-        "type": "string",
-        "description": "Unique identifier for the image"
-      },
-      "imageUrl": {
-        "type": "string",
-        "description": "URL of the image"
-      },
-      "url": {
-        "type": "string",
-        "description": "Alternative URL field (for compatibility)"
-      },
-      "isMain": {
-        "type": "boolean",
-        "description": "Whether this is the main/primary image",
-        "default": false
-      }
-    }
+    "type": "string"
   },
   "default": []
 }
 ```
+
+**Format:** Simple array of URL strings: `["https://...", "https://...", ...]`  
+**Main Image:** The first URL in the array is treated as the main/primary image.
 
 **Steps to update:**
 1. Go to your Base44 dashboard
@@ -129,8 +113,8 @@ The existing code already:
 ┌─────────────────────────────────────────────────────┐
 │                 Inventory Item                      │
 │  - item_name                                        │
-│  - image_url (main image)                           │
-│  - images: [ {id, imageUrl, isMain}, ... ]         │
+│  - image_url (main/first image)                     │
+│  - images: ["url1", "url2", "url3", ...]            │
 └──────────────┬──────────────────────────────────────┘
                │
                ├──► Load into Crosslist General Form

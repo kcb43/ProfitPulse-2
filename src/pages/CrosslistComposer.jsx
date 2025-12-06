@@ -2706,7 +2706,7 @@ export default function CrosslistComposer() {
   const uploadAllPhotos = async (photos) => {
     if (!photos || photos.length === 0) return { imageUrl: "", images: [] };
 
-    const uploadedImages = [];
+    const uploadedImageUrls = [];
     let mainImageUrl = "";
 
     for (let i = 0; i < photos.length; i++) {
@@ -2729,21 +2729,14 @@ export default function CrosslistComposer() {
       }
 
       if (imageUrl) {
-        const isMain = i === 0; // First photo is main
-        if (isMain) {
-          mainImageUrl = imageUrl;
+        if (i === 0) {
+          mainImageUrl = imageUrl; // First photo is main
         }
-
-        uploadedImages.push({
-          id: photo.id || `photo_${Date.now()}_${i}`,
-          imageUrl: imageUrl,
-          url: imageUrl,
-          isMain: isMain
-        });
+        uploadedImageUrls.push(imageUrl); // Just push the URL string
       }
     }
 
-    return { imageUrl: mainImageUrl, images: uploadedImages };
+    return { imageUrl: mainImageUrl, images: uploadedImageUrls };
   };
 
   const handleSaveToInventory = async () => {

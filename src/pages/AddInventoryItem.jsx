@@ -162,7 +162,12 @@ export default function AddInventoryItem() {
       // Load photos array or convert single image_url to photos array
       let photos = [];
       if (dataToLoad.images && Array.isArray(dataToLoad.images) && dataToLoad.images.length > 0) {
-        photos = dataToLoad.images;
+        // Convert string URLs to photo objects
+        photos = dataToLoad.images.map((url, index) => ({
+          id: `photo_${Date.now()}_${index}`,
+          imageUrl: typeof url === 'string' ? url : url.imageUrl || url.url || url,
+          isMain: index === 0 // First image is main
+        }));
       } else if (dataToLoad.image_url) {
         photos = [{ id: `photo_${Date.now()}`, imageUrl: dataToLoad.image_url, isMain: true }];
       }
@@ -248,7 +253,7 @@ export default function AddInventoryItem() {
     purchase_price: parseFloat(data.purchase_price) || 0,
     quantity: parseInt(data.quantity, 10) || 1,
     return_deadline: data.return_deadline ? data.return_deadline : null,
-    images: data.photos || [],
+    images: data.photos?.map(p => p.imageUrl || p.url || p).filter(Boolean) || [],
     image_url: data.photos?.find(p => p.isMain)?.imageUrl || data.photos?.[0]?.imageUrl || data.image_url || '',
   });
 

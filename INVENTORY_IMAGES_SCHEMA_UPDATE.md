@@ -12,32 +12,15 @@ Go to your Base44 dashboard and add this field to the `InventoryItem` entity sch
 ```json
 "images": {
   "type": "array",
-  "description": "Array of image objects for the item",
+  "description": "Array of image URLs for the item",
   "items": {
-    "type": "object",
-    "properties": {
-      "id": {
-        "type": "string",
-        "description": "Unique identifier for the image"
-      },
-      "imageUrl": {
-        "type": "string",
-        "description": "URL of the image"
-      },
-      "url": {
-        "type": "string",
-        "description": "Alternative URL field (for compatibility)"
-      },
-      "isMain": {
-        "type": "boolean",
-        "description": "Whether this is the main/primary image",
-        "default": false
-      }
-    }
+    "type": "string"
   },
   "default": []
 }
 ```
+
+**Note:** This is a simple array of URL strings, e.g., `["url1.jpg", "url2.jpg", "url3.jpg"]`. The first URL is treated as the main image.
 
 ### Complete Updated InventoryItem Schema
 
@@ -85,28 +68,9 @@ Add this field alongside your existing fields. Here's the complete schema with t
     },
     "images": {
       "type": "array",
-      "description": "Array of image objects for the item",
+      "description": "Array of image URLs for the item (first URL is main image)",
       "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique identifier for the image"
-          },
-          "imageUrl": {
-            "type": "string",
-            "description": "URL of the image"
-          },
-          "url": {
-            "type": "string",
-            "description": "Alternative URL field (for compatibility)"
-          },
-          "isMain": {
-            "type": "boolean",
-            "description": "Whether this is the main/primary image",
-            "default": false
-          }
-        }
+        "type": "string"
       },
       "default": []
     },
