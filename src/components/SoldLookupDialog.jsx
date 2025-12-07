@@ -100,14 +100,13 @@ export default function SoldLookupDialog({ open, onOpenChange, itemName = "", on
               Etsy
             </a>
           </Button>
+          <Button asChild variant="outline" className="w-full">
+            <a href={comparePrices} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2">
+              <GlobeIcon className="w-4 h-4" />
+              Compare Prices
+            </a>
+          </Button>
         </div>
-
-        <Button asChild variant="secondary" className="w-full">
-          <a href={comparePrices} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2">
-            <GlobeIcon className="w-4 h-4" />
-            Compare Prices
-          </a>
-        </Button>
 
         <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button variant="outline" onClick={copyQuery} disabled={!q} className="flex-1 sm:flex-none">
