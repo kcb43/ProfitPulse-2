@@ -1056,7 +1056,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] sm:w-[90vw] max-w-[95vw] max-h-[85vh] sm:max-h-[90vh] p-0 overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 flex flex-col">
           <DialogHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex-shrink-0">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
               <DialogTitle className="text-base sm:text-xl font-semibold text-white flex items-center gap-2">
                 <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="text-sm sm:text-xl">Advanced Photo Editor</span>
@@ -1066,11 +1066,13 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               {hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
                 <Button
                   onClick={handleApplyFiltersToAll}
-                  className="hidden md:flex bg-purple-600 hover:bg-purple-500 text-white text-sm h-9 px-4"
+                  className="hidden md:flex bg-purple-600 hover:bg-purple-500 text-white text-sm h-9 px-4 ml-4"
                 >
                   ✨ Apply to All Images
                 </Button>
               )}
+              
+              <div className="flex-1"></div>
             </div>
           </DialogHeader>
 
