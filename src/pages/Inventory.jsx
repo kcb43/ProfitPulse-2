@@ -1294,7 +1294,7 @@ export default function InventoryPage() {
                         width: '100%',
                         boxSizing: 'border-box',
                         flexShrink: 0,
-                        paddingBottom: window.innerWidth < 768 ? '1.25rem' : '0'
+                        paddingBottom: window.innerWidth < 768 ? '2.50rem' : '0'
                       }}
                     >
                       {/* Desktop checkbox */}
