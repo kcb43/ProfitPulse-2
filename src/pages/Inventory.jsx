@@ -1278,7 +1278,7 @@ export default function InventoryPage() {
                   return (
                     <div 
                       key={item.id} 
-                      className={`product-list-item relative flex flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full ${isDeleted ? 'opacity-75' : ''} ${selectedItems.includes(item.id) ? 'ring-2 ring-green-500' : ''}`}
+                      className={`product-list-item relative flex flex-row flex-nowrap items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full ${isDeleted ? 'opacity-75' : ''} ${selectedItems.includes(item.id) ? 'ring-2 ring-green-500' : ''}`}
                       style={{
                         minHeight: 'auto',
                         height: 'auto',
@@ -1317,6 +1317,7 @@ export default function InventoryPage() {
                             <ImageCarousel
                               images={item.images.map(img => img.imageUrl || img.url || img)}
                               imageClassName="object-contain"
+                              hideDots={true}
                             />
                           ) : (
                             <OptimizedImage
@@ -1372,7 +1373,7 @@ export default function InventoryPage() {
                             <span className="font-semibold">Price:</span> ${item.purchase_price.toFixed(2)}
                           </p>
                           {item.quantity > 1 && (
-                            <p className="text-gray-400 text-[10px] pl-3 leading-[13px]">
+                            <p className="text-gray-400 text-[10px] leading-[13px]">
                               (${perItemPrice.toFixed(2)} ea)
                             </p>
                           )}
