@@ -866,6 +866,14 @@ export default function InventoryPage() {
           return new Date(b.purchase_date) - new Date(a.purchase_date);
         case "purchase-oldest":
           return new Date(a.purchase_date) - new Date(b.purchase_date);
+        case "return-soon":
+          // Sort by return deadline, soonest first (null deadlines go to the end)
+          const deadlineA = a.return_deadline ? parseISO(a.return_deadline) : null;
+          const deadlineB = b.return_deadline ? parseISO(b.return_deadline) : null;
+          if (!deadlineA && !deadlineB) return 0;
+          if (!deadlineA) return 1;
+          if (!deadlineB) return -1;
+          return deadlineA - deadlineB;
         default:
           return 0;
       }
@@ -1076,19 +1084,6 @@ export default function InventoryPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="days" className="text-xs mb-1.5 block">Age</Label>
-                  <Select id="days" value={filters.daysInStock} onValueChange={val => setFilters(f => ({ ...f, daysInStock: val }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                  <SelectItem value="all">All Ages</SelectItem>
-                      <SelectItem value="stale">14+ Days</SelectItem>
-                      <SelectItem value="returnDeadline">Return Soon</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
                   <Label htmlFor="sort" className="text-xs mb-1.5 block">Sort By</Label>
                   <Select id="sort" value={sort} onValueChange={setSort}>
                     <SelectTrigger>
@@ -1103,6 +1098,7 @@ export default function InventoryPage() {
                       <SelectItem value="name-za">Name: Z to A</SelectItem>
                       <SelectItem value="purchase-newest">Purchase: Newest</SelectItem>
                       <SelectItem value="purchase-oldest">Purchase: Oldest</SelectItem>
+                      <SelectItem value="return-soon">Return Soon</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
