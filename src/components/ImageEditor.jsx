@@ -1193,7 +1193,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
           {/* Footer */}
-          <div className="px-3 sm:px-5 py-2 sm:py-3 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
+          <div className="px-3 sm:px-5 pt-2 pb-6 sm:py-3 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
             <Button
               onClick={resetAll}
               className="flex-1 bg-red-600 hover:bg-red-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
