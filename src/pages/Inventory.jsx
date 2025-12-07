@@ -1549,7 +1549,7 @@ export default function InventoryPage() {
                       </div>
                       
                       {/* Mobile: Mark Sold and View Details buttons at bottom */}
-                      <div className="md:hidden flex gap-2 px-2 pb-0 pt-3 mt-5 border-t border-gray-700 w-full">
+                      <div className="md:hidden flex gap-2 px-2 pt-3 mt-5 border-t border-gray-700 w-full -mb-2">
                         {!isSoldOut && item.status !== 'sold' && (
                           <Button
                             onClick={() => handleMarkAsSold(item)}
