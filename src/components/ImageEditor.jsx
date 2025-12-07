@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Cropper from 'cropperjs';
+import imageCompression from 'browser-image-compression';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +42,7 @@ import {
  * @param {function} onApplyToAll - Optional callback to apply filters to all images
  * @param {string} itemId - Optional item ID to track editing history
  */
-export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll, itemId }) {
+export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll, itemId, onAddImage }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [originalImgSrc, setOriginalImgSrc] = useState(null);
   const [filters, setFilters] = useState({
@@ -564,21 +565,42 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   };
 
   // Handle file upload
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImgSrc(event.target.result);
-      resetAll();
-      setTimeout(() => {
-        if (imageRef.current) {
-          initCropper();
-        }
-      }, 100);
-    };
-    reader.readAsDataURL(file);
+    if (onAddImage && itemId) {
+      // Upload and add new image to the item
+      try {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 0.25,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+        });
+        const fileToUpload = compressedFile || file;
+        const uploadPayload = fileToUpload instanceof File ? fileToUpload : new File([fileToUpload], file.name, { type: file.type });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadPayload });
+        
+        // Call the callback to add the new image
+        onAddImage(file_url);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        alert('Failed to upload image. Please try again.');
+      }
+    } else {
+      // Replace current image (original behavior)
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImgSrc(event.target.result);
+        resetAll();
+        setTimeout(() => {
+          if (imageRef.current) {
+            initCropper();
+          }
+        }, 100);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Load template

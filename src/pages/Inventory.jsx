@@ -2232,6 +2232,33 @@ export default function InventoryPage() {
         allImages={imageToEdit.itemId ? (inventoryItems.find(i => i.id === imageToEdit.itemId)?.images || []) : []}
         onApplyToAll={handleApplyFiltersToAll}
         itemId={imageToEdit.itemId}
+        onAddImage={async (newImageUrl) => {
+          if (!imageToEdit.itemId) return;
+          const item = inventoryItems.find(i => i.id === imageToEdit.itemId);
+          if (!item) return;
+          
+          // Add the new image to the item's images array
+          const updatedImages = [...(item.images || []), newImageUrl];
+          
+          try {
+            await updateItemMutation.mutateAsync({
+              id: item.id,
+              images: updatedImages
+            });
+            
+            toast({
+              title: "Image added",
+              description: "New image has been added successfully.",
+            });
+          } catch (error) {
+            console.error('Error adding image:', error);
+            toast({
+              title: "Error",
+              description: "Failed to add image. Please try again.",
+              variant: "destructive",
+            });
+          }
+        }}
       />
 
       {/* Inventory Item View Dialog */}
