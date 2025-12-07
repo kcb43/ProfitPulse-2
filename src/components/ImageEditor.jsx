@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Camera, 
   Upload, 
@@ -43,6 +44,7 @@ import {
  * @param {string} itemId - Optional item ID to track editing history
  */
 export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll, itemId, onAddImage }) {
+  const { toast } = useToast();
   const [imgSrc, setImgSrc] = useState(null);
   const [originalImgSrc, setOriginalImgSrc] = useState(null);
   const [filters, setFilters] = useState({
@@ -306,6 +308,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setTransform(savedSettings.transform);
           setLoadedFilters(savedSettings.filters);
           setLoadedTransform(savedSettings.transform);
+          setSelectedTemplate(savedSettings.templateName || null); // Restore template selection
         } else {
           if (isNewImage) {
             console.log('NEW image detected - clearing old settings');
@@ -737,12 +740,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       transform.flip_y !== 1;
 
     if (!hasChanges) {
-      alert('No edits have been made to apply.');
       return;
     }
-
-    const confirmed = confirm(`Apply current edits (filters, adjustments, and transforms) to all ${allImages.length} image(s)?`);
-    if (!confirmed) return;
 
     try {
       const processedImages = [];
@@ -768,10 +767,17 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       setHasUnsavedChanges(false);
       setAppliedToAll(true); // Mark that apply to all was used
       
-      alert(`✓ Edits applied to ${processedImages.length} image(s)!`);
+      toast({
+        title: "Edits Applied",
+        description: `Successfully applied edits to ${processedImages.length} image(s)!`,
+      });
     } catch (error) {
       console.error('Error applying edits to all images:', error);
-      alert('Failed to apply edits to all images. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to apply edits to all images. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -846,7 +852,11 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   // Save template to database
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
-      alert('Please enter a template name');
+      toast({
+        title: "Template Name Required",
+        description: "Please enter a template name",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -872,10 +882,18 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       setShowTemplateDialog(false);
       setTemplateName('');
-      alert('Template saved successfully!');
+      
+      toast({
+        title: "Template Saved",
+        description: `Template "${templateData.name}" saved successfully!`,
+      });
     } catch (error) {
       console.error('Error saving template:', error);
-      alert('Failed to save template. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to save template. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSavingTemplate(false);
     }
@@ -954,7 +972,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               transform: { ...transform },
               timestamp: Date.now(),
               imageUrl: imgSrc, // Current image URL
-              originalImageUrl: originalImageUrl // Always keep the original for re-editing
+              originalImageUrl: originalImageUrl, // Always keep the original for re-editing
+              templateName: selectedTemplate || null // Save selected template
             };
             console.log('Saving settings with key:', historyKey, 'Settings:', settingsToSave);
             imageEditHistoryRef.current.set(historyKey, settingsToSave);
@@ -984,13 +1003,20 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           
           // Show success toast for multi-image
           if (hasMultipleImages) {
-            alert(`✓ Image ${currentImageIndex + 1} saved! ${editedImages.size + 1}/${normalizedImages.length} images edited.`);
+            toast({
+              title: "Image Saved",
+              description: `Image ${currentImageIndex + 1} saved! ${editedImages.size + 1}/${normalizedImages.length} images edited.`,
+            });
           }
         }
       }, 'image/jpeg', 0.9);
     } catch (error) {
       console.error('Error saving image:', error);
-      alert('Failed to save image. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to save image. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
