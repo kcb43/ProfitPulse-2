@@ -1305,7 +1305,7 @@ export default function InventoryPage() {
                       <div className="flex flex-col sm:block flex-shrink-0 m-1 sm:m-4">
                         <div
                           onClick={() => handleSelect(item.id)}
-                          className={`md:cursor-default cursor-pointer glass flex items-center justify-center relative w-[130px] sm:w-[220px] min-w-[130px] sm:min-w-[220px] max-w-[130px] sm:max-w-[220px] h-[130px] sm:h-[210px] p-1 sm:p-1 transition-all duration-200 ${selectedItems.includes(item.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
+                          className={`md:cursor-default cursor-pointer glass flex items-center justify-center relative w-[130px] sm:w-[220px] min-w-[130px] sm:min-w-[220px] max-w-[130px] sm:max-w-[220px] h-[130px] sm:h-[210px] p-1 sm:p-1 transition-all duration-200 overflow-hidden ${selectedItems.includes(item.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
                           style={{
                             borderRadius: '12px',
                             background: 'rgba(255, 255, 255, 0.1)',
