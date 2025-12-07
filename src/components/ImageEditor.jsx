@@ -1112,7 +1112,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
             {/* Main Content */}
-            <div className="w-full md:flex-1 flex flex-col min-w-0 px-2 pt-6 pb-[0.10rem] sm:p-4 h-[250px] md:h-full overflow-hidden mt-auto md:mt-0 mb-0" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
+            <div className="w-full md:flex-1 flex flex-col min-w-0 px-2 pt-6 pb-[0.10rem] sm:p-4 h-[400px] md:h-full overflow-hidden mt-auto md:mt-0 mb-0" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
               <div 
                 className="w-full h-full rounded-lg overflow-hidden flex items-center justify-center" 
                 style={{ 
