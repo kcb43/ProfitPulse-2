@@ -167,7 +167,14 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   // Update hasUnsavedChanges when filters or transforms change
   useEffect(() => {
-    setHasUnsavedChanges(checkForChanges());
+    const hasChanges = checkForChanges();
+    console.log('Checking for changes:', { 
+      currentFilters: filters, 
+      loadedFilters, 
+      hasChanges,
+      hasUnsavedChanges 
+    });
+    setHasUnsavedChanges(hasChanges);
   }, [filters, transform, loadedFilters, loadedTransform]);
 
   // Navigate to previous image
@@ -1141,19 +1148,47 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                           : `${sliderValue}%`}
                       </span>
                     </div>
-                    <input
-                      type="range"
-                      min={sliderMin}
-                      max={sliderMax}
-                      value={sliderValue}
-                      onChange={(e) => handleSliderChange(Number(e.target.value))}
-                      className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                      style={{
-                        background: sliderRange > 0
-                          ? `linear-gradient(to right, #475569 0%, #6c5ce7 ${((sliderValue - sliderMin) / sliderRange) * 100}%, #6c5ce7 ${((sliderValue - sliderMin) / sliderRange) * 100}%, #475569 100%)`
-                          : '#475569'
-                      }}
-                    />
+                    <div className="relative">
+                      {/* Tick marks */}
+                      <div className="absolute inset-0 flex justify-between items-center pointer-events-none px-0.5">
+                        {[0, 25, 50, 75, 100].map((percent) => {
+                          // Calculate position based on slider range
+                          const position = ((percent - ((sliderMin / sliderMax) * 100)) / ((sliderMax - sliderMin) / sliderMax * 100)) * 100;
+                          if (position < 0 || position > 100) return null;
+                          return (
+                            <div
+                              key={percent}
+                              className="w-0.5 h-2 bg-white/40"
+                              style={{ position: 'absolute', left: `${position}%` }}
+                            />
+                          );
+                        })}
+                      </div>
+                      <input
+                        type="range"
+                        min={sliderMin}
+                        max={sliderMax}
+                        value={sliderValue}
+                        onChange={(e) => {
+                          let value = Number(e.target.value);
+                          // Snap to nearest tick mark (0, 25, 50, 75, 100) if within 3 units
+                          const tickMarks = [0, 25, 50, 75, 100, 125, 150, 175, 200];
+                          const nearestTick = tickMarks.reduce((prev, curr) => {
+                            return (Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev);
+                          });
+                          if (Math.abs(value - nearestTick) <= 3 && nearestTick >= sliderMin && nearestTick <= sliderMax) {
+                            value = nearestTick;
+                          }
+                          handleSliderChange(value);
+                        }}
+                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer slider relative z-10"
+                        style={{
+                          background: sliderRange > 0
+                            ? `linear-gradient(to right, #475569 0%, #6c5ce7 ${((sliderValue - sliderMin) / sliderRange) * 100}%, #6c5ce7 ${((sliderValue - sliderMin) / sliderRange) * 100}%, #475569 100%)`
+                            : '#475569'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
                 )}
