@@ -904,7 +904,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
           <div className="flex flex-col md:flex-row h-auto md:flex-1 overflow-y-auto md:overflow-hidden min-h-0">
             {/* Sidebar */}
-            <div className="w-full md:w-[300px] bg-slate-800/50 backdrop-blur-sm md:border-r border-slate-700/50 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-3 sm:space-y-6 max-h-none md:max-h-full">
+            <div className="w-full md:w-[300px] bg-slate-800/50 backdrop-blur-sm md:border-r border-slate-700/50 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-2 sm:space-y-6 max-h-none md:max-h-full">
               {/* Template Section */}
               <div className="space-y-2 sm:space-y-3">
                 <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
@@ -948,7 +948,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
               {/* Upload Section */}
               <div className="space-y-2 sm:space-y-3">
-                <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
+                <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
                   <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Upload
                 </h3>
@@ -972,7 +972,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
               {/* Transform Section */}
               <div className="space-y-2 sm:space-y-3">
-                <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
+                <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
                   <Crop className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Transform
                 </h3>
@@ -1026,7 +1026,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 {/* Adjustments Section - Hidden when cropping */}
                 {!isCropping && (
                   <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
-                    <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
+                    <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
                       <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Adjustments
                     </h3>
@@ -1059,7 +1059,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 {/* Filters Section - Hidden when cropping */}
                 {!isCropping && (
                   <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
-                    <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
+                    <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
                       <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Filters
                     </h3>
@@ -1098,7 +1098,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
             {/* Main Content */}
-            <div className="w-full md:flex-1 flex flex-col min-w-0 p-2 sm:p-4 h-[400px] md:h-full overflow-hidden" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
+            <div className="w-full md:flex-1 flex flex-col min-w-0 p-2 sm:p-4 h-[500px] md:h-full overflow-hidden" style={{ background: isCropping ? '#f8fafc' : 'transparent' }}>
               <div 
                 className="w-full h-full rounded-lg overflow-hidden flex items-center justify-center" 
                 style={{ 
