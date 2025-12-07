@@ -1354,7 +1354,8 @@ export default function InventoryPage() {
                         style={{
                           borderColor: 'rgba(51, 65, 85, 0.6)',
                           flexShrink: 1,
-                          minWidth: 0
+                          minWidth: 0,
+                          flex: window.innerWidth < 768 ? '0 1 auto' : '1 1 0%'
                         }}
                       >
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-[60%] sm:h-full sm:top-0 sm:translate-y-0 bg-slate-600/60"></div>
@@ -1366,11 +1367,15 @@ export default function InventoryPage() {
                           </h3>
                         </Link>
 
-                        <div className="mb-1 sm:hidden space-y-1">
+                        <div className="mb-1 sm:hidden space-y-0.5">
                           <p className="text-gray-300 text-[11px] break-words leading-[14px]">
                             <span className="font-semibold">Price:</span> ${item.purchase_price.toFixed(2)}
-                            {item.quantity > 1 && <span className="text-gray-400"> (${perItemPrice.toFixed(2)} ea)</span>}
                           </p>
+                          {item.quantity > 1 && (
+                            <p className="text-gray-400 text-[10px] pl-3 leading-[13px]">
+                              (${perItemPrice.toFixed(2)} ea)
+                            </p>
+                          )}
                           <p className="text-gray-300 text-[11px] break-words leading-[14px]">
                             <span className="font-semibold">Qty:</span> {item.quantity}
                             {quantitySold > 0 && (
@@ -1435,7 +1440,7 @@ export default function InventoryPage() {
                         )}
                       </div>
 
-                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2 sm:py-3 mr-0 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[60px] sm:w-[200px] min-w-[60px] sm:min-w-[200px] max-w-[60px] sm:max-w-[200px]"
+                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2 sm:py-3 mr-0 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[90px] sm:w-[200px] min-w-[90px] sm:min-w-[200px] max-w-[90px] sm:max-w-[200px]"
                         style={{
                           background: 'rgb(51, 65, 85)',
                           flexShrink: 0
@@ -1469,7 +1474,7 @@ export default function InventoryPage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-6 w-6 sm:h-7 sm:px-2 text-xs gap-1 p-0 sm:p-2"
+                            className="hidden sm:flex h-6 w-6 sm:h-7 sm:px-2 text-xs gap-1 p-0 sm:p-2"
                             onClick={() => handleTagEditorToggle(item.id)}
                           >
                             <Tag className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -1492,17 +1497,18 @@ export default function InventoryPage() {
                             </Button>
                           )}
                         </div>
-                        <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="w-full min-w-0 flex justify-center mt-1 sm:mt-2">
-                          <Button 
-                            className={`text-white font-semibold py-0.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md text-[7px] sm:text-xs w-full sm:w-auto ${
-                              item.status === 'listed' 
-                                ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
-                                : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                            }`}
-                          >
-                            <span className="whitespace-nowrap">View Details</span>
-                          </Button>
-                        </Link>
+                        <Button
+                          onClick={() => {
+                            navigate(createPageUrl(`AddInventoryItem?id=${item.id}`), { state: returnStateForInventory });
+                          }}
+                          className={`text-white font-semibold py-2 sm:py-1.5 px-2 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md text-[10px] sm:text-xs w-full sm:w-auto mt-1 sm:mt-2 leading-tight ${
+                            item.status === 'listed' 
+                              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
+                              : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
+                          }`}
+                        >
+                          <span className="whitespace-nowrap text-[10px] sm:text-xs">View Details</span>
+                        </Button>
                       </div>
                     </div>
                   );
