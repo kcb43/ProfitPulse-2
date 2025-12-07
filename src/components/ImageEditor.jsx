@@ -503,8 +503,11 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setActiveFilter(filterName);
   };
 
-  // Handle slider change - keep template selected even when adjusting
+  // Handle slider change - clear template when user manually adjusts
   const handleSliderChange = (value) => {
+    if (selectedTemplate) {
+      setSelectedTemplate(null); // Change to "None (Custom)" when adjusting
+    }
     setFilters(prev => ({
       ...prev,
       [activeFilter]: value
@@ -527,8 +530,11 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     }
   };
 
-  // Handle transform buttons
+  // Handle transform buttons - clear template when user manually transforms
   const handleTransform = (type) => {
+    if (selectedTemplate) {
+      setSelectedTemplate(null); // Change to "None (Custom)" when transforming
+    }
     switch (type) {
       case 'rotate_left':
         setTransform(prev => ({ ...prev, rotate: prev.rotate - 90 }));
