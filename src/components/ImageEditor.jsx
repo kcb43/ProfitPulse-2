@@ -264,6 +264,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         
         // Check if this image has saved editing settings (keyed by image URL)
         const historyKey = imageToLoad || null;
+        console.log('Loading image - historyKey:', historyKey);
+        console.log('Available history keys:', Array.from(imageEditHistoryRef.current.keys()));
+        
         const savedSettings = historyKey ? imageEditHistoryRef.current.get(historyKey) : null;
         
         if (savedSettings) {
@@ -275,6 +278,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setLoadedTransform(savedSettings.transform);
         } else {
           // Reset to defaults for images without saved settings
+          console.log('No saved settings found, using defaults');
           const defaultFilters = {
             brightness: 100,
             contrast: 100,
@@ -901,15 +905,19 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           // Store the editing settings for this image (keyed by image URL)
           if (imgSrc) {
             const historyKey = imgSrc;
-            imageEditHistoryRef.current.set(historyKey, {
+            const settingsToSave = {
               filters: { ...filters },
               transform: { ...transform },
               timestamp: Date.now()
-            });
+            };
+            console.log('Saving settings with key:', historyKey, 'Settings:', settingsToSave);
+            imageEditHistoryRef.current.set(historyKey, settingsToSave);
             
             // Persist to localStorage
             try {
-              localStorage.setItem('imageEditHistory', JSON.stringify(Array.from(imageEditHistoryRef.current.entries())));
+              const serialized = JSON.stringify(Array.from(imageEditHistoryRef.current.entries()));
+              localStorage.setItem('imageEditHistory', serialized);
+              console.log('Settings saved to localStorage, total keys:', imageEditHistoryRef.current.size);
             } catch (e) {
               console.error('Failed to save edit history to localStorage:', e);
             }
