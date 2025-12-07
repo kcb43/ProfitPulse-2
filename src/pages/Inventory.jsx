@@ -1237,9 +1237,14 @@ export default function InventoryPage() {
                 id="select-all"
                 className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&[data-state=checked]]:!bg-green-600 [&[data-state=checked]]:!border-green-600 flex-shrink-0 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
               />
-              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-white">
-                Select All ({sortedItems.length})
-              </label>
+              <div className="flex flex-col">
+                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-white">
+                  Select All ({sortedItems.length})
+                </label>
+                {viewMode === "list" && (
+                  <span className="text-xs text-gray-400 md:hidden">Tap image to select for bulk edit</span>
+                )}
+              </div>
             </div>
           )}
 
@@ -1273,14 +1278,14 @@ export default function InventoryPage() {
                   return (
                     <div 
                       key={item.id} 
-                      className={`product-list-item relative flex flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full ${isDeleted ? 'opacity-75' : ''}`}
+                      className={`product-list-item relative flex flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full ${isDeleted ? 'opacity-75' : ''} ${selectedItems.includes(item.id) ? 'ring-2 ring-green-500' : ''}`}
                       style={{
                         minHeight: 'auto',
                         height: 'auto',
                         borderRadius: '16px',
                         border: '1px solid rgba(51, 65, 85, 0.6)',
                         background: 'rgb(30, 41, 59)',
-                        boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
+                        boxShadow: selectedItems.includes(item.id) ? 'rgba(34, 197, 94, 0.4) 0px 10px 30px -5px' : 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                         overflow: 'hidden',
                         maxWidth: '100%',
                         width: '100%',
@@ -1288,7 +1293,8 @@ export default function InventoryPage() {
                         flexShrink: 0
                       }}
                     >
-                      <div className="absolute top-4 left-4 z-20">
+                      {/* Desktop checkbox */}
+                      <div className="hidden sm:block absolute top-4 left-4 z-20">
                         <Checkbox
                           checked={selectedItems.includes(item.id)}
                           onCheckedChange={() => handleSelect(item.id)}
@@ -1297,10 +1303,9 @@ export default function InventoryPage() {
                       </div>
 
                       <div className="flex flex-col sm:block flex-shrink-0 m-1 sm:m-4">
-                        <Link
-                          to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
-                          state={returnStateForInventory}
-                          className={`glass flex items-center justify-center relative w-[62px] sm:w-[220px] min-w-[62px] sm:min-w-[220px] max-w-[62px] sm:max-w-[220px] h-[62px] sm:h-[210px] p-1 sm:p-4 cursor-pointer transition-all duration-200 ${selectedItems.includes(item.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
+                        <div
+                          onClick={() => handleSelect(item.id)}
+                          className={`md:cursor-default cursor-pointer glass flex items-center justify-center relative w-[100px] sm:w-[220px] min-w-[100px] sm:min-w-[220px] max-w-[100px] sm:max-w-[220px] h-[100px] sm:h-[210px] p-1 sm:p-4 transition-all duration-200 ${selectedItems.includes(item.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
                           style={{
                             borderRadius: '12px',
                             background: 'rgba(255, 255, 255, 0.1)',
@@ -1324,21 +1329,28 @@ export default function InventoryPage() {
                             />
                           )}
                           {selectedItems.includes(item.id) && (
-                            <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 z-20">
-                              <div className="bg-green-600 rounded-full p-0.5 shadow-lg">
-                                <Check className="w-2.5 h-2.5 text-white" />
+                            <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-20">
+                              <div className="bg-green-600 rounded-full p-1 shadow-lg">
+                                <Check className="w-4 h-4 sm:w-2.5 sm:h-2.5 text-white" />
                               </div>
                             </div>
                           )}
                           <div className="absolute top-2 right-2 z-10">
-                            <Badge variant="outline" className={`${statusColors[item.status]} text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.5`}>
+                            <Badge variant="outline" className={`${statusColors[item.status]} text-[9px] sm:text-[10px] px-1.5 sm:px-1.5 py-0.5`}>
                               {statusLabels[item.status] || statusLabels.available}
                             </Badge>
                           </div>
-                        </Link>
+                          
+                          {/* Desktop link overlay */}
+                          <Link
+                            to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
+                            state={returnStateForInventory}
+                            className="hidden sm:block absolute inset-0 z-5"
+                          />
+                        </div>
                       </div>
 
-                      <div className="flex-1 flex flex-col justify-start px-1.5 sm:px-6 py-1 sm:py-6 border-r min-w-0 overflow-hidden relative"
+                      <div className="flex-1 flex flex-col justify-start px-2 sm:px-6 py-2 sm:py-6 border-r min-w-0 overflow-hidden relative"
                         style={{
                           borderColor: 'rgba(51, 65, 85, 0.6)',
                           flexShrink: 1,
@@ -1347,19 +1359,19 @@ export default function InventoryPage() {
                       >
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-[60%] sm:h-full sm:top-0 sm:translate-y-0 bg-slate-600/60"></div>
                         
-                        <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block mb-0.5 sm:mb-3">
-                          <h3 className="text-xs sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2"
-                            style={{ letterSpacing: '0.5px', lineHeight: '1.25' }}>
+                        <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block mb-1 sm:mb-3">
+                          <h3 className="text-sm sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-2 sm:line-clamp-2"
+                            style={{ letterSpacing: '0.3px', lineHeight: '1.3' }}>
                             {item.item_name || 'Untitled Item'}
                           </h3>
                         </Link>
 
-                        <div className="mb-0 sm:hidden space-y-0.5">
-                          <p className="text-gray-300 text-[9px] break-words leading-[12px]">
+                        <div className="mb-1 sm:hidden space-y-1">
+                          <p className="text-gray-300 text-[11px] break-words leading-[14px]">
                             <span className="font-semibold">Price:</span> ${item.purchase_price.toFixed(2)}
                             {item.quantity > 1 && <span className="text-gray-400"> (${perItemPrice.toFixed(2)} ea)</span>}
                           </p>
-                          <p className="text-gray-300 text-[9px] break-words leading-[12px]">
+                          <p className="text-gray-300 text-[11px] break-words leading-[14px]">
                             <span className="font-semibold">Qty:</span> {item.quantity}
                             {quantitySold > 0 && (
                               <span className={isSoldOut ? 'text-red-400' : 'text-blue-400'}>
@@ -1423,7 +1435,7 @@ export default function InventoryPage() {
                         )}
                       </div>
 
-                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-1 sm:py-3 mr-1.5 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[75px] sm:w-[200px] min-w-[75px] sm:min-w-[200px] max-w-[75px] sm:max-w-[200px]"
+                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2 sm:py-3 mr-0 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[60px] sm:w-[200px] min-w-[60px] sm:min-w-[200px] max-w-[60px] sm:max-w-[200px]"
                         style={{
                           background: 'rgb(51, 65, 85)',
                           flexShrink: 0
