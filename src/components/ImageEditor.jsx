@@ -262,14 +262,18 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setIsCropping(false);
         }
         
-        // Check if this image has saved editing settings (keyed by image URL)
-        const historyKey = imageToLoad || null;
-        console.log('Loading image - historyKey:', historyKey);
+        // Check if this image has saved editing settings (keyed by itemId + index for stability)
+        const historyKey = itemId ? `${itemId}_${currentImageIndex}` : imageToLoad;
+        console.log('Loading image - historyKey:', historyKey, 'imageURL:', imageToLoad);
         console.log('Available history keys:', Array.from(imageEditHistoryRef.current.keys()));
         
         const savedSettings = historyKey ? imageEditHistoryRef.current.get(historyKey) : null;
         
-        if (savedSettings) {
+        // Check if saved settings match current image URL (to handle photo replacements)
+        const settingsMatchCurrentImage = savedSettings && savedSettings.imageUrl === imageToLoad;
+        console.log('Settings match check:', { savedUrl: savedSettings?.imageUrl, currentUrl: imageToLoad, matches: settingsMatchCurrentImage });
+        
+        if (savedSettings && settingsMatchCurrentImage) {
           // Load previously saved settings for this image
           console.log(`Loading saved settings for image ${currentImageIndex}:`, savedSettings);
           setFilters(savedSettings.filters);
@@ -277,6 +281,16 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setLoadedFilters(savedSettings.filters);
           setLoadedTransform(savedSettings.transform);
         } else {
+          if (savedSettings && !settingsMatchCurrentImage) {
+            console.log('Image was replaced - clearing old settings and starting fresh');
+            // Clear the old settings for this position since image changed
+            imageEditHistoryRef.current.delete(historyKey);
+            try {
+              localStorage.setItem('imageEditHistory', JSON.stringify(Array.from(imageEditHistoryRef.current.entries())));
+            } catch (e) {
+              console.error('Failed to update localStorage:', e);
+            }
+          }
           // Reset to defaults for images without saved settings
           console.log('No saved settings found, using defaults');
           const defaultFilters = {
@@ -902,13 +916,14 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         if (blob) {
           const file = new File([blob], fileName, { type: 'image/jpeg' });
           
-          // Store the editing settings for this image (keyed by image URL)
-          if (imgSrc) {
-            const historyKey = imgSrc;
+          // Store the editing settings for this image (keyed by itemId + index for stability)
+          if (itemId !== undefined) {
+            const historyKey = `${itemId}_${currentImageIndex}`;
             const settingsToSave = {
               filters: { ...filters },
               transform: { ...transform },
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              imageUrl: imgSrc // Store the URL for reference
             };
             console.log('Saving settings with key:', historyKey, 'Settings:', settingsToSave);
             imageEditHistoryRef.current.set(historyKey, settingsToSave);
