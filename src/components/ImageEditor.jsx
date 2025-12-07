@@ -1347,47 +1347,43 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
           {/* Footer */}
           <div className="px-3 sm:px-5 pt-2 pb-6 sm:py-3 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
-            {/* Show Save button when changes made or image has been edited */}
-            {(hasUnsavedChanges || editedImages.has(currentImageIndex)) && (
-              <>
-                {/* Reset All - only show when there are changes from ORIGINAL */}
-                {hasChangesFromOriginal() && (
-                  <Button
-                    onClick={resetAll}
-                    className="flex-1 bg-red-600 hover:bg-red-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
-                  >
-                    <Undo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-base">Reset All</span>
-                  </Button>
-                )}
-                
-                {/* Apply to All button - Mobile only in footer */}
-                {!isCropping && hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
-                  <Button
-                    onClick={handleApplyFiltersToAll}
-                    className="md:hidden flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm"
-                  >
-                    ✨ Apply to All
-                  </Button>
-                )}
-                
-                {!isCropping && (
-                  <Button
-                    onClick={(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges ? () => onOpenChange(false) : handleSave}
-                    className="flex-1 bg-green-600 hover:bg-green-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
-                    disabled={!imgSrc}
-                  >
-                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-base">
-                      {(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges
-                        ? 'Done' 
-                        : hasMultipleImages 
-                          ? `Save Image ${currentImageIndex + 1}` 
-                          : 'Save Image'}
-                    </span>
-                  </Button>
-                )}
-              </>
+            {/* Reset All - only show when there are changes from ORIGINAL */}
+            {hasChangesFromOriginal() && (
+              <Button
+                onClick={resetAll}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <Undo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-base">Reset All</span>
+              </Button>
+            )}
+            
+            {/* Apply to All button - Mobile only in footer */}
+            {!isCropping && hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
+              <Button
+                onClick={handleApplyFiltersToAll}
+                className="md:hidden flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm"
+              >
+                ✨ Apply to All
+              </Button>
+            )}
+            
+            {/* Save/Done button - ALWAYS visible */}
+            {!isCropping && (
+              <Button
+                onClick={(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges ? () => onOpenChange(false) : handleSave}
+                className="flex-1 bg-green-600 hover:bg-green-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
+                disabled={!imgSrc}
+              >
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="text-xs sm:text-base">
+                  {(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges
+                    ? 'Done' 
+                    : hasMultipleImages 
+                      ? `Save Image ${currentImageIndex + 1}` 
+                      : 'Save Image'}
+                </span>
+              </Button>
             )}
           </div>
         </DialogContent>
