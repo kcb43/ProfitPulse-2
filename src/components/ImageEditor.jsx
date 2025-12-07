@@ -168,7 +168,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   // Update hasUnsavedChanges when filters or transforms change
   useEffect(() => {
     setHasUnsavedChanges(checkForChanges());
-  }, [filters, transform]);
+  }, [filters, transform, loadedFilters, loadedTransform]);
 
   // Navigate to previous image
   const goToPrevImage = () => {
