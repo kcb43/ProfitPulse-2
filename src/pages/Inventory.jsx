@@ -1336,11 +1336,6 @@ export default function InventoryPage() {
                               </div>
                             </div>
                           )}
-                          <div className="hidden sm:block absolute top-2 right-2 z-10">
-                            <Badge variant="outline" className={`${statusColors[item.status]} text-[9px] sm:text-[10px] px-1.5 sm:px-1.5 py-0.5`}>
-                              {statusLabels[item.status] || statusLabels.available}
-                            </Badge>
-                          </div>
                           
                           {/* Desktop link overlay */}
                           <Link
@@ -1417,6 +1412,13 @@ export default function InventoryPage() {
                         }}
                       >
                         <div className="absolute left-0 top-0 w-px h-[130px] sm:h-full bg-slate-600/60"></div>
+                        
+                        {/* Status badge above title - Desktop only */}
+                        <div className="hidden sm:block mb-2">
+                          <Badge variant="outline" className={`${statusColors[item.status]} text-[10px] px-1.5 py-0.5`}>
+                            {statusLabels[item.status] || statusLabels.available}
+                          </Badge>
+                        </div>
                         
                         <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block mb-1 sm:mb-3 w-full text-left">
                           <h3 className="text-sm sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2 text-left"
@@ -1574,13 +1576,6 @@ export default function InventoryPage() {
                         >
                           View Details
                         </Button>
-                      </div>
-                      
-                      {/* Desktop: Status badge below buttons column */}
-                      <div className="hidden sm:flex justify-end absolute right-2 bottom-2">
-                        <Badge variant="outline" className={`${statusColors[item.status]} text-[10px] px-1.5 py-0.5`}>
-                          {statusLabels[item.status] || statusLabels.available}
-                        </Badge>
                       </div>
                       
                       {/* Mobile: Mark Sold and View Details buttons at bottom */}
