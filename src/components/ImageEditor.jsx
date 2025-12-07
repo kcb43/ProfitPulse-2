@@ -308,7 +308,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setTransform(savedSettings.transform);
           setLoadedFilters(savedSettings.filters);
           setLoadedTransform(savedSettings.transform);
-          setSelectedTemplate(savedSettings.templateName || null); // Restore template selection
+          // Restore template selection (use new field name or fallback to old)
+          setSelectedTemplate(savedSettings.templateId || savedSettings.templateName || null);
+          console.log('Restored template:', savedSettings.templateId || savedSettings.templateName || 'none');
         } else {
           if (isNewImage) {
             console.log('NEW image detected - clearing old settings');
@@ -973,7 +975,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               timestamp: Date.now(),
               imageUrl: imgSrc, // Current image URL
               originalImageUrl: originalImageUrl, // Always keep the original for re-editing
-              templateName: selectedTemplate || null // Save selected template
+              templateId: selectedTemplate || null // Save selected template ID
             };
             console.log('Saving settings with key:', historyKey, 'Settings:', settingsToSave);
             imageEditHistoryRef.current.set(historyKey, settingsToSave);
