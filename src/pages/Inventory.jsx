@@ -37,6 +37,7 @@ import { useInventoryTags } from "@/hooks/useInventoryTags";
 import { ImageEditor } from "@/components/ImageEditor";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { InventoryItemViewDialog } from "@/components/InventoryItemViewDialog";
 import { FacebookListingDialog } from "@/components/FacebookListingDialog";
 import { isConnected } from "@/api/facebookClient";
 import EbaySearchDialog from "@/components/EbaySearchDialog";
@@ -95,6 +96,8 @@ export default function InventoryPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState({ url: null, itemId: null });
   const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [itemToView, setItemToView] = useState(null);
   const [facebookListingDialogOpen, setFacebookListingDialogOpen] = useState(false);
   const [itemForFacebookListing, setItemForFacebookListing] = useState(null);
   const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
@@ -1498,7 +1501,8 @@ export default function InventoryPage() {
                         </div>
                         <Button
                           onClick={() => {
-                            navigate(createPageUrl(`AddInventoryItem?id=${item.id}`), { state: returnStateForInventory });
+                            setItemToView(item);
+                            setViewDialogOpen(true);
                           }}
                           className={`text-white font-semibold py-2 sm:py-1.5 px-2 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md w-full sm:w-auto mt-1 sm:mt-2 leading-tight ${
                             item.status === 'listed' 
@@ -1561,10 +1565,12 @@ export default function InventoryPage() {
                     background: 'rgba(255, 255, 255, 0.05)',
                   }}
                 >
-                  <Link
-                    to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
-                    state={returnStateForInventory}
-                    className="block w-full h-full"
+                  <div
+                    onClick={() => {
+                      setItemToView(item);
+                      setViewDialogOpen(true);
+                    }}
+                    className="block w-full h-full cursor-pointer"
                   >
                     {item.images && item.images.length > 1 ? (
                       <ImageCarousel
@@ -1580,7 +1586,7 @@ export default function InventoryPage() {
                         lazy={true}
                       />
                     )}
-                  </Link>
+                  </div>
                   <div className="absolute top-2 left-2 z-10">
                     <Checkbox
                       checked={selectedItems.includes(item.id)}
@@ -2141,6 +2147,20 @@ export default function InventoryPage() {
         onApplyToAll={handleApplyFiltersToAll}
         itemId={imageToEdit.itemId}
       />
+
+      {/* Inventory Item View Dialog */}
+      {itemToView && (
+        <InventoryItemViewDialog
+          item={itemToView}
+          isOpen={viewDialogOpen}
+          onClose={() => {
+            setViewDialogOpen(false);
+            setItemToView(null);
+          }}
+          tags={getTags(itemToView.id)}
+          isFavorite={isFavorite(itemToView.id)}
+        />
+      )}
 
       <SoldLookupDialog
         open={soldDialogOpen}
