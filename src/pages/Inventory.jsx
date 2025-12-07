@@ -1354,8 +1354,8 @@ export default function InventoryPage() {
                         </div>
                         
                         {/* Mobile: Favorite, Edit Image icons, and Status badge below image */}
-                        <div className="md:hidden flex items-center justify-between gap-1.5 mt-2 w-full">
-                          <div className="flex gap-1.5">
+                        <div className="md:hidden mt-2">
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -1383,9 +1383,11 @@ export default function InventoryPage() {
                               </button>
                             )}
                           </div>
-                          <Badge variant="outline" className={`${statusColors[item.status]} text-[9px] px-1.5 py-0.5`}>
-                            {statusLabels[item.status] || statusLabels.available}
-                          </Badge>
+                          <div className="absolute right-2 top-[110px]">
+                            <Badge variant="outline" className={`${statusColors[item.status]} text-[9px] px-1.5 py-0.5`}>
+                              {statusLabels[item.status] || statusLabels.available}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
 
