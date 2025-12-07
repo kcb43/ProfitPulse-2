@@ -304,13 +304,24 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         if (savedSettings && !isNewImage) {
           // Load previously saved settings for this image
           console.log(`Loading saved settings for image ${currentImageIndex}:`, savedSettings);
+          console.log('Current selectedTemplate before restore:', selectedTemplate);
+          console.log('Template ID from settings:', savedSettings.templateId);
+          console.log('Available templates:', templates?.map(t => ({ id: t.id, name: t.name })));
+          
           setFilters(savedSettings.filters);
           setTransform(savedSettings.transform);
           setLoadedFilters(savedSettings.filters);
           setLoadedTransform(savedSettings.transform);
+          
           // Restore template selection (use new field name or fallback to old)
-          setSelectedTemplate(savedSettings.templateId || savedSettings.templateName || null);
-          console.log('Restored template:', savedSettings.templateId || savedSettings.templateName || 'none');
+          const templateToRestore = savedSettings.templateId || savedSettings.templateName || null;
+          console.log('Setting template to:', templateToRestore);
+          setSelectedTemplate(templateToRestore);
+          
+          // Verify it was set
+          setTimeout(() => {
+            console.log('Template after setState:', templateToRestore);
+          }, 100);
         } else {
           if (isNewImage) {
             console.log('NEW image detected - clearing old settings');
