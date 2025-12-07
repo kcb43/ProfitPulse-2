@@ -264,6 +264,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       if (urlToLoad && urlToLoad !== imgSrc) {
         console.log(`Loading image ${currentImageIndex + 1}/${normalizedImages.length}:`, urlToLoad, savedSettings ? '(from original)' : '(current)');
+        console.log('Loading image - historyKey:', historyKey, 'imageURL:', imageToLoad);
+        console.log('Available history keys:', Array.from(imageEditHistoryRef.current.keys()));
+        
         setImgSrc(urlToLoad);
         setOriginalImgSrc(urlToLoad);
         
@@ -274,13 +277,6 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setCropper(null);
           setIsCropping(false);
         }
-        
-        // Check if this image has saved editing settings (keyed by itemId + index for stability)
-        const historyKey = itemId ? `${itemId}_${currentImageIndex}` : imageToLoad;
-        console.log('Loading image - historyKey:', historyKey, 'imageURL:', imageToLoad);
-        console.log('Available history keys:', Array.from(imageEditHistoryRef.current.keys()));
-        
-        const savedSettings = historyKey ? imageEditHistoryRef.current.get(historyKey) : null;
         
         // Verify imageUrl matches for inventory items (to detect photo replacements)
         // Extract filename without hash to compare base images
