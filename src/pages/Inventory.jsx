@@ -581,11 +581,16 @@ export default function InventoryPage() {
       
       // Update query cache immediately with new image URL
       queryClient.setQueryData(['inventoryItem', variables.itemId], (oldData) => {
-        if (!oldData) return oldData;
-        console.log('Updating cache with new image URL:', fileUrl);
+        if (!oldData) {
+          console.log('No cached data for inventoryItem query');
+          return oldData;
+        }
+        console.log('Updating inventoryItem cache - old image_url:', oldData.image_url, '→ new:', fileUrl);
         if (oldData.images && oldData.images.length > 1 && variables.imageIndex !== undefined) {
           const updatedImages = [...oldData.images];
+          const oldUrl = updatedImages[variables.imageIndex];
           updatedImages[variables.imageIndex] = fileUrl;
+          console.log('Updated images array - index', variables.imageIndex, 'from:', oldUrl, 'to:', fileUrl);
           return { ...oldData, images: updatedImages, image_url: updatedImages[0] };
         }
         return { ...oldData, image_url: fileUrl };
