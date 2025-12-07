@@ -1084,14 +1084,6 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       </button>
                     ))}
                   </div>
-                  {hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
-                    <Button
-                      onClick={handleApplyFiltersToAll}
-                      className="md:hidden w-full bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm h-8 sm:h-9 mt-3"
-                    >
-                      ✨ Apply to All Images
-                    </Button>
-                  )}
                 </div>
               )}
             </div>
@@ -1209,6 +1201,17 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               <Undo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-base">Reset All</span>
             </Button>
+            
+            {/* Apply to All button - Mobile only in footer */}
+            {!isCropping && hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
+              <Button
+                onClick={handleApplyFiltersToAll}
+                className="md:hidden flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm"
+              >
+                ✨ Apply to All
+              </Button>
+            )}
+            
             {!isCropping && (
               <Button
                 onClick={(appliedToAll || editedImages.has(currentImageIndex)) ? () => onOpenChange(false) : handleSave}
