@@ -1317,6 +1317,7 @@ export default function InventoryPage() {
                             <ImageCarousel
                               images={item.images.map(img => img.imageUrl || img.url || img)}
                               imageClassName="object-contain"
+                              counterPosition="bottom"
                             />
                           ) : (
                             <OptimizedImage
