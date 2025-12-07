@@ -1574,13 +1574,13 @@ export default function InventoryPage() {
                         >
                           View Details
                         </Button>
-                        
-                        {/* Desktop: Status badge */}
-                        <div className="flex justify-end w-full mt-1">
-                          <Badge variant="outline" className={`${statusColors[item.status]} text-[10px] px-1.5 py-0.5`}>
-                            {statusLabels[item.status] || statusLabels.available}
-                          </Badge>
-                        </div>
+                      </div>
+                      
+                      {/* Desktop: Status badge below buttons column */}
+                      <div className="hidden sm:flex justify-end absolute right-2 bottom-2">
+                        <Badge variant="outline" className={`${statusColors[item.status]} text-[10px] px-1.5 py-0.5`}>
+                          {statusLabels[item.status] || statusLabels.available}
+                        </Badge>
                       </div>
                       
                       {/* Mobile: Mark Sold and View Details buttons at bottom */}
