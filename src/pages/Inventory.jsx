@@ -1294,7 +1294,7 @@ export default function InventoryPage() {
                         width: '100%',
                         boxSizing: 'border-box',
                         flexShrink: 0,
-                        paddingBottom: window.innerWidth < 768 ? '0.75rem' : '0'
+                        paddingBottom: window.innerWidth < 768 ? '1.25rem' : '0'
                       }}
                     >
                       {/* Desktop checkbox */}
@@ -1472,7 +1472,7 @@ export default function InventoryPage() {
                         )}
                       </div>
 
-                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2 sm:py-3 mr-0 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[90px] sm:w-[200px] min-w-[90px] sm:min-w-[200px] max-w-[90px] sm:max-w-[200px]"
+                      <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-2 sm:py-3 mr-0 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[85px] sm:w-[200px] min-w-[85px] sm:min-w-[200px] max-w-[85px] sm:max-w-[200px]"
                         style={{
                           background: 'rgb(51, 65, 85)',
                           flexShrink: 0
@@ -1535,9 +1535,9 @@ export default function InventoryPage() {
                         {!isSoldOut && item.status !== 'sold' && (
                           <Button
                             onClick={() => handleMarkAsSold(item)}
-                            className="md:hidden text-white font-semibold py-2 px-2 rounded-md text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md w-full leading-tight bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                            className="md:hidden text-white font-semibold py-1.5 px-1 rounded-md text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md w-full leading-tight text-[10px] bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                           >
-                            <span className="whitespace-nowrap text-xs">Mark Sold</span>
+                            Mark Sold
                           </Button>
                         )}
                         
@@ -1547,13 +1547,13 @@ export default function InventoryPage() {
                             setItemToView(item);
                             setViewDialogOpen(true);
                           }}
-                          className={`text-white font-semibold py-2 sm:py-1.5 px-2 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md w-full sm:w-auto leading-tight ${
+                          className={`text-white font-semibold py-1.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md w-full sm:w-auto leading-tight text-[10px] sm:text-xs ${
                             item.status === 'listed' 
                               ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
                               : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
                           }`}
                         >
-                          <span className="whitespace-nowrap text-xs sm:text-xs">View Details</span>
+                          <span className="text-[10px] sm:text-xs">View Details</span>
                         </Button>
                       </div>
                     </div>
