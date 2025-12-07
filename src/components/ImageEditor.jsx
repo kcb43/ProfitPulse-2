@@ -1216,8 +1216,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
           {/* Footer */}
           <div className="px-3 sm:px-5 pt-2 pb-6 sm:py-3 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
-            {/* Show buttons only when changes are made or image is already edited */}
-            {(hasUnsavedChanges || appliedToAll || editedImages.has(currentImageIndex)) && (
+            {/* Show buttons only when changes are made in current session */}
+            {(hasUnsavedChanges || editedImages.has(currentImageIndex)) && (
               <>
                 <Button
                   onClick={resetAll}
