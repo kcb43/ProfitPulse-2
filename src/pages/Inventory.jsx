@@ -1240,12 +1240,10 @@ export default function InventoryPage() {
                 <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-white">
                   Select All ({sortedItems.length})
                 </label>
-                {viewMode === "list" && (
-                  <>
-                    <span className="text-xs text-gray-400 md:hidden">Tap image to select for bulk edit</span>
-                    <span className="text-xs text-gray-400 hidden md:block">Click image to select for bulk edit</span>
-                  </>
-                )}
+                <span className="text-xs text-gray-400 md:hidden">
+                  {viewMode === "list" ? "Tap image to select for bulk edit" : "Tap image to select for bulk edit"}
+                </span>
+                <span className="text-xs text-gray-400 hidden md:block">Click image to select for bulk edit</span>
               </div>
             </div>
           )}
@@ -1649,10 +1647,7 @@ export default function InventoryPage() {
                   }}
                 >
                   <div
-                    onClick={() => {
-                      setItemToView(item);
-                      setViewDialogOpen(true);
-                    }}
+                    onClick={() => handleSelect(item.id)}
                     className="block w-full h-full cursor-pointer"
                   >
                     {item.images && item.images.length > 1 ? (
@@ -1669,14 +1664,6 @@ export default function InventoryPage() {
                         lazy={true}
                       />
                     )}
-                  </div>
-                  <div className="absolute top-2 left-2 z-10">
-                    <Checkbox
-                      checked={selectedItems.includes(item.id)}
-                      onCheckedChange={() => handleSelect(item.id)}
-                      id={`select-${item.id}`}
-                      className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px] backdrop-blur-sm"
-                    />
                   </div>
                   {selectedItems.includes(item.id) && (
                     <div className="absolute top-2 right-2 z-20">
