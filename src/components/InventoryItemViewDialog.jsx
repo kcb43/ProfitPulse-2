@@ -44,6 +44,7 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
                 <ImageCarousel
                   images={item.images}
                   imageClassName="object-cover md:rounded-r-lg"
+                  counterPosition="bottom"
                 />
               </div>
             ) : (
