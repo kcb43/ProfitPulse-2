@@ -2241,8 +2241,8 @@ export default function InventoryPage() {
           const updatedImages = [...(item.images || []), newImageUrl];
           
           try {
-            await updateItemMutation.mutateAsync({
-              id: item.id,
+            // Update the item with the new images array
+            await base44.entities.InventoryItem.update(item.id, {
               images: updatedImages
             });
             
