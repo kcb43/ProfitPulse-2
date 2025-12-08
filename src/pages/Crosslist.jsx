@@ -344,7 +344,7 @@ export default function Crosslist() {
   });
 
   const crosslistableItems = useMemo(
-    () => inventory.filter((item) => item.status !== "sold"),
+    () => inventory.filter((item) => item.status !== "sold" && !item.deleted_at),
     [inventory]
   );
 
