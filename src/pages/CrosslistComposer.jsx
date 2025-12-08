@@ -1484,9 +1484,11 @@ export default function CrosslistComposer() {
       if (field === "zip") next.ebay.shippingLocation = value;
       if (field === "category") {
         next.ebay.categoryName = value;
+        console.log('📝 Syncing category name to eBay:', value);
       }
       if (field === "categoryId") {
         next.ebay.categoryId = value;
+        console.log('📝 Syncing categoryId to eBay:', value);
       }
       if (field === "brand") {
         next.ebay.ebayBrand = value;
@@ -1911,6 +1913,15 @@ export default function CrosslistComposer() {
   
   const validateEbayForm = () => {
     const errors = [];
+    
+    // Debug logging to see what values we have
+    console.log('🔍 eBay Form Validation:', {
+      categoryId: ebayForm.categoryId,
+      categoryName: ebayForm.categoryName,
+      categoryIdType: typeof ebayForm.categoryId,
+      categoryIdTruthy: !!ebayForm.categoryId,
+    });
+    
     if (!ebayForm.handlingTime) errors.push("Handling Time");
     if (!ebayForm.shippingService) errors.push("Shipping Service");
     if (!ebayForm.shippingCostType) errors.push("Shipping Cost Type");
@@ -1919,7 +1930,19 @@ export default function CrosslistComposer() {
     if (!ebayForm.duration) errors.push("Duration");
     if (!ebayForm.buyItNowPrice) errors.push("Buy It Now Price");
     if (!ebayForm.color) errors.push("Color");
-    if (!ebayForm.categoryId) errors.push("Category");
+    
+    // Check for valid category ID (not empty, not "0", not 0)
+    const hasValidCategory = ebayForm.categoryId && 
+                            String(ebayForm.categoryId).trim() !== '' && 
+                            ebayForm.categoryId !== '0' && 
+                            ebayForm.categoryId !== 0;
+    
+    if (!hasValidCategory) {
+      console.log('❌ Category validation failed:', ebayForm.categoryId);
+      errors.push("Category");
+    } else {
+      console.log('✅ Category validation passed:', ebayForm.categoryId);
+    }
     // Only require Type if category is selected and ebayTypeAspect exists with values
     if (ebayForm.categoryId && ebayForm.categoryId !== '0' && ebayForm.categoryId !== 0) {
       // Only require if we have the type aspect with values
@@ -3769,6 +3792,7 @@ export default function CrosslistComposer() {
                             // This is a leaf node - select it
                             const fullPath = newPath.map(c => c.categoryName).join(" > ");
                             const categoryId = category.categoryId;
+                            console.log('✅ General category selected:', { fullPath, categoryId, type: typeof categoryId });
                             handleGeneralChange("category", fullPath);
                             handleGeneralChange("categoryId", categoryId);
                             setGeneralCategoryPath(newPath);
