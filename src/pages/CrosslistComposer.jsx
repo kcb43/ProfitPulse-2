@@ -3818,6 +3818,7 @@ export default function CrosslistComposer() {
                         size="sm"
                         onClick={() => {
                           handleGeneralChange("category", "");
+                          handleGeneralChange("categoryId", "");
                           setGeneralCategoryPath([]);
                         }}
                         className="h-6 px-2 text-xs"
@@ -4417,28 +4418,31 @@ export default function CrosslistComposer() {
                       </div>
                     )}
 
-                    {/* Debug info - always show in development for debugging */}
-                    {process.env.NODE_ENV === 'development' && !isLoadingEbayAspects && (
-                      <div className="text-xs text-muted-foreground p-2 bg-muted rounded mb-2 space-y-1">
-                        <div><strong>Debug Info:</strong></div>
-                        <div>Category ID: {ebayForm.categoryId}</div>
-                        <div>Category Name: {ebayForm.categoryName}</div>
-                        {ebayAspectsError && (
-                          <div className="text-red-600">Error: {ebayAspectsError.message}</div>
-                        )}
-                        {!ebayAspectsError && (
-                          <>
-                            <div>Found {ebayCategoryAspects.length} aspect(s):</div>
-                            {ebayCategoryAspects.map((a, idx) => (
-                              <div key={idx} className="ml-2 text-xs">
-                                - Aspect {idx + 1}: {a.localizedAspectName || a.aspectName || a.name || 'Unknown'} 
-                                (Values: {a.aspectValues?.length || 0})
-                                <details className="ml-2">
-                                  <summary className="cursor-pointer">Full data</summary>
-                                  <pre className="text-xs mt-1 whitespace-pre-wrap break-all">{JSON.stringify(a, null, 2)}</pre>
-                                </details>
-                              </div>
-                            ))}
+                    {/* Debug info - collapsed by default, only in development */}
+                    {process.env.NODE_ENV === 'development' && !isLoadingEbayAspects && ebayForm.categoryId && (
+                      <details className="text-xs text-muted-foreground p-2 bg-muted rounded mb-2">
+                        <summary className="cursor-pointer font-medium">
+                          🔍 Debug: Category Aspects ({ebayCategoryAspects.length} found)
+                        </summary>
+                        <div className="space-y-1 mt-2">
+                          <div>Category ID: {ebayForm.categoryId}</div>
+                          <div>Category Name: {ebayForm.categoryName}</div>
+                          {ebayAspectsError && (
+                            <div className="text-red-600">Error: {ebayAspectsError.message}</div>
+                          )}
+                          {!ebayAspectsError && ebayCategoryAspects.length > 0 && (
+                            <>
+                              <div className="mt-2">Aspects:</div>
+                              {ebayCategoryAspects.map((a, idx) => (
+                                <div key={idx} className="ml-2 text-xs">
+                                  - {a.localizedAspectName || a.aspectName || a.name || 'Unknown'} 
+                                  ({a.aspectValues?.length || 0} values)
+                                  <details className="ml-2">
+                                    <summary className="cursor-pointer text-blue-600">View data</summary>
+                                    <pre className="text-xs mt-1 whitespace-pre-wrap break-all">{JSON.stringify(a, null, 2)}</pre>
+                                  </details>
+                                </div>
+                              ))}
                             {ebayTypeAspect ? (
                               <div className="text-green-600">
                                 ✓ Model/Type aspect found: {ebayTypeAspect.localizedAspectName || ebayTypeAspect.aspectName || ebayTypeAspect.name} ({ebayTypeValues.length} values)
