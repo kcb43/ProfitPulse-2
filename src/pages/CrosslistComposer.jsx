@@ -2032,9 +2032,18 @@ export default function CrosslistComposer() {
         // Get category ID from either form
         const finalCategoryId = ebayForm.categoryId || generalForm.categoryId;
         
-        // Validate we have a category ID before proceeding
-        if (!finalCategoryId || finalCategoryId === '0' || finalCategoryId === 0) {
-          throw new Error('Category ID is required but not set. Please select a category.');
+        // Validate we have a category (check both ID and name as fallback)
+        const hasCategorySet = (finalCategoryId && finalCategoryId !== '0' && finalCategoryId !== 0) || 
+                              ebayForm.categoryName || 
+                              generalForm.category;
+        
+        if (!hasCategorySet) {
+          throw new Error('Please select a category before listing.');
+        }
+        
+        // If we don't have the ID but have the name, that's an issue with sync
+        if ((!finalCategoryId || finalCategoryId === '0') && (ebayForm.categoryName || generalForm.category)) {
+          throw new Error('Category name is set but ID is missing. Please reselect the category or contact support.');
         }
         
         // Prepare listing data
