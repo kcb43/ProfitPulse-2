@@ -62,7 +62,7 @@ window.addEventListener('load', () => {
 });
 
 // Listen for messages from the Profit Orbit web app (via window.postMessage)
-window.addEventListener('message', (event) => {
+window.addEventListener('message', async (event) => {
   // Only accept messages from same origin
   if (event.source !== window) return;
   
@@ -71,11 +71,13 @@ window.addEventListener('message', (event) => {
   if (event.data.type === 'CREATE_MERCARI_LISTING') {
     console.log('Forwarding Mercari listing request to extension...');
     
-    // Forward to background script, which will send it to Mercari tab
-    chrome.runtime.sendMessage({
-      type: 'CREATE_MERCARI_LISTING',
-      listingData: event.data.listingData
-    }, (response) => {
+    try {
+      // Forward to background script (Manifest V3 uses promises)
+      const response = await chrome.runtime.sendMessage({
+        type: 'CREATE_MERCARI_LISTING',
+        listingData: event.data.listingData
+      });
+      
       console.log('Extension response:', response);
       
       // Send response back to web app
@@ -84,9 +86,18 @@ window.addEventListener('message', (event) => {
         success: response?.success || false,
         listingId: response?.listingId,
         listingUrl: response?.listingUrl,
-        error: response?.error
+        error: response?.error || 'Unknown error occurred'
       }, '*');
-    });
+    } catch (error) {
+      console.error('Error communicating with extension:', error);
+      
+      // Send error back to web app
+      window.postMessage({
+        type: 'MERCARI_LISTING_RESPONSE',
+        success: false,
+        error: error.message || 'Failed to communicate with extension'
+      }, '*');
+    }
   }
 });
 
