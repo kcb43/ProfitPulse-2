@@ -6187,35 +6187,106 @@ export default function CrosslistComposer() {
                   Category <span className="text-red-500">*</span>
                 </Label>
                 
-                {/* Show selected category or inherit from General */}
+                {/* Show selected category with breadcrumb */}
                 {(facebookForm.category || generalForm.category) && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="text-xs">
-                      Selected: {facebookForm.category || generalForm.category}
-                    </Badge>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        handleMarketplaceChange("facebook", "category", "");
-                        handleMarketplaceChange("facebook", "categoryId", "");
-                      }}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
+                  <div className="mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {facebookForm.category || generalForm.category}
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          handleMarketplaceChange("facebook", "category", "");
+                          handleMarketplaceChange("facebook", "categoryId", "");
+                          setGeneralCategoryPath([]);
+                        }}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 )}
                 
-                <Input
-                  placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Enter or select category"}
-                  value={facebookForm.category || ""}
-                  onChange={(e) => handleMarketplaceChange("facebook", "category", e.target.value)}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Helps buyers find your item. Inherited from General form if set.
-                </p>
+                {/* Category Dropdown - Inherits from General or allows selection */}
+                {!isLoadingCategoryTree && categoryTreeId ? (
+                  generalCategoryPath.length > 0 && sortedCategories.length === 0 ? (
+                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-md">
+                      <p className="text-sm text-green-700 dark:text-green-400">
+                        ✓ Category selected: {facebookForm.category || generalForm.category}
+                      </p>
+                    </div>
+                  ) : sortedCategories.length > 0 ? (
+                    <Select
+                      value={undefined}
+                      onValueChange={(value) => {
+                        const selectedCategory = sortedCategories.find(
+                          cat => cat.category?.categoryId === value
+                        );
+                        
+                        if (selectedCategory) {
+                          const category = selectedCategory.category;
+                          const newPath = [...generalCategoryPath, {
+                            categoryId: category.categoryId,
+                            categoryName: category.categoryName,
+                          }];
+                          
+                          // Check if this category has children
+                          const hasChildren = selectedCategory.childCategoryTreeNodes && 
+                            selectedCategory.childCategoryTreeNodes.length > 0 &&
+                            !selectedCategory.leafCategoryTreeNode;
+                          
+                          if (hasChildren) {
+                            // Navigate deeper into the tree
+                            setGeneralCategoryPath(newPath);
+                          } else {
+                            // This is a leaf node - select it
+                            const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                            const categoryId = category.categoryId;
+                            handleMarketplaceChange("facebook", "category", fullPath);
+                            handleMarketplaceChange("facebook", "categoryId", categoryId);
+                            setGeneralCategoryPath(newPath);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={generalCategoryPath.length > 0 ? "Select subcategory" : "Select a category"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {sortedCategories.map((categoryNode) => {
+                          const category = categoryNode.category;
+                          if (!category || !category.categoryId) return null;
+                          
+                          const hasChildren = categoryNode.childCategoryTreeNodes && 
+                            categoryNode.childCategoryTreeNodes.length > 0 &&
+                            !categoryNode.leafCategoryTreeNode;
+                          
+                          return (
+                            <SelectItem key={category.categoryId} value={category.categoryId}>
+                              {category.categoryName} {hasChildren && '›'}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="p-3 bg-muted/50 border rounded-md text-sm text-muted-foreground">
+                      {generalForm.category 
+                        ? `Using category from General: ${generalForm.category}`
+                        : 'Loading categories...'}
+                    </div>
+                  )
+                ) : (
+                  <div className="p-3 bg-muted/50 border rounded-md text-sm text-muted-foreground">
+                    {generalForm.category 
+                      ? `Inherited from General: ${generalForm.category}`
+                      : 'Category tree loading...'}
+                  </div>
+                )}
               </div>
 
               {/* Category Specifics - Show when category is selected */}
