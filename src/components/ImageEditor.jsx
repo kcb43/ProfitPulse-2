@@ -66,6 +66,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   const [templateName, setTemplateName] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('free');
+  const [cropData, setCropData] = useState(null); // Store crop coordinates for applying to all images
   
   // Multi-image support
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -90,6 +91,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       return new Map();
     }
   })());
+  
+  // Store temporary unsaved state per image index (including crops) - session only
+  const tempImageStateRef = useRef(new Map());
   
   // Normalize images array - memoized to prevent recalculation
   const normalizedImages = useMemo(() => {
@@ -120,6 +124,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
   // Check if any changes have been made from loaded state
   const checkForChanges = () => {
+    // Check if image has been cropped (imgSrc differs from originalImgSrc)
+    const hasCropChanges = imgSrc !== originalImgSrc;
+    
     if (!loadedFilters || !loadedTransform) {
       // If no loaded state yet, compare to defaults
       const hasFilterChanges = 
@@ -133,7 +140,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         transform.flip_x !== 1 || 
         transform.flip_y !== 1;
       
-      return hasFilterChanges || hasTransformChanges;
+      return hasCropChanges || hasFilterChanges || hasTransformChanges;
     }
     
     // Compare to loaded state
@@ -148,7 +155,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       transform.flip_x !== loadedTransform.flip_x || 
       transform.flip_y !== loadedTransform.flip_y;
     
-    return hasFilterChanges || hasTransformChanges;
+    return hasCropChanges || hasFilterChanges || hasTransformChanges;
   };
   
   // Check if there are changes from ORIGINAL (for Reset All button)
@@ -167,21 +174,39 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     return hasFilterChanges || hasTransformChanges;
   };
 
-  // Update hasUnsavedChanges when filters or transforms change
+  // Update hasUnsavedChanges when filters, transforms, or image source change
   useEffect(() => {
     const hasChanges = checkForChanges();
     console.log('Checking for changes:', { 
       currentFilters: filters, 
-      loadedFilters, 
+      loadedFilters,
+      imgSrc,
+      originalImgSrc,
       hasChanges,
       hasUnsavedChanges 
     });
     setHasUnsavedChanges(hasChanges);
-  }, [filters, transform, loadedFilters, loadedTransform]);
+  }, [filters, transform, loadedFilters, loadedTransform, imgSrc, originalImgSrc]);
+
+  // Save current image state before navigating
+  const saveCurrentImageState = () => {
+    tempImageStateRef.current.set(currentImageIndex, {
+      imgSrc,
+      originalImgSrc,
+      filters: { ...filters },
+      transform: { ...transform },
+      selectedTemplate,
+      aspectRatio,
+      isCropping,
+      cropData: cropData ? { ...cropData } : null
+    });
+    console.log(`Saved state for image ${currentImageIndex}:`, tempImageStateRef.current.get(currentImageIndex));
+  };
 
   // Navigate to previous image
   const goToPrevImage = () => {
     if (currentImageIndex > 0) {
+      saveCurrentImageState(); // Save current state before navigating
       setCurrentImageIndex(currentImageIndex - 1);
       setAppliedToAll(false); // Reset when navigating
     }
@@ -190,6 +215,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   // Navigate to next image
   const goToNextImage = () => {
     if (currentImageIndex < normalizedImages.length - 1) {
+      saveCurrentImageState(); // Save current state before navigating
       setCurrentImageIndex(currentImageIndex + 1);
       setAppliedToAll(false); // Reset when navigating
     }
@@ -203,6 +229,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       setEditedImages(new Set());
       setAppliedToAll(false);
       setHasUnsavedChanges(false);
+      tempImageStateRef.current.clear(); // Clear temporary unsaved states
       
       // Load the first image
       const imageToLoad = normalizedImages[0];
@@ -244,6 +271,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         setSelectedTemplate(null);
         setAspectRatio('free');
         setIsCropping(false);
+        setCropData(null); // Reset crop data for new item
       }
     }
     return () => {
@@ -258,6 +286,31 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   useEffect(() => {
     if (open && normalizedImages.length > 0) {
       const imageToLoad = normalizedImages[currentImageIndex];
+      
+      // First check if there's a temporary unsaved state for this image
+      const tempState = tempImageStateRef.current.get(currentImageIndex);
+      
+      if (tempState) {
+        // Restore temporary unsaved state (user navigated away and came back)
+        console.log(`Restoring unsaved state for image ${currentImageIndex}:`, tempState);
+        setImgSrc(tempState.imgSrc);
+        setOriginalImgSrc(tempState.originalImgSrc);
+        setFilters(tempState.filters);
+        setTransform(tempState.transform);
+        setSelectedTemplate(tempState.selectedTemplate);
+        setAspectRatio(tempState.aspectRatio);
+        setIsCropping(tempState.isCropping);
+        setCropData(tempState.cropData);
+        
+        // Clean up existing cropper if not cropping
+        if (!tempState.isCropping && cropperInstanceRef.current) {
+          cropperInstanceRef.current.destroy();
+          cropperInstanceRef.current = null;
+          setCropper(null);
+        }
+        
+        return; // Skip the rest of the logic
+      }
       
       // Check if there are saved settings with an original URL
       const historyKey = itemId ? `${itemId}_${currentImageIndex}` : imageToLoad;
@@ -590,6 +643,22 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     }
     
     try {
+      // Get crop data (proportional coordinates) for applying to all images
+      const imageData = cropperInstanceRef.current.getImageData();
+      const cropBoxData = cropperInstanceRef.current.getCropBoxData();
+      
+      // Calculate proportional crop coordinates (0-1 range)
+      const proportionalCrop = {
+        left: (cropBoxData.left - imageData.left) / imageData.width,
+        top: (cropBoxData.top - imageData.top) / imageData.height,
+        width: cropBoxData.width / imageData.width,
+        height: cropBoxData.height / imageData.height
+      };
+      
+      // Store crop data for potential "Apply to All" use
+      setCropData(proportionalCrop);
+      console.log('Stored crop data:', proportionalCrop);
+      
       const canvas = cropperInstanceRef.current.getCroppedCanvas({
         maxWidth: 4096,
         maxHeight: 4096,
@@ -641,6 +710,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     if (originalImgSrc) {
       setImgSrc(originalImgSrc);
     }
+    
+    // Clear crop data
+    setCropData(null);
     
     setFilters({
       brightness: 100,
@@ -750,7 +822,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       filters.shadows !== 0 ||
       transform.rotate !== 0 ||
       transform.flip_x !== 1 ||
-      transform.flip_y !== 1;
+      transform.flip_y !== 1 ||
+      cropData !== null; // Also check for crop changes
 
     if (!hasChanges) {
       return;
@@ -780,6 +853,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       setHasUnsavedChanges(false);
       setAppliedToAll(true); // Mark that apply to all was used
       
+      // Clear all temporary unsaved states since all images have been processed
+      tempImageStateRef.current.clear();
+      
       toast({
         title: "Edits Applied",
         description: `Successfully applied edits to ${processedImages.length} image(s)!`,
@@ -802,56 +878,42 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       
       img.onload = () => {
         try {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
+          let sourceImg = img;
           
-          // Calculate rotated dimensions
-          const rotation = (transform.rotate % 360) * Math.PI / 180;
-          const isRotated90 = Math.abs(transform.rotate % 180) === 90;
-          
-          if (isRotated90) {
-            canvas.width = img.naturalHeight;
-            canvas.height = img.naturalWidth;
+          // Step 1: Apply crop if cropData exists
+          if (cropData) {
+            const cropCanvas = document.createElement('canvas');
+            const cropCtx = cropCanvas.getContext('2d');
+            
+            // Calculate crop dimensions based on proportional crop data
+            const cropX = img.naturalWidth * cropData.left;
+            const cropY = img.naturalHeight * cropData.top;
+            const cropWidth = img.naturalWidth * cropData.width;
+            const cropHeight = img.naturalHeight * cropData.height;
+            
+            cropCanvas.width = cropWidth;
+            cropCanvas.height = cropHeight;
+            
+            // Draw cropped portion
+            cropCtx.drawImage(
+              img,
+              cropX, cropY, cropWidth, cropHeight,
+              0, 0, cropWidth, cropHeight
+            );
+            
+            // Create a new image from the cropped canvas
+            const croppedImg = new Image();
+            croppedImg.src = cropCanvas.toDataURL('image/jpeg', 0.95);
+            
+            // Wait for cropped image to load, then continue with filters/transforms
+            croppedImg.onload = () => {
+              applyTransformsAndFilters(croppedImg, resolve, reject);
+            };
+            croppedImg.onerror = () => reject(new Error('Failed to create cropped image'));
           } else {
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
+            // No crop, proceed directly to transforms and filters
+            applyTransformsAndFilters(sourceImg, resolve, reject);
           }
-
-          // Apply transforms
-          ctx.translate(canvas.width / 2, canvas.height / 2);
-          ctx.scale(transform.flip_x, transform.flip_y);
-          ctx.rotate(rotation);
-
-          // Apply filters
-          ctx.filter = `brightness(${filters.brightness}%) 
-                       contrast(${filters.contrast}%) 
-                       saturate(${filters.saturate}%)`;
-
-          ctx.drawImage(
-            img,
-            -img.naturalWidth / 2,
-            -img.naturalHeight / 2,
-            img.naturalWidth,
-            img.naturalHeight
-          );
-
-          // Reset transforms for shadow application
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-          
-          // Apply shadows if needed
-          if (filters.shadows !== 0) {
-            applyShadows(ctx, canvas.width, canvas.height, filters.shadows);
-          }
-
-          // Convert to blob and create File
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const file = new File([blob], `edited-${Date.now()}.jpg`, { type: 'image/jpeg' });
-              resolve(file);
-            } else {
-              reject(new Error('Failed to create blob'));
-            }
-          }, 'image/jpeg', 0.9);
         } catch (error) {
           reject(error);
         }
@@ -860,6 +922,67 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       img.onerror = () => reject(new Error('Failed to load image'));
       img.src = imageUrl;
     });
+  };
+  
+  // Helper function to apply transforms and filters to an image
+  const applyTransformsAndFilters = (img, resolve, reject) => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Calculate rotated dimensions
+      const rotation = (transform.rotate % 360) * Math.PI / 180;
+      const isRotated90 = Math.abs(transform.rotate % 180) === 90;
+      
+      if (isRotated90) {
+        canvas.width = img.naturalHeight || img.height;
+        canvas.height = img.naturalWidth || img.width;
+      } else {
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+      }
+
+      // Apply transforms
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(transform.flip_x, transform.flip_y);
+      ctx.rotate(rotation);
+
+      // Apply filters
+      ctx.filter = `brightness(${filters.brightness}%) 
+                   contrast(${filters.contrast}%) 
+                   saturate(${filters.saturate}%)`;
+
+      const imgWidth = img.naturalWidth || img.width;
+      const imgHeight = img.naturalHeight || img.height;
+
+      ctx.drawImage(
+        img,
+        -imgWidth / 2,
+        -imgHeight / 2,
+        imgWidth,
+        imgHeight
+      );
+
+      // Reset transforms for shadow application
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      
+      // Apply shadows if needed
+      if (filters.shadows !== 0) {
+        applyShadows(ctx, canvas.width, canvas.height, filters.shadows);
+      }
+
+      // Convert to blob and create File
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `edited-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          resolve(file);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      }, 'image/jpeg', 0.9);
+    } catch (error) {
+      reject(error);
+    }
   };
 
   // Save template to database
@@ -1004,6 +1127,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           // Mark this image as edited
           setEditedImages(prev => new Set([...prev, currentImageIndex]));
           setHasUnsavedChanges(false);
+          
+          // Clear temporary unsaved state for this image since it's now saved
+          tempImageStateRef.current.delete(currentImageIndex);
           
           if (onSave) {
             onSave(file, currentImageIndex);
@@ -1408,7 +1534,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             )}
             
             {/* Apply to All button - Mobile only in footer */}
-            {!isCropping && hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
+            {hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
               <Button
                 onClick={handleApplyFiltersToAll}
                 className="md:hidden flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm"
