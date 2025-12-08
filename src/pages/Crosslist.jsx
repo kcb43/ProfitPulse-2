@@ -1205,16 +1205,6 @@ export default function Crosslist() {
                   selectedItems={selected}
                   onActionComplete={() => setSelected([])}
                 />
-                {selected.length > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowBulkActions(true)}
-                    className="whitespace-nowrap w-auto"
-                  >
-                    <List className="w-4 h-4 mr-2" />
-                    Bulk Actions ({selected.length})
-                  </Button>
-                )}
                 <Button
                   onClick={() => {
                     if (selected.length > 0) {

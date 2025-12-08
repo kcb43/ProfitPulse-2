@@ -204,43 +204,43 @@ export default function BulkActionsMenu({ selectedItems = [], onActionComplete }
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuItem onClick={() => comingSoon("Bulk Delist & Relist")}>
+          <DropdownMenuItem onClick={() => comingSoon("Delist & Relist")}>
             <ListChecks className="mr-2 h-4 w-4" />
-            <span>Bulk Delist &amp; Relist</span>
+            <span>Delist &amp; Relist</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => comingSoon("Bulk Edit Labels")}>
+          <DropdownMenuItem onClick={() => comingSoon("Edit Labels")}>
             <Edit className="mr-2 h-4 w-4" />
-            <span>Bulk Edit Labels</span>
+            <span>Edit Labels</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleBulkCopy} disabled={isProcessing}>
             <Copy className="mr-2 h-4 w-4" />
-            <span>Bulk Copy Items</span>
+            <span>Copy Items</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => setDeleteDialogOpen(true)} disabled={isProcessing}>
             <Trash2 className="mr-2 h-4 w-4" />
-            <span>Bulk Delete</span>
+            <span>Delete</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={() => comingSoon("Bulk Delist")} disabled={isProcessing}>
+          <DropdownMenuItem onClick={() => comingSoon("Delist")} disabled={isProcessing}>
             <ListX className="mr-2 h-4 w-4" />
-            <span>Bulk Delist</span>
+            <span>Delist</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={handleBulkMarkAsNotListed} disabled={isProcessing}>
             <EyeOff className="mr-2 h-4 w-4" />
-            <span>Bulk Mark as Not Listed</span>
+            <span>Mark as Not Listed</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={() => comingSoon("Bulk Edit")} disabled={isProcessing}>
+          <DropdownMenuItem onClick={() => comingSoon("Edit")} disabled={isProcessing}>
             <Edit className="mr-2 h-4 w-4" />
-            <span>Bulk Edit</span>
+            <span>Edit</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
