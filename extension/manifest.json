@@ -33,6 +33,14 @@
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://profitorbit.io/*",
+        "http://localhost:5173/*"
+      ],
+      "js": ["profit-orbit-bridge.js"],
+      "run_at": "document_start"
     }
   ],
   "action": {
