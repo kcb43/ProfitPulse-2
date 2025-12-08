@@ -39,6 +39,10 @@ import {
   ExternalLink,
   Lock,
   Unlock,
+  Settings,
+  Eye,
+  DollarSign,
+  Truck,
 } from "lucide-react";
 import ColorPickerDialog from "../components/ColorPickerDialog";
 import SoldLookupDialog from "../components/SoldLookupDialog";
@@ -211,11 +215,18 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     title: "",
     description: "",
     brand: "",
+    condition: "",
+    quantity: "1",
+    price: "",
+    tags: "",
+    sku: "",
+    category: "",
     deliveryMethod: "shipping_and_pickup",
     shippingPrice: "",
     localPickup: true,
     meetUpLocation: "",
     allowOffers: true,
+    hideFromFriends: false,
   },
 };
 
@@ -6159,6 +6170,87 @@ export default function CrosslistComposer() {
                     </p>
                   )}
                 </div>
+
+                {/* Condition */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    Condition <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={facebookForm.condition || generalForm.condition || undefined}
+                    onValueChange={(value) => handleMarketplaceChange("facebook", "condition", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={generalForm.condition ? `Inherited: ${generalForm.condition}` : "Select condition"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="used_like_new">Used - Like New</SelectItem>
+                      <SelectItem value="used_good">Used - Good</SelectItem>
+                      <SelectItem value="used_fair">Used - Fair</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {generalForm.condition && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Pricing and Quantity Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Pricing & Inventory</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Listing Price */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    Listing Price <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    placeholder={generalForm.price ? `Inherited: $${generalForm.price}` : "Enter price"}
+                    value={facebookForm.price || ""}
+                    onChange={(e) => handleMarketplaceChange("facebook", "price", e.target.value)}
+                  />
+                  {generalForm.price && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited ${generalForm.price} from General form
+                    </p>
+                  )}
+                </div>
+
+                {/* Quantity */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">
+                    Quantity <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder={generalForm.quantity ? `Inherited: ${generalForm.quantity}` : "1"}
+                    value={facebookForm.quantity || ""}
+                    onChange={(e) => handleMarketplaceChange("facebook", "quantity", e.target.value)}
+                  />
+                  {generalForm.quantity && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Shipping & Pickup</Label>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -6225,6 +6317,79 @@ export default function CrosslistComposer() {
                       onCheckedChange={(checked) => handleMarketplaceChange("facebook", "localPickup", checked)}
                     />
                     <Label htmlFor="facebook-local-pickup" className="text-sm">Offer local pickup</Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Options Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Additional Options</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Tags */}
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-1.5 block">Tags</Label>
+                  <Input
+                    placeholder={generalForm.tags ? `Inherited: ${generalForm.tags}` : "Comma-separated tags (e.g., vintage, luxury, gift)"}
+                    value={facebookForm.tags || ""}
+                    onChange={(e) => handleMarketplaceChange("facebook", "tags", e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Use up to 20 tags someone might search for
+                  </p>
+                </div>
+
+                {/* SKU */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">SKU</Label>
+                  <Input
+                    placeholder={generalForm.sku ? `Inherited: ${generalForm.sku}` : "Internal SKU (optional)"}
+                    value={facebookForm.sku || ""}
+                    onChange={(e) => handleMarketplaceChange("facebook", "sku", e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Only visible to you
+                  </p>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Category</Label>
+                  <Input
+                    placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Optional category"}
+                    value={facebookForm.category || ""}
+                    onChange={(e) => handleMarketplaceChange("facebook", "category", e.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Optional - helps buyers find your item
+                  </p>
+                </div>
+              </div>
+
+              {/* Privacy Settings Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Privacy Settings</Label>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-3">
+                  <Switch
+                    id="facebook-hide-from-friends"
+                    checked={facebookForm.hideFromFriends}
+                    onCheckedChange={(checked) => handleMarketplaceChange("facebook", "hideFromFriends", checked)}
+                  />
+                  <div>
+                    <Label htmlFor="facebook-hide-from-friends" className="text-sm cursor-pointer">Hide from friends</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      This listing will be hidden from your Facebook friends but visible to other people on Facebook
+                    </p>
                   </div>
                 </div>
               </div>
