@@ -337,10 +337,12 @@ export default function Crosslist() {
     "Zara",
   ];
 
-  const { data: inventory = [], isLoading } = useQuery({
+  const { data: inventory = [], isLoading, refetch: refetchInventory } = useQuery({
     queryKey: ["inventoryItems"],
     queryFn: () => base44.entities.InventoryItem.list("-purchase_date"),
     initialData: [],
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always consider data stale so it refetches
   });
 
   const crosslistableItems = useMemo(
@@ -766,14 +768,15 @@ export default function Crosslist() {
     
     // Also refresh when window regains focus (user comes back from CrosslistComposer)
     const handleFocus = () => {
+      refetchInventory(); // Refetch inventory data
       if (inventory.length > 0) {
-        loadListings();
+        loadListings(); // Refetch marketplace listings
       }
     };
     
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [inventory]);
+  }, [inventory, refetchInventory]);
 
   const getItemListings = (itemId) => {
     return marketplaceListings[itemId] || [];
