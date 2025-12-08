@@ -5930,6 +5930,91 @@ export default function CrosslistComposer() {
                 </div>
               </div>
 
+              {/* Category Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Category</Label>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
+                <CategorySelector
+                  value={mercariForm.categoryId || generalForm.categoryId || ''}
+                  onCategoryChange={(categoryId, categoryPath) => {
+                    handleMarketplaceChange("mercari", "categoryId", categoryId);
+                    handleMarketplaceChange("mercari", "category", categoryPath);
+                  }}
+                  placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Select a category"}
+                />
+                {generalForm.category && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Inherited from General form. You can edit this field.
+                  </p>
+                )}
+                {(mercariForm.category || generalForm.category) && (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Home className="h-3 w-3" />
+                    <span>{mercariForm.category || generalForm.category}</span>
+                  </div>
+                )}
+
+                {/* Category Specifics - Shows when category is selected */}
+                {(mercariForm.categoryId || generalForm.categoryId) && categoryAspects.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-xs font-medium">Category Specifics</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Refresh category aspects
+                          queryClient.invalidateQueries(['ebayCategoryAspects', categoryTreeId, mercariForm.categoryId || generalForm.categoryId]);
+                        }}
+                        className="h-6 w-6 p-0"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-muted/20 rounded-md border">
+                      {categoryAspects.slice(0, 4).map((aspect) => (
+                        <div key={aspect.localizedAspectName}>
+                          <Label className="text-xs mb-1.5 block">
+                            {aspect.localizedAspectName}
+                            {aspect.aspectConstraint?.aspectRequired && <span className="text-red-500 ml-1">*</span>}
+                          </Label>
+                          {aspect.aspectValues && aspect.aspectValues.length > 0 ? (
+                            <Select
+                              value={mercariForm[`aspect_${aspect.localizedAspectName}`] || ""}
+                              onValueChange={(value) => handleMarketplaceChange("mercari", `aspect_${aspect.localizedAspectName}`, value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder={`Select ${aspect.localizedAspectName.toLowerCase()}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {aspect.aspectValues.map((value) => (
+                                  <SelectItem key={value.localizedValue} value={value.localizedValue}>
+                                    {value.localizedValue}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              placeholder={`Enter ${aspect.localizedAspectName.toLowerCase()}`}
+                              value={mercariForm[`aspect_${aspect.localizedAspectName}`] || ""}
+                              onChange={(e) => handleMarketplaceChange("mercari", `aspect_${aspect.localizedAspectName}`, e.target.value)}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Item Details Section */}
               <div className="flex items-center justify-between pb-2 border-b mb-4">
                 <div className="flex items-center gap-2">
@@ -5940,19 +6025,24 @@ export default function CrosslistComposer() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Title Section */}
-                <div>
-                  <Label className="text-xs mb-1.5 block">Title</Label>
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-1.5 block">Title <span className="text-red-500">*</span></Label>
                   <Input
-                    placeholder="Enter listing title"
+                    placeholder={generalForm.title ? `Inherited: ${generalForm.title}` : "What are you selling?"}
                     value={mercariForm.title || ""}
                     onChange={(e) => handleMarketplaceChange("mercari", "title", e.target.value)}
                   />
+                  {generalForm.title && !mercariForm.title && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
                 </div>
 
                 {/* Description Section */}
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
-                    <Label className="text-xs">Description</Label>
+                    <Label className="text-xs">Description <span className="text-red-500">*</span></Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -5965,12 +6055,12 @@ export default function CrosslistComposer() {
                     </Button>
                   </div>
                   <RichTextarea
-                    placeholder={generalForm.description ? `Inherited from General` : "Enter Mercari-specific description..."}
+                    placeholder={generalForm.description ? `Inherited from General` : "Describe your item (5+ words)"}
                     value={mercariForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("mercari", "description", e.target.value)}
                     className="min-h-[120px]"
                   />
-                  {generalForm.description && (
+                  {generalForm.description && !mercariForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Inherited from General form. You can edit this field.
                     </p>
@@ -6055,11 +6145,183 @@ export default function CrosslistComposer() {
                       </SelectContent>
                     </Select>
                   )}
-                  {generalForm.brand && (
+                  {generalForm.brand && !mercariForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Inherited {generalForm.brand} from General form. You can edit this field.
                     </p>
                   )}
+                </div>
+
+                {/* Condition Section */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Condition <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={mercariForm.condition || generalForm.condition || undefined}
+                    onValueChange={(value) => handleMarketplaceChange("mercari", "condition", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={generalForm.condition ? `Inherited: ${generalForm.condition}` : "Select condition"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="New">New</SelectItem>
+                      <SelectItem value="Like New">Like New</SelectItem>
+                      <SelectItem value="Good">Good</SelectItem>
+                      <SelectItem value="Fair">Fair</SelectItem>
+                      <SelectItem value="Poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {generalForm.condition && !mercariForm.condition && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
+                </div>
+
+                {/* Color Section */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Color</Label>
+                  <Select
+                    value={mercariForm.color || generalForm.color || undefined}
+                    onValueChange={(value) => handleMarketplaceChange("mercari", "color", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={generalForm.color ? `Inherited: ${generalForm.color}` : "Select color (optional)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Black">Black</SelectItem>
+                      <SelectItem value="White">White</SelectItem>
+                      <SelectItem value="Gray">Gray</SelectItem>
+                      <SelectItem value="Brown">Brown</SelectItem>
+                      <SelectItem value="Beige">Beige</SelectItem>
+                      <SelectItem value="Red">Red</SelectItem>
+                      <SelectItem value="Pink">Pink</SelectItem>
+                      <SelectItem value="Orange">Orange</SelectItem>
+                      <SelectItem value="Yellow">Yellow</SelectItem>
+                      <SelectItem value="Green">Green</SelectItem>
+                      <SelectItem value="Blue">Blue</SelectItem>
+                      <SelectItem value="Purple">Purple</SelectItem>
+                      <SelectItem value="Gold">Gold</SelectItem>
+                      <SelectItem value="Silver">Silver</SelectItem>
+                      <SelectItem value="Multi-Color">Multi-Color</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {generalForm.color && !mercariForm.color && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
+                </div>
+
+                {/* Size Section - Shows if category is clothing/shoes */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Size</Label>
+                  <Input
+                    placeholder={generalForm.size ? `Inherited: ${generalForm.size}` : "e.g., M, 10, 32W x 34L"}
+                    value={mercariForm.size || ""}
+                    onChange={(e) => handleMarketplaceChange("mercari", "size", e.target.value)}
+                  />
+                  {generalForm.size && !mercariForm.size && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
+                </div>
+
+                {/* Tags/Keywords Section */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Tags / Keywords</Label>
+                  <Input
+                    placeholder="e.g., vintage, rare, limited edition"
+                    value={mercariForm.tags || generalForm.tags || ""}
+                    onChange={(e) => handleMarketplaceChange("mercari", "tags", e.target.value)}
+                  />
+                  {generalForm.tags && !mercariForm.tags && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Pricing & Inventory Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Pricing & Inventory</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Listing Price */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Listing Price <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="number"
+                    placeholder={generalForm.price ? `Inherited: $${generalForm.price}` : "(min $1/max $2000)"}
+                    value={mercariForm.price || ""}
+                    onChange={(e) => handleMarketplaceChange("mercari", "price", e.target.value)}
+                    className="text-right"
+                  />
+                  {generalForm.price && !mercariForm.price && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
+                </div>
+
+                {/* Quantity */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Quantity</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder={generalForm.quantity ? `Inherited: ${generalForm.quantity}` : "1"}
+                    value={mercariForm.quantity || ""}
+                    onChange={(e) => handleMarketplaceChange("mercari", "quantity", e.target.value)}
+                  />
+                  {generalForm.quantity && !mercariForm.quantity && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Inherited from General form. You can edit this field.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Shipping</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Ships From (Zip Code) */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Ships From (Zip Code) <span className="text-red-500">*</span></Label>
+                  <Input
+                    placeholder="Enter your zip code"
+                    value={mercariForm.shipsFrom || ""}
+                    onChange={(e) => handleMarketplaceChange("mercari", "shipsFrom", e.target.value)}
+                    maxLength={5}
+                  />
+                </div>
+
+                {/* Delivery Method */}
+                <div>
+                  <Label className="text-xs mb-1.5 block">Delivery Method <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={mercariForm.deliveryMethod || "prepaid"}
+                    onValueChange={(value) => handleMarketplaceChange("mercari", "deliveryMethod", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="prepaid">Mercari Prepaid Label (Recommended)</SelectItem>
+                      <SelectItem value="ship_on_own">Ship on Your Own</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
