@@ -301,12 +301,21 @@ export default function Settings() {
   };
 
   const handleMercariLogin = () => {
-    // Open Mercari login in a new tab (content script will detect login there)
-    window.open('https://www.mercari.com/login/', '_blank');
+    // Open Mercari login in a small popup window (like Vendoo)
+    const width = 500;
+    const height = 650;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    
+    window.open(
+      'https://www.mercari.com/login/',
+      'MercariLogin',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no`
+    );
     
     toast({
-      title: 'Mercari Login Opened',
-      description: 'Log into Mercari in the new tab. Once logged in, come back here and click "Connect Mercari".',
+      title: 'Mercari Login',
+      description: 'Log into Mercari in the popup, then close it and click "Connect Mercari".',
       duration: 6000,
     });
   };
@@ -403,6 +412,15 @@ export default function Settings() {
   };
 
   const getMarketplaceAccountStatus = (marketplaceId) => {
+    // Special handling for Mercari (uses extension, not OAuth)
+    if (marketplaceId === 'mercari') {
+      return { 
+        connected: mercariConnected,
+        expired: false,
+        accountName: mercariConnected ? JSON.parse(localStorage.getItem('profit_orbit_mercari_user') || '{}').userName : null
+      };
+    }
+    
     const account = marketplaceAccounts[marketplaceId];
     if (!account) {
       return { connected: false, expired: false };
