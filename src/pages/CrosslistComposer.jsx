@@ -6123,8 +6123,8 @@ export default function CrosslistComposer() {
                   </div>
                 )}
 
-                {/* Category Specifics - Shows when category is selected */}
-                {(mercariForm.categoryId || generalForm.categoryId) && categoryAspects.length > 0 && (
+                {/* Category Specifics - Shows when category is selected on Mercari form */}
+                {generalCategoryPath.length > 0 && (mercariForm.categoryId || generalForm.categoryId) && categoryAspects.length > 0 && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-xs font-medium">Category Specifics</Label>
