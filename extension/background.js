@@ -58,50 +58,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
-});
-
-// Notify Profit Orbit web app
-async function notifyProfitOrbit(message) {
-  try {
-    const tabs = await chrome.tabs.query({
-      url: ['https://profitorbit.io/*', 'http://localhost:5173/*']
-    });
-    
-    for (const tab of tabs) {
-      chrome.tabs.sendMessage(tab.id, message).catch(() => {
-        // Tab not ready
-      });
-    }
-  } catch (error) {
-    console.error('Error notifying Profit Orbit:', error);
-  }
-}
-
-// Listen for external messages from Profit Orbit web app
-chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  console.log('External message:', message, 'from:', sender.url);
-  
-  if (message.type === 'CHECK_EXTENSION_INSTALLED') {
-    sendResponse({ 
-      installed: true, 
-      version: chrome.runtime.getManifest().version,
-      name: 'Profit Orbit Crosslisting Assistant'
-    });
-    return true;
-  }
-  
-  if (message.type === 'GET_ALL_MARKETPLACE_STATUS') {
-    sendResponse({ status: marketplaceStatus });
-    return true;
-  }
-  
-  if (message.type === 'GET_MARKETPLACE_STATUS') {
-    const marketplace = message.marketplace;
-    sendResponse({ 
-      status: marketplaceStatus[marketplace] || { loggedIn: false }
-    });
-    return true;
-  }
   
   // Handle Mercari listing request from bridge script
   if (message.type === 'CREATE_MERCARI_LISTING') {
@@ -179,6 +135,50 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
     })();
     
     return true; // Keep channel open for async response
+  }
+});
+
+// Notify Profit Orbit web app
+async function notifyProfitOrbit(message) {
+  try {
+    const tabs = await chrome.tabs.query({
+      url: ['https://profitorbit.io/*', 'http://localhost:5173/*']
+    });
+    
+    for (const tab of tabs) {
+      chrome.tabs.sendMessage(tab.id, message).catch(() => {
+        // Tab not ready
+      });
+    }
+  } catch (error) {
+    console.error('Error notifying Profit Orbit:', error);
+  }
+}
+
+// Listen for external messages from Profit Orbit web app
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  console.log('External message:', message, 'from:', sender.url);
+  
+  if (message.type === 'CHECK_EXTENSION_INSTALLED') {
+    sendResponse({ 
+      installed: true, 
+      version: chrome.runtime.getManifest().version,
+      name: 'Profit Orbit Crosslisting Assistant'
+    });
+    return true;
+  }
+  
+  if (message.type === 'GET_ALL_MARKETPLACE_STATUS') {
+    sendResponse({ status: marketplaceStatus });
+    return true;
+  }
+  
+  if (message.type === 'GET_MARKETPLACE_STATUS') {
+    const marketplace = message.marketplace;
+    sendResponse({ 
+      status: marketplaceStatus[marketplace] || { loggedIn: false }
+    });
+    return true;
   }
   
   if (message.type === 'CREATE_LISTING') {
