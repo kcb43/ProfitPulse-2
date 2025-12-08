@@ -2438,8 +2438,8 @@ export default function CrosslistComposer() {
           description: mercariForm.description || generalForm.description || '',
           price: mercariForm.price || generalForm.price,
           quantity: mercariForm.quantity || generalForm.quantity || 1,
-          category: mercariForm.category || generalForm.category,
-          categoryId: mercariForm.categoryId || generalForm.categoryId,
+          mercariCategory: mercariForm.mercariCategory || '', // Mercari-specific category
+          mercariCategoryId: mercariForm.mercariCategoryId || '', // Mercari category ID
           condition: mercariForm.condition || generalForm.condition,
           brand: mercariForm.brand || generalForm.brand,
           color: mercariForm.color || generalForm.color,
@@ -6016,65 +6016,20 @@ export default function CrosslistComposer() {
               <div className="mb-6">
                 <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
                 
-                {/* Category breadcrumb path */}
-                {generalCategoryPath.length > 0 && (
-                  <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGeneralCategoryPath([]);
-                        handleMarketplaceChange("mercari", "category", "");
-                        handleMarketplaceChange("mercari", "categoryId", "");
-                      }}
-                      className="hover:text-foreground underline"
-                    >
-                      Home
-                    </button>
-                    {generalCategoryPath.map((cat, index) => (
-                      <React.Fragment key={cat.categoryId}>
-                        <span>/</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newPath = generalCategoryPath.slice(0, index + 1);
-                            setGeneralCategoryPath(newPath);
-                            const lastCat = newPath[newPath.length - 1];
-                            const fullPath = newPath.map(c => c.categoryName).join(" > ");
-                            handleMarketplaceChange("mercari", "category", fullPath);
-                            if (lastCat?.categoryId) {
-                              handleMarketplaceChange("mercari", "categoryId", lastCat.categoryId);
-                            }
-                          }}
-                          className="hover:text-foreground underline"
-                        >
-                          {cat.categoryName}
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Show selected category badge */}
-                {((mercariForm.category !== undefined && mercariForm.category !== "") || (generalCategoryPath.length > 0 && mercariForm.category === undefined && generalForm.category)) && (
+                {/* Show selected category */}
+                {mercariForm.mercariCategory && (
                   <div className="mb-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
-                        Selected: {
-                          mercariForm.category !== undefined && mercariForm.category !== "" 
-                            ? mercariForm.category 
-                            : generalCategoryPath.length > 0 && mercariForm.category === undefined
-                              ? generalCategoryPath.map(c => c.categoryName).join(" > ")
-                              : generalForm.category
-                        }
+                        {mercariForm.mercariCategory}
                       </Badge>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          handleMarketplaceChange("mercari", "category", "");
-                          handleMarketplaceChange("mercari", "categoryId", "");
-                          setGeneralCategoryPath([]);
+                          handleMarketplaceChange("mercari", "mercariCategory", "");
+                          handleMarketplaceChange("mercari", "mercariCategoryId", "");
                         }}
                         className="h-6 px-2 text-xs"
                       >
@@ -6084,78 +6039,82 @@ export default function CrosslistComposer() {
                   </div>
                 )}
                 
-                {/* Category Dropdown - Inherits from General or allows selection */}
-                {!isLoadingCategoryTree && categoryTreeId ? (
-                  generalCategoryPath.length > 0 && sortedCategories.length === 0 ? (
-                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-md">
-                      <p className="text-sm text-green-700 dark:text-green-400">
-                        ✓ Category selected: {mercariForm.category !== undefined ? mercariForm.category : generalForm.category}
-                      </p>
-                    </div>
-                  ) : sortedCategories.length > 0 ? (
-                    <Select
-                      value={undefined}
-                      onValueChange={(value) => {
-                        const selectedCategory = sortedCategories.find(
-                          cat => cat.category?.categoryId === value
-                        );
-                        
-                        if (selectedCategory) {
-                          const category = selectedCategory.category;
-                          const newPath = [...generalCategoryPath, {
-                            categoryId: category.categoryId,
-                            categoryName: category.categoryName,
-                          }];
-                          
-                          const hasChildren = selectedCategory.childCategoryTreeNodes && 
-                            selectedCategory.childCategoryTreeNodes.length > 0 &&
-                            !selectedCategory.leafCategoryTreeNode;
-                          
-                          if (hasChildren) {
-                            setGeneralCategoryPath(newPath);
-                          } else {
-                            const fullPath = newPath.map(c => c.categoryName).join(" > ");
-                            const categoryId = category.categoryId;
-                            handleMarketplaceChange("mercari", "category", fullPath);
-                            handleMarketplaceChange("mercari", "categoryId", categoryId);
-                            setGeneralCategoryPath(newPath);
-                          }
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={
-                          mercariForm.category !== undefined 
-                            ? "Select a category" 
-                            : generalForm.category 
-                              ? `Inherited: ${generalForm.category}` 
-                              : "Select a category"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedCategories.map((cat) => (
-                          <SelectItem 
-                            key={cat.category?.categoryId} 
-                            value={cat.category?.categoryId}
-                          >
-                            {cat.category?.categoryName}
-                            {cat.leafCategoryTreeNode && " (selectable)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
-                      {mercariForm.category !== undefined 
-                        ? (mercariForm.category || "Select a category from the dropdown")
-                        : (generalForm.category ? `Using category from General: ${generalForm.category}` : "Select a category from the dropdown")
-                      }
-                    </div>
-                  )
-                ) : (
-                  <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
-                    Loading categories...
-                  </div>
+                {/* Mercari Category Dropdown */}
+                <Select
+                  value={mercariForm.mercariCategoryId || ""}
+                  onValueChange={(value) => {
+                    const categories = [
+                      { id: "1", name: "Women" },
+                      { id: "2", name: "Men" },
+                      { id: "7", name: "Electronics" },
+                      { id: "1611", name: "Toys & Collectibles" },
+                      { id: "4", name: "Home" },
+                      { id: "6", name: "Beauty" },
+                      { id: "3", name: "Kids" },
+                      { id: "5", name: "Vintage & collectibles" },
+                      { id: "8", name: "Sports & outdoors" },
+                      { id: "9", name: "Handmade" },
+                      { id: "113", name: "Arts & Crafts" },
+                      { id: "143", name: "Pet Supplies" },
+                      { id: "2633", name: "Garden & Outdoor" },
+                      { id: "2882", name: "Office" },
+                      { id: "3170", name: "Tools" },
+                      { id: "141", name: "Books" },
+                      { id: "10", name: "Other" }
+                    ];
+                    
+                    const selected = categories.find(cat => cat.id === value);
+                    if (selected) {
+                      handleMarketplaceChange("mercari", "mercariCategory", selected.name);
+                      handleMarketplaceChange("mercari", "mercariCategoryId", selected.id);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Mercari category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Women</SelectItem>
+                    <SelectItem value="2">Men</SelectItem>
+                    <SelectItem value="7">Electronics</SelectItem>
+                    <SelectItem value="1611">Toys & Collectibles</SelectItem>
+                    <SelectItem value="4">Home</SelectItem>
+                    <SelectItem value="6">Beauty</SelectItem>
+                    <SelectItem value="3">Kids</SelectItem>
+                    <SelectItem value="5">Vintage & collectibles</SelectItem>
+                    <SelectItem value="8">Sports & outdoors</SelectItem>
+                    <SelectItem value="9">Handmade</SelectItem>
+                    <SelectItem value="113">Arts & Crafts</SelectItem>
+                    <SelectItem value="143">Pet Supplies</SelectItem>
+                    <SelectItem value="2633">Garden & Outdoor</SelectItem>
+                    <SelectItem value="2882">Office</SelectItem>
+                    <SelectItem value="3170">Tools</SelectItem>
+                    <SelectItem value="141">Books</SelectItem>
+                    <SelectItem value="10">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Auto-suggest based on General form category */}
+                {generalForm.category && !mercariForm.mercariCategory && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    💡 Suggested based on General category: 
+                    {generalForm.category.toLowerCase().includes('women') || generalForm.category.toLowerCase().includes('clothing') ? ' Women' : ''}
+                    {generalForm.category.toLowerCase().includes('men') && !generalForm.category.toLowerCase().includes('women') ? ' Men' : ''}
+                    {generalForm.category.toLowerCase().includes('electronic') ? ' Electronics' : ''}
+                    {generalForm.category.toLowerCase().includes('toy') ? ' Toys & Collectibles' : ''}
+                    {generalForm.category.toLowerCase().includes('home') || generalForm.category.toLowerCase().includes('furniture') ? ' Home' : ''}
+                    {generalForm.category.toLowerCase().includes('beauty') || generalForm.category.toLowerCase().includes('cosmetic') ? ' Beauty' : ''}
+                    {generalForm.category.toLowerCase().includes('kid') || generalForm.category.toLowerCase().includes('baby') ? ' Kids' : ''}
+                    {generalForm.category.toLowerCase().includes('vintage') || generalForm.category.toLowerCase().includes('collectible') ? ' Vintage & collectibles' : ''}
+                    {generalForm.category.toLowerCase().includes('sport') || generalForm.category.toLowerCase().includes('outdoor') ? ' Sports & outdoors' : ''}
+                    {generalForm.category.toLowerCase().includes('handmade') || generalForm.category.toLowerCase().includes('craft') ? ' Handmade' : ''}
+                    {generalForm.category.toLowerCase().includes('art') ? ' Arts & Crafts' : ''}
+                    {generalForm.category.toLowerCase().includes('pet') ? ' Pet Supplies' : ''}
+                    {generalForm.category.toLowerCase().includes('garden') || generalForm.category.toLowerCase().includes('yard') ? ' Garden & Outdoor' : ''}
+                    {generalForm.category.toLowerCase().includes('office') ? ' Office' : ''}
+                    {generalForm.category.toLowerCase().includes('tool') ? ' Tools' : ''}
+                    {generalForm.category.toLowerCase().includes('book') ? ' Books' : ''}
+                  </p>
                 )}
 
                 {/* Size Field - Only shows for clothing/shoes/apparel categories */}

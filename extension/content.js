@@ -427,19 +427,24 @@ async function fillMercariForm(data) {
       console.log('✓ Description set');
     }
     
-    // 3. CATEGORY - Multi-level selection required
-    // Mercari has CategoryL0, CategoryL1, CategoryL2, etc.
-    if (data.category || data.categoryId) {
-      console.log('🔍 Attempting category selection...');
-      // This is complex - Mercari requires navigating through category hierarchy
-      // For now, we'll attempt a basic selection
-      // The user will need to manually complete if it fails
-      const categorySuccess = await selectMercariDropdown('CategoryL0', data.category || 'Other', true);
+    // 3. CATEGORY - Mercari-specific category
+    if (data.mercariCategory) {
+      console.log('🔍 Attempting Mercari category selection:', data.mercariCategory);
+      const categorySuccess = await selectMercariDropdown('CategoryL0', data.mercariCategory, false);
       if (categorySuccess) {
-        console.log('✓ Category selected (may need sub-categories)');
+        console.log('✓ Mercari category selected:', data.mercariCategory);
       } else {
-        console.warn('⚠️ Category selection failed - may need manual intervention');
+        console.warn('⚠️ Category selection failed - trying partial match');
+        // Try partial match as fallback
+        const partialSuccess = await selectMercariDropdown('CategoryL0', data.mercariCategory, true);
+        if (partialSuccess) {
+          console.log('✓ Category selected with partial match');
+        } else {
+          console.error('❌ Category selection failed completely');
+        }
       }
+    } else {
+      console.warn('⚠️ No Mercari category provided - skipping category selection');
     }
     
     // 4. BRAND
