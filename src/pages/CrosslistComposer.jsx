@@ -2114,26 +2114,33 @@ export default function CrosslistComposer() {
           }
           
           // Update inventory item status and save marketplace listing
-          if (currentEditingItemId) {
+          if (currentEditingItemId && listingItemId) {
             try {
-              // Update inventory item status
-              await base44.entities.InventoryItem.update(currentEditingItemId, {
+              // Update inventory item status with listing info
+              const updatedItem = await base44.entities.InventoryItem.update(currentEditingItemId, {
                 status: 'listed',
-                ebay_listing_id: listingItemId || '',
+                ebay_listing_id: String(listingItemId),
+                marketplace_listings: {
+                  ebay: {
+                    listing_id: String(listingItemId),
+                    listed_at: new Date().toISOString(),
+                    status: 'active',
+                    url: result.ListingURL || `https://www.ebay.com/itm/${listingItemId}`
+                  }
+                }
               });
               
-              // Save marketplace listing record
+              // Save marketplace listing record to localStorage
               const listingData = {
                 inventory_item_id: currentEditingItemId,
                 marketplace: 'ebay',
-                marketplace_listing_id: listingItemId || '',
+                marketplace_listing_id: String(listingItemId),
                 marketplace_listing_url: result.ListingURL || `https://www.ebay.com/itm/${listingItemId}`,
                 status: 'active',
                 listed_at: new Date().toISOString(),
                 metadata: result,
               };
               
-              // Save to localStorage (CrosslistingEngine method)
               const listings = JSON.parse(localStorage.getItem('marketplace_listings') || '[]');
               listings.push({
                 ...listingData,
@@ -2142,10 +2149,24 @@ export default function CrosslistComposer() {
               });
               localStorage.setItem('marketplace_listings', JSON.stringify(listings));
               
-              queryClient.invalidateQueries(['inventoryItems']);
+              // Force immediate refresh of inventory data
+              await queryClient.invalidateQueries(['inventoryItems']);
+              await queryClient.refetchQueries(['inventoryItems']);
+              
             } catch (updateError) {
               console.error('Error updating inventory item:', updateError);
+              toast({
+                title: "Warning",
+                description: "Item listed on eBay but inventory update failed. Please refresh the page.",
+                variant: "destructive",
+              });
             }
+          } else if (!currentEditingItemId) {
+            toast({
+              title: "Warning", 
+              description: "Item listed on eBay but not linked to inventory. Save to General form first.",
+              variant: "destructive",
+            });
           }
 
           toast({
@@ -2254,26 +2275,33 @@ export default function CrosslistComposer() {
           });
 
           // Update inventory item status and save marketplace listing
-          if (currentEditingItemId) {
+          if (currentEditingItemId && result.id) {
             try {
-              // Update inventory item status
+              // Update inventory item status with listing info
               await base44.entities.InventoryItem.update(currentEditingItemId, {
                 status: 'listed',
-                facebook_listing_id: result.id || '',
+                facebook_listing_id: String(result.id),
+                marketplace_listings: {
+                  facebook: {
+                    listing_id: String(result.id),
+                    listed_at: new Date().toISOString(),
+                    status: 'active',
+                    url: result.url || ''
+                  }
+                }
               });
               
-              // Save marketplace listing record
+              // Save marketplace listing record to localStorage
               const listingData = {
                 inventory_item_id: currentEditingItemId,
                 marketplace: 'facebook',
-                marketplace_listing_id: result.id || '',
+                marketplace_listing_id: String(result.id),
                 marketplace_listing_url: result.url || '',
                 status: 'active',
                 listed_at: new Date().toISOString(),
                 metadata: result,
               };
               
-              // Save to localStorage
               const listings = JSON.parse(localStorage.getItem('marketplace_listings') || '[]');
               listings.push({
                 ...listingData,
@@ -2282,9 +2310,17 @@ export default function CrosslistComposer() {
               });
               localStorage.setItem('marketplace_listings', JSON.stringify(listings));
               
-              queryClient.invalidateQueries(['inventoryItems']);
+              // Force immediate refresh of inventory data
+              await queryClient.invalidateQueries(['inventoryItems']);
+              await queryClient.refetchQueries(['inventoryItems']);
+              
             } catch (updateError) {
               console.error('Error updating inventory item:', updateError);
+              toast({
+                title: "Warning",
+                description: "Item listed on Facebook but inventory update failed. Please refresh the page.",
+                variant: "destructive",
+              });
             }
           }
         } else {
