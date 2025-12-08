@@ -934,15 +934,15 @@ export default function CrosslistComposer() {
   const { data: generalCategoriesData, isLoading: isLoadingGeneralCategories, error: generalCategoriesError } = useEbayCategories(
     categoryTreeId,
     generalCurrentCategoryId,
-    (activeForm === "general" || activeForm === "facebook") && !!categoryTreeId
+    (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") && !!categoryTreeId
   );
   
   // Use the appropriate category data based on active form
-  // Facebook form uses General category data for consistency
-  const categoriesData = (activeForm === "general" || activeForm === "facebook") ? generalCategoriesData : ebayCategoriesData;
-  const isLoadingCategories = (activeForm === "general" || activeForm === "facebook") ? isLoadingGeneralCategories : isLoadingEbayCategories;
-  const categoriesError = (activeForm === "general" || activeForm === "facebook") ? generalCategoriesError : ebayCategoriesError;
-  const currentCategoryPath = (activeForm === "general" || activeForm === "facebook") ? generalCategoryPath : selectedCategoryPath;
+  // Facebook and Mercari forms use General category data for consistency
+  const categoriesData = (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") ? generalCategoriesData : ebayCategoriesData;
+  const isLoadingCategories = (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") ? isLoadingGeneralCategories : isLoadingEbayCategories;
+  const categoriesError = (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") ? generalCategoriesError : ebayCategoriesError;
+  const currentCategoryPath = (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") ? generalCategoryPath : selectedCategoryPath;
   
   const categorySubtreeNode = categoriesData?.categorySubtreeNode;
   const currentCategories = categorySubtreeNode?.childCategoryTreeNodes || [];
@@ -5942,23 +5942,131 @@ export default function CrosslistComposer() {
 
               <div className="mb-6">
                 <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
-                <CategorySelector
-                  value={mercariForm.categoryId || generalForm.categoryId || ''}
-                  onCategoryChange={(categoryId, categoryPath) => {
-                    handleMarketplaceChange("mercari", "categoryId", categoryId);
-                    handleMarketplaceChange("mercari", "category", categoryPath);
-                  }}
-                  placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Select a category"}
-                />
-                {generalForm.category && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Inherited from General form. You can edit this field.
-                  </p>
+                
+                {/* Category breadcrumb path */}
+                {generalCategoryPath.length > 0 && (
+                  <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGeneralCategoryPath([]);
+                        handleMarketplaceChange("mercari", "category", "");
+                        handleMarketplaceChange("mercari", "categoryId", "");
+                      }}
+                      className="hover:text-foreground underline"
+                    >
+                      Home
+                    </button>
+                    {generalCategoryPath.map((cat, index) => (
+                      <React.Fragment key={cat.categoryId}>
+                        <span>/</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPath = generalCategoryPath.slice(0, index + 1);
+                            setGeneralCategoryPath(newPath);
+                            const lastCat = newPath[newPath.length - 1];
+                            const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                            handleMarketplaceChange("mercari", "category", fullPath);
+                            if (lastCat?.categoryId) {
+                              handleMarketplaceChange("mercari", "categoryId", lastCat.categoryId);
+                            }
+                          }}
+                          className="hover:text-foreground underline"
+                        >
+                          {cat.categoryName}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                  </div>
                 )}
+                
+                {/* Show selected category badge */}
                 {(mercariForm.category || generalForm.category) && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Home className="h-3 w-3" />
-                    <span>{mercariForm.category || generalForm.category}</span>
+                  <div className="mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        Selected: {mercariForm.category || generalForm.category}
+                      </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          handleMarketplaceChange("mercari", "category", "");
+                          handleMarketplaceChange("mercari", "categoryId", "");
+                          setGeneralCategoryPath([]);
+                        }}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Category Dropdown - Inherits from General or allows selection */}
+                {!isLoadingCategoryTree && categoryTreeId ? (
+                  generalCategoryPath.length > 0 && sortedCategories.length === 0 ? (
+                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-md">
+                      <p className="text-sm text-green-700 dark:text-green-400">
+                        ✓ Category selected: {mercariForm.category || generalForm.category}
+                      </p>
+                    </div>
+                  ) : sortedCategories.length > 0 ? (
+                    <Select
+                      value={undefined}
+                      onValueChange={(value) => {
+                        const selectedCategory = sortedCategories.find(
+                          cat => cat.category?.categoryId === value
+                        );
+                        
+                        if (selectedCategory) {
+                          const category = selectedCategory.category;
+                          const newPath = [...generalCategoryPath, {
+                            categoryId: category.categoryId,
+                            categoryName: category.categoryName,
+                          }];
+                          
+                          const hasChildren = selectedCategory.childCategoryTreeNodes && 
+                            selectedCategory.childCategoryTreeNodes.length > 0 &&
+                            !selectedCategory.leafCategoryTreeNode;
+                          
+                          if (hasChildren) {
+                            setGeneralCategoryPath(newPath);
+                          } else {
+                            const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                            const categoryId = category.categoryId;
+                            handleMarketplaceChange("mercari", "category", fullPath);
+                            handleMarketplaceChange("mercari", "categoryId", categoryId);
+                            setGeneralCategoryPath(newPath);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Select a category"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortedCategories.map((cat) => (
+                          <SelectItem 
+                            key={cat.category?.categoryId} 
+                            value={cat.category?.categoryId}
+                          >
+                            {cat.category?.categoryName}
+                            {cat.leafCategoryTreeNode && " (selectable)"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
+                      {generalForm.category ? `Using category from General: ${generalForm.category}` : "Select a category from the dropdown"}
+                    </div>
+                  )
+                ) : (
+                  <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground">
+                    Loading categories...
                   </div>
                 )}
 
@@ -6223,21 +6331,6 @@ export default function CrosslistComposer() {
                     onChange={(e) => handleMarketplaceChange("mercari", "size", e.target.value)}
                   />
                   {generalForm.size && !mercariForm.size && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Inherited from General form. You can edit this field.
-                    </p>
-                  )}
-                </div>
-
-                {/* Tags/Keywords Section */}
-                <div>
-                  <Label className="text-xs mb-1.5 block">Tags / Keywords</Label>
-                  <Input
-                    placeholder="e.g., vintage, rare, limited edition"
-                    value={mercariForm.tags || generalForm.tags || ""}
-                    onChange={(e) => handleMarketplaceChange("mercari", "tags", e.target.value)}
-                  />
-                  {generalForm.tags && !mercariForm.tags && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Inherited from General form. You can edit this field.
                     </p>
