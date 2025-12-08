@@ -307,63 +307,249 @@ async function createMercariListing(listingData) {
   }
 }
 
+// Helper: Click Mercari custom dropdown and select option
+async function selectMercariDropdown(testId, optionText, partialMatch = false) {
+  try {
+    console.log(`Selecting from dropdown [${testId}]: ${optionText}`);
+    
+    // Find and click the dropdown trigger
+    const dropdown = document.querySelector(`[data-testid="${testId}"]`);
+    if (!dropdown) {
+      console.warn(`Dropdown [${testId}] not found`);
+      return false;
+    }
+    
+    // Click to open dropdown
+    dropdown.click();
+    await sleep(500);
+    
+    // Wait for options to appear (they usually appear in a portal/overlay)
+    // Mercari dropdowns render options in the DOM after clicking
+    await sleep(300);
+    
+    // Try to find the option - Mercari uses various patterns
+    // Look for elements with role="option" or in a listbox
+    const options = Array.from(document.querySelectorAll('[role="option"]'));
+    
+    let matchedOption = null;
+    
+    if (partialMatch) {
+      matchedOption = options.find(opt => 
+        opt.textContent.toLowerCase().includes(optionText.toLowerCase())
+      );
+    } else {
+      matchedOption = options.find(opt => 
+        opt.textContent.trim().toLowerCase() === optionText.toLowerCase()
+      );
+    }
+    
+    if (matchedOption) {
+      console.log(`✓ Found option: ${matchedOption.textContent}`);
+      matchedOption.click();
+      await sleep(500);
+      return true;
+    } else {
+      console.warn(`Option "${optionText}" not found in dropdown [${testId}]`);
+      // Click outside to close dropdown
+      document.body.click();
+      await sleep(300);
+      return false;
+    }
+  } catch (error) {
+    console.error(`Error selecting dropdown [${testId}]:`, error);
+    return false;
+  }
+}
+
+// Helper: Type into autocomplete/searchable dropdown
+async function typeIntoMercariDropdown(testId, text) {
+  try {
+    console.log(`Typing into dropdown [${testId}]: ${text}`);
+    
+    const dropdown = document.querySelector(`[data-testid="${testId}"]`);
+    if (!dropdown) {
+      console.warn(`Dropdown [${testId}] not found`);
+      return false;
+    }
+    
+    // Click to open/focus
+    dropdown.click();
+    await sleep(300);
+    
+    // Try to find an input field within or after the dropdown
+    const input = dropdown.querySelector('input') || 
+                  document.querySelector(`[data-testid="${testId}"] + input`) ||
+                  document.activeElement;
+    
+    if (input && input.tagName === 'INPUT') {
+      input.value = text;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      await sleep(500);
+      
+      // Press Enter to select
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await sleep(300);
+      
+      console.log(`✓ Typed and selected: ${text}`);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error(`Error typing into dropdown [${testId}]:`, error);
+    return false;
+  }
+}
+
 // Fill Mercari form fields
 async function fillMercariForm(data) {
   console.log('Filling Mercari form with data:', data);
   
-  // Title - using actual Mercari selectors
-  const titleInput = document.querySelector('[data-testid="Title"]') || 
-                    document.querySelector('#sellName');
-  if (titleInput && data.title) {
-    titleInput.value = data.title;
-    titleInput.dispatchEvent(new Event('input', { bubbles: true }));
-    titleInput.dispatchEvent(new Event('change', { bubbles: true }));
-    await sleep(300);
-    console.log('✓ Title set:', data.title);
+  try {
+    // 1. TITLE
+    const titleInput = document.querySelector('[data-testid="Title"]') || 
+                      document.querySelector('#sellName');
+    if (titleInput && data.title) {
+      titleInput.value = data.title;
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+      titleInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await sleep(300);
+      console.log('✓ Title set:', data.title);
+    }
+    
+    // 2. DESCRIPTION
+    const descInput = document.querySelector('[data-testid="Description"]') ||
+                     document.querySelector('#sellDescription');
+    if (descInput && data.description) {
+      descInput.value = data.description;
+      descInput.dispatchEvent(new Event('input', { bubbles: true }));
+      descInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await sleep(300);
+      console.log('✓ Description set');
+    }
+    
+    // 3. CATEGORY - Multi-level selection required
+    // Mercari has CategoryL0, CategoryL1, CategoryL2, etc.
+    if (data.category || data.categoryId) {
+      console.log('🔍 Attempting category selection...');
+      // This is complex - Mercari requires navigating through category hierarchy
+      // For now, we'll attempt a basic selection
+      // The user will need to manually complete if it fails
+      const categorySuccess = await selectMercariDropdown('CategoryL0', data.category || 'Other', true);
+      if (categorySuccess) {
+        console.log('✓ Category selected (may need sub-categories)');
+      } else {
+        console.warn('⚠️ Category selection failed - may need manual intervention');
+      }
+    }
+    
+    // 4. BRAND
+    if (data.brand) {
+      console.log('🔍 Attempting brand selection...');
+      // Try typing first (Mercari brand is searchable)
+      let brandSuccess = await typeIntoMercariDropdown('Brand', data.brand);
+      if (!brandSuccess) {
+        // Fallback to dropdown selection
+        brandSuccess = await selectMercariDropdown('Brand', data.brand, true);
+      }
+      if (brandSuccess) {
+        console.log('✓ Brand set:', data.brand);
+      } else {
+        console.warn('⚠️ Brand selection failed');
+      }
+    }
+    
+    // 5. CONDITION
+    if (data.condition) {
+      console.log('🔍 Attempting condition selection...');
+      const conditionSuccess = await selectMercariDropdown('Condition', data.condition, false);
+      if (conditionSuccess) {
+        console.log('✓ Condition set:', data.condition);
+      } else {
+        console.warn('⚠️ Condition selection failed');
+      }
+    }
+    
+    // 6. COLOR (if available)
+    if (data.color) {
+      console.log('🔍 Attempting color selection...');
+      const colorSuccess = await selectMercariDropdown('Color', data.color, false);
+      if (colorSuccess) {
+        console.log('✓ Color set:', data.color);
+      }
+    }
+    
+    // 7. SIZE (text input)
+    if (data.size) {
+      const sizeInput = document.querySelector('[data-testid="Size"]') ||
+                        document.querySelector('input[name*="size" i]');
+      if (sizeInput) {
+        sizeInput.value = data.size;
+        sizeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(300);
+        console.log('✓ Size set:', data.size);
+      }
+    }
+    
+    // 8. SHIPS FROM (zip code)
+    if (data.shipsFrom) {
+      // User may need to click Edit button first
+      const editShipsFromBtn = document.querySelector('[data-testid="ShipsFromEditButton"]');
+      if (editShipsFromBtn) {
+        editShipsFromBtn.click();
+        await sleep(500);
+      }
+      
+      const zipInput = document.querySelector('input[name*="zip" i]') ||
+                       document.querySelector('input[placeholder*="zip" i]');
+      if (zipInput) {
+        zipInput.value = data.shipsFrom;
+        zipInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(300);
+        console.log('✓ Ships from set:', data.shipsFrom);
+      }
+    }
+    
+    // 9. DELIVERY METHOD
+    if (data.deliveryMethod) {
+      console.log('🔍 Attempting delivery method selection...');
+      const deliveryText = data.deliveryMethod === 'prepaid' ? 'Prepaid' : 'Ship on your own';
+      const deliverySuccess = await selectMercariDropdown('ShippingMethod', deliveryText, true);
+      if (deliverySuccess) {
+        console.log('✓ Delivery method set');
+      }
+    }
+    
+    // 10. PRICE (do this last as it often triggers validation)
+    const priceInput = document.querySelector('[data-testid="Price"]') ||
+                      document.querySelector('#Price') ||
+                      document.querySelector('[name="sellPrice"]');
+    if (priceInput && data.price) {
+      priceInput.value = String(data.price);
+      priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+      priceInput.dispatchEvent(new Event('change', { bubbles: true }));
+      priceInput.dispatchEvent(new Event('blur', { bubbles: true }));
+      await sleep(500);
+      console.log('✓ Price set:', data.price);
+    }
+    
+    // 11. PHOTOS - Complex file upload
+    // This requires special handling and may not work due to security restrictions
+    if (data.photos && data.photos.length > 0) {
+      console.warn('⚠️ Photo upload attempted but may require manual intervention');
+      console.log(`Photos to upload: ${data.photos.length} files`);
+      // Photo upload via extension is very limited due to security
+      // User will likely need to upload photos manually
+    }
+    
+    console.log('✅ Form filling complete - check for any warnings above');
+    return true;
+    
+  } catch (error) {
+    console.error('Error filling form:', error);
+    throw error;
   }
-  
-  // Description
-  const descInput = document.querySelector('[data-testid="Description"]') ||
-                   document.querySelector('#sellDescription');
-  if (descInput && data.description) {
-    descInput.value = data.description;
-    descInput.dispatchEvent(new Event('input', { bubbles: true }));
-    descInput.dispatchEvent(new Event('change', { bubbles: true }));
-    await sleep(300);
-    console.log('✓ Description set');
-  }
-  
-  // Price
-  const priceInput = document.querySelector('[data-testid="Price"]') ||
-                    document.querySelector('#Price') ||
-                    document.querySelector('[name="sellPrice"]');
-  if (priceInput && data.price) {
-    priceInput.value = String(data.price);
-    priceInput.dispatchEvent(new Event('input', { bubbles: true }));
-    priceInput.dispatchEvent(new Event('change', { bubbles: true }));
-    await sleep(300);
-    console.log('✓ Price set:', data.price);
-  }
-  
-  // Category - Mercari uses custom dropdown, need to click and select
-  // TODO: Implement category selection
-  console.log('⚠️ Category selection needs implementation (custom dropdown)');
-  
-  // Condition - Custom dropdown
-  // TODO: Implement condition selection
-  console.log('⚠️ Condition selection needs implementation (custom dropdown)');
-  
-  // Brand - Custom dropdown  
-  // TODO: Implement brand selection
-  console.log('⚠️ Brand selection needs implementation (custom dropdown)');
-  
-  // Photos upload would go here
-  // TODO: Implement photo uploads
-  console.log('⚠️ Photo upload needs implementation');
-  
-  console.log('✓ Basic form fields filled (dropdowns and photos still TODO)');
-  
-  return true;
 }
 
 // Helper: Sleep function
