@@ -2465,8 +2465,10 @@ export default function CrosslistComposer() {
 
         // Listen for completion message from extension
         const handleListingComplete = (event) => {
-          if (event.data.type === 'MERCARI_LISTING_COMPLETE') {
+          if (event.data.type === 'MERCARI_LISTING_RESPONSE') {
             window.removeEventListener('message', handleListingComplete);
+            
+            console.log('Received Mercari listing response:', event.data);
             
             if (event.data.success) {
               toast({
@@ -2506,8 +2508,21 @@ export default function CrosslistComposer() {
             setIsSaving(false);
           }
         };
-
+        
         window.addEventListener('message', handleListingComplete);
+        
+        // Timeout after 60 seconds
+        setTimeout(() => {
+          window.removeEventListener('message', handleListingComplete);
+          if (isSaving) {
+            setIsSaving(false);
+            toast({
+              title: "Listing Timeout",
+              description: "The listing process took too long. Please check Mercari manually.",
+              variant: "destructive",
+            });
+          }
+        }, 60000);
 
         // Timeout after 30 seconds
         setTimeout(() => {
@@ -6345,93 +6360,13 @@ export default function CrosslistComposer() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="prepaid">Mercari Prepaid Label (Recommended)</SelectItem>
+                      <SelectItem value="prepaid">Mercari Prepaid Label</SelectItem>
                       <SelectItem value="ship_on_own">Ship on Your Own</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs mb-1.5 block">Shipping Carrier</Label>
-                  <Select
-                    value={mercariForm.shippingCarrier}
-                    onValueChange={(value) => handleMarketplaceChange("mercari", "shippingCarrier", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Mercari Prepaid">Mercari Prepaid</SelectItem>
-                      <SelectItem value="USPS">USPS</SelectItem>
-                      <SelectItem value="FedEx">FedEx</SelectItem>
-                      <SelectItem value="UPS">UPS</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs mb-1.5 block">Shipping Price</Label>
-                  <Input
-                    placeholder="Inherit or override"
-                    value={mercariForm.shippingPrice}
-                    onChange={(e) => handleMarketplaceChange("mercari", "shippingPrice", e.target.value)}
-                    disabled={false}
-                  />
-                  {mercariForm.inheritGeneral && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Uses General price rules when sync is enabled.
-                    </p>
-                  )}
-                </div>
-                <div className="md:col-span-2">
-                  <Label className="text-xs mb-1.5 block">Smart Pricing</Label>
-                  <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
-                    <Switch
-                      id="mercari-smart-pricing"
-                      checked={mercariForm.smartPricing}
-                      onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartPricing", checked)}
-                    />
-                    <Label htmlFor="mercari-smart-pricing" className="text-sm">Automatically adjust price to stay competitive</Label>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs mb-1.5 block">Smart Pricing Floor</Label>
-                  <Input
-                    placeholder="Lowest price allowed"
-                    value={mercariForm.floorPrice}
-                    onChange={(e) => handleMarketplaceChange("mercari", "floorPrice", e.target.value)}
-                    disabled={!mercariForm.smartPricing}
-                  />
-                </div>
-              </div>
-
-              {/* Package Details Section */}
-              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-medium">Package Details</Label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <Label className="text-xs mb-1.5 block">
-                    Package Details <span className="text-red-500">*</span>
-                  </Label>
-                  <Button
-                    type="button"
-                    variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
-                    onClick={() => setPackageDetailsDialogOpen(true)}
-                    className="w-full justify-start"
-                  >
-                    <Package className="w-4 h-4 mr-2" />
-                    {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
-                      ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
-                      : "Enter weight & size"}
-                  </Button>
-                </div>
-              </div>
 
               <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">

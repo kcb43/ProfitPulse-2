@@ -61,5 +61,34 @@ window.addEventListener('load', () => {
   }, 1000);
 });
 
+// Listen for messages from the Profit Orbit web app (via window.postMessage)
+window.addEventListener('message', (event) => {
+  // Only accept messages from same origin
+  if (event.source !== window) return;
+  
+  console.log('Bridge received window message:', event.data);
+  
+  if (event.data.type === 'CREATE_MERCARI_LISTING') {
+    console.log('Forwarding Mercari listing request to extension...');
+    
+    // Forward to background script, which will send it to Mercari tab
+    chrome.runtime.sendMessage({
+      type: 'CREATE_MERCARI_LISTING',
+      listingData: event.data.listingData
+    }, (response) => {
+      console.log('Extension response:', response);
+      
+      // Send response back to web app
+      window.postMessage({
+        type: 'MERCARI_LISTING_RESPONSE',
+        success: response?.success || false,
+        listingId: response?.listingId,
+        listingUrl: response?.listingUrl,
+        error: response?.error
+      }, '*');
+    });
+  }
+});
+
 console.log('Profit Orbit Extension: Bridge script initialized');
 

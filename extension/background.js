@@ -103,6 +103,53 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
     return true;
   }
   
+  // Handle Mercari listing request from bridge script
+  if (message.type === 'CREATE_MERCARI_LISTING') {
+    console.log('Background received Mercari listing request');
+    const listingData = message.listingData;
+    
+    // Find Mercari tab or create new one
+    chrome.tabs.query({ url: 'https://www.mercari.com/*' }, (tabs) => {
+      if (tabs.length > 0) {
+        // Send to existing Mercari tab
+        const mercariTab = tabs[0];
+        chrome.tabs.sendMessage(mercariTab.id, {
+          type: 'CREATE_LISTING',
+          listingData: listingData
+        }, (response) => {
+          console.log('Mercari tab response:', response);
+          sendResponse(response || { success: false, error: 'No response from Mercari tab' });
+        });
+      } else {
+        // Open new Mercari sell page
+        chrome.tabs.create({
+          url: 'https://www.mercari.com/sell/',
+          active: false
+        }, (tab) => {
+          console.log('Opened new Mercari tab:', tab.id);
+          // Wait for page to load, then send listing data
+          chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+            if (tabId === tab.id && info.status === 'complete') {
+              chrome.tabs.onUpdated.removeListener(listener);
+              console.log('Mercari page loaded, sending listing data...');
+              setTimeout(() => {
+                chrome.tabs.sendMessage(tab.id, {
+                  type: 'CREATE_LISTING',
+                  listingData: listingData
+                }, (response) => {
+                  console.log('Mercari content script response:', response);
+                  sendResponse(response || { success: false, error: 'No response from Mercari tab' });
+                });
+              }, 2000); // Give Mercari extra time to initialize
+            }
+          });
+        });
+        sendResponse({ success: true, message: 'Opening Mercari sell page...' });
+      }
+    });
+    return true; // Keep channel open for async response
+  }
+  
   if (message.type === 'CREATE_LISTING') {
     const marketplace = message.marketplace;
     const listingData = message.listingData;

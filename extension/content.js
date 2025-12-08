@@ -227,11 +227,18 @@ if (MARKETPLACE) {
     }
     
     if (message.type === 'CREATE_LISTING') {
-      // TODO: Implement listing creation for this marketplace
       console.log(`Creating ${MARKETPLACE} listing with data:`, message.listingData);
-      createListing(message.listingData);
-      sendResponse({ success: true });
-      return true;
+      
+      // Run async listing creation
+      createListing(message.listingData).then((result) => {
+        console.log('Listing creation result:', result);
+        sendResponse(result);
+      }).catch((error) => {
+        console.error('Listing creation error:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+      
+      return true; // Keep channel open for async response
     }
   });
 
@@ -251,11 +258,10 @@ async function createListing(listingData) {
   
   // Other marketplaces to be implemented
   console.log(`Listing automation for ${MARKETPLACE} coming soon`);
-  window.postMessage({
-    type: 'MERCARI_LISTING_COMPLETE',
+  return {
     success: false,
     error: `${MARKETPLACE} listing automation not yet implemented`
-  }, '*');
+  };
 }
 
 // Mercari-specific listing automation
@@ -283,26 +289,11 @@ async function createMercariListing(listingData) {
     // Submit the form
     const submitResult = await submitMercariForm();
     
-    // Notify web app of success
-    window.postMessage({
-      type: 'MERCARI_LISTING_COMPLETE',
-      success: submitResult.success,
-      listingId: submitResult.listingId,
-      listingUrl: submitResult.listingUrl,
-      error: submitResult.error
-    }, '*');
-    
+    console.log('Mercari listing submit result:', submitResult);
     return submitResult;
     
   } catch (error) {
     console.error('Error in Mercari listing automation:', error);
-    
-    window.postMessage({
-      type: 'MERCARI_LISTING_COMPLETE',
-      success: false,
-      error: error.message
-    }, '*');
-    
     return { success: false, error: error.message };
   }
 }
