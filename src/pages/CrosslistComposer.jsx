@@ -2437,11 +2437,16 @@ export default function CrosslistComposer() {
           title: mercariForm.title || generalForm.title,
           description: mercariForm.description || generalForm.description || '',
           price: mercariForm.price || generalForm.price,
+          quantity: mercariForm.quantity || generalForm.quantity || 1,
           category: mercariForm.category || generalForm.category,
+          categoryId: mercariForm.categoryId || generalForm.categoryId,
           condition: mercariForm.condition || generalForm.condition,
           brand: mercariForm.brand || generalForm.brand,
+          color: mercariForm.color || generalForm.color,
           size: mercariForm.size || generalForm.size,
           photos: mercariForm.photos?.length > 0 ? mercariForm.photos : generalForm.photos || [],
+          shipsFrom: mercariForm.shipsFrom || generalForm.zip || '',
+          deliveryMethod: mercariForm.deliveryMethod || 'prepaid',
           shippingPayer: mercariForm.shippingCarrier === "Mercari Prepaid" ? "buyer" : "seller",
         };
 
@@ -6124,7 +6129,7 @@ export default function CrosslistComposer() {
                 )}
 
                 {/* Category Specifics - Shows when category is selected on Mercari form */}
-                {generalCategoryPath.length > 0 && (mercariForm.categoryId || generalForm.categoryId) && categoryAspects.length > 0 && (
+                {(generalCategoryPath.length > 0 || mercariForm.categoryId) && categoryAspects.length > 0 && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-xs font-medium">Category Specifics</Label>
