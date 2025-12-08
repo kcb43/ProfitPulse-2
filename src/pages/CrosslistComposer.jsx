@@ -4443,18 +4443,19 @@ export default function CrosslistComposer() {
                                   </details>
                                 </div>
                               ))}
-                            {ebayTypeAspect ? (
-                              <div className="text-green-600">
-                                ✓ Model/Type aspect found: {ebayTypeAspect.localizedAspectName || ebayTypeAspect.aspectName || ebayTypeAspect.name} ({ebayTypeValues.length} values)
-                              </div>
-                            ) : (
-                              <div className="text-orange-600">
-                                ✗ No Model/Type aspect found. Check console for full aspect data.
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
+                              {ebayTypeAspect ? (
+                                <div className="text-green-600">
+                                  ✓ Model/Type aspect found: {ebayTypeAspect.localizedAspectName || ebayTypeAspect.aspectName || ebayTypeAspect.name} ({ebayTypeValues.length} values)
+                                </div>
+                              ) : (
+                                <div className="text-orange-600">
+                                  ✗ No Model/Type aspect found. Check console for full aspect data.
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </details>
                     )}
                     
                     {/* Type and Condition side by side */}
