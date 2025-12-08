@@ -108,6 +108,66 @@ const PREDEFINED_CATEGORIES = [
   "Yoga"
 ];
 
+// Mercari Category Tree
+const MERCARI_CATEGORIES = {
+  "1": {
+    id: "1",
+    name: "Women",
+    subcategories: {
+      "11": { 
+        id: "11", 
+        name: "Dresses",
+        subcategories: {
+          "149": { id: "149", name: "Above knee, mini" },
+          "150": { id: "150", name: "Knee-length" },
+          "151": { id: "151", name: "Midi" },
+          "152": { id: "152", name: "Maxi" },
+          "153": { id: "153", name: "High Low" },
+          "1866": { id: "1866", name: "Jumpsuits & Rompers" },
+          "154": { id: "154", name: "Other" },
+          "11_all": { id: "11", name: "All Dresses" }
+        }
+      },
+      "12": { id: "12", name: "Tops & blouses" },
+      "13": { id: "13", name: "Sweaters" },
+      "14": { id: "14", name: "Jeans" },
+      "15": { id: "15", name: "Pants" },
+      "16": { id: "16", name: "Skirts" },
+      "17": { id: "17", name: "Coats & jackets" },
+      "18": { id: "18", name: "Suits & blazers" },
+      "19": { id: "19", name: "Athletic apparel" },
+      "20": { id: "20", name: "Swimwear" },
+      "21": { id: "21", name: "Women's handbags" },
+      "22": { id: "22", name: "Women's accessories" },
+      "23": { id: "23", name: "Jewelry" },
+      "24": { id: "24", name: "Maternity" },
+      "25": { id: "25", name: "Shoes" },
+      "1561": { id: "1561", name: "Underwear" },
+      "1936": { id: "1936", name: "Shorts" },
+      "1947": { id: "1947", name: "Sleepwear & robes" },
+      "3550": { id: "3550", name: "Kimono / Yukata" },
+      "3551": { id: "3551", name: "School Uniform" },
+      "26": { id: "26", name: "Other" }
+    }
+  },
+  "2": { id: "2", name: "Men" },
+  "7": { id: "7", name: "Electronics" },
+  "1611": { id: "1611", name: "Toys & Collectibles" },
+  "4": { id: "4", name: "Home" },
+  "6": { id: "6", name: "Beauty" },
+  "3": { id: "3", name: "Kids" },
+  "5": { id: "5", name: "Vintage & collectibles" },
+  "8": { id: "8", name: "Sports & outdoors" },
+  "9": { id: "9", name: "Handmade" },
+  "113": { id: "113", name: "Arts & Crafts" },
+  "143": { id: "143", name: "Pet Supplies" },
+  "2633": { id: "2633", name: "Garden & Outdoor" },
+  "2882": { id: "2882", name: "Office" },
+  "3170": { id: "3170", name: "Tools" },
+  "141": { id: "141", name: "Books" },
+  "10": { id: "10", name: "Other" }
+};
+
 const MARKETPLACES = [
   { id: "ebay",     label: "eBay",     icon: EBAY_ICON_URL },
   { id: "facebook", label: "Facebook", icon: FACEBOOK_ICON_URL },
@@ -437,6 +497,7 @@ export default function CrosslistComposer() {
   const [editingColorField, setEditingColorField] = useState(null);
   const [selectedCategoryPath, setSelectedCategoryPath] = useState([]);
   const [generalCategoryPath, setGeneralCategoryPath] = useState([]);
+  const [mercariCategoryPath, setMercariCategoryPath] = useState([]);
   const [descriptionGeneratorOpen, setDescriptionGeneratorOpen] = useState(false);
   const [brandSearchOpen, setBrandSearchOpen] = useState(false);
   const [categorySearchOpen, setCategorySearchOpen] = useState(false);
@@ -6016,99 +6077,124 @@ export default function CrosslistComposer() {
               <div className="mb-6">
                 <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
                 
-                {/* Show selected category */}
-                {mercariForm.mercariCategory && (
-                  <div className="mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {mercariForm.mercariCategory}
-                      </Badge>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          handleMarketplaceChange("mercari", "mercariCategory", "");
-                          handleMarketplaceChange("mercari", "mercariCategoryId", "");
-                        }}
-                        className="h-6 px-2 text-xs"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
+                {/* Category breadcrumb */}
+                {mercariCategoryPath.length > 0 && (
+                  <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMercariCategoryPath([]);
+                        handleMarketplaceChange("mercari", "mercariCategory", "");
+                        handleMarketplaceChange("mercari", "mercariCategoryId", "");
+                      }}
+                      className="hover:text-foreground underline"
+                    >
+                      Home
+                    </button>
+                    {mercariCategoryPath.map((cat, index) => (
+                      <React.Fragment key={cat.id}>
+                        <span>/</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPath = mercariCategoryPath.slice(0, index + 1);
+                            setMercariCategoryPath(newPath);
+                            const fullPath = newPath.map(c => c.name).join(" > ");
+                            handleMarketplaceChange("mercari", "mercariCategory", fullPath);
+                            handleMarketplaceChange("mercari", "mercariCategoryId", newPath[newPath.length - 1].id);
+                          }}
+                          className="hover:text-foreground underline"
+                        >
+                          {cat.name}
+                        </button>
+                      </React.Fragment>
+                    ))}
                   </div>
                 )}
                 
-                {/* Mercari Category Dropdown */}
+                {/* Show selected category badge */}
+                {mercariForm.mercariCategory && (
+                  <div className="mb-2">
+                    <Badge variant="secondary" className="text-xs">
+                      Selected: {mercariForm.mercariCategory}
+                    </Badge>
+                  </div>
+                )}
+                
+                {/* Mercari Category Dropdown - Multi-level */}
                 <Select
-                  value={mercariForm.mercariCategoryId || ""}
+                  value=""
                   onValueChange={(value) => {
-                    const categories = [
-                      { id: "1", name: "Women" },
-                      { id: "2", name: "Men" },
-                      { id: "7", name: "Electronics" },
-                      { id: "1611", name: "Toys & Collectibles" },
-                      { id: "4", name: "Home" },
-                      { id: "6", name: "Beauty" },
-                      { id: "3", name: "Kids" },
-                      { id: "5", name: "Vintage & collectibles" },
-                      { id: "8", name: "Sports & outdoors" },
-                      { id: "9", name: "Handmade" },
-                      { id: "113", name: "Arts & Crafts" },
-                      { id: "143", name: "Pet Supplies" },
-                      { id: "2633", name: "Garden & Outdoor" },
-                      { id: "2882", name: "Office" },
-                      { id: "3170", name: "Tools" },
-                      { id: "141", name: "Books" },
-                      { id: "10", name: "Other" }
-                    ];
+                    // Get current level categories
+                    let currentLevel = MERCARI_CATEGORIES;
                     
-                    const selected = categories.find(cat => cat.id === value);
+                    // Navigate to current path's subcategories
+                    for (const pathItem of mercariCategoryPath) {
+                      currentLevel = currentLevel[pathItem.id]?.subcategories || {};
+                    }
+                    
+                    // Find selected category
+                    const selected = currentLevel[value];
                     if (selected) {
-                      handleMarketplaceChange("mercari", "mercariCategory", selected.name);
-                      handleMarketplaceChange("mercari", "mercariCategoryId", selected.id);
+                      const newPath = [...mercariCategoryPath, { id: selected.id, name: selected.name }];
+                      
+                      // Check if has subcategories
+                      if (selected.subcategories && Object.keys(selected.subcategories).length > 0) {
+                        // Has subcategories - navigate deeper
+                        setMercariCategoryPath(newPath);
+                      } else {
+                        // Leaf node - select it
+                        const fullPath = newPath.map(c => c.name).join(" > ");
+                        handleMarketplaceChange("mercari", "mercariCategory", fullPath);
+                        handleMarketplaceChange("mercari", "mercariCategoryId", selected.id);
+                        setMercariCategoryPath(newPath);
+                      }
                     }
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Mercari category" />
+                    <SelectValue placeholder={
+                      mercariCategoryPath.length > 0 
+                        ? `Select ${mercariCategoryPath[mercariCategoryPath.length - 1].name} subcategory...`
+                        : "Select category"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Women</SelectItem>
-                    <SelectItem value="2">Men</SelectItem>
-                    <SelectItem value="7">Electronics</SelectItem>
-                    <SelectItem value="1611">Toys & Collectibles</SelectItem>
-                    <SelectItem value="4">Home</SelectItem>
-                    <SelectItem value="6">Beauty</SelectItem>
-                    <SelectItem value="3">Kids</SelectItem>
-                    <SelectItem value="5">Vintage & collectibles</SelectItem>
-                    <SelectItem value="8">Sports & outdoors</SelectItem>
-                    <SelectItem value="9">Handmade</SelectItem>
-                    <SelectItem value="113">Arts & Crafts</SelectItem>
-                    <SelectItem value="143">Pet Supplies</SelectItem>
-                    <SelectItem value="2633">Garden & Outdoor</SelectItem>
-                    <SelectItem value="2882">Office</SelectItem>
-                    <SelectItem value="3170">Tools</SelectItem>
-                    <SelectItem value="141">Books</SelectItem>
-                    <SelectItem value="10">Other</SelectItem>
+                    {(() => {
+                      // Get categories for current level
+                      let currentLevel = MERCARI_CATEGORIES;
+                      
+                      // Navigate to current path
+                      for (const pathItem of mercariCategoryPath) {
+                        currentLevel = currentLevel[pathItem.id]?.subcategories || {};
+                      }
+                      
+                      // Render options
+                      return Object.values(currentLevel).map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                          {cat.subcategories && Object.keys(cat.subcategories).length > 0 ? ' →' : ''}
+                        </SelectItem>
+                      ));
+                    })()}
                   </SelectContent>
                 </Select>
                 
                 {/* Auto-suggest based on General form category */}
                 {generalForm.category && !mercariForm.mercariCategory && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    💡 Suggested based on General category: 
-                    {generalForm.category.toLowerCase().includes('women') || generalForm.category.toLowerCase().includes('clothing') ? ' Women' : ''}
+                    💡 Suggested: 
+                    {generalForm.category.toLowerCase().includes('women') || (generalForm.category.toLowerCase().includes('clothing') && !generalForm.category.toLowerCase().includes('men')) ? ' Women' : ''}
                     {generalForm.category.toLowerCase().includes('men') && !generalForm.category.toLowerCase().includes('women') ? ' Men' : ''}
                     {generalForm.category.toLowerCase().includes('electronic') ? ' Electronics' : ''}
                     {generalForm.category.toLowerCase().includes('toy') ? ' Toys & Collectibles' : ''}
                     {generalForm.category.toLowerCase().includes('home') || generalForm.category.toLowerCase().includes('furniture') ? ' Home' : ''}
-                    {generalForm.category.toLowerCase().includes('beauty') || generalForm.category.toLowerCase().includes('cosmetic') ? ' Beauty' : ''}
+                    {generalForm.category.toLowerCase().includes('beauty') ? ' Beauty' : ''}
                     {generalForm.category.toLowerCase().includes('kid') || generalForm.category.toLowerCase().includes('baby') ? ' Kids' : ''}
                     {generalForm.category.toLowerCase().includes('vintage') || generalForm.category.toLowerCase().includes('collectible') ? ' Vintage & collectibles' : ''}
-                    {generalForm.category.toLowerCase().includes('sport') || generalForm.category.toLowerCase().includes('outdoor') ? ' Sports & outdoors' : ''}
-                    {generalForm.category.toLowerCase().includes('handmade') || generalForm.category.toLowerCase().includes('craft') ? ' Handmade' : ''}
-                    {generalForm.category.toLowerCase().includes('art') ? ' Arts & Crafts' : ''}
+                    {generalForm.category.toLowerCase().includes('sport') || generalForm.category.toLowerCase().includes('outdoor') || generalForm.category.toLowerCase().includes('grill') || generalForm.category.toLowerCase().includes('cooking') ? ' Sports & outdoors or Garden & Outdoor' : ''}
+                    {generalForm.category.toLowerCase().includes('handmade') ? ' Handmade' : ''}
+                    {generalForm.category.toLowerCase().includes('art') || generalForm.category.toLowerCase().includes('craft') ? ' Arts & Crafts' : ''}
                     {generalForm.category.toLowerCase().includes('pet') ? ' Pet Supplies' : ''}
                     {generalForm.category.toLowerCase().includes('garden') || generalForm.category.toLowerCase().includes('yard') ? ' Garden & Outdoor' : ''}
                     {generalForm.category.toLowerCase().includes('office') ? ' Office' : ''}
