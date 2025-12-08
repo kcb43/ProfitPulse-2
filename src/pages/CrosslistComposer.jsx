@@ -6198,6 +6198,28 @@ export default function CrosslistComposer() {
                 </div>
               </div>
 
+              {/* Category Section */}
+              <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Category</Label>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <Label className="text-xs mb-1.5 block">
+                  Category <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Enter category"}
+                  value={facebookForm.category || ""}
+                  onChange={(e) => handleMarketplaceChange("facebook", "category", e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Select a category to help buyers find your item
+                </p>
+              </div>
+
               {/* Pricing and Quantity Section */}
               <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
                 <div className="flex items-center gap-2">
@@ -6344,7 +6366,7 @@ export default function CrosslistComposer() {
                 </div>
 
                 {/* SKU */}
-                <div>
+                <div className="md:col-span-2">
                   <Label className="text-xs mb-1.5 block">SKU</Label>
                   <Input
                     placeholder={generalForm.sku ? `Inherited: ${generalForm.sku}` : "Internal SKU (optional)"}
@@ -6353,19 +6375,6 @@ export default function CrosslistComposer() {
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
                     Only visible to you
-                  </p>
-                </div>
-
-                {/* Category */}
-                <div>
-                  <Label className="text-xs mb-1.5 block">Category</Label>
-                  <Input
-                    placeholder={generalForm.category ? `Inherited: ${generalForm.category}` : "Optional category"}
-                    value={facebookForm.category || ""}
-                    onChange={(e) => handleMarketplaceChange("facebook", "category", e.target.value)}
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Optional - helps buyers find your item
                   </p>
                 </div>
               </div>
