@@ -311,79 +311,121 @@ async function createMercariListing(listingData) {
 async function fillMercariForm(data) {
   console.log('Filling Mercari form with data:', data);
   
-  // TODO: These selectors need to be determined by inspecting Mercari's actual form
-  // For now, using placeholder selectors
-  
-  // Title
-  const titleInput = document.querySelector('[name="title"]') || 
-                    document.querySelector('input[placeholder*="title" i]') ||
-                    document.querySelector('[data-testid="title-input"]');
+  // Title - using actual Mercari selectors
+  const titleInput = document.querySelector('[data-testid="Title"]') || 
+                    document.querySelector('#sellName');
   if (titleInput && data.title) {
     titleInput.value = data.title;
     titleInput.dispatchEvent(new Event('input', { bubbles: true }));
-    console.log('✓ Title set');
+    titleInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
+    console.log('✓ Title set:', data.title);
   }
   
-  // Description  
-  const descInput = document.querySelector('[name="description"]') ||
-                   document.querySelector('textarea[placeholder*="description" i]') ||
-                   document.querySelector('[data-testid="description-input"]');
+  // Description
+  const descInput = document.querySelector('[data-testid="Description"]') ||
+                   document.querySelector('#sellDescription');
   if (descInput && data.description) {
     descInput.value = data.description;
     descInput.dispatchEvent(new Event('input', { bubbles: true }));
+    descInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
     console.log('✓ Description set');
   }
   
   // Price
-  const priceInput = document.querySelector('[name="price"]') ||
-                    document.querySelector('input[placeholder*="price" i]') ||
-                    document.querySelector('input[type="number"]');
+  const priceInput = document.querySelector('[data-testid="Price"]') ||
+                    document.querySelector('#Price') ||
+                    document.querySelector('[name="sellPrice"]');
   if (priceInput && data.price) {
-    priceInput.value = data.price;
+    priceInput.value = String(data.price);
     priceInput.dispatchEvent(new Event('input', { bubbles: true }));
-    console.log('✓ Price set');
+    priceInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
+    console.log('✓ Price set:', data.price);
   }
   
-  // Category, condition, brand, etc. would be similar
-  // These require clicking dropdowns and selecting options
+  // Category - Mercari uses custom dropdown, need to click and select
+  // TODO: Implement category selection
+  console.log('⚠️ Category selection needs implementation (custom dropdown)');
   
-  console.log('Form fields filled (partial - selectors need refinement)');
+  // Condition - Custom dropdown
+  // TODO: Implement condition selection
+  console.log('⚠️ Condition selection needs implementation (custom dropdown)');
   
-  // Photos would require special handling (file uploads)
-  // This is complex and needs to be implemented separately
+  // Brand - Custom dropdown  
+  // TODO: Implement brand selection
+  console.log('⚠️ Brand selection needs implementation (custom dropdown)');
+  
+  // Photos upload would go here
+  // TODO: Implement photo uploads
+  console.log('⚠️ Photo upload needs implementation');
+  
+  console.log('✓ Basic form fields filled (dropdowns and photos still TODO)');
   
   return true;
 }
 
+// Helper: Sleep function
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Submit Mercari form
 async function submitMercariForm() {
-  // TODO: Find and click submit button
-  const submitBtn = document.querySelector('button[type="submit"]') ||
-                   document.querySelector('button:contains("List")') ||
-                   document.querySelector('[data-testid="submit-button"]');
+  // Find the List button using actual Mercari selector
+  const submitBtn = document.querySelector('[data-testid="ListButton"]') ||
+                   document.querySelector('button[type="submit"]');
   
-  if (submitBtn) {
-    console.log('Found submit button, clicking...');
-    submitBtn.click();
-    
-    // Wait for success confirmation
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Try to extract listing ID/URL from the page
-    // This would need to be determined by inspecting Mercari's success page
-    const listingId = 'PLACEHOLDER_ID';
-    const listingUrl = window.location.href;
-    
+  if (!submitBtn) {
+    console.error('Submit button not found');
     return {
-      success: true,
-      listingId,
-      listingUrl
+      success: false,
+      error: 'List button not found on page'
     };
   }
   
+  // Check if button is enabled (Mercari disables it if form is invalid)
+  if (submitBtn.disabled) {
+    console.error('Submit button is disabled - form may be incomplete');
+    return {
+      success: false,
+      error: 'Form incomplete - please fill in required fields (Category, Condition, etc.)'
+    };
+  }
+  
+  console.log('Clicking List button...');
+  submitBtn.click();
+  
+  // Wait for navigation/success page
+  await sleep(3000);
+  
+  // Try to detect success and extract listing URL
+  // After successful listing, Mercari usually redirects to the item page
+  // or shows a success message
+  const currentUrl = window.location.href;
+  
+  if (currentUrl.includes('/item/')) {
+    // Successfully created - URL contains item ID
+    const listingId = currentUrl.split('/item/')[1]?.split('/')[0] || '';
+    
+    return {
+      success: true,
+      listingId: listingId,
+      listingUrl: currentUrl
+    };
+  } else if (currentUrl.includes('/sell')) {
+    // Still on sell page - might have failed or validation error
+    return {
+      success: false,
+      error: 'Listing may have failed - still on sell page. Check for validation errors.'
+    };
+  }
+  
+  // Unknown state
   return {
     success: false,
-    error: 'Submit button not found - manual listing required'
+    error: 'Unable to determine listing status'
   };
 }
 
