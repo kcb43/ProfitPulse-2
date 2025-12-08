@@ -1928,15 +1928,13 @@ export default function CrosslistComposer() {
     if (!ebayForm.buyItNowPrice) errors.push("Buy It Now Price");
     if (!ebayForm.color) errors.push("Color");
     
-    // Check for valid category from multiple sources
-    const hasValidCategory = 
-      // Check eBay form categoryId
-      (ebayForm.categoryId && String(ebayForm.categoryId).trim() !== '' && ebayForm.categoryId !== '0' && ebayForm.categoryId !== 0) ||
-      // Check General form categoryId (synced to eBay)
-      (generalForm.categoryId && String(generalForm.categoryId).trim() !== '' && generalForm.categoryId !== '0' && generalForm.categoryId !== 0) ||
-      // Check if categoryName is set (indicates category was selected even if ID sync failed)
-      (ebayForm.categoryName && ebayForm.categoryName.trim() !== '') ||
-      (generalForm.category && generalForm.category.trim() !== '');
+    // Check if category is selected - check both ID and name fields
+    // If the category name/path is set, then a category was definitely selected
+    const hasCategoryName = (ebayForm.categoryName || generalForm.category);
+    const hasCategoryId = (ebayForm.categoryId || generalForm.categoryId);
+    
+    // Category is valid if we have EITHER a name OR a valid ID
+    const hasValidCategory = hasCategoryName || (hasCategoryId && hasCategoryId !== '0' && hasCategoryId !== 0);
     
     if (!hasValidCategory) errors.push("Category");
     // Only require Type if category is selected and ebayTypeAspect exists with values
@@ -2031,11 +2029,19 @@ export default function CrosslistComposer() {
           throw new Error('No valid photo URLs available. Please ensure photos are uploaded or use photos from inventory.');
         }
 
+        // Get category ID from either form
+        const finalCategoryId = ebayForm.categoryId || generalForm.categoryId;
+        
+        // Validate we have a category ID before proceeding
+        if (!finalCategoryId || finalCategoryId === '0' || finalCategoryId === 0) {
+          throw new Error('Category ID is required but not set. Please select a category.');
+        }
+        
         // Prepare listing data
         const listingData = {
           title: ebayForm.title || generalForm.title,
           description: ebayForm.description || generalForm.description || '',
-          categoryId: ebayForm.categoryId || generalForm.categoryId,
+          categoryId: finalCategoryId,
           price: ebayForm.buyItNowPrice || generalForm.price,
           quantity: parseInt(generalForm.quantity) || 1,
           photos: photosToUse,
