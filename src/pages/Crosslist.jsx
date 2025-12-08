@@ -349,17 +349,17 @@ export default function Crosslist() {
   );
 
   // Compute which marketplaces an item is actually crosslisted to
-  // Uses actual marketplace listings from crosslistingEngine
+  // Checks both marketplace listings AND inventory item listing IDs
   const computeListingState = (item) => {
     const listings = getItemListings(item.id);
     const activeListings = listings.filter(l => l.status === 'active');
     
     return {
-      ebay:     activeListings.some(l => l.marketplace === 'ebay'),
-      facebook: activeListings.some(l => l.marketplace === 'facebook'),
-      mercari:  activeListings.some(l => l.marketplace === 'mercari'),
-      etsy:     activeListings.some(l => l.marketplace === 'etsy'),
-      poshmark: activeListings.some(l => l.marketplace === 'poshmark'),
+      ebay:     activeListings.some(l => l.marketplace === 'ebay') || !!(item.ebay_listing_id && item.ebay_listing_id.trim()),
+      facebook: activeListings.some(l => l.marketplace === 'facebook') || !!(item.facebook_listing_id && item.facebook_listing_id.trim()),
+      mercari:  activeListings.some(l => l.marketplace === 'mercari') || !!(item.mercari_listing_id && item.mercari_listing_id.trim()),
+      etsy:     activeListings.some(l => l.marketplace === 'etsy') || !!(item.etsy_listing_id && item.etsy_listing_id.trim()),
+      poshmark: activeListings.some(l => l.marketplace === 'poshmark') || !!(item.poshmark_listing_id && item.poshmark_listing_id.trim()),
     };
   };
 
