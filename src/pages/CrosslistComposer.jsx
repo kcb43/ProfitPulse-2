@@ -928,14 +928,15 @@ export default function CrosslistComposer() {
   const { data: generalCategoriesData, isLoading: isLoadingGeneralCategories, error: generalCategoriesError } = useEbayCategories(
     categoryTreeId,
     generalCurrentCategoryId,
-    activeForm === "general" && !!categoryTreeId
+    (activeForm === "general" || activeForm === "facebook") && !!categoryTreeId
   );
   
   // Use the appropriate category data based on active form
-  const categoriesData = activeForm === "general" ? generalCategoriesData : ebayCategoriesData;
-  const isLoadingCategories = activeForm === "general" ? isLoadingGeneralCategories : isLoadingEbayCategories;
-  const categoriesError = activeForm === "general" ? generalCategoriesError : ebayCategoriesError;
-  const currentCategoryPath = activeForm === "general" ? generalCategoryPath : selectedCategoryPath;
+  // Facebook form uses General category data for consistency
+  const categoriesData = (activeForm === "general" || activeForm === "facebook") ? generalCategoriesData : ebayCategoriesData;
+  const isLoadingCategories = (activeForm === "general" || activeForm === "facebook") ? isLoadingGeneralCategories : isLoadingEbayCategories;
+  const categoriesError = (activeForm === "general" || activeForm === "facebook") ? generalCategoriesError : ebayCategoriesError;
+  const currentCategoryPath = (activeForm === "general" || activeForm === "facebook") ? generalCategoryPath : selectedCategoryPath;
   
   const categorySubtreeNode = categoriesData?.categorySubtreeNode;
   const currentCategories = categorySubtreeNode?.childCategoryTreeNodes || [];
