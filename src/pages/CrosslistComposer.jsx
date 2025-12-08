@@ -43,6 +43,8 @@ import {
   Eye,
   DollarSign,
   Truck,
+  Tag,
+  Home,
 } from "lucide-react";
 import ColorPickerDialog from "../components/ColorPickerDialog";
 import SoldLookupDialog from "../components/SoldLookupDialog";
@@ -6156,7 +6158,7 @@ export default function CrosslistComposer() {
                 <div>
                   <Label className="text-xs mb-1.5 block">Condition <span className="text-red-500">*</span></Label>
                   <Select
-                    value={mercariForm.condition || generalForm.condition || undefined}
+                    value={mercariForm.condition || generalForm.condition || ""}
                     onValueChange={(value) => handleMarketplaceChange("mercari", "condition", value)}
                   >
                     <SelectTrigger>
@@ -6181,7 +6183,7 @@ export default function CrosslistComposer() {
                 <div>
                   <Label className="text-xs mb-1.5 block">Color</Label>
                   <Select
-                    value={mercariForm.color || generalForm.color || undefined}
+                    value={mercariForm.color || generalForm.color || ""}
                     onValueChange={(value) => handleMarketplaceChange("mercari", "color", value)}
                   >
                     <SelectTrigger>
