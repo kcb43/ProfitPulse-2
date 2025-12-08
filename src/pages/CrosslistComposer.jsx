@@ -1928,12 +1928,15 @@ export default function CrosslistComposer() {
     if (!ebayForm.buyItNowPrice) errors.push("Buy It Now Price");
     if (!ebayForm.color) errors.push("Color");
     
-    // Check for valid category ID from either eBay form or General form (since they sync)
-    const categoryIdToCheck = ebayForm.categoryId || generalForm.categoryId;
-    const hasValidCategory = categoryIdToCheck && 
-                            String(categoryIdToCheck).trim() !== '' && 
-                            categoryIdToCheck !== '0' && 
-                            categoryIdToCheck !== 0;
+    // Check for valid category from multiple sources
+    const hasValidCategory = 
+      // Check eBay form categoryId
+      (ebayForm.categoryId && String(ebayForm.categoryId).trim() !== '' && ebayForm.categoryId !== '0' && ebayForm.categoryId !== 0) ||
+      // Check General form categoryId (synced to eBay)
+      (generalForm.categoryId && String(generalForm.categoryId).trim() !== '' && generalForm.categoryId !== '0' && generalForm.categoryId !== 0) ||
+      // Check if categoryName is set (indicates category was selected even if ID sync failed)
+      (ebayForm.categoryName && ebayForm.categoryName.trim() !== '') ||
+      (generalForm.category && generalForm.category.trim() !== '');
     
     if (!hasValidCategory) errors.push("Category");
     // Only require Type if category is selected and ebayTypeAspect exists with values
@@ -2032,7 +2035,7 @@ export default function CrosslistComposer() {
         const listingData = {
           title: ebayForm.title || generalForm.title,
           description: ebayForm.description || generalForm.description || '',
-          categoryId: ebayForm.categoryId,
+          categoryId: ebayForm.categoryId || generalForm.categoryId,
           price: ebayForm.buyItNowPrice || generalForm.price,
           quantity: parseInt(generalForm.quantity) || 1,
           photos: photosToUse,
