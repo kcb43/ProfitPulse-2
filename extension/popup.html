@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Profit Orbit Extension</title>
+  <style>
+    body {
+      width: 350px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f9fafb;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    .marketplace-card {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .marketplace-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .marketplace-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .status-badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+    .status-connected {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status-disconnected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .user-name {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+    .version {
+      text-align: center;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">PO</div>
+    <div>
+      <h1>Profit Orbit</h1>
+      <div class="subtitle">Crosslisting Assistant v1.0.0</div>
+    </div>
+  </div>
+
+  <div id="marketplaces">
+    <!-- Will be populated by popup.js -->
+  </div>
+
+  <button id="refreshBtn" class="btn-primary">
+    🔄 Refresh All Connections
+  </button>
+
+  <button id="openProfitOrbit" class="btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+    🚀 Open Profit Orbit
+  </button>
+
+  <div class="version">
+    Profit Orbit Extension v1.0.0
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

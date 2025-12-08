@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Profit Orbit - Crosslisting Assistant",
+  "version": "1.0.0",
+  "description": "Automate crosslisting on Mercari, Facebook, Poshmark, eBay, and more",
+  "permissions": [
+    "storage",
+    "cookies",
+    "tabs",
+    "scripting",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "https://www.mercari.com/*",
+    "https://www.facebook.com/*",
+    "https://www.poshmark.com/*",
+    "https://www.ebay.com/*",
+    "https://www.etsy.com/*",
+    "https://profitorbit.io/*",
+    "http://localhost:5173/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.mercari.com/*",
+        "https://www.facebook.com/*",
+        "https://www.poshmark.com/*",
+        "https://www.ebay.com/*",
+        "https://www.etsy.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "externally_connectable": {
+    "matches": [
+      "https://profitorbit.io/*",
+      "http://localhost:5173/*"
+    ]
+  }
+}
+
