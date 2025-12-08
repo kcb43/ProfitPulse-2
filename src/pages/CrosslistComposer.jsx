@@ -618,11 +618,31 @@ export default function CrosslistComposer() {
     // Check for OAuth errors
     const authError = params.get('ebay_auth_error');
     if (authError) {
+      const errorMessage = decodeURIComponent(authError);
+      let helpText = errorMessage;
+      
+      // Provide helpful guidance for common errors
+      if (errorMessage.includes('invalid_request') || errorMessage.includes('redirect_uri')) {
+        helpText = 'The redirect URL doesn\'t match your eBay Developer Console settings. Please check:\n\n' +
+                   '1. Go to developer.ebay.com/my/keys\n' +
+                   '2. Verify OAuth 2.0 Redirect URIs match your app URL\n' +
+                   '3. Make sure you\'re using the correct environment (Sandbox vs Production)\n\n' +
+                   'Open browser console for detailed configuration info.';
+      }
+      
       toast({
-        title: "Connection failed",
-        description: `Failed to connect eBay account: ${decodeURIComponent(authError)}`,
+        title: "eBay Connection Failed",
+        description: helpText,
         variant: "destructive",
+        duration: 10000, // Show longer for complex messages
       });
+      
+      console.error('eBay OAuth Error Details:', {
+        error: errorMessage,
+        currentUrl: window.location.href,
+        suggestion: 'Visit /api/ebay/auth?debug=true to see your OAuth configuration'
+      });
+      
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname);
     }
@@ -1674,7 +1694,7 @@ export default function CrosslistComposer() {
     });
   };
   
-  const handleConnectEbay = () => {
+  const handleConnectEbay = async () => {
     // Save current theme to sessionStorage before OAuth redirect
     const currentTheme = localStorage.getItem('theme') || 'default-light';
     sessionStorage.setItem('preserved_theme', currentTheme);
@@ -1693,8 +1713,23 @@ export default function CrosslistComposer() {
     // Save to sessionStorage (cleared when tab closes)
     sessionStorage.setItem('ebay_oauth_state', JSON.stringify(stateToSave));
     
-    // Initiate eBay OAuth flow
-    window.location.href = '/api/ebay/auth';
+    // First check OAuth configuration
+    try {
+      const debugResponse = await fetch('/api/ebay/auth?debug=true');
+      const debugInfo = await debugResponse.json();
+      
+      console.log('eBay OAuth Configuration:', debugInfo);
+      
+      // Proceed with OAuth flow
+      window.location.href = '/api/ebay/auth';
+    } catch (error) {
+      console.error('Error checking eBay OAuth config:', error);
+      toast({
+        title: "Configuration Error",
+        description: "Unable to connect to eBay. Please check the console for details.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDisconnectFacebook = () => {
