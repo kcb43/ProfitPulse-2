@@ -280,8 +280,8 @@ async function createMercariListing(listingData) {
       return;
     }
     
-    // Wait for form to be ready
-    await waitForElement('[name="title"], input[placeholder*="title"]', 10000);
+    // Wait for form to be ready (use actual Mercari selectors)
+    await waitForElement('[data-testid="Title"], #sellName', 10000);
     
     // Fill in form fields
     await fillMercariForm(listingData);
