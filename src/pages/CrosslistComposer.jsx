@@ -1305,12 +1305,18 @@ export default function CrosslistComposer() {
   const ebayRequiredAspects = ebayCategoryAspects.filter(aspect => {
     const constraint = aspect.aspectConstraint;
     const isRequired = constraint?.aspectMode === 'REQUIRED' || constraint?.aspectMode === 'RECOMMENDED';
-    // Exclude Brand and Model/Type as they're handled separately
+    // Exclude Brand, Model/Type, Items Included, and blockchain/NFT fields (handled separately or not applicable)
     const aspectName = (aspect.localizedAspectName || aspect.aspectName || aspect.name || '').toLowerCase();
     const isBrand = aspectName === 'brand';
     const isModelOrType = aspectName.includes('model') || aspectName === 'type';
     const isItemsIncluded = aspectName.includes('items included') || aspectName.includes('what\'s included') || aspectName === 'included';
-    return isRequired && !isBrand && !isModelOrType && !isItemsIncluded;
+    const isBlockchainField = aspectName.includes('token') || 
+                              aspectName.includes('blockchain') || 
+                              aspectName.includes('contract address') || 
+                              aspectName.includes('creator') ||
+                              aspectName.includes('nft') ||
+                              aspectName.includes('crypto');
+    return isRequired && !isBrand && !isModelOrType && !isItemsIncluded && !isBlockchainField;
   });
   
   // Find "Items Included" aspect specifically (can be required or optional)
