@@ -6201,84 +6201,29 @@ export default function CrosslistComposer() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Brand Section */}
+                {/* Brand Section - No custom brand for Mercari */}
                 <div>
                   <Label className="text-xs mb-1.5 block">Brand</Label>
-                  {brandIsCustom ? (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter brand name and press Enter to save"
-                        value={mercariForm.brand || ""}
-                        onChange={(e) => handleMarketplaceChange("mercari", "brand", e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && mercariForm.brand?.trim()) {
-                            e.preventDefault();
-                            const savedBrand = addCustomBrand(mercariForm.brand);
-                            if (savedBrand) {
-                              setBrandIsCustom(false);
-                            }
-                          }
-                        }}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="default"
-                        size="sm"
-                        onClick={() => {
-                          if (mercariForm.brand?.trim()) {
-                            const savedBrand = addCustomBrand(mercariForm.brand);
-                            if (savedBrand) {
-                              setBrandIsCustom(false);
-                            }
-                          }
-                        }}
-                        disabled={!mercariForm.brand?.trim()}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setBrandIsCustom(false);
-                          handleMarketplaceChange("mercari", "brand", "");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <Select
-                      value={mercariForm.brand || generalForm.brand || undefined}
-                      onValueChange={(value) => {
-                        if (value === "custom") {
-                          setBrandIsCustom(true);
-                          handleMarketplaceChange("mercari", "brand", "");
-                        } else {
-                          handleMarketplaceChange("mercari", "brand", value);
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={generalForm.brand ? `Inherited: ${generalForm.brand}` : "Select or Custom"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="custom">+ Add Custom Brand</SelectItem>
-                        {customBrands.length > 0 && customBrands.map((brand) => (
-                          <SelectItem key={`custom-${brand}`} value={brand}>
-                            {brand} ⭐
-                          </SelectItem>
-                        ))}
-                        {POPULAR_BRANDS.map((brand) => (
-                          <SelectItem key={brand} value={brand}>
-                            {brand}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                  <Select
+                    value={mercariForm.brand || generalForm.brand || ""}
+                    onValueChange={(value) => handleMarketplaceChange("mercari", "brand", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={generalForm.brand ? `Inherited: ${generalForm.brand}` : "Select brand"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customBrands.length > 0 && customBrands.map((brand) => (
+                        <SelectItem key={`custom-${brand}`} value={brand}>
+                          {brand} ⭐
+                        </SelectItem>
+                      ))}
+                      {POPULAR_BRANDS.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {generalForm.brand && !mercariForm.brand && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Inherited {generalForm.brand} from General form. You can edit this field.
@@ -6346,20 +6291,24 @@ export default function CrosslistComposer() {
                   )}
                 </div>
 
-                {/* Size Section - Shows if category is clothing/shoes */}
-                <div>
-                  <Label className="text-xs mb-1.5 block">Size</Label>
-                  <Input
-                    placeholder={generalForm.size ? `Inherited: ${generalForm.size}` : "e.g., M, 10, 32W x 34L"}
-                    value={mercariForm.size || ""}
-                    onChange={(e) => handleMarketplaceChange("mercari", "size", e.target.value)}
-                  />
-                  {generalForm.size && !mercariForm.size && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Inherited from General form. You can edit this field.
-                    </p>
-                  )}
-                </div>
+                {/* Size Section - Only shows if category is clothing/shoes/apparel */}
+                {((mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('clothing') ||
+                  (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('shoes') ||
+                  (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('apparel')) && (
+                  <div>
+                    <Label className="text-xs mb-1.5 block">Size</Label>
+                    <Input
+                      placeholder={generalForm.size ? `Inherited: ${generalForm.size}` : "e.g., M, 10, 32W x 34L"}
+                      value={mercariForm.size || ""}
+                      onChange={(e) => handleMarketplaceChange("mercari", "size", e.target.value)}
+                    />
+                    {generalForm.size && !mercariForm.size && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Inherited from General form. You can edit this field.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Pricing & Inventory Section */}
@@ -6495,17 +6444,6 @@ export default function CrosslistComposer() {
                     onChange={(e) => handleMarketplaceChange("mercari", "floorPrice", e.target.value)}
                     disabled={!mercariForm.smartPricing}
                   />
-                </div>
-                <div>
-                  <Label className="text-xs mb-1.5 block">Local Pickup</Label>
-                  <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
-                    <Switch
-                      id="mercari-local-pickup"
-                      checked={mercariForm.localPickup}
-                      onCheckedChange={(checked) => handleMarketplaceChange("mercari", "localPickup", checked)}
-                    />
-                    <Label htmlFor="mercari-local-pickup" className="text-sm">Offer local pickup</Label>
-                  </div>
                 </div>
               </div>
 
@@ -6817,11 +6755,11 @@ export default function CrosslistComposer() {
                 )}
                 
                 {/* Show selected category badge */}
-                {(facebookForm.category || generalForm.category) && (
+                {((facebookForm.category !== undefined ? facebookForm.category : generalForm.category) || generalCategoryPath.length > 0) && (
                   <div className="mb-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-xs">
-                        Selected: {facebookForm.category || generalForm.category}
+                        Selected: {facebookForm.category !== undefined ? facebookForm.category : generalForm.category}
                       </Badge>
                       <Button
                         type="button"
