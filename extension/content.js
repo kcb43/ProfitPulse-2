@@ -164,29 +164,41 @@ function getUserInfo() {
 
 // Send login status to background script AND update localStorage for web app
 function updateLoginStatus() {
-  const userInfo = getUserInfo();
-  
-  // Update localStorage so Profit Orbit web app can read it
-  if (userInfo.loggedIn) {
-    localStorage.setItem(`${MARKETPLACE}_session_detected`, 'true');
-    localStorage.setItem(`${MARKETPLACE}_user_info`, JSON.stringify(userInfo));
-  } else {
-    localStorage.removeItem(`${MARKETPLACE}_session_detected`);
-    localStorage.removeItem(`${MARKETPLACE}_user_info`);
-  }
-  
-  // Send to background script
-  chrome.runtime.sendMessage({
-    type: `${MARKETPLACE?.toUpperCase()}_LOGIN_STATUS`,
-    marketplace: MARKETPLACE,
-    data: userInfo
-  }, (response) => {
-    if (chrome.runtime.lastError) {
-      console.error('Error sending message:', chrome.runtime.lastError);
+  try {
+    const userInfo = getUserInfo();
+    
+    // Update localStorage so Profit Orbit web app can read it
+    if (userInfo.loggedIn) {
+      localStorage.setItem(`${MARKETPLACE}_session_detected`, 'true');
+      localStorage.setItem(`${MARKETPLACE}_user_info`, JSON.stringify(userInfo));
     } else {
-      console.log('Login status sent:', response);
+      localStorage.removeItem(`${MARKETPLACE}_session_detected`);
+      localStorage.removeItem(`${MARKETPLACE}_user_info`);
     }
-  });
+    
+    // Check if extension context is still valid before sending message
+    if (!chrome.runtime?.id) {
+      console.log('Extension context invalidated - please refresh the page');
+      return;
+    }
+    
+    // Send to background script
+    chrome.runtime.sendMessage({
+      type: `${MARKETPLACE?.toUpperCase()}_LOGIN_STATUS`,
+      marketplace: MARKETPLACE,
+      data: userInfo
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        // Extension was reloaded or context invalidated - this is normal
+        console.log('Extension context changed - page needs refresh');
+      } else {
+        console.log('Login status sent:', response);
+      }
+    });
+  } catch (error) {
+    // Gracefully handle any errors
+    console.log('Extension communication error (page may need refresh):', error.message);
+  }
 }
 
 // Check login on page load
