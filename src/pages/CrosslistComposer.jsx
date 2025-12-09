@@ -2387,7 +2387,270 @@ const MERCARI_CATEGORIES = {
       }
     }
   },
-  "5": { id: "5", name: "Vintage & collectibles" },
+  "5": {
+    id: "5",
+    name: "Vintage & collectibles",
+    subcategories: {
+      "95": {
+        id: "95",
+        name: "Jewelry",
+        subcategories: {
+          "878": { id: "878", name: "Brooch" },
+          "879": { id: "879", name: "Necklace" },
+          "880": { id: "880", name: "Earrings" },
+          "881": { id: "881", name: "Ring" },
+          "882": { id: "882", name: "Bracelet" },
+          "883": { id: "883", name: "Pendant" },
+          "884": { id: "884", name: "Watch" },
+          "885": { id: "885", name: "Other" }
+        }
+      },
+      "96": {
+        id: "96",
+        name: "Clothing",
+        subcategories: {
+          "886": { id: "886", name: "Dress" },
+          "887": { id: "887", name: "Jacket" },
+          "888": { id: "888", name: "Shirt" },
+          "889": { id: "889", name: "Sweater" },
+          "890": { id: "890", name: "Blouse" },
+          "891": { id: "891", name: "Skirt" },
+          "892": { id: "892", name: "Tshirt" },
+          "893": { id: "893", name: "Outerwear" },
+          "894": { id: "894", name: "Pants" },
+          "895": { id: "895", name: "Shorts" },
+          "896": { id: "896", name: "Children" },
+          "897": { id: "897", name: "Baby" },
+          "898": { id: "898", name: "Swimwear" },
+          "899": { id: "899", name: "Tank" },
+          "901": { id: "901", name: "Corset" },
+          "902": { id: "902", name: "Other" }
+        }
+      },
+      "97": {
+        id: "97",
+        name: "Home decor",
+        subcategories: {
+          "903": { id: "903", name: "Wall hanging" },
+          "904": { id: "904", name: "Vase" },
+          "905": { id: "905", name: "Linens" },
+          "906": { id: "906", name: "Lighting" },
+          "907": { id: "907", name: "Box" },
+          "908": { id: "908", name: "Candle holder" },
+          "909": { id: "909", name: "Planter" },
+          "910": { id: "910", name: "Bedding" },
+          "911": { id: "911", name: "Tray" },
+          "912": { id: "912", name: "Pillow" },
+          "913": { id: "913", name: "Frame" },
+          "914": { id: "914", name: "Basket" },
+          "915": { id: "915", name: "Other" }
+        }
+      },
+      "99": {
+        id: "99",
+        name: "Accessories",
+        subcategories: {
+          "922": { id: "922", name: "Shoes" },
+          "923": { id: "923", name: "Hat" },
+          "924": { id: "924", name: "Scarf" },
+          "925": { id: "925", name: "Eyewear" },
+          "926": { id: "926", name: "Necktie" },
+          "927": { id: "927", name: "Belt" },
+          "928": { id: "928", name: "Handkerchief" },
+          "929": { id: "929", name: "Cuff links" },
+          "930": { id: "930", name: "Buckle" },
+          "932": { id: "932", name: "Gloves" },
+          "933": { id: "933", name: "Apron" },
+          "934": { id: "934", name: "Compact" },
+          "935": { id: "935", name: "Wallet" },
+          "936": { id: "936", name: "Shawl" },
+          "937": { id: "937", name: "Keychain" },
+          "938": { id: "938", name: "Other" }
+        }
+      },
+      "100": {
+        id: "100",
+        name: "Housewares",
+        subcategories: {
+          "939": { id: "939", name: "Glass" },
+          "940": { id: "940", name: "Bowl" },
+          "941": { id: "941", name: "Cup" },
+          "942": { id: "942", name: "Ceramic" },
+          "943": { id: "943", name: "Plate" },
+          "945": { id: "945", name: "Box" },
+          "946": { id: "946", name: "Towel" },
+          "947": { id: "947", name: "Table" },
+          "948": { id: "948", name: "Coaster" },
+          "951": { id: "951", name: "Light" },
+          "952": { id: "952", name: "Pot holder" },
+          "953": { id: "953", name: "Magnet" },
+          "954": { id: "954", name: "Other" }
+        }
+      },
+      "101": {
+        id: "101",
+        name: "Supplies",
+        subcategories: {
+          "955": { id: "955", name: "Pattern" },
+          "956": { id: "956", name: "Fabric" },
+          "957": { id: "957", name: "Button" },
+          "958": { id: "958", name: "Trim" },
+          "959": { id: "959", name: "Bead" },
+          "960": { id: "960", name: "Finding" },
+          "961": { id: "961", name: "Cabochon" },
+          "962": { id: "962", name: "Charm" },
+          "963": { id: "963", name: "Ephemera" },
+          "964": { id: "964", name: "Chain" },
+          "965": { id: "965", name: "Yarn" },
+          "966": { id: "966", name: "Zipper" },
+          "967": { id: "967", name: "Other" }
+        }
+      },
+      "102": {
+        id: "102",
+        name: "Antique",
+        subcategories: {
+          "968": { id: "968", name: "100 years or older" },
+          "969": { id: "969", name: "50 to 75 years" },
+          "970": { id: "970", name: "Paper ephemera" },
+          "971": { id: "971", name: "Collectibles" },
+          "972": { id: "972", name: "75 to 100 years" },
+          "973": { id: "973", name: "Home decor" },
+          "974": { id: "974", name: "Jewelry" },
+          "975": { id: "975", name: "Housewares" },
+          "976": { id: "976", name: "Supplies" },
+          "977": { id: "977", name: "Serving" },
+          "978": { id: "978", name: "Book" },
+          "979": { id: "979", name: "Accessories" },
+          "980": { id: "980", name: "Furniture" },
+          "982": { id: "982", name: "Bags and purses" },
+          "983": { id: "983", name: "Electronics" },
+          "984": { id: "984", name: "Other" }
+        }
+      },
+      "103": {
+        id: "103",
+        name: "Paper ephemera",
+        subcategories: {
+          "985": { id: "985", name: "Postcard" },
+          "986": { id: "986", name: "Advertisement" },
+          "987": { id: "987", name: "Map" },
+          "988": { id: "988", name: "Stamps" },
+          "989": { id: "989", name: "Game" },
+          "990": { id: "990", name: "Matchbox" },
+          "991": { id: "991", name: "Other" }
+        }
+      },
+      "104": {
+        id: "104",
+        name: "Serving",
+        subcategories: {
+          "992": { id: "992", name: "Bowl" },
+          "993": { id: "993", name: "Glassware" },
+          "994": { id: "994", name: "Plate" },
+          "995": { id: "995", name: "Flatware" },
+          "996": { id: "996", name: "Teacup" },
+          "997": { id: "997", name: "Salt and pepper shakers" },
+          "998": { id: "998", name: "Pitcher" },
+          "999": { id: "999", name: "Cream and sugar set" },
+          "1000": { id: "1000", name: "Mug" },
+          "1001": { id: "1001", name: "Tray" },
+          "1002": { id: "1002", name: "Platter" },
+          "1003": { id: "1003", name: "Teapot" },
+          "1004": { id: "1004", name: "Casserole" },
+          "1005": { id: "1005", name: "Dinnerware set" },
+          "1006": { id: "1006", name: "Tumbler" },
+          "1007": { id: "1007", name: "Butter dish" },
+          "1008": { id: "1008", name: "Other" }
+        }
+      },
+      "106": {
+        id: "106",
+        name: "Bags and purses",
+        subcategories: {
+          "1029": { id: "1029", name: "Handbag" },
+          "1030": { id: "1030", name: "Purse" },
+          "1031": { id: "1031", name: "Clutch" },
+          "1032": { id: "1032", name: "Leather" },
+          "1034": { id: "1034", name: "Formal" },
+          "1035": { id: "1035", name: "Tote" },
+          "1036": { id: "1036", name: "Pouch" },
+          "1037": { id: "1037", name: "Case" },
+          "1039": { id: "1039", name: "Change purse" },
+          "1040": { id: "1040", name: "Diaper bag" },
+          "1041": { id: "1041", name: "Other" }
+        }
+      },
+      "108": {
+        id: "108",
+        name: "Electronics",
+        subcategories: {
+          "1053": { id: "1053", name: "Camera" },
+          "1054": { id: "1054", name: "Clock" },
+          "1055": { id: "1055", name: "Radio" },
+          "1056": { id: "1056", name: "Telephone" },
+          "1057": { id: "1057", name: "Video game" },
+          "1058": { id: "1058", name: "Television" },
+          "1059": { id: "1059", name: "Game" },
+          "1060": { id: "1060", name: "Other" }
+        }
+      },
+      "109": {
+        id: "109",
+        name: "Furniture",
+        subcategories: {
+          "1061": { id: "1061", name: "Shelf" },
+          "1062": { id: "1062", name: "Table" },
+          "1063": { id: "1063", name: "Fixture" },
+          "1064": { id: "1064", name: "Chair" },
+          "1065": { id: "1065", name: "Mirror" },
+          "1066": { id: "1066", name: "Storage" },
+          "1067": { id: "1067", name: "Bench" },
+          "1068": { id: "1068", name: "Dresser" },
+          "1069": { id: "1069", name: "Bookcase" },
+          "1070": { id: "1070", name: "Bed" },
+          "1071": { id: "1071", name: "Desk" },
+          "1072": { id: "1072", name: "Entertainment" },
+          "1073": { id: "1073", name: "Other" }
+        }
+      },
+      "111": { id: "111", name: "Other" },
+      "2603": {
+        id: "2603",
+        name: "Collectible Coins",
+        subcategories: {
+          "2604": { id: "2604", name: "Collectible Ancient Coins" },
+          "2605": { id: "2605", name: "Collectible Exonumia" },
+          "2606": { id: "2606", name: "Collectible US Coins" },
+          "2607": { id: "2607", name: "Collectible World Coins" },
+          "2608": { id: "2608", name: "Other Collectible Coins" }
+        }
+      },
+      "2609": {
+        id: "2609",
+        name: "Collectible Paper Money",
+        subcategories: {
+          "2610": { id: "2610", name: "Collectible US Paper Money" },
+          "2611": { id: "2611", name: "Collectible World Paper Money" },
+          "2612": { id: "2612", name: "Other Collectible Paper Money" }
+        }
+      },
+      "2613": {
+        id: "2613",
+        name: "Collectible Postage",
+        subcategories: {
+          "2614": { id: "2614", name: "Collectible Airmail Stamps" },
+          "2615": { id: "2615", name: "Collectible Cinderella Stamps" },
+          "2616": { id: "2616", name: "Collectible Commemorative Stamps" },
+          "2617": { id: "2617", name: "Collectible Definitive Stamps" },
+          "2618": { id: "2618", name: "Collectible Postmarks" },
+          "2619": { id: "2619", name: "Collectible Stamp Sheets" },
+          "2620": { id: "2620", name: "Collectible Topical Stamps" },
+          "2621": { id: "2621", name: "Other Collectible Stamps" }
+        }
+      }
+    }
+  },
   "8": { id: "8", name: "Sports & outdoors" },
   "9": { id: "9", name: "Handmade" },
   "113": { id: "113", name: "Arts & Crafts" },
