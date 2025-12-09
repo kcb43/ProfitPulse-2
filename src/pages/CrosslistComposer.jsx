@@ -4135,7 +4135,307 @@ const MERCARI_CATEGORIES = {
       }
     }
   },
-  "3170": { id: "3170", name: "Tools" },
+  "3170": {
+    id: "3170",
+    name: "Tools",
+    subcategories: {
+      "3171": {
+        id: "3171",
+        name: "Air Tools",
+        subcategories: {
+          "3172": { id: "3172", name: "Air Blow Guns" },
+          "3173": { id: "3173", name: "Air Compressors" },
+          "3174": { id: "3174", name: "Air Cut Off Tools" },
+          "3175": { id: "3175", name: "Air Drills" },
+          "3176": { id: "3176", name: "Air Grinders" },
+          "3177": { id: "3177", name: "Air Hammers" },
+          "3178": { id: "3178", name: "Air Hoses" },
+          "3179": { id: "3179", name: "Air Impact Wrenches" },
+          "3180": { id: "3180", name: "Air Nailer" },
+          "3181": { id: "3181", name: "Air Polishers" },
+          "3182": { id: "3182", name: "Air Pressure Regulators" },
+          "3183": { id: "3183", name: "Air Ratchet Wrenches" },
+          "3184": { id: "3184", name: "Air Sanders" },
+          "3185": { id: "3185", name: "Air Sprayers" },
+          "3186": { id: "3186", name: "Air Tool Fittings" },
+          "3187": { id: "3187", name: "Grease Guns" },
+          "3188": { id: "3188", name: "Inflators" },
+          "3189": { id: "3189", name: "Other Air Tools" }
+        }
+      },
+      "3190": {
+        id: "3190",
+        name: "Chains & Ropes",
+        subcategories: {
+          "3191": { id: "3191", name: "Carabiners" },
+          "3192": { id: "3192", name: "Chains" },
+          "3193": { id: "3193", name: "Rope & Chain Connectors" },
+          "3194": { id: "3194", name: "Ropes" },
+          "3195": { id: "3195", name: "Wire Ropes" },
+          "3196": { id: "3196", name: "Other Chain & Ropes" }
+        }
+      },
+      "3197": {
+        id: "3197",
+        name: "Cutting Tools",
+        subcategories: {
+          "3198": { id: "3198", name: "Bolt Cutters" },
+          "3199": { id: "3199", name: "Glass Cutters" },
+          "3200": { id: "3200", name: "Jigs" },
+          "3201": { id: "3201", name: "Machetes" },
+          "3202": { id: "3202", name: "Miter Boxes" },
+          "3203": { id: "3203", name: "Planes" },
+          "3204": { id: "3204", name: "Other Cutting Tools" }
+        }
+      },
+      "3205": {
+        id: "3205",
+        name: "Electrical Tools",
+        subcategories: {
+          "3206": { id: "3206", name: "Cable Cutters" },
+          "3207": { id: "3207", name: "Cable Pliers" },
+          "3208": { id: "3208", name: "Cable Pullers" },
+          "3209": { id: "3209", name: "Conduit Benders" },
+          "3210": { id: "3210", name: "Connector Tool Kits" },
+          "3211": { id: "3211", name: "Crimping Dies" },
+          "3212": { id: "3212", name: "Electrical Tool Kits" },
+          "3213": { id: "3213", name: "Electrical Tweezers" },
+          "3214": { id: "3214", name: "Fusion Splicers & Cleavers" },
+          "3215": { id: "3215", name: "Soldering Guns" },
+          "3216": { id: "3216", name: "Soldering Irons" },
+          "3217": { id: "3217", name: "Wire Stripping Machines" },
+          "3218": { id: "3218", name: "Other Electrical Tools" }
+        }
+      },
+      "3219": {
+        id: "3219",
+        name: "Fastening Tools",
+        subcategories: {
+          "3220": { id: "3220", name: "C-Clamps" },
+          "3221": { id: "3221", name: "Clamps" },
+          "3222": { id: "3222", name: "Rivet Tools" },
+          "3223": { id: "3223", name: "Staple Guns" },
+          "3224": { id: "3224", name: "Staples" },
+          "3225": { id: "3225", name: "Vises" },
+          "3226": { id: "3226", name: "Other Fastening Tools" }
+        }
+      },
+      "3227": {
+        id: "3227",
+        name: "Hammers",
+        subcategories: {
+          "3228": { id: "3228", name: "Ball-Peen Hammers" },
+          "3229": { id: "3229", name: "Claw Hammers" },
+          "3230": { id: "3230", name: "Mallets" },
+          "3231": { id: "3231", name: "Sledgehammers" },
+          "3232": { id: "3232", name: "Other Hammers" }
+        }
+      },
+      "3233": {
+        id: "3233",
+        name: "Hand Tools",
+        subcategories: {
+          "3234": { id: "3234", name: "Adapters & Extenders" },
+          "3235": { id: "3235", name: "Caulking & Sealing Guns" },
+          "3236": { id: "3236", name: "Chisels" },
+          "3237": { id: "3237", name: "Drill Bits" },
+          "3238": { id: "3238", name: "Hand Crimpers" },
+          "3239": { id: "3239", name: "Hex Keys" },
+          "3240": { id: "3240", name: "Knives & Cutters" },
+          "3241": { id: "3241", name: "Nut Drivers" },
+          "3242": { id: "3242", name: "Pry Bars" },
+          "3243": { id: "3243", name: "Punches" },
+          "3244": { id: "3244", name: "Ratchets" },
+          "3245": { id: "3245", name: "Sockets" },
+          "3246": { id: "3246", name: "Stud Finders" },
+          "3247": { id: "3247", name: "Wire Strippers" },
+          "3248": { id: "3248", name: "Other Hand Tools" }
+        }
+      },
+      "3249": {
+        id: "3249",
+        name: "Measuring & Layout",
+        subcategories: {
+          "3250": { id: "3250", name: "Calipers" },
+          "3251": { id: "3251", name: "Laser Levels" },
+          "3252": { id: "3252", name: "Levels" },
+          "3253": { id: "3253", name: "Measuring Tapes" },
+          "3254": { id: "3254", name: "Measuring Wheels" },
+          "3255": { id: "3255", name: "Range Meters" },
+          "3256": { id: "3256", name: "Other Measuring & Layout" }
+        }
+      },
+      "3257": {
+        id: "3257",
+        name: "Pliers",
+        subcategories: {
+          "3258": { id: "3258", name: "Cutting Pliers" },
+          "3259": { id: "3259", name: "Needle Nose Pliers" },
+          "3260": { id: "3260", name: "Slip Joint Pliers" },
+          "3261": { id: "3261", name: "Tongue & Groove Pliers" },
+          "3262": { id: "3262", name: "Other Pliers" }
+        }
+      },
+      "3263": {
+        id: "3263",
+        name: "Power Tools",
+        subcategories: {
+          "3264": { id: "3264", name: "Buffers & Polishers" },
+          "3265": { id: "3265", name: "Combo Tool Sets" },
+          "3266": { id: "3266", name: "Cordless Ratchets" },
+          "3267": { id: "3267", name: "Grinders" },
+          "3268": { id: "3268", name: "Hammer Drills" },
+          "3269": { id: "3269", name: "Heat Guns" },
+          "3270": { id: "3270", name: "Impact Drivers" },
+          "3271": { id: "3271", name: "Impact Wrenches" },
+          "3272": { id: "3272", name: "Lathes" },
+          "3273": { id: "3273", name: "Multi-Tools" },
+          "3274": { id: "3274", name: "Nail Guns" },
+          "3275": { id: "3275", name: "Power Cutting Tools" },
+          "3276": { id: "3276", name: "Power Drills" },
+          "3277": { id: "3277", name: "Power Riveters" },
+          "3278": { id: "3278", name: "Right Angle Drills" },
+          "3279": { id: "3279", name: "Rotary Drills" },
+          "3280": { id: "3280", name: "Routers" },
+          "3281": { id: "3281", name: "Sanders" },
+          "3282": { id: "3282", name: "Screw Guns" },
+          "3283": { id: "3283", name: "Other Power Tools" }
+        }
+      },
+      "3284": {
+        id: "3284",
+        name: "Power Tool Accessories",
+        subcategories: {
+          "3285": { id: "3285", name: "Power Tool Batteries" },
+          "3286": { id: "3286", name: "Power Tool Battery Chargers" },
+          "3287": { id: "3287", name: "Other Power Tool Accessories" }
+        }
+      },
+      "3288": {
+        id: "3288",
+        name: "Safety Gear",
+        subcategories: {
+          "3289": { id: "3289", name: "Back Support Belts" },
+          "3290": { id: "3290", name: "Bump Caps" },
+          "3291": { id: "3291", name: "Disposable Coveralls" },
+          "3292": { id: "3292", name: "Disposable Gloves" },
+          "3293": { id: "3293", name: "Ear Muffs" },
+          "3294": { id: "3294", name: "Ear Plugs" },
+          "3295": { id: "3295", name: "Emergency Response" },
+          "3296": { id: "3296", name: "Face Shields" },
+          "3297": { id: "3297", name: "First Aid Kits" },
+          "3298": { id: "3298", name: "Hard Hats" },
+          "3299": { id: "3299", name: "Knee Pads" },
+          "3300": { id: "3300", name: "Lifelines" },
+          "3301": { id: "3301", name: "PPE Kits" },
+          "3302": { id: "3302", name: "Safety Glasses" },
+          "3303": { id: "3303", name: "Safety Goggles" },
+          "3304": { id: "3304", name: "Safety Vests" },
+          "3305": { id: "3305", name: "Shoe Covers" },
+          "3306": { id: "3306", name: "Work Gloves" },
+          "3307": { id: "3307", name: "Other Safety Gear" }
+        }
+      },
+      "3308": {
+        id: "3308",
+        name: "Saws",
+        subcategories: {
+          "3309": { id: "3309", name: "Band Saws" },
+          "3310": { id: "3310", name: "Circular Saws" },
+          "3311": { id: "3311", name: "Hand Saws" },
+          "3312": { id: "3312", name: "Jigsaws" },
+          "3313": { id: "3313", name: "Miter Saws" },
+          "3314": { id: "3314", name: "Reciprocating Saws" },
+          "3315": { id: "3315", name: "Tables Saws" },
+          "3316": { id: "3316", name: "Other Saws" }
+        }
+      },
+      "3317": {
+        id: "3317",
+        name: "Saw Accessories",
+        subcategories: {
+          "3318": { id: "3318", name: "Bandsaw Blades" },
+          "3319": { id: "3319", name: "Circular Saw Blades" },
+          "3320": { id: "3320", name: "Diamond Blades" },
+          "3321": { id: "3321", name: "Jigsaw Blades" },
+          "3322": { id: "3322", name: "Reciprocating Saw Blades" },
+          "3323": { id: "3323", name: "Scroll Saw Blades" },
+          "3324": { id: "3324", name: "Other Saw Accessories" }
+        }
+      },
+      "3325": {
+        id: "3325",
+        name: "Screwdrivers",
+        subcategories: {
+          "3326": { id: "3326", name: "Multi-bit Screwdrivers" },
+          "3327": { id: "3327", name: "Phillips Screwdrivers" },
+          "3328": { id: "3328", name: "Screwdriver Bits" },
+          "3329": { id: "3329", name: "Screwdriver Sets" },
+          "3330": { id: "3330", name: "Slotted Screwdrivers" },
+          "3331": { id: "3331", name: "Other Screwdrivers" }
+        }
+      },
+      "3332": {
+        id: "3332",
+        name: "Tie Downs",
+        subcategories: {
+          "3333": { id: "3333", name: "Bungee Cords" },
+          "3334": { id: "3334", name: "Cargo Bars" },
+          "3335": { id: "3335", name: "Cargo Nets" },
+          "3336": { id: "3336", name: "D-Ring Anchors" },
+          "3337": { id: "3337", name: "Load Binders" },
+          "3338": { id: "3338", name: "Pulleys" },
+          "3339": { id: "3339", name: "Ratchet Straps" },
+          "3340": { id: "3340", name: "Tarp Straps" },
+          "3341": { id: "3341", name: "Winch Straps" },
+          "3342": { id: "3342", name: "Other Tie Downs" }
+        }
+      },
+      "3343": {
+        id: "3343",
+        name: "Tools Storage",
+        subcategories: {
+          "3344": { id: "3344", name: "Tool Bags" },
+          "3345": { id: "3345", name: "Tool Belts" },
+          "3346": { id: "3346", name: "Tool Chests" },
+          "3347": { id: "3347", name: "Workbenches" },
+          "3348": { id: "3348", name: "Other Tools Storage" }
+        }
+      },
+      "3349": {
+        id: "3349",
+        name: "Welding Equipment",
+        subcategories: {
+          "3350": { id: "3350", name: "Spot Welders" },
+          "3351": { id: "3351", name: "Welding Cables" },
+          "3352": { id: "3352", name: "Welding Clamps" },
+          "3353": { id: "3353", name: "Welding Fuel Cylinders" },
+          "3354": { id: "3354", name: "Welding Helmet" },
+          "3355": { id: "3355", name: "Welding Hoses" },
+          "3356": { id: "3356", name: "Welding Machines" },
+          "3357": { id: "3357", name: "Welding Tips" },
+          "3358": { id: "3358", name: "Welding Torches" },
+          "3359": { id: "3359", name: "Welding Valves" },
+          "3360": { id: "3360", name: "Welding Wire" },
+          "3361": { id: "3361", name: "Other Welding Equipment" }
+        }
+      },
+      "3362": {
+        id: "3362",
+        name: "Wrenches",
+        subcategories: {
+          "3363": { id: "3363", name: "Adjustable Wrenches" },
+          "3364": { id: "3364", name: "Box Wrenches" },
+          "3365": { id: "3365", name: "Combination Wrenches" },
+          "3366": { id: "3366", name: "Crescent Wrenches" },
+          "3367": { id: "3367", name: "Open-End Wrenches" },
+          "3368": { id: "3368", name: "Torque Wrenches" },
+          "3369": { id: "3369", name: "Wrench Sets" },
+          "3370": { id: "3370", name: "Other Wrenches" }
+        }
+      }
+    }
+  },
   "141": { id: "141", name: "Books" },
   "10": { id: "10", name: "Other" }
 };
