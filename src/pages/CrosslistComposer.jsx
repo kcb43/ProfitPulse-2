@@ -3942,7 +3942,199 @@ const MERCARI_CATEGORIES = {
       }
     }
   },
-  "2882": { id: "2882", name: "Office" },
+  "2882": {
+    id: "2882",
+    name: "Office",
+    subcategories: {
+      "1533": {
+        id: "1533",
+        name: "School Supplies",
+        subcategories: {
+          "2950": { id: "2950", name: "Binders" },
+          "2951": { id: "2951", name: "Binding Covers" },
+          "2952": { id: "2952", name: "Binding Spines" },
+          "2953": { id: "2953", name: "Calculators" },
+          "2954": { id: "2954", name: "Glue Sticks" },
+          "2955": { id: "2955", name: "Highlighters" },
+          "2956": { id: "2956", name: "Index Cards" },
+          "2957": { id: "2957", name: "Pencil Sharpeners" },
+          "2958": { id: "2958", name: "Protractors" },
+          "2959": { id: "2959", name: "Rulers" },
+          "2960": { id: "2960", name: "Scissors" },
+          "2961": { id: "2961", name: "Other School Supplies" }
+        }
+      },
+      "1534": {
+        id: "1534",
+        name: "Ink & Toner",
+        subcategories: {
+          "2899": { id: "2899", name: "Ink Cartidges" },
+          "2900": { id: "2900", name: "Ink Refills" },
+          "2901": { id: "2901", name: "Ink Ribbons" },
+          "2902": { id: "2902", name: "Toner Cartridges" },
+          "2903": { id: "2903", name: "Toner Refills" },
+          "2904": { id: "2904", name: "Other Ink & Toner" }
+        }
+      },
+      "1535": {
+        id: "1535",
+        name: "Paper",
+        subcategories: {
+          "2941": { id: "2941", name: "Cardstock" },
+          "2942": { id: "2942", name: "Cash Register Rolls" },
+          "2943": { id: "2943", name: "Certificate Paper" },
+          "2944": { id: "2944", name: "Construction Paper" },
+          "2945": { id: "2945", name: "Copy & Multipurpose Paper" },
+          "2946": { id: "2946", name: "Filler Paper" },
+          "2947": { id: "2947", name: "Graph Paper" },
+          "2948": { id: "2948", name: "Photo Paper" },
+          "2949": { id: "2949", name: "Other Office Paper" }
+        }
+      },
+      "1536": {
+        id: "1536",
+        name: "Writing Supplies",
+        subcategories: {
+          "2997": { id: "2997", name: "Erasers" },
+          "2999": { id: "2999", name: "Mechanical Pencil Lead Refills" },
+          "3000": { id: "3000", name: "Mechanical Pencils" },
+          "3001": { id: "3001", name: "Pencil Cases" },
+          "3002": { id: "3002", name: "Pencils" },
+          "3007": { id: "3007", name: "Other Writing Supplies" }
+        }
+      },
+      "1537": {
+        id: "1537",
+        name: "Office Electronics",
+        subcategories: {
+          "2913": { id: "2913", name: "Cash Registers" },
+          "2914": { id: "2914", name: "Label Makers" },
+          "2915": { id: "2915", name: "Laminators" },
+          "2916": { id: "2916", name: "Office Calculators" },
+          "2917": { id: "2917", name: "Shredders" },
+          "2918": { id: "2918", name: "Other Office Electronics" }
+        }
+      },
+      "1538": {
+        id: "1538",
+        name: "Desk Organization",
+        subcategories: {
+          "2883": { id: "2883", name: "Bookends" },
+          "2884": { id: "2884", name: "Business Card Holders" },
+          "2885": { id: "2885", name: "Desk Organizers" },
+          "2886": { id: "2886", name: "Desk Trays" },
+          "2887": { id: "2887", name: "Desk Drawer Organizers" },
+          "2888": { id: "2888", name: "File Organizers" },
+          "2889": { id: "2889", name: "Magazine Holders" },
+          "2890": { id: "2890", name: "Wall Files" },
+          "2891": { id: "2891", name: "Other Desk Organization" }
+        }
+      },
+      "1539": {
+        id: "1539",
+        name: "Shipping Supplies",
+        subcategories: {
+          "2962": { id: "2962", name: "Address Labels" },
+          "2963": { id: "2963", name: "Air Pillows & Inflatable Packaging" },
+          "2964": { id: "2964", name: "Bubble Mailers" },
+          "2965": { id: "2965", name: "Bubble Rolls" },
+          "2966": { id: "2966", name: "Business Envelopes" },
+          "2967": { id: "2967", name: "Catalog Envelopes" },
+          "2968": { id: "2968", name: "Corrugated Mailers" },
+          "2969": { id: "2969", name: "Cushioning Bags" },
+          "2970": { id: "2970", name: "Cushioning Sheets" },
+          "2971": { id: "2971", name: "Double Sided Tape" },
+          "2972": { id: "2972", name: "Envelope Sealers" },
+          "2973": { id: "2973", name: "Flat Mailers" },
+          "2974": { id: "2974", name: "Foam Rolls" },
+          "2975": { id: "2975", name: "Interdepartmental Envelopes" },
+          "2976": { id: "2976", name: "Invitation Envelopes" },
+          "2977": { id: "2977", name: "Letter Openers" },
+          "2978": { id: "2978", name: "Mailing Tubes" },
+          "2979": { id: "2979", name: "Mini Envelopes" },
+          "2980": { id: "2980", name: "Packing Peanuts" },
+          "2981": { id: "2981", name: "Packing Tape" },
+          "2982": { id: "2982", name: "Poly Bags" },
+          "2983": { id: "2983", name: "Shipping Boxes" },
+          "2984": { id: "2984", name: "Shipping Labels" },
+          "2985": { id: "2985", name: "Shipping Tags" },
+          "2986": { id: "2986", name: "Window Envelopes" },
+          "2987": { id: "2987", name: "Other Shipping Supplies" },
+          "3478": { id: "3478", name: "Postage Stamps" }
+        }
+      },
+      "2892": {
+        id: "2892",
+        name: "Folders & Filing",
+        subcategories: {
+          "2893": { id: "2893", name: "Accordion Folders" },
+          "2894": { id: "2894", name: "Classification Folders" },
+          "2895": { id: "2895", name: "Filing Folders" },
+          "2896": { id: "2896", name: "Hanging File Folders" },
+          "2897": { id: "2897", name: "Pocket Folders" },
+          "2898": { id: "2898", name: "Other Folders & Filing" }
+        }
+      },
+      "2905": {
+        id: "2905",
+        name: "Notebooks & Writing Pads",
+        subcategories: {
+          "2906": { id: "2906", name: "Address Books" },
+          "2907": { id: "2907", name: "Composition Books" },
+          "2908": { id: "2908", name: "Journals" },
+          "2909": { id: "2909", name: "Note Pads" },
+          "2910": { id: "2910", name: "Notebooks" },
+          "2911": { id: "2911", name: "Writing Pads" },
+          "2912": { id: "2912", name: "Other Notebooks & Writing Pads" }
+        }
+      },
+      "2988": {
+        id: "2988",
+        name: "Tapes & Adhesives",
+        subcategories: {
+          "2989": { id: "2989", name: "Duct Tape" },
+          "2990": { id: "2990", name: "Electrical Tape" },
+          "2991": { id: "2991", name: "Masking Tape" },
+          "2992": { id: "2992", name: "Mounting Tape" },
+          "2993": { id: "2993", name: "Painters Tape" }
+        }
+      },
+      "3479": {
+        id: "3479",
+        name: "Markers",
+        subcategories: {
+          "2996": { id: "2996", name: "Dry Erase Markers" },
+          "3003": { id: "3003", name: "Permanent Markers" },
+          "3006": { id: "3006", name: "Washable Markers" },
+          "3480": { id: "3480", name: "Alcohol-Based Markers" },
+          "3481": { id: "3481", name: "Brush Markers" },
+          "3482": { id: "3482", name: "Dual Tip Art Markers" },
+          "3483": { id: "3483", name: "Paint Markers" },
+          "3484": { id: "3484", name: "Marker Refills" },
+          "3485": { id: "3485", name: "Other Markers" }
+        }
+      },
+      "3486": {
+        id: "3486",
+        name: "Pens",
+        subcategories: {
+          "2994": { id: "2994", name: "Ballpoint Pens" },
+          "2995": { id: "2995", name: "Calligraphy Pens" },
+          "2998": { id: "2998", name: "Gel Pens" },
+          "3004": { id: "3004", name: "Retractable Pens" },
+          "3005": { id: "3005", name: "Rollerball Pens" },
+          "3487": { id: "3487", name: "Archival Ink Pens" },
+          "3488": { id: "3488", name: "Paintpens" },
+          "3489": { id: "3489", name: "Brush Pens" },
+          "3490": { id: "3490", name: "Felt Tip Pens" },
+          "3491": { id: "3491", name: "Fineliner Pens" },
+          "3492": { id: "3492", name: "Fountain Pens" },
+          "3493": { id: "3493", name: "Pen Refills" },
+          "3494": { id: "3494", name: "Other Pens" }
+        }
+      }
+    }
+  },
   "3170": { id: "3170", name: "Tools" },
   "141": { id: "141", name: "Books" },
   "10": { id: "10", name: "Other" }
