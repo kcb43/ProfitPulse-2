@@ -8033,15 +8033,15 @@ export default function CrosslistComposer() {
 
         {/* Form selector */}
         <div>
-          <Label className="text-xs mb-1.5 block">Select Form</Label>
-          <div className="flex flex-wrap gap-2">
+          <Label className="text-sm mb-2 block font-semibold">Select Form</Label>
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => setActiveForm("general")}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border text-sm transition
+              className={`inline-flex items-center gap-2 px-5 py-3 rounded-lg border-2 text-base font-medium transition-all
                 ${activeForm === "general"
-                  ? "bg-foreground text-background dark:bg-foreground dark:text-background"
-                  : "bg-muted/70 hover:bg-muted dark:bg-muted/40 dark:hover:bg-muted/60 text-foreground"
+                  ? "bg-foreground text-background dark:bg-foreground dark:text-background shadow-md scale-105"
+                  : "bg-muted/70 hover:bg-muted dark:bg-muted/40 dark:hover:bg-muted/60 text-foreground hover:scale-102"
                 }`}
             >
               General
@@ -8053,10 +8053,10 @@ export default function CrosslistComposer() {
                   key={m.id}
                   type="button"
                   onClick={() => setActiveForm(m.id)}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border text-sm transition
+                  className={`inline-flex items-center gap-2 px-5 py-3 rounded-lg border-2 text-base font-medium transition-all
                     ${active
-                      ? "bg-foreground text-background dark:bg-foreground dark:text-background"
-                      : "bg-muted/70 hover:bg-muted dark:bg-muted/40 dark:hover:bg-muted/60 text-foreground"
+                      ? "bg-foreground text-background dark:bg-foreground dark:text-background shadow-md scale-105"
+                      : "bg-muted/70 hover:bg-muted dark:bg-muted/40 dark:hover:bg-muted/60 text-foreground hover:scale-102"
                     }`}
                 >
                   {renderMarketplaceIcon(m)}
