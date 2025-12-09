@@ -8071,6 +8071,89 @@ export default function CrosslistComposer() {
           </div>
         )}
 
+        {/* Mercari Connection Status Bar - Only shown when Mercari form is active */}
+        {activeForm === "mercari" && (
+          <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img src={MERCARI_ICON_URL} alt="Mercari" className="w-5 h-5" />
+                <Label className="text-base font-semibold">Mercari Account</Label>
+              </div>
+              {mercariConnected ? (
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 text-destructive hover:text-destructive" 
+                    onClick={() => {
+                      localStorage.removeItem('profit_orbit_mercari_connected');
+                      localStorage.removeItem('profit_orbit_mercari_username');
+                      setMercariConnected(false);
+                      setMercariUsername(null);
+                      toast({
+                        title: "Disconnected",
+                        description: "Mercari account has been disconnected.",
+                      });
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="gap-2" 
+                  onClick={() => {
+                    // Open Mercari login popup via extension
+                    window.open('https://www.mercari.com/mypage/', 'mercari-login', 'width=600,height=700');
+                    toast({
+                      title: "Mercari Login",
+                      description: "Please log into your Mercari account in the popup window.",
+                    });
+                  }}
+                >
+                  <Check className="h-4 w-4" />
+                  Connect Mercari Account
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
+              {/* Status */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1">Connection Status</Label>
+                <div className="flex items-center gap-2">
+                  {mercariConnected ? (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <span className="text-sm font-medium text-red-600 dark:text-red-400">Not Connected</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Username */}
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1">Logged in as</Label>
+                <div className="text-sm">
+                  {mercariUsername ? (
+                    <span className="font-medium">{mercariUsername}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Form selector */}
         <div>
           <Label className="text-sm mb-2 block font-semibold">Select Form</Label>
@@ -10363,87 +10446,6 @@ export default function CrosslistComposer() {
           {/* Mercari Form */}
           {activeForm === "mercari" && (
             <div className="space-y-6">
-              {/* Mercari Connection Status Bar */}
-              <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <img src={MERCARI_ICON_URL} alt="Mercari" className="w-5 h-5" />
-                    <Label className="text-base font-semibold">Mercari Account</Label>
-                  </div>
-                  {mercariConnected ? (
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-2 text-destructive hover:text-destructive" 
-                        onClick={() => {
-                          localStorage.removeItem('profit_orbit_mercari_connected');
-                          localStorage.removeItem('profit_orbit_mercari_username');
-                          setMercariConnected(false);
-                          setMercariUsername(null);
-                          toast({
-                            title: "Disconnected",
-                            description: "Mercari account has been disconnected.",
-                          });
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                        Disconnect
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      className="gap-2" 
-                      onClick={() => {
-                        // Open Mercari login popup via extension
-                        window.open('https://www.mercari.com/mypage/', 'mercari-login', 'width=600,height=700');
-                        toast({
-                          title: "Mercari Login",
-                          description: "Please log into your Mercari account in the popup window.",
-                        });
-                      }}
-                    >
-                      <Check className="h-4 w-4" />
-                      Connect Mercari Account
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
-                  {/* Status */}
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Connection Status</Label>
-                    <div className="flex items-center gap-2">
-                      {mercariConnected ? (
-                        <>
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                          <span className="text-sm font-medium text-red-600 dark:text-red-400">Not Connected</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Username */}
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-1">Logged in as</Label>
-                    <div className="text-sm">
-                      {mercariUsername ? (
-                        <span className="font-medium">{mercariUsername}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {currentEditingItemId && (
                 <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
                   <Package className="w-4 h-4 text-muted-foreground" />
