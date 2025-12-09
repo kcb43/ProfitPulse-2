@@ -675,7 +675,269 @@ const MERCARI_CATEGORIES = {
       }
     }
   },
-  "7": { id: "7", name: "Electronics" },
+  "7": {
+    id: "7",
+    name: "Electronics",
+    subcategories: {
+      "80": {
+        id: "80",
+        name: "Cameras & photography",
+        subcategories: {
+          "759": { id: "759", name: "Digital cameras" },
+          "760": { id: "760", name: "Camcorders" },
+          "761": { id: "761", name: "Camera & photo accessories" },
+          "766": { id: "766", name: "Lighting & studio" },
+          "767": { id: "767", name: "Film & Polaroid Cameras" },
+          "768": { id: "768", name: "Other" },
+          "2134": { id: "2134", name: "Camera Filters" },
+          "2135": { id: "2135", name: "Camera Lenses" },
+          "2136": { id: "2136", name: "Photography Supports" },
+          "2137": { id: "2137", name: "Photography Tripods" },
+          "2138": { id: "2138", name: "Camera Flash Accessories" },
+          "2139": { id: "2139", name: "Camera Flashes" },
+          "2140": { id: "2140", name: "Binoculars" },
+          "2141": { id: "2141", name: "Telescopes" },
+          "2205": { id: "2205", name: "Sport Cameras" },
+          "2206": { id: "2206", name: "Waterproof Cameras" },
+          "2207": { id: "2207", name: "Camera Films" },
+          "2208": { id: "2208", name: "Polaroid Films" }
+        }
+      },
+      "81": {
+        id: "81",
+        name: "Computers & Laptops",
+        subcategories: {
+          "774": { id: "774", name: "Networking & connectivity" },
+          "777": { id: "777", name: "Other" },
+          "1595": { id: "1595", name: "Monitors & Screens" },
+          "1596": { id: "1596", name: "Computer Accessories" },
+          "2145": { id: "2145", name: "Laptops" },
+          "2146": { id: "2146", name: "Netbooks" },
+          "2147": { id: "2147", name: "Desktops Computers" },
+          "2148": { id: "2148", name: "All-In-One Computers" },
+          "2149": { id: "2149", name: "Printers" },
+          "2150": { id: "2150", name: "Printing Supplies" },
+          "2151": { id: "2151", name: "Scanners" },
+          "2152": { id: "2152", name: "Computer Drives" },
+          "2153": { id: "2153", name: "Computer Media" },
+          "2154": { id: "2154", name: "Computer Storage" },
+          "2268": { id: "2268", name: "All-In-One Printers" }
+        }
+      },
+      "82": {
+        id: "82",
+        name: "Cell phones & accessories",
+        subcategories: {
+          "778": { id: "778", name: "Cell phones & smartphones" },
+          "779": { id: "779", name: "Cell phone accessories" },
+          "780": { id: "780", name: "Headsets" },
+          "782": { id: "782", name: "Screen protectors" },
+          "784": { id: "784", name: "Batteries" },
+          "786": { id: "786", name: "Other" },
+          "2155": { id: "2155", name: "Cell Phone Cases" },
+          "2156": { id: "2156", name: "Cell Phone Covers" },
+          "2157": { id: "2157", name: "Cell Phone Skins" },
+          "2158": { id: "2158", name: "Cell Phone Chargers" },
+          "2159": { id: "2159", name: "Cell Phone Cradles" },
+          "2160": { id: "2160", name: "Cell Phone Adapters" },
+          "2161": { id: "2161", name: "Cell Phone Cables" },
+          "2631": { id: "2631", name: "Wireless Cell Phone Chargers" }
+        }
+      },
+      "83": {
+        id: "83",
+        name: "TV & Video",
+        subcategories: {
+          "787": { id: "787", name: "Televisions" },
+          "794": { id: "794", name: "Gadgets" },
+          "795": { id: "795", name: "Other" },
+          "1578": { id: "1578", name: "Streaming Devices" },
+          "2164": { id: "2164", name: "Blu-ray Players" },
+          "2165": { id: "2165", name: "DVD Players" },
+          "2201": { id: "2201", name: "Projector Screens" },
+          "2202": { id: "2202", name: "Projectors" },
+          "2632": { id: "2632", name: "DVRs" }
+        }
+      },
+      "84": {
+        id: "84",
+        name: "Video games & consoles",
+        subcategories: {
+          "796": { id: "796", name: "Games" },
+          "797": { id: "797", name: "Consoles" },
+          "798": { id: "798", name: "Accessories" },
+          "800": { id: "800", name: "Strategy guides" },
+          "802": { id: "802", name: "Replacement parts & tools" },
+          "803": { id: "803", name: "Other" },
+          "1599": { id: "1599", name: "PC Gaming" }
+        }
+      },
+      "85": {
+        id: "85",
+        name: "Car audio, video & gps",
+        subcategories: {
+          "805": { id: "805", name: "GPS units & equipment" },
+          "806": { id: "806", name: "Car speakers & systems" },
+          "807": { id: "807", name: "Car subwoofers" },
+          "808": { id: "808", name: "Car video" },
+          "809": { id: "809", name: "Car security & convenience" },
+          "810": { id: "810", name: "Car A/V installation" },
+          "813": { id: "813", name: "Other" },
+          "2166": { id: "2166", name: "Car Amplifiers" },
+          "2167": { id: "2167", name: "Car CD Changers" },
+          "2168": { id: "2168", name: "Car Equalizers" },
+          "2169": { id: "2169", name: "Car Stereo Receivers" },
+          "2170": { id: "2170", name: "GPS Accessories" },
+          "2171": { id: "2171", name: "GPS Car Mounts" },
+          "2246": { id: "2246", name: "Car Coaxial Speakers" },
+          "2247": { id: "2247", name: "Car Component Speakers" },
+          "2248": { id: "2248", name: "Car Mid-Range Speakers" },
+          "2249": { id: "2249", name: "Car Tweeters" },
+          "2250": { id: "2250", name: "Car Woofers" }
+        }
+      },
+      "86": {
+        id: "86",
+        name: "Media",
+        subcategories: {
+          "814": { id: "814", name: "Blu-ray" },
+          "815": { id: "815", name: "DVD" },
+          "816": { id: "816", name: "CD" },
+          "817": { id: "817", name: "VHS" },
+          "818": { id: "818", name: "Other" }
+        }
+      },
+      "87": { id: "87", name: "Other" },
+      "775": {
+        id: "775",
+        name: "Computer Components & Parts",
+        subcategories: {
+          "2251": { id: "2251", name: "Computer Case Fans" },
+          "2252": { id: "2252", name: "Computer Controller Cards" },
+          "2253": { id: "2253", name: "Computer CPUs" },
+          "2254": { id: "2254", name: "Computer Drive Enclosures" },
+          "2255": { id: "2255", name: "Computer GPUs" },
+          "2256": { id: "2256", name: "Computer Memory (RAM)" },
+          "2257": { id: "2257", name: "Computer Motherboards" },
+          "2258": { id: "2258", name: "Computer Power Supplies" },
+          "2259": { id: "2259", name: "Computer Sound Cards" },
+          "2260": { id: "2260", name: "CPU Fans" },
+          "2261": { id: "2261", name: "Desktop Cases" },
+          "2262": { id: "2262", name: "Heatsinks" },
+          "2263": { id: "2263", name: "I/O Adapters" },
+          "2264": { id: "2264", name: "PC Water Cooling Accessories" },
+          "2265": { id: "2265", name: "PC Water Cooling Kits" },
+          "2266": { id: "2266", name: "Thermal Compound" },
+          "2267": { id: "2267", name: "Other Computer Parts & Components" }
+        }
+      },
+      "801": {
+        id: "801",
+        name: "Video Game Merchandise",
+        subcategories: {
+          "3503": { id: "3503", name: "Interactive Gaming Figures" },
+          "3504": { id: "3504", name: "Interactive Video Game Cards" },
+          "3505": { id: "3505", name: "Other Video Game Merchandise" }
+        }
+      },
+      "1573": {
+        id: "1573",
+        name: "Wearables",
+        subcategories: {
+          "1574": { id: "1574", name: "Smart Watches" },
+          "1575": { id: "1575", name: "Smart Watch Accessories" },
+          "1576": { id: "1576", name: "Fitness Trackers" }
+        }
+      },
+      "1580": {
+        id: "1580",
+        name: "Smart Home & Security",
+        subcategories: {
+          "791": { id: "791", name: "Home surveillance" },
+          "1581": { id: "1581", name: "Smart Thermostats" },
+          "1582": { id: "1582", name: "Smart Lighting" },
+          "1583": { id: "1583", name: "Smart Locks" },
+          "1584": { id: "1584", name: "Smart Speakers & Assistants" },
+          "1585": { id: "1585", name: "Smart Cleaning Appliances" },
+          "1586": { id: "1586", name: "Other" }
+        }
+      },
+      "1587": {
+        id: "1587",
+        name: "Home Audio",
+        subcategories: {
+          "788": { id: "788", name: "Other Home Audio" },
+          "793": { id: "793", name: "Audio Accessories" },
+          "1556": { id: "1556", name: "Studio recording equipment" },
+          "1588": { id: "1588", name: "Bluetooth Speakers" },
+          "1590": { id: "1590", name: "Docking Stations" },
+          "1591": { id: "1591", name: "Radios" },
+          "1592": { id: "1592", name: "Portable Stereos & Boomboxes" },
+          "2162": { id: "2162", name: "Home Speakers" },
+          "2163": { id: "2163", name: "Home Subwoofers" },
+          "2197": { id: "2197", name: "Microphone Accessories" },
+          "2198": { id: "2198", name: "Microphones" },
+          "2199": { id: "2199", name: "DJ Equipment" },
+          "2200": { id: "2200", name: "Karaoke Equipment" },
+          "2203": { id: "2203", name: "CD Players" },
+          "2204": { id: "2204", name: "Record Players" },
+          "2269": { id: "2269", name: "Compact Stereos" },
+          "2270": { id: "2270", name: "DA Converters" },
+          "2271": { id: "2271", name: "Home Audio Amplifiers" },
+          "2272": { id: "2272", name: "Home Audio Cables" },
+          "2273": { id: "2273", name: "Home Audio CD/SACD Players" },
+          "2274": { id: "2274", name: "Home Audio Equalizers" },
+          "2275": { id: "2275", name: "Home Audio Integrated Amplifiers" },
+          "2276": { id: "2276", name: "Home Audio Interconnects" },
+          "2277": { id: "2277", name: "Home Audio Preamplifiers" },
+          "2278": { id: "2278", name: "Home Audio Receivers" },
+          "2279": { id: "2279", name: "Home Audio Sound Bars" },
+          "2280": { id: "2280", name: "Home Audio Tape Decks" },
+          "2281": { id: "2281", name: "Home Audio Turntables" },
+          "2282": { id: "2282", name: "Music Streamers" },
+          "2283": { id: "2283", name: "Radio Tuners" }
+        }
+      },
+      "1593": {
+        id: "1593",
+        name: "Headphones & MP3 Players",
+        subcategories: {
+          "789": { id: "789", name: "Headphones" },
+          "1577": { id: "1577", name: "MP3 Players" },
+          "1594": { id: "1594", name: "Bluetooth Headphones" }
+        }
+      },
+      "1597": {
+        id: "1597",
+        name: "Tablets & E-readers",
+        subcategories: {
+          "769": { id: "769", name: "iPad/tablet/ebook readers" },
+          "1602": { id: "1602", name: "Tablet Accessories" },
+          "2142": { id: "2142", name: "Tablet Cases" },
+          "2143": { id: "2143", name: "Tablet Covers" },
+          "2144": { id: "2144", name: "Tablet Skins" }
+        }
+      },
+      "1603": {
+        id: "1603",
+        name: "Drones",
+        subcategories: {
+          "1604": { id: "1604", name: "Drones" },
+          "1605": { id: "1605", name: "Drone Accessories" }
+        }
+      },
+      "1606": {
+        id: "1606",
+        name: "Virtual Reality",
+        subcategories: {
+          "1607": { id: "1607", name: "VR Headsets" },
+          "1608": { id: "1608", name: "VR Phone Cases" },
+          "1609": { id: "1609", name: "VR Accessories" },
+          "1610": { id: "1610", name: "VR Games" }
+        }
+      }
+    }
+  },
   "1611": { id: "1611", name: "Toys & Collectibles" },
   "4": { id: "4", name: "Home" },
   "6": { id: "6", name: "Beauty" },
