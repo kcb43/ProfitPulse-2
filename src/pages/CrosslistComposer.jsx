@@ -3564,7 +3564,123 @@ const MERCARI_CATEGORIES = {
       }
     }
   },
-  "143": { id: "143", name: "Pet Supplies" },
+  "143": {
+    id: "143",
+    name: "Pet Supplies",
+    subcategories: {
+      "1508": { id: "1508", name: "Others" },
+      "3008": {
+        id: "3008",
+        name: "Aquariums & Fish Supplies",
+        subcategories: {
+          "3009": { id: "3009", name: "Air Pumps" },
+          "3010": { id: "3010", name: "Aquarium Decor" },
+          "3011": { id: "3011", name: "Aquarium Heaters" },
+          "3012": { id: "3012", name: "Aquarium Lighting" },
+          "3013": { id: "3013", name: "Aquarium Water Cleaners" },
+          "3014": { id: "3014", name: "Aquariums & Tanks" },
+          "3015": { id: "3015", name: "Tank Filters" },
+          "3016": { id: "3016", name: "Fish Bowls" },
+          "3017": { id: "3017", name: "Fish Food" },
+          "3018": { id: "3018", name: "Aquarium Gravel & Substrate" },
+          "3019": { id: "3019", name: "Aquarium UV Sterilizers" },
+          "3020": { id: "3020", name: "Aquarium Water Pumps" },
+          "3021": { id: "3021", name: "Other Aquarium & Fish Supplies" }
+        }
+      },
+      "3022": {
+        id: "3022",
+        name: "Bird Supplies",
+        subcategories: {
+          "3023": { id: "3023", name: "Bird Cage Covers" },
+          "3024": { id: "3024", name: "Bird Cages" },
+          "3025": { id: "3025", name: "Bird Feed" },
+          "3026": { id: "3026", name: "Bird Litter" },
+          "3027": { id: "3027", name: "Bird Perches" },
+          "3028": { id: "3028", name: "Bird Swings" },
+          "3029": { id: "3029", name: "Bird Toys" },
+          "3030": { id: "3030", name: "Other Bird Supplies" }
+        }
+      },
+      "3031": {
+        id: "3031",
+        name: "Cat Supplies",
+        subcategories: {
+          "3032": { id: "3032", name: "Cat Beds" },
+          "3033": { id: "3033", name: "Cat Bowls & Feeders" },
+          "3034": { id: "3034", name: "Cat Brushes" },
+          "3035": { id: "3035", name: "Cat Carriers" },
+          "3036": { id: "3036", name: "Cat Collars" },
+          "3037": { id: "3037", name: "Cat Costumes" },
+          "3038": { id: "3038", name: "Cat Crates" },
+          "3039": { id: "3039", name: "Cat Doors & Flaps" },
+          "3040": { id: "3040", name: "Cat Food" },
+          "3041": { id: "3041", name: "Cat Grass" },
+          "3042": { id: "3042", name: "Cat Harnesses" },
+          "3043": { id: "3043", name: "Cat Leashes" },
+          "3044": { id: "3044", name: "Cat Litter" },
+          "3045": { id: "3045", name: "Cat Scratchers" },
+          "3046": { id: "3046", name: "Cat Supplements" },
+          "3047": { id: "3047", name: "Cat Tags" },
+          "3048": { id: "3048", name: "Cat Toys" },
+          "3049": { id: "3049", name: "Cat Treats" },
+          "3050": { id: "3050", name: "Catnip" },
+          "3051": { id: "3051", name: "Cat Flea & Tick Prevention" },
+          "3052": { id: "3052", name: "Cat Litter Boxes" },
+          "3053": { id: "3053", name: "Cat Pheromone Treatment" },
+          "3054": { id: "3054", name: "Other Cat Supplies" }
+        }
+      },
+      "3055": {
+        id: "3055",
+        name: "Dog Supplies",
+        subcategories: {
+          "1506": { id: "1506", name: "Dog Cages" },
+          "3056": { id: "3056", name: "Dog Beds" },
+          "3057": { id: "3057", name: "Dog Blankets" },
+          "3058": { id: "3058", name: "Dog Bowls & Feeders" },
+          "3059": { id: "3059", name: "Dog Brushes" },
+          "3060": { id: "3060", name: "Dog Chews & Treats" },
+          "3061": { id: "3061", name: "Dog Collars" },
+          "3062": { id: "3062", name: "Dog Combs" },
+          "3063": { id: "3063", name: "Dog Costumes" },
+          "3064": { id: "3064", name: "Dog Crates" },
+          "3065": { id: "3065", name: "Dog Doors & Flaps" },
+          "3066": { id: "3066", name: "Dog Food" },
+          "3067": { id: "3067", name: "Dog Fur Clippers" },
+          "3068": { id: "3068", name: "Dog Gates & Pens" },
+          "3069": { id: "3069", name: "Dog Harnesses" },
+          "3070": { id: "3070", name: "Dog Houses" },
+          "3071": { id: "3071", name: "Dog Leashes" },
+          "3072": { id: "3072", name: "Dog Muzzles" },
+          "3073": { id: "3073", name: "Dog Nail Trimmers" },
+          "3074": { id: "3074", name: "Dog Pools" },
+          "3075": { id: "3075", name: "Dog Shampoo" },
+          "3076": { id: "3076", name: "Dog Shoes" },
+          "3077": { id: "3077", name: "Dog Supplements" },
+          "3078": { id: "3078", name: "Dog Tags" },
+          "3079": { id: "3079", name: "Dog Toys" },
+          "3080": { id: "3080", name: "Dog Waste Bags" },
+          "3081": { id: "3081", name: "Dog Whistles" },
+          "3082": { id: "3082", name: "Dog Flea & Tick Treatment" },
+          "3083": { id: "3083", name: "Pet Odor & Stain Removal" },
+          "3084": { id: "3084", name: "Pooper Scoopers" },
+          "3085": { id: "3085", name: "Other Dog Supplies" }
+        }
+      },
+      "3086": {
+        id: "3086",
+        name: "Reptile Supplies",
+        subcategories: {
+          "3087": { id: "3087", name: "Reptile Food" },
+          "3088": { id: "3088", name: "Reptile Heaters" },
+          "3089": { id: "3089", name: "Reptile Terrariums" },
+          "3090": { id: "3090", name: "Terrerium Decor" },
+          "3091": { id: "3091", name: "Other Reptile Supplies" }
+        }
+      }
+    }
+  },
   "2633": { id: "2633", name: "Garden & Outdoor" },
   "2882": { id: "2882", name: "Office" },
   "3170": { id: "3170", name: "Tools" },
