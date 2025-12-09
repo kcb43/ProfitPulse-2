@@ -246,7 +246,8 @@ export default function Crosslist() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { addTag } = useInventoryTags();
-  const [layout, setLayout] = useState("rows");
+  const [layout, setLayout] = useState("grid");
+  const [isMobile, setIsMobile] = useState(false);
   const [q, setQ] = useState("");
   const [platformFilter, setPlatformFilter] = useState("all");
   const [selected, setSelected] = useState([]);
@@ -272,6 +273,23 @@ export default function Crosslist() {
   const [bulkAction, setBulkAction] = useState(null);
   const [selectedMarketplaces, setSelectedMarketplaces] = useState([]);
   const [crosslistLoading, setCrosslistLoading] = useState(false);
+  
+  // Force grid view on mobile screens (md breakpoint is 768px)
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile && layout !== "grid") {
+        setLayout("grid");
+      }
+    };
+    
+    // Check on mount and resize
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [layout]);
   
   // Get eBay category tree ID
   const { data: categoryTreeData, isLoading: isLoadingCategoryTree } = useEbayCategoryTreeId('EBAY_US');
@@ -1064,8 +1082,14 @@ export default function Crosslist() {
 
   const toggleSelect = (id) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  const toggleAll = (checked) =>
-    setSelected(checked ? filtered.map((x) => x.id) : []);
+  const toggleAll = (checked) => {
+    const isChecked = checked === true;
+    if (isChecked) {
+      setSelected(filtered.map((x) => x.id));
+    } else {
+      setSelected([]);
+    }
+  };
 
   const toggleMarketActive = (mkt) =>
     setActiveMkts((prev) => (prev.includes(mkt) ? prev.filter((x) => x !== mkt) : [...prev, mkt]));
@@ -1165,7 +1189,7 @@ export default function Crosslist() {
               Start crosslisting your inventory in seconds. Bulk tools now; marketplace APIs later.
             </p>
           </div>
-          <div className="flex gap-2 flex-shrink-0 flex-wrap">
+          <div className="hidden md:flex gap-2 flex-shrink-0 flex-wrap">
             <Button
               variant="outline"
               onClick={() => setLayout((l) => (l === "rows" ? "grid" : "rows"))}
@@ -1252,13 +1276,6 @@ export default function Crosslist() {
                 <span className="font-medium text-foreground">{crosslistableItems.length}</span> items
               </div>
               <div className="flex flex-col md:flex-row gap-2 flex-wrap order-1 md:order-2 md:ml-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => toggleAll(selected.length !== filtered.length)}
-                  className="whitespace-nowrap w-auto"
-                >
-                  {selected.length === filtered.length ? "Unselect All" : "Select All"}
-                </Button>
                 <BulkActionsMenu 
                   selectedItems={selected}
                   onActionComplete={() => setSelected([])}
@@ -1287,7 +1304,28 @@ export default function Crosslist() {
           <div className="p-12 text-center text-muted-foreground">
             No items match your filters.
           </div>
-        ) : layout === "rows" ? (
+        ) : (
+          <>
+            {filtered.length > 0 && (
+              <div className="flex items-center gap-3 p-4 bg-gray-800 dark:bg-gray-800 rounded-t-lg">
+                <Checkbox
+                  checked={selected.length === filtered.length && filtered.length > 0}
+                  onCheckedChange={toggleAll}
+                  id="select-all"
+                  className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&[data-state=checked]]:!bg-green-600 [&[data-state=checked]]:!border-green-600 flex-shrink-0 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
+                />
+                <div className="flex flex-col">
+                  <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-white">
+                    Select All ({filtered.length})
+                  </label>
+                  <span className="text-xs text-gray-400 md:hidden">
+                    Tap image to select for bulk edit
+                  </span>
+                  <span className="text-xs text-gray-400 hidden md:block">Click image to select for bulk edit</span>
+                </div>
+              </div>
+            )}
+            {layout === "rows" && !isMobile ? (
           <div className="space-y-6">
             {filtered.map((it) => {
               const map = computeListingState(it);
@@ -1304,15 +1342,6 @@ export default function Crosslist() {
                     boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                     overflow: 'hidden'
                   }}>
-                  {/* Checkbox - positioned absolutely */}
-                  <div className="absolute top-4 left-4 z-20">
-                    <Checkbox
-                      checked={selected.includes(it.id)}
-                      onCheckedChange={() => toggleSelect(it.id)}
-                      className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
-                    />
-                  </div>
-
                   {/* Product Image Section */}
                   <div className="glass flex items-center justify-center relative flex-shrink-0 m-4"
                     style={{
@@ -1324,14 +1353,26 @@ export default function Crosslist() {
                       border: '1px solid rgba(255, 255, 255, 0.1)',
                       padding: '16px'
                     }}>
-                    <OptimizedImage
-                      src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
-                      alt={it.item_name}
-                      fallback="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"
-                      className="w-full h-full object-contain"
-                      style={{ maxHeight: '186px' }}
-                      lazy={true}
-                    />
+                    <div
+                      onClick={() => toggleSelect(it.id)}
+                      className="block w-full h-full cursor-pointer"
+                    >
+                      <OptimizedImage
+                        src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
+                        alt={it.item_name}
+                        fallback="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"
+                        className="w-full h-full object-contain"
+                        style={{ maxHeight: '186px' }}
+                        lazy={true}
+                      />
+                    </div>
+                    {selected.includes(it.id) && (
+                      <div className="absolute top-2 left-2 z-20">
+                        <div className="bg-green-600 rounded-full p-1 shadow-lg">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Details Section */}
@@ -1463,31 +1504,29 @@ export default function Crosslist() {
                       background: 'rgba(255, 255, 255, 0.05)',
                     }}
                   >
-                    <OptimizedImage
-                      src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
-                      alt={it.item_name}
-                      fallback="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"
-                      className="w-full h-full object-cover"
-                      lazy={true}
-                    />
-                    <div className="absolute top-2 left-2 z-10">
-                      <Checkbox
-                        checked={selected.includes(it.id)}
-                        onCheckedChange={() => toggleSelect(it.id)}
-                        className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&_svg]:!h-[16px] [&_svg]:!w-[16px] backdrop-blur-sm"
+                    <div
+                      onClick={() => toggleSelect(it.id)}
+                      className="block w-full h-full cursor-pointer"
+                    >
+                      <OptimizedImage
+                        src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
+                        alt={it.item_name}
+                        fallback="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"
+                        className="w-full h-full object-cover"
+                        lazy={true}
                       />
                     </div>
                     {selected.includes(it.id) && (
-                      <div className="absolute top-2 right-2 z-20">
+                      <div className="absolute top-2 left-2 z-20">
                         <div className="bg-green-600 rounded-full p-1 shadow-lg">
                           <Check className="w-4 h-4 text-white" />
                         </div>
                       </div>
                     )}
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <div className="px-2 py-1 rounded-lg text-white text-xs font-semibold backdrop-blur-sm bg-black/60">
-                        Listed on {listedCount} platform{listedCount !== 1 ? 's' : ''}
-                      </div>
+                    <div className="absolute bottom-2 left-2 z-10">
+                      <Badge variant="outline" className={`${STATUS_COLORS[it.status] || STATUS_COLORS.available} text-[10px] px-1.5 py-0.5 backdrop-blur-sm`}>
+                        {STATUS_LABELS[it.status] || STATUS_LABELS.available}
+                      </Badge>
                     </div>
                   </div>
                   <CardContent className="p-4">
@@ -1517,17 +1556,7 @@ export default function Crosslist() {
                             >
                               {renderMarketplaceIcon(m, "w-4 h-4")}
                             </div>
-                            {status === 'not_listed' ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleListOnMarketplaceItem(it.id, m.id)}
-                                disabled={crosslistLoading}
-                                className="text-xs h-6 px-2"
-                              >
-                                List
-                              </Button>
-                            ) : (
+                            {status === 'not_listed' ? null : (
                               <div className="flex gap-1">
                                 {listing?.marketplace_listing_url && (
                                   <Button
@@ -1576,6 +1605,8 @@ export default function Crosslist() {
               );
             })}
           </div>
+        )}
+          </>
         )}
       </div>
 
