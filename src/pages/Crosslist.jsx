@@ -79,9 +79,9 @@ const MARKETPLACES = [
 ];
 
 const STATUS_COLORS = {
-  available: "bg-blue-100 text-blue-800",
-  listed:    "bg-yellow-100 text-yellow-800",
-  sold:      "bg-gray-100 text-gray-800",
+  available: "bg-blue-100 text-blue-800 border border-blue-200",
+  listed:    "bg-green-100 text-green-800 border border-green-200",
+  sold:      "bg-gray-100 text-gray-800 border border-gray-200",
 };
 
 const STATUS_LABELS = {
@@ -1344,8 +1344,8 @@ export default function Crosslist() {
                     <div className="mb-3">
                       <Badge className={`${STATUS_COLORS[it.status] || STATUS_COLORS.available} glass px-4 sm:px-6 py-2 rounded-xl text-sm font-medium`}
                         style={{
-                          background: it.status === 'listed' ? 'rgba(250, 204, 21, 0.2)' : it.status === 'sold' ? 'rgba(156, 163, 175, 0.2)' : 'rgba(59, 130, 246, 0.2)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)'
+                          background: it.status === 'listed' ? 'rgba(34, 197, 94, 0.2)' : it.status === 'sold' ? 'rgba(156, 163, 175, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                          border: it.status === 'listed' ? '1px solid rgba(34, 197, 94, 0.4)' : it.status === 'sold' ? '1px solid rgba(156, 163, 175, 0.4)' : '1px solid rgba(59, 130, 246, 0.4)'
                         }}>
                         {STATUS_LABELS[it.status] || STATUS_LABELS.available}
                       </Badge>
