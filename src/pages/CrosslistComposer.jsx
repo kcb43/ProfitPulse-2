@@ -45,6 +45,8 @@ import {
   Truck,
   Tag,
   Home,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import ColorPickerDialog from "../components/ColorPickerDialog";
 import SoldLookupDialog from "../components/SoldLookupDialog";
@@ -7153,6 +7155,14 @@ export default function CrosslistComposer() {
   const [generalCategoryPath, setGeneralCategoryPath] = useState([]);
   const [mercariCategoryPath, setMercariCategoryPath] = useState([]);
   const [descriptionGeneratorOpen, setDescriptionGeneratorOpen] = useState(false);
+  const [expandedDescription, setExpandedDescription] = useState(null); // Track which description is expanded in dialog: 'general' | 'ebay' | 'etsy' | 'mercari' | 'facebook' | null
+  const [collapsedDescriptions, setCollapsedDescriptions] = useState({
+    general: true,
+    ebay: true,
+    etsy: true,
+    mercari: true,
+    facebook: true,
+  }); // Track which descriptions are collapsed on mobile (true = collapsed, false = expanded)
   const [brandSearchOpen, setBrandSearchOpen] = useState(false);
   const [brandSearchValue, setBrandSearchValue] = useState("");
   const [ebayBrandSearchOpen, setEbayBrandSearchOpen] = useState(false);
@@ -10284,7 +10294,7 @@ export default function CrosslistComposer() {
         {/* eBay Account Connection Section - At Top (Only show on eBay form) */}
         {activeForm === "ebay" && (
         <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2">
               <img src={EBAY_ICON_URL} alt="eBay" className="w-5 h-5" />
               <Label className="text-base font-semibold">eBay Account</Label>
@@ -10301,7 +10311,7 @@ export default function CrosslistComposer() {
                 </Button>
               </div>
             ) : (
-              <Button variant="default" size="sm" className="gap-2" onClick={handleConnectEbay}>
+              <Button variant="default" size="sm" className="gap-2 w-fit" onClick={handleConnectEbay}>
                 <Check className="h-4 w-4" />
                 Connect eBay Account
               </Button>
@@ -10357,7 +10367,7 @@ export default function CrosslistComposer() {
         {/* Facebook Account Connection Section - At Top (Only show on Facebook form) */}
         {activeForm === "facebook" && (
         <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2">
               <img src={FACEBOOK_ICON_URL} alt="Facebook" className="w-5 h-5" />
               <Label className="text-base font-semibold">Facebook Account</Label>
@@ -10374,7 +10384,7 @@ export default function CrosslistComposer() {
                 </Button>
               </div>
             ) : (
-              <Button variant="default" size="sm" className="gap-2" onClick={handleConnectFacebook}>
+              <Button variant="default" size="sm" className="gap-2 w-fit" onClick={handleConnectFacebook}>
                 <Check className="h-4 w-4" />
                 Connect Facebook Account
               </Button>
@@ -10513,7 +10523,7 @@ export default function CrosslistComposer() {
         {/* Mercari Connection Status Bar - Only shown when Mercari form is active */}
         {activeForm === "mercari" && (
           <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <img src={MERCARI_ICON_URL} alt="Mercari" className="w-5 h-5" />
                 <Label className="text-base font-semibold">Mercari Account</Label>
@@ -10543,7 +10553,7 @@ export default function CrosslistComposer() {
                 <Button 
                   variant="default" 
                   size="sm" 
-                  className="gap-2" 
+                  className="gap-2 w-fit" 
                   onClick={() => {
                     // Open Mercari login popup via extension
                     window.open('https://www.mercari.com/mypage/', 'mercari-login', 'width=600,height=700');
@@ -10877,16 +10887,47 @@ export default function CrosslistComposer() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <Label htmlFor="general-description" className="text-xs">Description</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDescriptionGeneratorOpen(true)}
-                      className="gap-2 h-7 text-xs"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      AI Generate
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCollapsedDescriptions(prev => ({ ...prev, general: !prev.general }))}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        {collapsedDescriptions.general ? (
+                          <>
+                            <Maximize2 className="h-3 w-3" />
+                            Expand
+                          </>
+                        ) : (
+                          <>
+                            <Minimize2 className="h-3 w-3" />
+                            Minimize
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedDescription('general')}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                        Full Screen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDescriptionGeneratorOpen(true)}
+                        className="gap-2 h-7 text-xs"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI Generate
+                      </Button>
+                    </div>
                   </div>
                   <RichTextarea
                     id="general-description"
@@ -10894,7 +10935,9 @@ export default function CrosslistComposer() {
                     placeholder="Enter a detailed description of your item..."
                     value={generalForm.description || ""}
                     onChange={(e) => handleGeneralChange("description", e.target.value)}
-                    className="min-h-[120px]"
+                    className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                      collapsedDescriptions.general ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                    }`}
                   />
                 </div>
                 <div>
@@ -11838,16 +11881,47 @@ export default function CrosslistComposer() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <Label htmlFor="ebay-description" className="text-xs">Description</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDescriptionGeneratorOpen(true)}
-                      className="gap-2 h-7 text-xs"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      AI Generate
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCollapsedDescriptions(prev => ({ ...prev, ebay: !prev.ebay }))}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        {collapsedDescriptions.ebay ? (
+                          <>
+                            <Maximize2 className="h-3 w-3" />
+                            Expand
+                          </>
+                        ) : (
+                          <>
+                            <Minimize2 className="h-3 w-3" />
+                            Minimize
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedDescription('ebay')}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                        Full Screen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDescriptionGeneratorOpen(true)}
+                        className="gap-2 h-7 text-xs"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI Generate
+                      </Button>
+                    </div>
                   </div>
                   <RichTextarea
                     id="ebay-description"
@@ -11855,7 +11929,9 @@ export default function CrosslistComposer() {
                     placeholder={generalForm.description ? `Inherited from General` : "Enter eBay-specific description..."}
                     value={ebayForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("ebay", "description", e.target.value)}
-                    className="min-h-[120px]"
+                    className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                      collapsedDescriptions.ebay ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                    }`}
                   />
                   {generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -13210,22 +13286,55 @@ export default function CrosslistComposer() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <Label className="text-xs">Description</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDescriptionGeneratorOpen(true)}
-                      className="gap-2 h-7 text-xs"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      AI Generate
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCollapsedDescriptions(prev => ({ ...prev, etsy: !prev.etsy }))}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        {collapsedDescriptions.etsy ? (
+                          <>
+                            <Maximize2 className="h-3 w-3" />
+                            Expand
+                          </>
+                        ) : (
+                          <>
+                            <Minimize2 className="h-3 w-3" />
+                            Minimize
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedDescription('etsy')}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                        Full Screen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDescriptionGeneratorOpen(true)}
+                        className="gap-2 h-7 text-xs"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI Generate
+                      </Button>
+                    </div>
                   </div>
                   <RichTextarea
                     placeholder={generalForm.description ? `Inherited from General` : "Enter Etsy-specific description..."}
                     value={etsyForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("etsy", "description", e.target.value)}
-                    className="min-h-[120px]"
+                    className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                      collapsedDescriptions.etsy ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                    }`}
                   />
                   {generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -13743,22 +13852,55 @@ export default function CrosslistComposer() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <Label className="text-xs">Description <span className="text-red-500">*</span></Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDescriptionGeneratorOpen(true)}
-                      className="gap-2 h-7 text-xs"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      AI Generate
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCollapsedDescriptions(prev => ({ ...prev, mercari: !prev.mercari }))}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        {collapsedDescriptions.mercari ? (
+                          <>
+                            <Maximize2 className="h-3 w-3" />
+                            Expand
+                          </>
+                        ) : (
+                          <>
+                            <Minimize2 className="h-3 w-3" />
+                            Minimize
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedDescription('mercari')}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                        Full Screen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDescriptionGeneratorOpen(true)}
+                        className="gap-2 h-7 text-xs"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI Generate
+                      </Button>
+                    </div>
                   </div>
                   <RichTextarea
                     placeholder={generalForm.description ? `Inherited from General` : "Describe your item (5+ words)"}
                     value={mercariForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("mercari", "description", e.target.value)}
-                    className="min-h-[120px]"
+                    className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                      collapsedDescriptions.mercari ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                    }`}
                   />
                   {generalForm.description && !mercariForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -14565,22 +14707,55 @@ export default function CrosslistComposer() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <Label className="text-xs">Description</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDescriptionGeneratorOpen(true)}
-                      className="gap-2 h-7 text-xs"
-                    >
-                      <Sparkles className="h-3 w-3" />
-                      AI Generate
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCollapsedDescriptions(prev => ({ ...prev, facebook: !prev.facebook }))}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        {collapsedDescriptions.facebook ? (
+                          <>
+                            <Maximize2 className="h-3 w-3" />
+                            Expand
+                          </>
+                        ) : (
+                          <>
+                            <Minimize2 className="h-3 w-3" />
+                            Minimize
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedDescription('facebook')}
+                        className="gap-2 h-7 text-xs md:hidden"
+                      >
+                        <Maximize2 className="h-3 w-3" />
+                        Full Screen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDescriptionGeneratorOpen(true)}
+                        className="gap-2 h-7 text-xs"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        AI Generate
+                      </Button>
+                    </div>
                   </div>
                   <RichTextarea
                     placeholder={generalForm.description ? `Inherited from General` : "Enter Facebook-specific description..."}
                     value={facebookForm.description || ""}
                     onChange={(e) => handleMarketplaceChange("facebook", "description", e.target.value)}
-                    className="min-h-[120px]"
+                    className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                      collapsedDescriptions.facebook ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                    }`}
                   />
                   {generalForm.description && (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -15436,6 +15611,81 @@ export default function CrosslistComposer() {
         condition={activeForm === "general" ? generalForm.condition : generalForm.condition}
         similarDescriptions={similarItems}
       />
+
+      {/* Expanded Description Dialog - Mobile Only */}
+      <Dialog open={expandedDescription !== null} onOpenChange={(open) => !open && setExpandedDescription(null)}>
+        <DialogContent className="max-w-full md:max-w-2xl h-[90vh] md:h-auto flex flex-col p-0 md:p-6">
+          <DialogHeader className="px-6 pt-6 pb-4 md:px-0 md:pt-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                {expandedDescription === 'general' && 'Edit Description'}
+                {expandedDescription === 'ebay' && 'Edit eBay Description'}
+                {expandedDescription === 'etsy' && 'Edit Etsy Description'}
+                {expandedDescription === 'mercari' && 'Edit Mercari Description'}
+                {expandedDescription === 'facebook' && 'Edit Facebook Description'}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setExpandedDescription(null)}
+                className="md:hidden"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <DialogDescription className="md:block hidden">
+              Edit your description in a larger view. Changes are saved automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden px-6 pb-6 md:px-0 md:pb-0">
+            {expandedDescription === 'general' && (
+              <RichTextarea
+                placeholder="Enter a detailed description of your item..."
+                value={generalForm.description || ""}
+                onChange={(e) => handleGeneralChange("description", e.target.value)}
+                className="min-h-[60vh] md:min-h-[400px] w-full"
+              />
+            )}
+            {expandedDescription === 'ebay' && (
+              <RichTextarea
+                placeholder={generalForm.description ? `Inherited from General` : "Enter eBay-specific description..."}
+                value={ebayForm.description || ""}
+                onChange={(e) => handleMarketplaceChange("ebay", "description", e.target.value)}
+                className="min-h-[60vh] md:min-h-[400px] w-full"
+              />
+            )}
+            {expandedDescription === 'etsy' && (
+              <RichTextarea
+                placeholder={generalForm.description ? `Inherited from General` : "Enter Etsy-specific description..."}
+                value={etsyForm.description || ""}
+                onChange={(e) => handleMarketplaceChange("etsy", "description", e.target.value)}
+                className="min-h-[60vh] md:min-h-[400px] w-full"
+              />
+            )}
+            {expandedDescription === 'mercari' && (
+              <RichTextarea
+                placeholder={generalForm.description ? `Inherited from General` : "Describe your item (5+ words)"}
+                value={mercariForm.description || ""}
+                onChange={(e) => handleMarketplaceChange("mercari", "description", e.target.value)}
+                className="min-h-[60vh] md:min-h-[400px] w-full"
+              />
+            )}
+            {expandedDescription === 'facebook' && (
+              <RichTextarea
+                placeholder={generalForm.description ? `Inherited from General` : "Enter Facebook-specific description..."}
+                value={facebookForm.description || ""}
+                onChange={(e) => handleMarketplaceChange("facebook", "description", e.target.value)}
+                className="min-h-[60vh] md:min-h-[400px] w-full"
+              />
+            )}
+          </div>
+          <DialogFooter className="px-6 pb-6 md:px-0 md:pb-0">
+            <Button onClick={() => setExpandedDescription(null)}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Image Editor */}
       <ImageEditor
