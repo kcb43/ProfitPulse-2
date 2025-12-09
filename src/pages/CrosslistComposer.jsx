@@ -10885,7 +10885,7 @@ export default function CrosslistComposer() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
                     <Label htmlFor="general-description" className="text-xs">Description</Label>
                     <div className="flex gap-2">
                       <Button
@@ -10915,7 +10915,7 @@ export default function CrosslistComposer() {
                         className="gap-2 h-7 text-xs md:hidden"
                       >
                         <Maximize2 className="h-3 w-3" />
-                        Full Screen
+                        Full
                       </Button>
                       <Button
                         type="button"
@@ -11879,7 +11879,7 @@ export default function CrosslistComposer() {
 
                 {/* Description Section */}
                 <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
                     <Label htmlFor="ebay-description" className="text-xs">Description</Label>
                     <div className="flex gap-2">
                       <Button
@@ -11909,7 +11909,7 @@ export default function CrosslistComposer() {
                         className="gap-2 h-7 text-xs md:hidden"
                       >
                         <Maximize2 className="h-3 w-3" />
-                        Full Screen
+                        Full
                       </Button>
                       <Button
                         type="button"
@@ -13284,7 +13284,7 @@ export default function CrosslistComposer() {
 
                 {/* Description Section */}
                 <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
                     <Label className="text-xs">Description</Label>
                     <div className="flex gap-2">
                       <Button
@@ -13314,7 +13314,7 @@ export default function CrosslistComposer() {
                         className="gap-2 h-7 text-xs md:hidden"
                       >
                         <Maximize2 className="h-3 w-3" />
-                        Full Screen
+                        Full
                       </Button>
                       <Button
                         type="button"
@@ -13850,7 +13850,7 @@ export default function CrosslistComposer() {
 
                 {/* Description Section */}
                 <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
                     <Label className="text-xs">Description <span className="text-red-500">*</span></Label>
                     <div className="flex gap-2">
                       <Button
@@ -13880,7 +13880,7 @@ export default function CrosslistComposer() {
                         className="gap-2 h-7 text-xs md:hidden"
                       >
                         <Maximize2 className="h-3 w-3" />
-                        Full Screen
+                        Full
                       </Button>
                       <Button
                         type="button"
@@ -14705,7 +14705,7 @@ export default function CrosslistComposer() {
 
                 {/* Description Section */}
                 <div className="md:col-span-2">
-                  <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
                     <Label className="text-xs">Description</Label>
                     <div className="flex gap-2">
                       <Button
@@ -14735,7 +14735,7 @@ export default function CrosslistComposer() {
                         className="gap-2 h-7 text-xs md:hidden"
                       >
                         <Maximize2 className="h-3 w-3" />
-                        Full Screen
+                        Full
                       </Button>
                       <Button
                         type="button"
@@ -15616,23 +15616,13 @@ export default function CrosslistComposer() {
       <Dialog open={expandedDescription !== null} onOpenChange={(open) => !open && setExpandedDescription(null)}>
         <DialogContent className="max-w-full md:max-w-2xl h-[90vh] md:h-auto flex flex-col p-0 md:p-6">
           <DialogHeader className="px-6 pt-6 pb-4 md:px-0 md:pt-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle>
-                {expandedDescription === 'general' && 'Edit Description'}
-                {expandedDescription === 'ebay' && 'Edit eBay Description'}
-                {expandedDescription === 'etsy' && 'Edit Etsy Description'}
-                {expandedDescription === 'mercari' && 'Edit Mercari Description'}
-                {expandedDescription === 'facebook' && 'Edit Facebook Description'}
-              </DialogTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setExpandedDescription(null)}
-                className="md:hidden"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <DialogTitle>
+              {expandedDescription === 'general' && 'Edit Description'}
+              {expandedDescription === 'ebay' && 'Edit eBay Description'}
+              {expandedDescription === 'etsy' && 'Edit Etsy Description'}
+              {expandedDescription === 'mercari' && 'Edit Mercari Description'}
+              {expandedDescription === 'facebook' && 'Edit Facebook Description'}
+            </DialogTitle>
             <DialogDescription className="md:block hidden">
               Edit your description in a larger view. Changes are saved automatically.
             </DialogDescription>
