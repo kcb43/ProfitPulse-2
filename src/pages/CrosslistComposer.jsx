@@ -4436,7 +4436,72 @@ const MERCARI_CATEGORIES = {
       }
     }
   },
-  "141": { id: "141", name: "Books" },
+  "141": {
+    id: "141",
+    name: "Books",
+    subcategories: {
+      "142": {
+        id: "142",
+        name: "Magazines",
+        subcategories: {
+          "1495": { id: "1495", name: "Lifestyle & Culture Magazines" },
+          "1496": { id: "1496", name: "International Magazines" },
+          "1497": { id: "1497", name: "Professional & Trade Magazines" },
+          "1498": { id: "1498", name: "Other Magazines" }
+        }
+      },
+      "1011": {
+        id: "1011",
+        name: "Fiction Books",
+        subcategories: {
+          "1010": { id: "1010", name: "Comics" },
+          "1023": { id: "1023", name: "Sci-fi & Fantasy Books" },
+          "1482": { id: "1482", name: "Literary Fiction Books" },
+          "1487": { id: "1487", name: "Fictional Children's Books" },
+          "3513": { id: "3513", name: "Manga" },
+          "3514": { id: "3514", name: "Romance Fiction Books" },
+          "3515": { id: "3515", name: "Horror Fiction Books" },
+          "3516": { id: "3516", name: "Western Books" },
+          "3517": { id: "3517", name: "Historical Fiction Books" },
+          "3518": { id: "3518", name: "Mystery & Crime Fiction Books" },
+          "3519": { id: "3519", name: "Thriller Fiction Books" },
+          "3520": { id: "3520", name: "Other Fiction Books" },
+          "3529": { id: "3529", name: "Action & Adventure Books" }
+        }
+      },
+      "1016": {
+        id: "1016",
+        name: "Nonfiction Books",
+        subcategories: {
+          "1018": { id: "1018", name: "Craft Books" },
+          "1483": { id: "1483", name: "Business & Finance Books" },
+          "1484": { id: "1484", name: "Politics Books" },
+          "1486": { id: "1486", name: "Religion & Spirituality Books" },
+          "1492": { id: "1492", name: "Biographies & Memoirs" },
+          "2184": { id: "2184", name: "Art Books" },
+          "2185": { id: "2185", name: "Photography Books" },
+          "3521": { id: "3521", name: "Nonfiction Children's Books" },
+          "3522": { id: "3522", name: "Other Nonfiction Books" }
+        }
+      },
+      "1480": {
+        id: "1480",
+        name: "Reference Books",
+        subcategories: {
+          "1012": { id: "1012", name: "Cookbooks" },
+          "1017": { id: "1017", name: "Other Reference Books" },
+          "1489": { id: "1489", name: "Educational & Instructional Books" },
+          "3523": { id: "3523", name: "Dictionaries" },
+          "3524": { id: "3524", name: "Thesauruses" },
+          "3525": { id: "3525", name: "Encyclopedias" },
+          "3526": { id: "3526", name: "Textbooks" },
+          "3530": { id: "3530", name: "Health & Fitness Books" },
+          "3531": { id: "3531", name: "Self-Help Books" }
+        }
+      },
+      "1494": { id: "1494", name: "Other Books" }
+    }
+  },
   "10": { id: "10", name: "Other" }
 };
 
