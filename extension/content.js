@@ -550,11 +550,39 @@ async function fillMercariForm(data) {
     // 5. CONDITION
     if (data.condition) {
       console.log('🔍 Attempting condition selection...');
-      const conditionSuccess = await selectMercariDropdown('Condition', data.condition, false);
+      
+      // Map condition values to Mercari's expected format
+      const conditionMap = {
+        'New': 'New',
+        'Like New': 'Like New',
+        'Good': 'Good',
+        'Fair': 'Fair',
+        'Poor': 'Poor',
+        // Also handle general form conditions
+        'New With Tags/Box': 'New',
+        'New Without Tags/Box': 'Like New',
+        'Pre - Owned - Excellent': 'Like New',
+        'Pre - Owned - Good': 'Good',
+        'Pre - Owned - Fair': 'Fair',
+        'Poor (Major flaws)': 'Poor',
+      };
+      
+      const mercariCondition = conditionMap[data.condition] || data.condition;
+      console.log(`  Mapping condition: "${data.condition}" → "${mercariCondition}"`);
+      
+      // Try exact match first
+      let conditionSuccess = await selectMercariDropdown('Condition', mercariCondition, false);
+      
+      if (!conditionSuccess) {
+        console.warn('  ⚠️ Exact match failed, trying partial match...');
+        // Try partial match as fallback
+        conditionSuccess = await selectMercariDropdown('Condition', mercariCondition, true);
+      }
+      
       if (conditionSuccess) {
-        console.log('✓ Condition set:', data.condition);
+        console.log('✓ Condition set:', mercariCondition);
       } else {
-        console.warn('⚠️ Condition selection failed');
+        console.warn('⚠️ Condition selection failed - condition may need manual selection');
       }
     }
     
@@ -619,6 +647,47 @@ async function fillMercariForm(data) {
       priceInput.dispatchEvent(new Event('blur', { bubbles: true }));
       await sleep(500);
       console.log('✓ Price set:', data.price);
+    }
+    
+    // 10.5. SMART PRICING & SMART OFFERS (after price is set)
+    if (data.smartPricing !== undefined || data.smartOffers !== undefined) {
+      await sleep(500); // Wait for price to process and toggles to appear
+      
+      // Smart Pricing toggle
+      if (data.smartPricing !== undefined) {
+        const smartPricingToggle = document.querySelector('[data-testid*="SmartPricing"]') ||
+                                  document.querySelector('input[type="checkbox"][name*="smart" i][name*="pricing" i]') ||
+                                  document.querySelector('input[type="checkbox"][aria-label*="Smart Pricing" i]') ||
+                                  document.querySelector('button[aria-label*="Smart Pricing" i]');
+        if (smartPricingToggle) {
+          const isChecked = smartPricingToggle.checked || smartPricingToggle.getAttribute('aria-checked') === 'true';
+          if (data.smartPricing !== isChecked) {
+            smartPricingToggle.click();
+            await sleep(300);
+            console.log(`✓ Smart Pricing ${data.smartPricing ? 'enabled' : 'disabled'}`);
+          }
+        } else {
+          console.warn('⚠️ Smart Pricing toggle not found');
+        }
+      }
+      
+      // Smart Offers toggle
+      if (data.smartOffers !== undefined) {
+        const smartOffersToggle = document.querySelector('[data-testid*="SmartOffers"]') ||
+                                 document.querySelector('input[type="checkbox"][name*="smart" i][name*="offers" i]') ||
+                                 document.querySelector('input[type="checkbox"][aria-label*="Smart Offers" i]') ||
+                                 document.querySelector('button[aria-label*="Smart Offers" i]');
+        if (smartOffersToggle) {
+          const isChecked = smartOffersToggle.checked || smartOffersToggle.getAttribute('aria-checked') === 'true';
+          if (data.smartOffers !== isChecked) {
+            smartOffersToggle.click();
+            await sleep(300);
+            console.log(`✓ Smart Offers ${data.smartOffers ? 'enabled' : 'disabled'}`);
+          }
+        } else {
+          console.warn('⚠️ Smart Offers toggle not found');
+        }
+      }
     }
     
     // 11. PHOTOS - Complex file upload

@@ -7175,6 +7175,60 @@ export default function CrosslistComposer() {
           return;
         }
 
+        // Validate that full category path is selected (no subcategories remaining)
+        if (!mercariForm.mercariCategory || !mercariForm.mercariCategoryId) {
+          toast({
+            title: "Category Required",
+            description: "Please select a complete category path (including all subcategories) before listing.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Check if category is a leaf node (no subcategories) using the category path
+        const checkCategoryComplete = (categoryId, categoryPath) => {
+          if (!categoryId) return false;
+          
+          // Navigate through MERCARI_CATEGORIES using the path
+          let currentLevel = MERCARI_CATEGORIES;
+          const pathParts = categoryPath.split(' > ');
+          
+          // Navigate to the selected category
+          for (let i = 0; i < pathParts.length; i++) {
+            const part = pathParts[i];
+            // Find the category in current level by name
+            const found = Object.values(currentLevel).find(cat => cat.name === part);
+            if (!found) return false;
+            
+            // If this is the last part, check if it has subcategories
+            if (i === pathParts.length - 1) {
+              // Check if the found category ID matches the selected categoryId
+              if (found.id !== categoryId) return false;
+              // Check if it's a leaf node (no subcategories)
+              return !found.subcategories || Object.keys(found.subcategories).length === 0;
+            }
+            
+            // Move to next level
+            if (found.subcategories) {
+              currentLevel = found.subcategories;
+            } else {
+              return false; // Path is incomplete - expected subcategories but none found
+            }
+          }
+          return true;
+        };
+
+        if (!checkCategoryComplete(mercariForm.mercariCategoryId, mercariForm.mercariCategory)) {
+          toast({
+            title: "Incomplete Category Selection",
+            description: "Please select all subcategories until you reach a final category with no more subcategories.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
         // Prepare listing data for extension
         const listingData = {
           title: mercariForm.title || generalForm.title,
@@ -7191,6 +7245,8 @@ export default function CrosslistComposer() {
           shipsFrom: mercariForm.shipsFrom || generalForm.zip || '',
           deliveryMethod: mercariForm.deliveryMethod || 'prepaid',
           shippingPayer: mercariForm.shippingCarrier === "Mercari Prepaid" ? "buyer" : "seller",
+          smartPricing: mercariForm.smartPricing || false,
+          smartOffers: mercariForm.smartOffers || false,
         };
 
         // Send to extension for automation
@@ -11960,6 +12016,38 @@ export default function CrosslistComposer() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       Inherited from General form. You can edit this field.
                     </p>
+                  )}
+                  
+                  {/* Smart Pricing and Smart Offers - Only show after price is entered */}
+                  {(mercariForm.price || generalForm.price) && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="mercari-smart-pricing" className="text-xs font-medium cursor-pointer">
+                            Smart Pricing
+                          </Label>
+                          <span className="text-xs text-muted-foreground">(Auto-adjust price based on market)</span>
+                        </div>
+                        <Switch
+                          id="mercari-smart-pricing"
+                          checked={mercariForm.smartPricing || false}
+                          onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartPricing", checked)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="mercari-smart-offers" className="text-xs font-medium cursor-pointer">
+                            Smart Offers
+                          </Label>
+                          <span className="text-xs text-muted-foreground">(Auto-accept reasonable offers)</span>
+                        </div>
+                        <Switch
+                          id="mercari-smart-offers"
+                          checked={mercariForm.smartOffers || false}
+                          onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartOffers", checked)}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
 
