@@ -34215,6 +34215,37 @@ export default function CrosslistComposer() {
     return similarityMatch || null;
   };
 
+  // Filter Mercari brands based on search value for performance
+  const filteredMercariBrands = useMemo(() => {
+    const searchLower = mercariBrandSearchValue.toLowerCase().trim();
+    
+    // Filter custom brands that match Mercari brands
+    const filteredCustomBrands = customBrands
+      .filter(brand => {
+        const matched = findSimilarBrand(brand, MERCARI_BRANDS);
+        if (!matched) return false;
+        if (!searchLower) return true;
+        return matched.toLowerCase().includes(searchLower);
+      })
+      .map(brand => ({
+        original: brand,
+        matched: findSimilarBrand(brand, MERCARI_BRANDS)
+      }));
+
+    // Filter Mercari brands
+    const filteredBrands = searchLower
+      ? MERCARI_BRANDS.filter(brand => 
+          brand.toLowerCase().includes(searchLower)
+        )
+      : MERCARI_BRANDS.slice(0, 50); // Limit to first 50 if no search
+
+    return {
+      customBrands: filteredCustomBrands,
+      mercariBrands: filteredBrands,
+      hasMore: !searchLower && MERCARI_BRANDS.length > 50
+    };
+  }, [mercariBrandSearchValue, customBrands]);
+
   const addCustomBrand = (brandName) => {
     const trimmed = brandName.trim();
     if (!trimmed) return;
@@ -40197,85 +40228,57 @@ export default function CrosslistComposer() {
                         <CommandList>
                           <CommandEmpty>No brand found.</CommandEmpty>
                           <CommandGroup>
-                            {useMemo(() => {
-                              const searchLower = mercariBrandSearchValue.toLowerCase().trim();
-                              
-                              // Filter custom brands that match Mercari brands
-                              const filteredCustomBrands = customBrands
-                                .filter(brand => {
-                                  const matched = findSimilarBrand(brand, MERCARI_BRANDS);
-                                  if (!matched) return false;
-                                  if (!searchLower) return true;
-                                  return matched.toLowerCase().includes(searchLower);
-                                })
-                                .map(brand => ({
-                                  original: brand,
-                                  matched: findSimilarBrand(brand, MERCARI_BRANDS)
-                                }));
-
-                              // Filter Mercari brands
-                              const filteredMercariBrands = searchLower
-                                ? MERCARI_BRANDS.filter(brand => 
-                                    brand.toLowerCase().includes(searchLower)
-                                  )
-                                : MERCARI_BRANDS.slice(0, 50); // Limit to first 50 if no search
-
-                              return (
-                                <>
-                                  {/* Show custom brands that match Mercari brands */}
-                                  {filteredCustomBrands.map(({ original, matched }) => (
-                                    <CommandItem
-                                      key={`custom-${original}`}
-                                      value={matched || original}
-                                      onSelect={() => {
-                                        if (matched) {
-                                          handleMarketplaceChange("mercari", "brand", matched);
-                                        }
-                                        setMercariBrandSearchOpen(false);
-                                        setMercariBrandSearchValue("");
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          mercariForm.brand === matched ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      <span>{matched}</span>
-                                      <span className="text-xs text-muted-foreground ml-2">⭐ Custom</span>
-                                    </CommandItem>
-                                  ))}
-                                  {filteredCustomBrands.length > 0 && (
-                                    <div className="border-t my-1" />
+                            {/* Show custom brands that match Mercari brands */}
+                            {filteredMercariBrands.customBrands.map(({ original, matched }) => (
+                              <CommandItem
+                                key={`custom-${original}`}
+                                value={matched || original}
+                                onSelect={() => {
+                                  if (matched) {
+                                    handleMarketplaceChange("mercari", "brand", matched);
+                                  }
+                                  setMercariBrandSearchOpen(false);
+                                  setMercariBrandSearchValue("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    mercariForm.brand === matched ? "opacity-100" : "opacity-0"
                                   )}
-                                  {/* Mercari-specific brands */}
-                                  {filteredMercariBrands.map((brand) => (
-                                    <CommandItem
-                                      key={brand}
-                                      value={brand}
-                                      onSelect={() => {
-                                        handleMarketplaceChange("mercari", "brand", brand);
-                                        setMercariBrandSearchOpen(false);
-                                        setMercariBrandSearchValue("");
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          mercariForm.brand === brand ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {brand}
-                                    </CommandItem>
-                                  ))}
-                                  {!searchLower && filteredMercariBrands.length === 50 && (
-                                    <div className="px-2 py-1.5 text-xs text-muted-foreground text-center">
-                                      Type to search {MERCARI_BRANDS.length.toLocaleString()} brands...
-                                    </div>
+                                />
+                                <span>{matched}</span>
+                                <span className="text-xs text-muted-foreground ml-2">⭐ Custom</span>
+                              </CommandItem>
+                            ))}
+                            {filteredMercariBrands.customBrands.length > 0 && (
+                              <div className="border-t my-1" />
+                            )}
+                            {/* Mercari-specific brands */}
+                            {filteredMercariBrands.mercariBrands.map((brand) => (
+                              <CommandItem
+                                key={brand}
+                                value={brand}
+                                onSelect={() => {
+                                  handleMarketplaceChange("mercari", "brand", brand);
+                                  setMercariBrandSearchOpen(false);
+                                  setMercariBrandSearchValue("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    mercariForm.brand === brand ? "opacity-100" : "opacity-0"
                                   )}
-                                </>
-                              );
-                            }, [mercariBrandSearchValue, customBrands, mercariForm.brand])}
+                                />
+                                {brand}
+                              </CommandItem>
+                            ))}
+                            {filteredMercariBrands.hasMore && (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground text-center">
+                                Type to search {MERCARI_BRANDS.length.toLocaleString()} brands...
+                              </div>
+                            )}
                           </CommandGroup>
                         </CommandList>
                       </Command>
