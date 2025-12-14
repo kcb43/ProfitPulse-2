@@ -697,6 +697,7 @@ async function fillMercariForm(data) {
   console.log('Filling Mercari form with data:', data);
   
   try {
+    // Wrap entire form fill in try-catch to prevent errors from stopping the process
     // 1. TITLE
     const titleInput = document.querySelector('[data-testid="Title"]') || 
                       document.querySelector('#sellName');
@@ -806,20 +807,29 @@ async function fillMercariForm(data) {
       console.log('🔍 Attempting brand selection...');
       let brandSuccess = false;
       
-      // Try multiple approaches
+      // Try multiple approaches - but stop as soon as one succeeds
       // 1. Try typing first (Mercari brand is searchable)
       brandSuccess = await typeIntoMercariDropdown('Brand', data.brand);
+      if (brandSuccess) {
+        console.log('✓ Brand set via typing:', data.brand);
+      }
       
       // 2. If typing failed, try dropdown selection with exact match
       if (!brandSuccess) {
         console.log('  → Typing failed, trying dropdown selection...');
         brandSuccess = await selectMercariDropdown('Brand', data.brand, false);
+        if (brandSuccess) {
+          console.log('✓ Brand set via exact match:', data.brand);
+        }
       }
       
       // 3. If exact match failed, try partial match
       if (!brandSuccess) {
         console.log('  → Exact match failed, trying partial match...');
         brandSuccess = await selectMercariDropdown('Brand', data.brand, true);
+        if (brandSuccess) {
+          console.log('✓ Brand set via partial match:', data.brand);
+        }
       }
       
       // 4. Try with just the first word if brand has multiple words
@@ -827,24 +837,12 @@ async function fillMercariForm(data) {
         const firstWord = data.brand.split(' ')[0];
         console.log(`  → Trying with first word only: "${firstWord}"...`);
         brandSuccess = await selectMercariDropdown('Brand', firstWord, true);
+        if (brandSuccess) {
+          console.log(`✓ Brand set via first word: "${firstWord}"`);
+        }
       }
       
-      if (brandSuccess) {
-        // Wait a bit for UI to update, then verify (but don't fail if verification is unclear)
-        await sleep(500);
-        const brandDropdown = document.querySelector('[data-testid="Brand"]');
-        const brandValue = brandDropdown?.textContent?.trim() || '';
-        
-        // Log the result - if we got true from selection, trust it
-        if (brandValue && (brandValue.toLowerCase().includes(data.brand.toLowerCase()) || 
-            data.brand.toLowerCase().includes(brandValue.toLowerCase()))) {
-          console.log(`✓ Brand set: "${brandValue}" (matched "${data.brand}")`);
-        } else if (brandValue) {
-          console.log(`✓ Brand selection completed: "${brandValue}"`);
-        } else {
-          console.log(`✓ Brand selection completed (value: "${data.brand}")`);
-        }
-      } else {
+      if (!brandSuccess) {
         console.warn('⚠️ Brand selection failed - brand may need manual selection');
         console.warn(`  Attempted brand: "${data.brand}"`);
       }
@@ -997,6 +995,7 @@ async function fillMercariForm(data) {
       
       // Smart Pricing toggle
       if (data.smartPricing !== undefined) {
+        try {
         console.log('🔍 Looking for Smart Pricing toggle...');
         // Try multiple selectors for Smart Pricing toggle
         let smartPricingToggle = document.querySelector('[data-testid*="SmartPricing" i]') ||
@@ -1117,115 +1116,137 @@ async function fillMercariForm(data) {
             .slice(0, 5)
             .map(el => el.getAttribute('data-testid'))
           );
+        } catch (error) {
+          console.error('❌ Error handling Smart Pricing:', error);
+          console.warn('⚠️ Smart Pricing toggle failed - continuing with form fill');
         }
       }
       
       // Smart Offers toggle
       if (data.smartOffers !== undefined) {
-        console.log('🔍 Looking for Smart Offers toggle...');
-        // Try multiple selectors for Smart Offers toggle
-        let smartOffersToggle = document.querySelector('[data-testid*="SmartOffers" i]') ||
-                               document.querySelector('[data-testid*="smart" i][data-testid*="offers" i]') ||
-                               document.querySelector('input[type="checkbox"][name*="smart" i][name*="offers" i]') ||
-                               document.querySelector('input[type="checkbox"][aria-label*="Smart Offers" i]') ||
-                               document.querySelector('button[aria-label*="Smart Offers" i]');
-        
-        // Try finding by text content - search more broadly
-        if (!smartOffersToggle) {
-          const allElements = Array.from(document.querySelectorAll('*'));
-          const offersElement = allElements.find(el => {
-            const text = el.textContent?.toLowerCase() || '';
-            return text.includes('smart offers') && 
-                   (el.tagName === 'LABEL' || el.tagName === 'SPAN' || el.tagName === 'DIV');
-          });
+        try {
+          console.log('🔍 Looking for Smart Offers toggle...');
+          // Try multiple selectors for Smart Offers toggle
+          let smartOffersToggle = document.querySelector('[data-testid*="SmartOffers" i]') ||
+                                 document.querySelector('[data-testid*="smart" i][data-testid*="offers" i]') ||
+                                 document.querySelector('input[type="checkbox"][name*="smart" i][name*="offers" i]') ||
+                                 document.querySelector('input[type="checkbox"][aria-label*="Smart Offers" i]') ||
+                                 document.querySelector('button[aria-label*="Smart Offers" i]');
           
-          if (offersElement) {
-            // Look for toggle near the text
-            const container = offersElement.closest('div, label, form');
-            if (container) {
-              smartOffersToggle = container.querySelector('input[type="checkbox"], button, [role="switch"], [role="button"]') ||
-                                 container.querySelector('[data-testid*="toggle"], [data-testid*="switch"]');
-            }
+          // Try finding by text content - search more broadly
+          if (!smartOffersToggle) {
+            const allElements = Array.from(document.querySelectorAll('*'));
+            const offersElement = allElements.find(el => {
+              const text = el.textContent?.toLowerCase() || '';
+              return text.includes('smart offers') && 
+                     (el.tagName === 'LABEL' || el.tagName === 'SPAN' || el.tagName === 'DIV');
+            });
             
-            // Also try sibling elements
-            if (!smartOffersToggle) {
-              let sibling = offersElement.nextElementSibling;
-              for (let i = 0; i < 3 && sibling; i++) {
-                smartOffersToggle = sibling.querySelector('input[type="checkbox"], button, [role="switch"]');
-                if (smartOffersToggle) break;
-                sibling = sibling.nextElementSibling;
+            if (offersElement) {
+              // Look for toggle near the text
+              const container = offersElement.closest('div, label, form');
+              if (container) {
+                smartOffersToggle = container.querySelector('input[type="checkbox"], button, [role="switch"], [role="button"]') ||
+                                   container.querySelector('[data-testid*="toggle"], [data-testid*="switch"]');
               }
-            }
-          }
-        }
-        
-        if (smartOffersToggle) {
-          const isChecked = smartOffersToggle.checked || 
-                          smartOffersToggle.getAttribute('aria-checked') === 'true' ||
-                          smartOffersToggle.classList.contains('checked') ||
-                          smartOffersToggle.getAttribute('aria-pressed') === 'true';
-          
-          if (data.smartOffers !== isChecked) {
-            smartOffersToggle.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            await sleep(200);
-            smartOffersToggle.click();
-            await sleep(500); // Wait for toggle to activate and UI to update
-            
-            console.log(`✓ Smart Offers ${data.smartOffers ? 'enabled' : 'disabled'}`);
-            
-            // If enabling Smart Offers, look for Minimum Price input
-            if (data.smartOffers && data.minimumPrice) {
-              console.log('🔍 Looking for Minimum Price input...');
-              await sleep(500); // Wait for input field to appear
               
-              // Try to find minimum price input
-              let minimumPriceInput = document.querySelector('input[placeholder*="minimum" i]') ||
-                                     document.querySelector('input[placeholder*="lowest" i]') ||
-                                     document.querySelector('input[name*="minimum" i]') ||
-                                     document.querySelector('input[name*="min" i]') ||
-                                     document.querySelector('[data-testid*="Minimum" i]') ||
-                                     document.querySelector('[data-testid*="minimum" i]');
-              
-              // Try finding by label text
-              if (!minimumPriceInput) {
-                const labels = Array.from(document.querySelectorAll('label, span, div'));
-                const minLabel = labels.find(el => {
-                  const text = el.textContent?.toLowerCase() || '';
-                  return (text.includes('minimum') || text.includes('lowest')) && text.includes('price');
-                });
-                
-                if (minLabel) {
-                  const container = minLabel.closest('div, form');
-                  if (container) {
-                    minimumPriceInput = container.querySelector('input[type="text"], input[type="number"]');
-                  }
+              // Also try sibling elements
+              if (!smartOffersToggle) {
+                let sibling = offersElement.nextElementSibling;
+                for (let i = 0; i < 3 && sibling; i++) {
+                  smartOffersToggle = sibling.querySelector('input[type="checkbox"], button, [role="switch"]');
+                  if (smartOffersToggle) break;
+                  sibling = sibling.nextElementSibling;
                 }
               }
+            }
+          }
+          
+          if (smartOffersToggle) {
+            const isChecked = smartOffersToggle.checked || 
+                            smartOffersToggle.getAttribute('aria-checked') === 'true' ||
+                            smartOffersToggle.classList.contains('checked') ||
+                            smartOffersToggle.getAttribute('aria-pressed') === 'true' ||
+                            smartOffersToggle.getAttribute('data-state') === 'checked';
+            
+            console.log(`  Current Smart Offers state: ${isChecked ? 'ON' : 'OFF'}, Desired: ${data.smartOffers ? 'ON' : 'OFF'}`);
+            
+            if (data.smartOffers !== isChecked) {
+              smartOffersToggle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              await sleep(200);
+              smartOffersToggle.click();
+              await sleep(500); // Wait for toggle to activate and UI to update
               
-              if (minimumPriceInput) {
-                minimumPriceInput.focus();
-                minimumPriceInput.value = String(data.minimumPrice);
-                minimumPriceInput.dispatchEvent(new Event('input', { bubbles: true }));
-                minimumPriceInput.dispatchEvent(new Event('change', { bubbles: true }));
-                await sleep(300);
-                console.log(`✓ Minimum Price set: ${data.minimumPrice}`);
+              // Verify the toggle actually changed
+              const newState = smartOffersToggle.checked || 
+                             smartOffersToggle.getAttribute('aria-checked') === 'true' ||
+                             smartOffersToggle.classList.contains('checked') ||
+                             smartOffersToggle.getAttribute('aria-pressed') === 'true' ||
+                             smartOffersToggle.getAttribute('data-state') === 'checked';
+              
+              if (newState === data.smartOffers) {
+                console.log(`✓ Smart Offers ${data.smartOffers ? 'enabled' : 'disabled'}`);
               } else {
-                console.warn('⚠️ Minimum Price input not found after enabling Smart Offers');
+                console.warn(`⚠️ Smart Offers toggle may not have changed - current state: ${newState ? 'ON' : 'OFF'}`);
               }
+              
+              // If enabling Smart Offers, look for Minimum Price input
+              if (data.smartOffers && data.minimumPrice) {
+                console.log('🔍 Looking for Minimum Price input...');
+                await sleep(500); // Wait for input field to appear
+                
+                // Try to find minimum price input
+                let minimumPriceInput = document.querySelector('input[placeholder*="minimum" i]') ||
+                                       document.querySelector('input[placeholder*="lowest" i]') ||
+                                       document.querySelector('input[name*="minimum" i]') ||
+                                       document.querySelector('input[name*="min" i]') ||
+                                       document.querySelector('[data-testid*="Minimum" i]') ||
+                                       document.querySelector('[data-testid*="minimum" i]');
+                
+                // Try finding by label text
+                if (!minimumPriceInput) {
+                  const labels = Array.from(document.querySelectorAll('label, span, div'));
+                  const minLabel = labels.find(el => {
+                    const text = el.textContent?.toLowerCase() || '';
+                    return (text.includes('minimum') || text.includes('lowest')) && text.includes('price');
+                  });
+                  
+                  if (minLabel) {
+                    const container = minLabel.closest('div, form');
+                    if (container) {
+                      minimumPriceInput = container.querySelector('input[type="text"], input[type="number"]');
+                    }
+                  }
+                }
+                
+                if (minimumPriceInput) {
+                  minimumPriceInput.focus();
+                  minimumPriceInput.value = String(data.minimumPrice);
+                  minimumPriceInput.dispatchEvent(new Event('input', { bubbles: true }));
+                  minimumPriceInput.dispatchEvent(new Event('change', { bubbles: true }));
+                  await sleep(300);
+                  console.log(`✓ Minimum Price set: ${data.minimumPrice}`);
+                } else {
+                  console.warn('⚠️ Minimum Price input not found after enabling Smart Offers');
+                }
+              }
+            } else {
+              console.log(`✓ Smart Offers already ${data.smartOffers ? 'enabled' : 'disabled'}`);
             }
           } else {
-            console.log(`✓ Smart Offers already ${data.smartOffers ? 'enabled' : 'disabled'}`);
+            console.warn('⚠️ Smart Offers toggle not found - may not be available for this item');
+            console.log('  Available testIds near price:', Array.from(document.querySelectorAll('[data-testid]'))
+              .filter(el => {
+                const testId = el.getAttribute('data-testid') || '';
+                return testId.toLowerCase().includes('offer') || testId.toLowerCase().includes('smart');
+              })
+              .slice(0, 5)
+              .map(el => el.getAttribute('data-testid'))
+            );
           }
-        } else {
-          console.warn('⚠️ Smart Offers toggle not found - may not be available for this item');
-          console.log('  Available testIds near price:', Array.from(document.querySelectorAll('[data-testid]'))
-            .filter(el => {
-              const testId = el.getAttribute('data-testid') || '';
-              return testId.toLowerCase().includes('offer') || testId.toLowerCase().includes('smart');
-            })
-            .slice(0, 5)
-            .map(el => el.getAttribute('data-testid'))
-          );
+        } catch (error) {
+          console.error('❌ Error handling Smart Offers:', error);
+          console.warn('⚠️ Smart Offers toggle failed - continuing with form fill');
         }
       }
     }
