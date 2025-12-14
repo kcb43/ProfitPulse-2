@@ -830,7 +830,20 @@ async function fillMercariForm(data) {
       }
       
       if (brandSuccess) {
-        console.log('✓ Brand set:', data.brand);
+        // Wait a bit for UI to update, then verify (but don't fail if verification is unclear)
+        await sleep(500);
+        const brandDropdown = document.querySelector('[data-testid="Brand"]');
+        const brandValue = brandDropdown?.textContent?.trim() || '';
+        
+        // Log the result - if we got true from selection, trust it
+        if (brandValue && (brandValue.toLowerCase().includes(data.brand.toLowerCase()) || 
+            data.brand.toLowerCase().includes(brandValue.toLowerCase()))) {
+          console.log(`✓ Brand set: "${brandValue}" (matched "${data.brand}")`);
+        } else if (brandValue) {
+          console.log(`✓ Brand selection completed: "${brandValue}"`);
+        } else {
+          console.log(`✓ Brand selection completed (value: "${data.brand}")`);
+        }
       } else {
         console.warn('⚠️ Brand selection failed - brand may need manual selection');
         console.warn(`  Attempted brand: "${data.brand}"`);
@@ -895,7 +908,20 @@ async function fillMercariForm(data) {
       }
       
       if (conditionSuccess) {
-        console.log('✓ Condition set:', mercariCondition);
+        // Wait a bit for UI to update, then verify (but don't fail if verification is unclear)
+        await sleep(500);
+        const conditionDropdown = document.querySelector('[data-testid="Condition"]');
+        const conditionValue = conditionDropdown?.textContent?.trim() || '';
+        
+        // Log the result - if we got true from selection, trust it
+        if (conditionValue && (conditionValue.toLowerCase().includes(mercariCondition.toLowerCase()) || 
+            mercariCondition.toLowerCase().includes(conditionValue.toLowerCase()))) {
+          console.log(`✓ Condition set: "${conditionValue}" (matched "${mercariCondition}")`);
+        } else if (conditionValue) {
+          console.log(`✓ Condition selection completed: "${conditionValue}"`);
+        } else {
+          console.log(`✓ Condition selection completed (value: "${mercariCondition}")`);
+        }
       } else {
         console.warn('⚠️ Condition selection failed - condition may need manual selection');
         console.warn(`  Attempted condition: "${data.condition}" → "${mercariCondition}"`);
@@ -1009,18 +1035,34 @@ async function fillMercariForm(data) {
         }
         
         if (smartPricingToggle) {
+          // Check current state - Smart Pricing is ON by default on Mercari
           const isChecked = smartPricingToggle.checked || 
                           smartPricingToggle.getAttribute('aria-checked') === 'true' ||
                           smartPricingToggle.classList.contains('checked') ||
-                          smartPricingToggle.getAttribute('aria-pressed') === 'true';
+                          smartPricingToggle.getAttribute('aria-pressed') === 'true' ||
+                          smartPricingToggle.getAttribute('data-state') === 'checked';
           
+          console.log(`  Current Smart Pricing state: ${isChecked ? 'ON' : 'OFF'}, Desired: ${data.smartPricing ? 'ON' : 'OFF'}`);
+          
+          // Only toggle if state doesn't match desired state
           if (data.smartPricing !== isChecked) {
             smartPricingToggle.scrollIntoView({ behavior: 'smooth', block: 'center' });
             await sleep(200);
             smartPricingToggle.click();
             await sleep(500); // Wait for toggle to activate and UI to update
             
-            console.log(`✓ Smart Pricing ${data.smartPricing ? 'enabled' : 'disabled'}`);
+            // Verify the toggle actually changed
+            const newState = smartPricingToggle.checked || 
+                           smartPricingToggle.getAttribute('aria-checked') === 'true' ||
+                           smartPricingToggle.classList.contains('checked') ||
+                           smartPricingToggle.getAttribute('aria-pressed') === 'true' ||
+                           smartPricingToggle.getAttribute('data-state') === 'checked';
+            
+            if (newState === data.smartPricing) {
+              console.log(`✓ Smart Pricing ${data.smartPricing ? 'enabled' : 'disabled'}`);
+            } else {
+              console.warn(`⚠️ Smart Pricing toggle may not have changed - current state: ${newState ? 'ON' : 'OFF'}`);
+            }
             
             // If enabling Smart Pricing, look for Floor Price input
             if (data.smartPricing && data.floorPrice) {

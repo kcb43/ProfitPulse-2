@@ -310,48 +310,173 @@ async function fillMercariFormWithPuppeteer(page, data) {
       }
     }
 
-    // 11. SMART OFFERS
-    if (data.smartOffers !== undefined) {
-      console.log(`  → Setting Smart Offers: ${data.smartOffers}`);
-      const smartOffersToggle = await page.$('[data-testid*="SmartOffers"]') ||
-                                await page.$('input[type="checkbox"][name*="smart" i]') ||
-                                await page.$('button[aria-label*="Smart Offers" i]');
+    // 11. SMART PRICING (check first - it's ON by default)
+    if (data.smartPricing !== undefined) {
+      console.log(`  → Setting Smart Pricing: ${data.smartPricing}`);
+      let smartPricingToggle = await page.$('[data-testid*="SmartPricing" i]') ||
+                               await page.$('input[type="checkbox"][name*="smart" i][name*="pricing" i]') ||
+                               await page.$('button[aria-label*="Smart Pricing" i]');
       
-      if (smartOffersToggle) {
+      // Try finding by text if not found
+      if (!smartPricingToggle) {
+        smartPricingToggle = await page.evaluateHandle(() => {
+          const elements = Array.from(document.querySelectorAll('*'));
+          const pricingElement = elements.find(el => {
+            const text = el.textContent?.toLowerCase() || '';
+            return text.includes('smart pricing');
+          });
+          if (pricingElement) {
+            const container = pricingElement.closest('div, label, form');
+            if (container) {
+              return container.querySelector('input[type="checkbox"], button, [role="switch"]');
+            }
+          }
+          return null;
+        });
+      }
+      
+      if (smartPricingToggle && smartPricingToggle.asElement()) {
         const isChecked = await page.evaluate(el => {
-          return el.checked || el.getAttribute('aria-checked') === 'true';
-        }, smartOffersToggle);
+          return el.checked || 
+                 el.getAttribute('aria-checked') === 'true' ||
+                 el.classList.contains('checked') ||
+                 el.getAttribute('aria-pressed') === 'true' ||
+                 el.getAttribute('data-state') === 'checked';
+        }, smartPricingToggle);
         
-        if (data.smartOffers !== isChecked) {
-          await smartOffersToggle.click();
-          await page.waitForTimeout(300);
+        console.log(`    Current state: ${isChecked ? 'ON' : 'OFF'}, Desired: ${data.smartPricing ? 'ON' : 'OFF'}`);
+        
+        if (data.smartPricing !== isChecked) {
+          await smartPricingToggle.click();
+          await page.waitForTimeout(500);
+          console.log(`  ✓ Smart Pricing ${data.smartPricing ? 'enabled' : 'disabled'}`);
+          
+          // If enabling, fill floor price
+          if (data.smartPricing && data.floorPrice) {
+            await page.waitForTimeout(500);
+            const floorPriceInput = await page.$('input[placeholder*="floor" i]') ||
+                                   await page.$('input[name*="floor" i]') ||
+                                   await page.$('[data-testid*="Floor" i]');
+            if (floorPriceInput) {
+              await floorPriceInput.click({ clickCount: 3 });
+              await floorPriceInput.type(String(data.floorPrice), { delay: 50 });
+              console.log(`  ✓ Floor Price set: ${data.floorPrice}`);
+            }
+          }
+        } else {
+          console.log(`  ✓ Smart Pricing already ${data.smartPricing ? 'enabled' : 'disabled'}`);
         }
       }
     }
 
-    // 12. PHOTOS - This is why we use Puppeteer!
+    // 12. SMART OFFERS
+    if (data.smartOffers !== undefined) {
+      console.log(`  → Setting Smart Offers: ${data.smartOffers}`);
+      let smartOffersToggle = await page.$('[data-testid*="SmartOffers" i]') ||
+                              await page.$('input[type="checkbox"][name*="smart" i][name*="offers" i]') ||
+                              await page.$('button[aria-label*="Smart Offers" i]');
+      
+      // Try finding by text if not found
+      if (!smartOffersToggle) {
+        smartOffersToggle = await page.evaluateHandle(() => {
+          const elements = Array.from(document.querySelectorAll('*'));
+          const offersElement = elements.find(el => {
+            const text = el.textContent?.toLowerCase() || '';
+            return text.includes('smart offers');
+          });
+          if (offersElement) {
+            const container = offersElement.closest('div, label, form');
+            if (container) {
+              return container.querySelector('input[type="checkbox"], button, [role="switch"]');
+            }
+          }
+          return null;
+        });
+      }
+      
+      if (smartOffersToggle && smartOffersToggle.asElement()) {
+        const isChecked = await page.evaluate(el => {
+          return el.checked || 
+                 el.getAttribute('aria-checked') === 'true' ||
+                 el.classList.contains('checked') ||
+                 el.getAttribute('aria-pressed') === 'true' ||
+                 el.getAttribute('data-state') === 'checked';
+        }, smartOffersToggle);
+        
+        if (data.smartOffers !== isChecked) {
+          await smartOffersToggle.click();
+          await page.waitForTimeout(500);
+          console.log(`  ✓ Smart Offers ${data.smartOffers ? 'enabled' : 'disabled'}`);
+          
+          // If enabling, fill minimum price
+          if (data.smartOffers && data.minimumPrice) {
+            await page.waitForTimeout(500);
+            const minimumPriceInput = await page.$('input[placeholder*="minimum" i]') ||
+                                    await page.$('input[name*="minimum" i]') ||
+                                    await page.$('[data-testid*="Minimum" i]');
+            if (minimumPriceInput) {
+              await minimumPriceInput.click({ clickCount: 3 });
+              await minimumPriceInput.type(String(data.minimumPrice), { delay: 50 });
+              console.log(`  ✓ Minimum Price set: ${data.minimumPrice}`);
+            }
+          }
+        } else {
+          console.log(`  ✓ Smart Offers already ${data.smartOffers ? 'enabled' : 'disabled'}`);
+        }
+      }
+    }
+
+    // 13. PHOTOS - This is why we use Puppeteer!
     if (data.photos && data.photos.length > 0) {
       console.log(`  → Uploading ${data.photos.length} photo(s)...`);
-      const fileInput = await page.$('input[type="file"]');
+      
+      // Try multiple selectors for file input
+      let fileInput = await page.$('input[type="file"]') ||
+                     await page.$('input[accept*="image"]') ||
+                     await page.$('[data-testid*="Photo"] input[type="file"]') ||
+                     await page.$('[data-testid*="photo"] input[type="file"]');
+      
+      if (!fileInput) {
+        // Try clicking upload button first to reveal file input
+        const uploadButton = await page.$('button[aria-label*="photo" i]') ||
+                            await page.$('button[aria-label*="image" i]') ||
+                            await page.$('[data-testid*="Photo"] button') ||
+                            await page.$('[data-testid*="Upload"]');
+        
+        if (uploadButton) {
+          console.log('  → Clicking upload button to reveal file input...');
+          await uploadButton.click();
+          await page.waitForTimeout(500);
+          fileInput = await page.$('input[type="file"]');
+        }
+      }
       
       if (fileInput) {
-        // Download images from URLs if needed, or use local paths
-        // For now, we'll assume photos are URLs that need to be downloaded first
-        // In production, you might want to download them server-side first
-        
-        // Note: Puppeteer's uploadFile requires local file paths
-        // You'll need to download URLs to temp files first, or pass file paths
+        // Download/convert images from URLs or base64 to local file paths
         const photoPaths = await downloadPhotosIfNeeded(data.photos);
         
         if (photoPaths.length > 0) {
+          console.log(`  → Uploading ${photoPaths.length} photo file(s)...`);
+          
+          // Puppeteer's uploadFile can handle multiple files
           await fileInput.uploadFile(...photoPaths);
-          await page.waitForTimeout(2000); // Wait for uploads to process
-          console.log('  ✓ Photos uploaded');
+          
+          // Wait for uploads to process - Mercari shows upload progress
+          console.log('  → Waiting for photos to upload...');
+          await page.waitForTimeout(3000); // Give Mercari time to process uploads
+          
+          // Verify photos were uploaded by checking for image previews
+          const photoPreviews = await page.$$('[data-testid*="Photo"] img, [data-testid*="photo"] img, .photo-preview img');
+          if (photoPreviews.length > 0) {
+            console.log(`  ✓ ${photoPreviews.length} photo(s) uploaded successfully`);
+          } else {
+            console.log('  ✓ Photos uploaded (verification pending)');
+          }
         } else {
-          console.warn('  ⚠️ No valid photo paths found');
+          console.warn('  ⚠️ No valid photo paths found after processing');
         }
       } else {
-        console.warn('  ⚠️ File input not found');
+        console.warn('  ⚠️ File input not found - photos may need manual upload');
       }
     }
 
@@ -412,12 +537,12 @@ async function selectMercariDropdown(page, testId, optionText, partialMatch = fa
 }
 
 /**
- * Download photos from URLs if needed
+ * Download photos from URLs or convert base64 to files if needed
  * Returns array of local file paths
  */
 async function downloadPhotosIfNeeded(photos) {
   // Import Node.js modules (works in both CommonJS and ES modules)
-  let fs, path, https, http;
+  let fs, path, https, http, os;
   
   try {
     const fsModule = await import('fs');
@@ -451,40 +576,108 @@ async function downloadPhotosIfNeeded(photos) {
     http = require('http');
   }
   
-  const tempPaths = [];
+  try {
+    const osModule = await import('os');
+    os = osModule.default || osModule;
+  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    os = require('os');
+  }
   
-  for (const photo of photos) {
+  const tempPaths = [];
+  const tempDir = os.tmpdir ? os.tmpdir() : '/tmp';
+  
+  // Ensure temp directory exists
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+    
     // If it's already a local path, use it
     if (fs.existsSync(photo)) {
       tempPaths.push(photo);
       continue;
     }
     
+    // If it's a base64 data URL, convert it to a file
+    if (photo.startsWith('data:image/')) {
+      try {
+        const matches = photo.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+          const base64Data = matches[2];
+          const buffer = Buffer.from(base64Data, 'base64');
+          
+          const tempPath = path.join(tempDir, `photo-${Date.now()}-${i}-${Math.random().toString(36).substring(7)}.${ext}`);
+          fs.writeFileSync(tempPath, buffer);
+          tempPaths.push(tempPath);
+          console.log(`  → Converted base64 image ${i + 1} to file`);
+        }
+      } catch (error) {
+        console.error(`Failed to convert base64 photo ${i + 1}:`, error);
+      }
+      continue;
+    }
+    
     // If it's a URL, download it
     if (photo.startsWith('http://') || photo.startsWith('https://')) {
       try {
-        const tempPath = path.join('/tmp', `photo-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`);
+        // Determine file extension from URL or Content-Type
+        const urlPath = new URL(photo).pathname;
+        let ext = 'jpg'; // default
+        if (urlPath.includes('.')) {
+          const urlExt = path.extname(urlPath).substring(1).toLowerCase();
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(urlExt)) {
+            ext = urlExt === 'jpeg' ? 'jpg' : urlExt;
+          }
+        }
+        
+        const tempPath = path.join(tempDir, `photo-${Date.now()}-${i}-${Math.random().toString(36).substring(7)}.${ext}`);
         const file = fs.createWriteStream(tempPath);
         
         const protocol = photo.startsWith('https') ? https : http;
         
         await new Promise((resolve, reject) => {
           protocol.get(photo, (response) => {
+            // Check if it's actually an image
+            const contentType = response.headers['content-type'];
+            if (contentType && !contentType.startsWith('image/')) {
+              reject(new Error(`URL does not point to an image: ${contentType}`));
+              return;
+            }
+            
             response.pipe(file);
             file.on('finish', () => {
               file.close();
               resolve();
             });
-          }).on('error', reject);
+          }).on('error', (err) => {
+            file.close();
+            fs.unlinkSync(tempPath).catch(() => {}); // Delete partial file
+            reject(err);
+          });
         });
         
-        tempPaths.push(tempPath);
+        // Verify file was created and has content
+        const stats = fs.statSync(tempPath);
+        if (stats.size > 0) {
+          tempPaths.push(tempPath);
+          console.log(`  → Downloaded photo ${i + 1} from URL (${stats.size} bytes)`);
+        } else {
+          fs.unlinkSync(tempPath);
+          console.warn(`  ⚠️ Downloaded file is empty: ${photo}`);
+        }
       } catch (error) {
-        console.error(`Failed to download photo ${photo}:`, error);
+        console.error(`Failed to download photo ${i + 1} from ${photo}:`, error.message);
       }
+    } else {
+      console.warn(`  ⚠️ Unknown photo format: ${photo.substring(0, 50)}...`);
     }
   }
   
+  console.log(`  → Processed ${tempPaths.length} out of ${photos.length} photos`);
   return tempPaths;
 }
 
