@@ -4736,7 +4736,9 @@ const MARKETPLACE_TEMPLATE_DEFAULTS = {
     shippingPrice: "",
     localPickup: false,
     smartPricing: false,
+    smartOffers: false,
     floorPrice: "",
+    minimumPrice: "",
   },
   facebook: {
     inheritGeneral: true,
@@ -35498,6 +35500,8 @@ export default function CrosslistComposer() {
           shippingPayer: mercariForm.shippingCarrier === "Mercari Prepaid" ? "buyer" : "seller",
           smartPricing: mercariForm.smartPricing || false,
           smartOffers: mercariForm.smartOffers || false,
+          floorPrice: mercariForm.floorPrice || '', // Floor price for Smart Pricing
+          minimumPrice: mercariForm.minimumPrice || '', // Minimum price for Smart Offers
         };
 
         // Send to extension for automation
@@ -40450,31 +40454,75 @@ export default function CrosslistComposer() {
                   {/* Smart Pricing and Smart Offers - Only show after price is entered */}
                   {(mercariForm.price || generalForm.price) && (
                     <div className="mt-4 space-y-3">
-                      <div className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="mercari-smart-pricing" className="text-xs font-medium cursor-pointer">
-                            Smart Pricing
-                          </Label>
-                          <span className="text-xs text-muted-foreground">(Auto-adjust price based on market)</span>
+                      <div className="p-3 border rounded-md bg-muted/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="mercari-smart-pricing" className="text-xs font-medium cursor-pointer">
+                              Smart Pricing
+                            </Label>
+                            <span className="text-xs text-muted-foreground">(Auto-adjust price based on market)</span>
+                          </div>
+                          <Switch
+                            id="mercari-smart-pricing"
+                            checked={mercariForm.smartPricing || false}
+                            onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartPricing", checked)}
+                          />
                         </div>
-                        <Switch
-                          id="mercari-smart-pricing"
-                          checked={mercariForm.smartPricing || false}
-                          onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartPricing", checked)}
-                        />
+                        {mercariForm.smartPricing && (
+                          <div className="mt-3">
+                            <Label htmlFor="mercari-floor-price" className="text-xs mb-1.5 block">
+                              Floor Price
+                            </Label>
+                            <Input
+                              id="mercari-floor-price"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="Enter minimum price"
+                              value={mercariForm.floorPrice || ""}
+                              onChange={(e) => handleMarketplaceChange("mercari", "floorPrice", e.target.value)}
+                              className="text-sm"
+                            />
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Applicable fees will be deducted from the final sale price.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="mercari-smart-offers" className="text-xs font-medium cursor-pointer">
-                            Smart Offers
-                          </Label>
-                          <span className="text-xs text-muted-foreground">(Auto-accept reasonable offers)</span>
+                      <div className="p-3 border rounded-md bg-muted/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor="mercari-smart-offers" className="text-xs font-medium cursor-pointer">
+                              Smart Offers
+                            </Label>
+                            <span className="text-xs text-muted-foreground">(Auto-accept reasonable offers)</span>
+                          </div>
+                          <Switch
+                            id="mercari-smart-offers"
+                            checked={mercariForm.smartOffers || false}
+                            onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartOffers", checked)}
+                          />
                         </div>
-                        <Switch
-                          id="mercari-smart-offers"
-                          checked={mercariForm.smartOffers || false}
-                          onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartOffers", checked)}
-                        />
+                        {mercariForm.smartOffers && (
+                          <div className="mt-3">
+                            <Label htmlFor="mercari-minimum-price" className="text-xs mb-1.5 block">
+                              Minimum Price
+                            </Label>
+                            <Input
+                              id="mercari-minimum-price"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="Enter minimum offer price"
+                              value={mercariForm.minimumPrice || ""}
+                              onChange={(e) => handleMarketplaceChange("mercari", "minimumPrice", e.target.value)}
+                              className="text-sm"
+                            />
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Applicable fees will be deducted from the final sale price.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
