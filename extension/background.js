@@ -68,41 +68,98 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle async response - Manifest V3 pattern
     (async () => {
       try {
+        // Helper function to check if content script is ready
+        const isContentScriptReady = async (tabId, maxRetries = 5) => {
+          for (let i = 0; i < maxRetries; i++) {
+            try {
+              // Try to ping the content script
+              const response = await chrome.tabs.sendMessage(tabId, { type: 'PING' });
+              // Check if we got a valid response
+              if (response && response.pong) {
+                return true;
+              }
+            } catch (error) {
+              // If it's not a connection error, don't retry
+              if (!error.message?.includes('Receiving end does not exist') && 
+                  !error.message?.includes('Could not establish connection')) {
+                return false;
+              }
+            }
+            
+            if (i < maxRetries - 1) {
+              // Wait before retrying (exponential backoff)
+              await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+            }
+          }
+          return false;
+        };
+        
+        // Helper function to send message with retry
+        const sendMessageWithRetry = async (tabId, message, maxRetries = 3) => {
+          for (let i = 0; i < maxRetries; i++) {
+            try {
+              const response = await chrome.tabs.sendMessage(tabId, message);
+              return { success: true, response };
+            } catch (error) {
+              const isLastRetry = i === maxRetries - 1;
+              const isConnectionError = error.message?.includes('Receiving end does not exist') ||
+                                       error.message?.includes('Could not establish connection');
+              
+              if (isLastRetry || !isConnectionError) {
+                return { success: false, error: error.message };
+              }
+              
+              // Wait before retrying
+              console.log(`⏳ Retry ${i + 1}/${maxRetries} - waiting for content script...`);
+              await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            }
+          }
+        };
+        
         // Find Mercari tab or create new one
         console.log('Querying for Mercari tabs...');
         const tabs = await chrome.tabs.query({ url: 'https://www.mercari.com/*' });
         console.log('Found Mercari tabs:', tabs.length);
         
+        let targetTab = null;
+        
         if (tabs.length > 0) {
-          // Send to existing Mercari tab
-          console.log('✅ Using existing Mercari tab:', tabs[0].id);
+          // Try to use existing Mercari tab
+          console.log('✅ Found existing Mercari tab:', tabs[0].id);
           const mercariTab = tabs[0];
           
-          try {
-            const response = await chrome.tabs.sendMessage(mercariTab.id, {
-              type: 'CREATE_LISTING',
-              listingData: listingData
-            });
-            console.log('✅ Mercari tab response:', response);
-            sendResponse(response || { success: false, error: 'No response from Mercari tab' });
-          } catch (error) {
-            console.error('❌ Error sending to Mercari tab:', error);
-            sendResponse({ success: false, error: 'Failed to communicate with Mercari tab: ' + error.message });
+          // Check if tab is in a valid state
+          const tabInfo = await chrome.tabs.get(mercariTab.id);
+          if (tabInfo.status === 'complete' && tabInfo.url?.startsWith('https://www.mercari.com')) {
+            console.log('✅ Tab is ready, checking if content script is loaded...');
+            
+            // Check if content script is ready
+            const isReady = await isContentScriptReady(mercariTab.id);
+            if (isReady) {
+              console.log('✅ Content script is ready');
+              targetTab = mercariTab;
+            } else {
+              console.log('⚠️ Content script not ready, will create new tab');
+            }
+          } else {
+            console.log('⚠️ Tab not in valid state, will create new tab');
           }
-        } else {
-          // Open new Mercari sell page
+        }
+        
+        // If no valid tab found, create a new one
+        if (!targetTab) {
           console.log('📂 Opening new Mercari sell page...');
-          const tab = await chrome.tabs.create({
+          targetTab = await chrome.tabs.create({
             url: 'https://www.mercari.com/sell/',
             active: false
           });
           
-          console.log('✅ Opened new Mercari tab:', tab.id);
+          console.log('✅ Opened new Mercari tab:', targetTab.id);
           
           // Wait for page to load
           await new Promise((resolve) => {
             const listener = (tabId, info) => {
-              if (tabId === tab.id && info.status === 'complete') {
+              if (tabId === targetTab.id && info.status === 'complete') {
                 chrome.tabs.onUpdated.removeListener(listener);
                 console.log('✅ Mercari page loaded');
                 resolve();
@@ -111,22 +168,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             chrome.tabs.onUpdated.addListener(listener);
           });
           
-          // Give Mercari extra time to initialize
+          // Give Mercari extra time to initialize and content script to load
           console.log('⏳ Waiting 3s for Mercari to initialize...');
           await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          console.log('📤 Sending listing data to Mercari content script...');
-          try {
-            const response = await chrome.tabs.sendMessage(tab.id, {
-              type: 'CREATE_LISTING',
-              listingData: listingData
-            });
-            console.log('✅ Mercari content script response:', response);
-            sendResponse(response || { success: false, error: 'No response from Mercari content script' });
-          } catch (error) {
-            console.error('❌ Error sending to new Mercari tab:', error);
-            sendResponse({ success: false, error: 'Failed to communicate with Mercari content script: ' + error.message });
-          }
+        }
+        
+        // Send listing data with retry logic
+        console.log('📤 Sending listing data to Mercari content script...');
+        const result = await sendMessageWithRetry(targetTab.id, {
+          type: 'CREATE_LISTING',
+          listingData: listingData
+        });
+        
+        if (result.success) {
+          console.log('✅ Mercari content script response:', result.response);
+          sendResponse(result.response || { success: false, error: 'No response from Mercari content script' });
+        } else {
+          console.error('❌ Failed to communicate with Mercari tab after retries:', result.error);
+          sendResponse({ 
+            success: false, 
+            error: 'Failed to communicate with Mercari tab. Please ensure you have a Mercari tab open and try again. Error: ' + result.error 
+          });
         }
       } catch (error) {
         console.error('❌ Error in Mercari listing flow:', error);

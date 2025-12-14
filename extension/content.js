@@ -220,6 +220,12 @@ if (MARKETPLACE) {
 
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'PING') {
+      // Simple ping to check if content script is ready
+      sendResponse({ pong: true, marketplace: MARKETPLACE });
+      return true;
+    }
+    
     if (message.type === 'CHECK_LOGIN') {
       const userInfo = getUserInfo();
       sendResponse({ status: userInfo });
