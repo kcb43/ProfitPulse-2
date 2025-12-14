@@ -313,35 +313,13 @@ async function fillMercariFormWithPuppeteer(page, data) {
     // 11. SMART PRICING (check first - it's ON by default)
     if (data.smartPricing !== undefined) {
       console.log(`  → Setting Smart Pricing: ${data.smartPricing}`);
-      let smartPricingToggle = await page.$('[data-testid*="SmartPricing" i]') ||
-                               await page.$('input[type="checkbox"][name*="smart" i][name*="pricing" i]') ||
-                               await page.$('button[aria-label*="Smart Pricing" i]');
+      // Use exact Mercari selector: data-testid="SmartPricingButton"
+      let smartPricingToggle = await page.$('[data-testid="SmartPricingButton"]');
       
-      // Try finding by text if not found
-      if (!smartPricingToggle) {
-        smartPricingToggle = await page.evaluateHandle(() => {
-          const elements = Array.from(document.querySelectorAll('*'));
-          const pricingElement = elements.find(el => {
-            const text = el.textContent?.toLowerCase() || '';
-            return text.includes('smart pricing');
-          });
-          if (pricingElement) {
-            const container = pricingElement.closest('div, label, form');
-            if (container) {
-              return container.querySelector('input[type="checkbox"], button, [role="switch"]');
-            }
-          }
-          return null;
-        });
-      }
-      
-      if (smartPricingToggle && smartPricingToggle.asElement()) {
+      if (smartPricingToggle) {
+        // Mercari uses aria-pressed: "true" = ON, "false" = OFF
         const isChecked = await page.evaluate(el => {
-          return el.checked || 
-                 el.getAttribute('aria-checked') === 'true' ||
-                 el.classList.contains('checked') ||
-                 el.getAttribute('aria-pressed') === 'true' ||
-                 el.getAttribute('data-state') === 'checked';
+          return el.getAttribute('aria-pressed') === 'true';
         }, smartPricingToggle);
         
         console.log(`    Current state: ${isChecked ? 'ON' : 'OFF'}, Desired: ${data.smartPricing ? 'ON' : 'OFF'}`);
@@ -351,12 +329,13 @@ async function fillMercariFormWithPuppeteer(page, data) {
           await page.waitForTimeout(500);
           console.log(`  ✓ Smart Pricing ${data.smartPricing ? 'enabled' : 'disabled'}`);
           
-          // If enabling, fill floor price
+          // If enabling, fill floor price using exact Mercari selectors
           if (data.smartPricing && data.floorPrice) {
             await page.waitForTimeout(500);
-            const floorPriceInput = await page.$('input[placeholder*="floor" i]') ||
-                                   await page.$('input[name*="floor" i]') ||
-                                   await page.$('[data-testid*="Floor" i]');
+            let floorPriceInput = await page.$('[data-testid="SmartPricingFloorPrice"]') ||
+                                 await page.$('#sellMinPriceForAutoPriceDrop') ||
+                                 await page.$('input[placeholder*="floor" i]') ||
+                                 await page.$('input[name*="floor" i]');
             if (floorPriceInput) {
               await floorPriceInput.click({ clickCount: 3 });
               await floorPriceInput.type(String(data.floorPrice), { delay: 50 });
@@ -430,23 +409,45 @@ async function fillMercariFormWithPuppeteer(page, data) {
     if (data.photos && data.photos.length > 0) {
       console.log(`  → Uploading ${data.photos.length} photo(s)...`);
       
-      // Try multiple selectors for file input
-      let fileInput = await page.$('input[type="file"]') ||
-                     await page.$('input[accept*="image"]') ||
-                     await page.$('[data-testid*="Photo"] input[type="file"]') ||
-                     await page.$('[data-testid*="photo"] input[type="file"]');
+      // Mercari photo upload: The file input might be hidden or inside PhotoUploadBox
+      // First, try to find the file input directly
+      let fileInput = await page.$('input[type="file"]');
       
+      // If not found, try clicking PhotoUploadBox to reveal it
       if (!fileInput) {
-        // Try clicking upload button first to reveal file input
-        const uploadButton = await page.$('button[aria-label*="photo" i]') ||
-                            await page.$('button[aria-label*="image" i]') ||
-                            await page.$('[data-testid*="Photo"] button') ||
-                            await page.$('[data-testid*="Upload"]');
-        
-        if (uploadButton) {
-          console.log('  → Clicking upload button to reveal file input...');
-          await uploadButton.click();
+        const photoUploadBox = await page.$('[data-testid="PhotoUploadBox"]');
+        if (photoUploadBox) {
+          // Click the upload area - this might trigger file input to appear
+          await photoUploadBox.click();
           await page.waitForTimeout(500);
+          
+          // Try to find file input again
+          fileInput = await page.$('input[type="file"]');
+        }
+      }
+      
+      // If still not found, use evaluateHandle to find hidden file inputs
+      if (!fileInput) {
+        const fileInputHandle = await page.evaluateHandle(() => {
+          // Look for file input anywhere on the page (might be hidden)
+          const inputs = document.querySelectorAll('input[type="file"]');
+          return inputs.length > 0 ? inputs[0] : null;
+        });
+        
+        if (fileInputHandle && fileInputHandle.asElement) {
+          fileInput = fileInputHandle.asElement();
+        } else if (fileInputHandle) {
+          fileInput = fileInputHandle;
+        }
+      }
+      
+      // Alternative: Try to create/trigger file input via click on PhotoUploadBox
+      if (!fileInput) {
+        const photoUploadBox = await page.$('[data-testid="PhotoUploadBox"]');
+        if (photoUploadBox) {
+          // Try clicking and then immediately looking for file input
+          await photoUploadBox.click();
+          await page.waitForTimeout(300);
           fileInput = await page.$('input[type="file"]');
         }
       }
@@ -459,26 +460,59 @@ async function fillMercariFormWithPuppeteer(page, data) {
           console.log(`  → Uploading ${photoPaths.length} photo file(s)...`);
           
           // Puppeteer's uploadFile method - correct syntax: element.uploadFile(filePath)
-          // For multiple files, Mercari file input should support multiple file selection
-          // Upload all files at once if possible, otherwise one by one
+          // According to Puppeteer docs, uploadFile accepts a single file path
+          // For multiple files, we need to either:
+          // 1. Set the input's multiple attribute and upload all at once
+          // 2. Upload files one by one to separate inputs
+          
           try {
-            // Try uploading all files at once (if Mercari input supports multiple)
+            // First, check if the input supports multiple files
+            const supportsMultiple = await page.evaluate(el => {
+              return el.hasAttribute('multiple') || el.getAttribute('multiple') !== null;
+            }, fileInput);
+            
             if (photoPaths.length === 1) {
+              // Single file upload
               await fileInput.uploadFile(photoPaths[0]);
+            } else if (supportsMultiple) {
+              // Multiple files - try uploading all at once
+              // Note: Some Puppeteer versions support array, others need individual calls
+              try {
+                await fileInput.uploadFile(...photoPaths);
+              } catch (error) {
+                // If spread operator fails, upload one by one
+                for (const photoPath of photoPaths) {
+                  await fileInput.uploadFile(photoPath);
+                  await page.waitForTimeout(300);
+                }
+              }
             } else {
-              // For multiple files, try uploading all at once
-              // Some file inputs support multiple files via array
-              await fileInput.uploadFile(...photoPaths);
-            }
-          } catch (error) {
-            // If that fails, upload one by one
-            for (const photoPath of photoPaths) {
-              const currentFileInput = await page.$('input[type="file"]');
-              if (currentFileInput) {
-                await currentFileInput.uploadFile(photoPath);
-                await page.waitForTimeout(500); // Small delay between uploads
+              // Input doesn't support multiple - upload one by one
+              // Note: Mercari might have multiple file inputs or need separate uploads
+              for (let i = 0; i < photoPaths.length; i++) {
+                // For each file after the first, try to find a new file input
+                // (Mercari might create new inputs for each photo)
+                if (i === 0) {
+                  await fileInput.uploadFile(photoPaths[i]);
+                } else {
+                  // Wait a bit for Mercari to process the previous upload
+                  await page.waitForTimeout(500);
+                  
+                  // Try to find a new file input (Mercari might create one for the next photo)
+                  const nextFileInput = await page.$('input[type="file"]');
+                  if (nextFileInput) {
+                    await nextFileInput.uploadFile(photoPaths[i]);
+                  } else {
+                    // Fallback: try the same input again (if it supports multiple)
+                    await fileInput.uploadFile(photoPaths[i]);
+                  }
+                }
+                await page.waitForTimeout(300);
               }
             }
+          } catch (error) {
+            console.error('  ❌ Error uploading photos:', error);
+            throw error;
           }
           
           // Wait for uploads to process - Mercari shows upload progress

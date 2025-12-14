@@ -840,49 +840,12 @@ async function fillMercariForm(data) {
       // Smart Pricing toggle
       if (data.smartPricing !== undefined) {
         try {
-          // Try multiple selectors for Smart Pricing toggle
-          let smartPricingToggle = document.querySelector('[data-testid*="SmartPricing" i]') ||
-                                   document.querySelector('[data-testid*="smart" i][data-testid*="pricing" i]') ||
-                                   document.querySelector('input[type="checkbox"][name*="smart" i][name*="pricing" i]') ||
-                                   document.querySelector('input[type="checkbox"][aria-label*="Smart Pricing" i]') ||
-                                   document.querySelector('button[aria-label*="Smart Pricing" i]');
-          
-          // Try finding by text content - search more broadly
-          if (!smartPricingToggle) {
-            const allElements = Array.from(document.querySelectorAll('*'));
-            const pricingElement = allElements.find(el => {
-              const text = el.textContent?.toLowerCase() || '';
-              return text.includes('smart pricing') && 
-                     (el.tagName === 'LABEL' || el.tagName === 'SPAN' || el.tagName === 'DIV');
-            });
-            
-            if (pricingElement) {
-              // Look for toggle near the text
-              const container = pricingElement.closest('div, label, form');
-              if (container) {
-                smartPricingToggle = container.querySelector('input[type="checkbox"], button, [role="switch"], [role="button"]') ||
-                                    container.querySelector('[data-testid*="toggle"], [data-testid*="switch"]');
-              }
-              
-              // Also try sibling elements
-              if (!smartPricingToggle) {
-                let sibling = pricingElement.nextElementSibling;
-                for (let i = 0; i < 3 && sibling; i++) {
-                  smartPricingToggle = sibling.querySelector('input[type="checkbox"], button, [role="switch"]');
-                  if (smartPricingToggle) break;
-                  sibling = sibling.nextElementSibling;
-                }
-              }
-            }
-          }
+          // Use the exact Mercari selector: data-testid="SmartPricingButton"
+          let smartPricingToggle = document.querySelector('[data-testid="SmartPricingButton"]');
           
           if (smartPricingToggle) {
-            // Check current state - Smart Pricing is ON by default on Mercari
-            const isChecked = smartPricingToggle.checked || 
-                            smartPricingToggle.getAttribute('aria-checked') === 'true' ||
-                            smartPricingToggle.classList.contains('checked') ||
-                            smartPricingToggle.getAttribute('aria-pressed') === 'true' ||
-                            smartPricingToggle.getAttribute('data-state') === 'checked';
+            // Check current state using aria-pressed (ON = "true", OFF = "false")
+            const isChecked = smartPricingToggle.getAttribute('aria-pressed') === 'true';
             
             // Only toggle if state doesn't match desired state
             if (data.smartPricing !== isChecked) {
@@ -895,29 +858,11 @@ async function fillMercariForm(data) {
               if (data.smartPricing && data.floorPrice) {
                 await sleep(500); // Wait for input field to appear
                 
-                // Try to find floor price input
-                let floorPriceInput = document.querySelector('input[placeholder*="floor" i]') ||
-                                     document.querySelector('input[placeholder*="minimum" i]') ||
-                                     document.querySelector('input[name*="floor" i]') ||
-                                     document.querySelector('input[name*="minimum" i]') ||
-                                     document.querySelector('[data-testid*="Floor" i]') ||
-                                     document.querySelector('[data-testid*="floor" i]');
-                
-                // Try finding by label text
-                if (!floorPriceInput) {
-                  const labels = Array.from(document.querySelectorAll('label, span, div'));
-                  const floorLabel = labels.find(el => {
-                    const text = el.textContent?.toLowerCase() || '';
-                    return text.includes('floor') && text.includes('price');
-                  });
-                  
-                  if (floorLabel) {
-                    const container = floorLabel.closest('div, form');
-                    if (container) {
-                      floorPriceInput = container.querySelector('input[type="text"], input[type="number"]');
-                    }
-                  }
-                }
+                // Use exact Mercari selectors for Floor Price
+                let floorPriceInput = document.querySelector('[data-testid="SmartPricingFloorPrice"]') ||
+                                     document.querySelector('#sellMinPriceForAutoPriceDrop') ||
+                                     document.querySelector('input[placeholder*="floor" i]') ||
+                                     document.querySelector('input[name*="floor" i]');
                 
                 if (floorPriceInput) {
                   floorPriceInput.focus();
