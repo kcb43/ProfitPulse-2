@@ -1081,7 +1081,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-[95vw] sm:w-[85vw] max-w-[1200px] max-h-[90vh] p-0 overflow-hidden bg-slate-900 border-slate-700/50 flex flex-col shadow-2xl">
-          <DialogHeader className="px-4 py-2.5 border-b border-slate-700/30 bg-slate-800/30 backdrop-blur-sm flex-shrink-0">
+          <DialogHeader className="px-4 py-[17px] border-b border-slate-700/30 bg-slate-800/30 backdrop-blur-sm flex-shrink-0">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
                 <Camera className="w-4 h-4" />
@@ -1133,7 +1133,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 </Select>
                 <Button
                   onClick={handleSaveTemplateClick}
-                  className="w-full bg-indigo-600/80 hover:bg-indigo-500 text-white flex items-center justify-center gap-1.5 text-xs h-7"
+                  className="w-full bg-indigo-600/80 hover:bg-indigo-500 text-white flex items-center justify-center gap-1.5 text-xs h-[41px]"
                 >
                   <Save className="w-3 h-3" />
                   <span>Save Template</span>
@@ -1194,7 +1194,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 ) : (
                   <button
                     onClick={() => handleTransform('crop')}
-                    className="w-full p-2 rounded-md border bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/50 transition-all duration-200 flex items-center justify-center gap-1.5 text-xs h-[53px]"
+                    className="w-full p-2 rounded-md border bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/50 transition-all duration-200 flex items-center justify-center gap-1.5 text-xs h-[54px]"
                   >
                     <Crop className="w-3.5 h-3.5" />
                     <span>Crop</span>
@@ -1277,7 +1277,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     {/* Save/Done button */}
                     <Button
                       onClick={(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges ? () => onOpenChange(false) : handleSave}
-                      className="w-full bg-green-600/80 hover:bg-green-500 text-white flex items-center justify-center gap-1.5 text-xs h-7 font-medium"
+                      className="w-full bg-green-600/80 hover:bg-green-500 text-white flex items-center justify-center gap-1.5 text-xs h-10 font-medium"
+                      style={{ paddingTop: '27px', paddingBottom: '27px' }}
                       disabled={!imgSrc}
                     >
                       <Download className="w-3 h-3" />
@@ -1307,7 +1308,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 }}
               >
                 {imgSrc && (
-                  <div className="relative inline-block max-w-full max-h-full w-full h-full flex items-center justify-center">
+                  <div className="relative flex items-center justify-center" style={{ outline: 'none', border: 'none', width: '100%', height: '100%' }}>
                     {/* Image edited checkmark - top right */}
                     {editedImages.has(currentImageIndex) && (
                       <div className="absolute top-4 right-4 z-20">
@@ -1351,7 +1352,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       ref={imageRef}
                       src={imgSrc}
                       alt="Editor Preview"
-                      className="block object-contain md:w-[590px]"
+                      className="block object-contain"
                       style={{
                         width: '501px',
                         height: 'auto',
@@ -1376,14 +1377,22 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     }}>
                       <button
                         onClick={() => handleTransform('rotate_left')}
-                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-slate-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
+                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border flex items-center justify-center transition-all hover:scale-105"
+                        style={{
+                          borderColor: 'rgba(250, 250, 249, 1)',
+                          boxShadow: '0px 1px 10px 4px rgba(0, 0, 0, 0.15), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1)'
+                        }}
                         title="Rotate Left"
                       >
                         <RotateCcw className="w-4 h-4 text-slate-700" />
                       </button>
                       <button
                         onClick={() => handleTransform('rotate_right')}
-                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-slate-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
+                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border flex items-center justify-center transition-all hover:scale-105"
+                        style={{
+                          borderColor: 'rgba(250, 250, 249, 1)',
+                          boxShadow: '0px 1px 10px 4px rgba(0, 0, 0, 0.15), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1)'
+                        }}
                         title="Rotate Right"
                       >
                         <RotateCw className="w-4 h-4 text-slate-700" />

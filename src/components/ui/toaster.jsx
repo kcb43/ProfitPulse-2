@@ -6,6 +6,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  ToastIcon,
 } from "@/components/ui/toast";
 
 export function Toaster() {
@@ -21,14 +22,18 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, onOpenChange, ...props }) {
+      {toasts.map(function ({ id, title, description, action, onOpenChange, variant, ...props }) {
+        const toastVariant = variant || "success";
         return (
-          <Toast key={id} {...props} onOpenChange={onOpenChange}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
+          <Toast key={id} {...props} variant={toastVariant} onOpenChange={onOpenChange}>
+            <div className="relative" style={{ width: '100%', minHeight: '50px' }}>
+              <ToastIcon variant={toastVariant} />
+              <div className="flex flex-col" style={{ marginLeft: '48px', paddingRight: '24px' }}>
+                {title && <ToastTitle>{title}</ToastTitle>}
+                {description && (
+                  <ToastDescription>{description}</ToastDescription>
+                )}
+              </div>
             </div>
             {action}
             <ToastClose 
