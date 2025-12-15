@@ -1353,9 +1353,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       ref={imageRef}
                       src={imgSrc}
                       alt="Editor Preview"
-                      className="block object-contain"
+                      className="block object-contain w-full md:w-4/5"
                       style={{
-                        width: '100%',
                         height: 'auto',
                         maxWidth: '100%',
                         maxHeight: '95%',
