@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
-import { DollarSign, Calendar, Package, Tag, Edit as EditIcon, Star } from 'lucide-react';
+import { DollarSign, Calendar, Package, Tag, Edit as EditIcon, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ImageCarousel } from "@/components/ImageCarousel";
@@ -25,6 +25,7 @@ const statusLabels = {
 
 export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFavorite = false }) {
   const navigate = useNavigate();
+  const [notesExpanded, setNotesExpanded] = useState(false);
   
   if (!item) return null;
 
@@ -32,18 +33,26 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
   const quantitySold = item.quantity_sold || 0;
   const availableToSell = item.quantity - quantitySold;
   const isSoldOut = quantitySold >= item.quantity;
+  
+  // Notes truncation for desktop (show first 150 characters)
+  const NOTES_TRUNCATE_LENGTH = 150;
+  const notesText = item.notes || '';
+  const shouldTruncateNotes = notesText.length > NOTES_TRUNCATE_LENGTH;
+  const displayNotes = shouldTruncateNotes && !notesExpanded 
+    ? notesText.substring(0, NOTES_TRUNCATE_LENGTH) + '...'
+    : notesText;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full">
         <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-[90vh]">
-          {/* Image Section */}
-          <div className="order-1 md:order-2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden md:h-auto min-h-[256px] md:min-h-0">
+          {/* Image Section - Square aspect ratio on desktop */}
+          <div className="order-1 md:order-2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden md:aspect-square min-h-[256px] md:min-h-0">
             {item.images && item.images.length > 1 ? (
-              <div className="w-full h-64 md:h-full md:min-h-[500px]">
+              <div className="w-full h-64 md:w-full md:h-full md:aspect-square">
                 <ImageCarousel
                   images={item.images}
-                  imageClassName="object-cover md:rounded-r-lg w-full h-full"
+                  imageClassName="object-cover md:rounded-r-lg w-full h-full md:aspect-square"
                   counterPosition="bottom"
                 />
               </div>
@@ -52,7 +61,7 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
                 src={item.image_url || DEFAULT_IMAGE_URL}
                 alt={item.item_name}
                 fallback={DEFAULT_IMAGE_URL}
-                className="w-full h-64 md:h-full md:min-h-[500px] object-cover md:rounded-r-lg"
+                className="w-full h-64 md:w-full md:h-full md:aspect-square object-cover md:rounded-r-lg"
               />
             )}
           </div>
@@ -162,11 +171,33 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
                 </div>
               )}
 
-              {/* Notes */}
+              {/* Notes - Expandable on desktop */}
               {item.notes && (
                 <div className="pt-2 border-t">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Notes</p>
-                  <p className="italic text-xs break-words text-gray-700 dark:text-gray-300">"{item.notes}"</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</p>
+                    {shouldTruncateNotes && (
+                      <button
+                        onClick={() => setNotesExpanded(!notesExpanded)}
+                        className="hidden md:flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                      >
+                        {notesExpanded ? (
+                          <>
+                            <ChevronUp className="w-3 h-3" />
+                            Show Less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3 h-3" />
+                            Show More
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  <p className="italic text-xs break-words text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    "{displayNotes}"
+                  </p>
                 </div>
               )}
 
