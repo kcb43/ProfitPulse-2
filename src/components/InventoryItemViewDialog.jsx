@@ -44,8 +44,26 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full">
-        <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-[90vh]" style={{ marginBottom: '0px', paddingTop: '17px', paddingBottom: '17px' }}>
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full"
+        style={{ 
+          position: 'fixed !important',
+          left: '50% !important',
+          top: '50% !important',
+          transform: 'translate(-50%, -50%) !important',
+          margin: '0 !important'
+        }}
+      >
+        <div 
+          className="flex flex-col md:grid md:grid-cols-2 h-full max-h-[90vh]" 
+          style={{ 
+            marginBottom: '0px', 
+            paddingTop: '17px', 
+            paddingBottom: '17px',
+            userSelect: 'text',
+            touchAction: 'pan-y'
+          }}
+        >
           {/* Image Section - Fill entire right side on desktop */}
           <div className="order-1 md:order-2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden min-h-[256px] md:h-full md:min-h-0">
             {item.images && item.images.length > 1 ? (
