@@ -26,7 +26,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  CheckCircle
+  CheckCircle,
+  Layers
 } from 'lucide-react';
 
 /**
@@ -49,7 +50,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   const [filters, setFilters] = useState({
     brightness: 100,
     contrast: 100,
-    saturate: 100
+    saturate: 100,
+    shadow: 0
   });
   const [transform, setTransform] = useState({
     rotate: 0,
@@ -130,7 +132,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       const hasFilterChanges = 
         filters.brightness !== 100 || 
         filters.contrast !== 100 || 
-        filters.saturate !== 100;
+        filters.saturate !== 100 ||
+        filters.shadow !== 0;
       
       const hasTransformChanges = 
         transform.rotate !== 0 || 
@@ -144,7 +147,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     const hasFilterChanges = 
       filters.brightness !== loadedFilters.brightness || 
       filters.contrast !== loadedFilters.contrast || 
-      filters.saturate !== loadedFilters.saturate;
+      filters.saturate !== loadedFilters.saturate ||
+      filters.shadow !== (loadedFilters.shadow || 0);
     
     const hasTransformChanges = 
       transform.rotate !== loadedTransform.rotate || 
@@ -159,7 +163,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     const hasFilterChanges = 
       filters.brightness !== 100 || 
       filters.contrast !== 100 || 
-      filters.saturate !== 100;
+      filters.saturate !== 100 ||
+      filters.shadow !== 0;
     
     const hasTransformChanges = 
       transform.rotate !== 0 || 
@@ -252,7 +257,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           setFilters({
             brightness: 100,
             contrast: 100,
-            saturate: 100
+            saturate: 100,
+            shadow: 0
           });
           setTransform({
             rotate: 0,
@@ -384,7 +390,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           const defaultFilters = {
             brightness: 100,
             contrast: 100,
-            saturate: 100
+            saturate: 100,
+            shadow: 0
           };
           const defaultTransform = {
             rotate: 0,
@@ -478,7 +485,13 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       imageRef.current.style.filter = filterStyle;
       imageRef.current.style.transform = transformStyle;
       
-      // Note: Shadows are applied during final save, not in preview
+      // Apply shadow effect using drop-shadow
+      if (filters.shadow > 0) {
+        const shadowIntensity = filters.shadow / 100; // Convert 0-100 to 0-1
+        const shadowBlur = shadowIntensity * 20; // Max blur of 20px
+        const shadowOffset = shadowIntensity * 10; // Max offset of 10px
+        imageRef.current.style.filter = `${filterStyle} drop-shadow(${shadowOffset}px ${shadowOffset}px ${shadowBlur}px rgba(0, 0, 0, ${shadowIntensity * 0.5}))`;
+      }
     }
   }, [filters, transform]);
 
@@ -489,6 +502,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       case 'contrast':
       case 'saturate':
         return 200;
+      case 'shadow':
+        return 100;
       default:
         return 100;
     }
@@ -660,7 +675,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     setFilters({
       brightness: 100,
       contrast: 100,
-      saturate: 100
+      saturate: 100,
+      shadow: 0
     });
     setTransform({
       rotate: 0,
@@ -732,7 +748,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       setFilters({
         brightness: template.settings.brightness ?? 100,
         contrast: template.settings.contrast ?? 100,
-        saturate: template.settings.saturate ?? 100
+        saturate: template.settings.saturate ?? 100,
+        shadow: template.settings.shadow ?? 0
       });
       setTransform({
         rotate: template.settings.rotate ?? 0,
@@ -760,6 +777,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       filters.brightness !== 100 || 
       filters.contrast !== 100 || 
       filters.saturate !== 100 ||
+      filters.shadow !== 0 ||
       transform.rotate !== 0 ||
       transform.flip_x !== 1 ||
       transform.flip_y !== 1 ||
@@ -860,12 +878,27 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                        contrast(${filters.contrast}%) 
                        saturate(${filters.saturate}%)`;
 
+          // Apply shadow if enabled
+          if (filters.shadow > 0) {
+            const shadowIntensity = filters.shadow / 100;
+            ctx.shadowBlur = shadowIntensity * 20;
+            ctx.shadowOffsetX = shadowIntensity * 10;
+            ctx.shadowOffsetY = shadowIntensity * 10;
+            ctx.shadowColor = `rgba(0, 0, 0, ${shadowIntensity * 0.5})`;
+          }
+
           // Step 5: Draw the image (cropped if needed)
           ctx.drawImage(
             img,
             sourceX, sourceY, sourceWidth, sourceHeight,  // Source (crop area)
             -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight  // Destination
           );
+
+          // Reset shadow
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.shadowColor = 'transparent';
 
           // Reset transforms for final output
           ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -910,6 +943,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           brightness: filters.brightness,
           contrast: filters.contrast,
           saturate: filters.saturate,
+          shadow: filters.shadow,
           rotate: transform.rotate,
           flip_x: transform.flip_x,
           flip_y: transform.flip_y
@@ -979,6 +1013,15 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                    contrast(${filters.contrast}%) 
                    saturate(${filters.saturate}%)`;
 
+      // Apply shadow if enabled
+      if (filters.shadow > 0) {
+        const shadowIntensity = filters.shadow / 100;
+        ctx.shadowBlur = shadowIntensity * 20; // Max blur of 20px
+        ctx.shadowOffsetX = shadowIntensity * 10; // Max offset of 10px
+        ctx.shadowOffsetY = shadowIntensity * 10;
+        ctx.shadowColor = `rgba(0, 0, 0, ${shadowIntensity * 0.5})`; // Semi-transparent black
+      }
+
       ctx.drawImage(
         img,
         -img.naturalWidth / 2,
@@ -986,6 +1029,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
         img.naturalWidth,
         img.naturalHeight
       );
+
+      // Reset shadow for next operations
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowColor = 'transparent';
 
       // Reset transforms for final output
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1259,11 +1308,31 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 {/* Filters Section - Hidden when cropping */}
                 {!isCropping && (
                   <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-1.5">
+                    {/* Brightness and Contrast Row */}
+                    <div className="grid grid-cols-2 gap-1.5">
                     {[
                       { id: 'brightness', icon: BrightnessIcon, label: 'Bright' },
                       { id: 'contrast', icon: Contrast, label: 'Contrast' },
+                    ].map(({ id, icon: Icon, label }) => (
+                      <button
+                        key={id}
+                        onClick={() => handleFilterClick(id)}
+                        className={`p-1.5 rounded-md border transition-all duration-200 flex flex-col items-center gap-1 ${
+                          activeFilter === id
+                            ? 'bg-indigo-600/80 border-indigo-400/50 text-white shadow-md'
+                            : 'bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/40 hover:border-indigo-500/30'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span className="text-[10px] leading-tight">{label}</span>
+                      </button>
+                    ))}
+                    </div>
+                    {/* Saturation and Shadow Row */}
+                    <div className="grid grid-cols-2 gap-1.5">
+                    {[
                       { id: 'saturate', icon: Palette, label: 'Saturate' },
+                      { id: 'shadow', icon: Layers, label: 'Shadow' },
                     ].map(({ id, icon: Icon, label }) => (
                       <button
                         key={id}
@@ -1376,11 +1445,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         width: '499px',
                         height: 'auto',
                         maxWidth: '100%',
-                        maxHeight: '95%',
-                        filter: `brightness(${filters.brightness}%) 
-                                  contrast(${filters.contrast}%) 
-                                  saturate(${filters.saturate}%)`,
-                        transform: `rotate(${transform.rotate}deg) scale(${transform.flip_x}, ${transform.flip_y})`
+                        maxHeight: '95%'
                       }}
                     />
                     
