@@ -35,15 +35,15 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <div className="flex flex-col md:grid md:grid-cols-2">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 w-[95vw] sm:w-full">
+        <div className="flex flex-col md:grid md:grid-cols-2 h-full max-h-[90vh]">
           {/* Image Section */}
-          <div className="order-1 md:order-2 bg-gray-100 dark:bg-gray-800">
+          <div className="order-1 md:order-2 bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden md:h-auto min-h-[256px] md:min-h-0">
             {item.images && item.images.length > 1 ? (
-              <div className="w-full h-64 md:h-full">
+              <div className="w-full h-64 md:h-full md:min-h-[500px]">
                 <ImageCarousel
                   images={item.images}
-                  imageClassName="object-cover md:rounded-r-lg"
+                  imageClassName="object-cover md:rounded-r-lg w-full h-full"
                   counterPosition="bottom"
                 />
               </div>
@@ -52,13 +52,13 @@ export function InventoryItemViewDialog({ item, isOpen, onClose, tags = [], isFa
                 src={item.image_url || DEFAULT_IMAGE_URL}
                 alt={item.item_name}
                 fallback={DEFAULT_IMAGE_URL}
-                className="w-full h-64 md:h-full object-cover md:rounded-r-lg"
+                className="w-full h-64 md:h-full md:min-h-[500px] object-cover md:rounded-r-lg"
               />
             )}
           </div>
 
           {/* Details Section */}
-          <div className="p-4 md:p-6 order-2 md:order-1">
+          <div className="p-4 md:p-6 order-2 md:order-1 overflow-y-auto md:h-full">
             <DialogHeader className="mb-4">
               <div className="flex items-start justify-between gap-2">
                 <DialogTitle className="text-lg font-bold pr-6 break-words">{item.item_name}</DialogTitle>
