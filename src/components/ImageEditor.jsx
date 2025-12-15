@@ -1092,8 +1092,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               {hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
                 <Button
                   onClick={handleApplyFiltersToAll}
-                  className="hidden md:flex absolute right-[60px] bg-purple-600/80 hover:bg-purple-500 text-white text-xs h-7 px-3"
-                  style={{ marginRight: '0px', marginBottom: '0px', top: '163px' }}
+                  className="hidden md:flex absolute right-[60px] top-[60px] bg-purple-600/80 hover:bg-purple-500 text-white text-xs h-7 px-3"
+                  style={{ marginRight: '0px', marginBottom: '0px' }}
                 >
                   ✨ Apply to All
                 </Button>
