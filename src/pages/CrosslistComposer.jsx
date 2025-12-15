@@ -41663,6 +41663,7 @@ export default function CrosslistComposer() {
                 </button>
                 {MARKETPLACES.map((m) => {
                   const active = activeForm === m.id;
+                  const isFacebook = m.id === "facebook";
                   return (
                     <button
                       key={m.id}
@@ -41670,9 +41671,12 @@ export default function CrosslistComposer() {
                       onClick={() => setActiveForm(m.id)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
                         active
-                          ? "bg-primary text-primary-foreground shadow-md"
+                          ? isFacebook
+                            ? "text-primary-foreground shadow-md"
+                            : "bg-primary text-primary-foreground shadow-md"
                           : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-foreground"
                       }`}
+                      style={active && isFacebook ? { backgroundColor: "rgba(34, 197, 94, 1)" } : undefined}
                     >
                       <img src={m.icon} alt={m.label} className="w-5 h-5" />
                       <span className="font-medium">{m.label}</span>
