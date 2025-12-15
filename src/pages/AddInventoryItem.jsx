@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { cleanHtmlText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -255,6 +256,7 @@ export default function AddInventoryItem() {
     return_deadline: data.return_deadline ? data.return_deadline : null,
     images: data.photos?.map(p => p.imageUrl || p.url || p).filter(Boolean) || [],
     image_url: data.photos?.find(p => p.isMain)?.imageUrl || data.photos?.[0]?.imageUrl || data.image_url || '',
+    notes: data.notes ? cleanHtmlText(data.notes) : '',
   });
 
   const itemMutation = useMutation({
@@ -993,6 +995,15 @@ export default function AddInventoryItem() {
                           id="notes" 
                           value={formData.notes} 
                           onChange={(e) => handleChange('notes', e.target.value)}
+                          onPaste={(e) => {
+                            // Clean HTML from pasted content
+                            const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+                            if (pastedText) {
+                              e.preventDefault();
+                              const cleaned = cleanHtmlText(pastedText);
+                              handleChange('notes', formData.notes + (formData.notes ? '\n' : '') + cleaned);
+                            }
+                          }}
                           placeholder="Any additional details..."
                           rows={3}
                           className="w-full"

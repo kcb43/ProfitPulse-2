@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Upload, X, Image as ImageIcon, Plus, Loader2 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { base44 } from '@/api/base44Client';
+import { cleanHtmlText } from '@/lib/utils';
 
 const MAX_PHOTOS = 12;
 const MAX_FILE_SIZE_MB = 10;
@@ -199,7 +200,7 @@ export function UnifiedListingForm({
       // Prepare inventory item data
       const inventoryData = {
         item_name: formData.title,
-        notes: formData.description,
+        notes: cleanHtmlText(formData.description),
         purchase_price: parseFloat(formData.price),
         condition: formData.condition,
         brand: formData.brand,
@@ -272,6 +273,15 @@ export function UnifiedListingForm({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onPaste={(e) => {
+                // Clean HTML from pasted content
+                const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+                if (pastedText) {
+                  e.preventDefault();
+                  const cleaned = cleanHtmlText(pastedText);
+                  setFormData(prev => ({ ...prev, description: prev.description + (prev.description ? '\n' : '') + cleaned }));
+                }
+              }}
               placeholder="Describe your item in detail..."
               rows={6}
               required
