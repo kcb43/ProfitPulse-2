@@ -1080,37 +1080,31 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] max-w-[95vw] max-h-[85vh] sm:max-h-[90vh] p-0 overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 flex flex-col">
-          <DialogHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <DialogTitle className="text-base sm:text-xl font-semibold text-white flex items-center gap-2">
-                <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-sm sm:text-xl">Advanced Photo Editor</span>
+        <DialogContent className="w-[95vw] sm:w-[85vw] max-w-[1200px] max-h-[90vh] p-0 overflow-hidden bg-slate-900 border-slate-700/50 flex flex-col shadow-2xl">
+          <DialogHeader className="px-4 py-2.5 border-b border-slate-700/30 bg-slate-800/30 backdrop-blur-sm flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <DialogTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                <span>Photo Editor</span>
               </DialogTitle>
               
               {/* Apply to All button - Desktop only in header */}
               {hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
                 <Button
                   onClick={handleApplyFiltersToAll}
-                  className="hidden md:flex bg-purple-600 hover:bg-purple-500 text-white text-sm h-9 px-4 ml-4"
+                  className="hidden md:flex bg-purple-600/80 hover:bg-purple-500 text-white text-xs h-7 px-3 ml-auto"
                 >
-                  ✨ Apply to All Images
+                  ✨ Apply to All
                 </Button>
               )}
-              
-              <div className="flex-1"></div>
             </div>
           </DialogHeader>
 
-          <div className="ant-modal-body flex flex-col md:flex-row h-auto md:flex-1 overflow-y-auto md:overflow-hidden min-h-0 pb-0" style={{ scale: 1, outline: 'none' }}>
-            {/* Sidebar */}
-            <div className="w-full md:w-[300px] bg-slate-800/50 backdrop-blur-sm md:border-r border-slate-700/50 overflow-y-auto overflow-x-hidden px-2 pt-2 pb-1 sm:p-4 space-y-2 sm:space-y-6 max-h-none md:max-h-full">
-              {/* Template Section */}
-              <div className="space-y-2 sm:space-y-3">
-                <h3 className="text-xs sm:text-sm font-medium text-slate-300 flex items-center gap-2">
-                  <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Templates
-                </h3>
+          <div className="ant-modal-body flex flex-col md:flex-row h-auto md:flex-1 overflow-y-auto md:overflow-hidden min-h-0" style={{ scale: 1, outline: 'none', padding: '16px' }}>
+            {/* Compact Sidebar */}
+            <div className="w-full md:w-[220px] bg-slate-800/30 backdrop-blur-sm md:border-r border-slate-700/30 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 max-h-none md:max-h-full flex-shrink-0">
+              {/* Template Section - Compact */}
+              <div className="space-y-2">
                 <Select
                   value={selectedTemplate || 'none'}
                   onValueChange={(value) => {
@@ -1125,8 +1119,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full bg-slate-700/50 border-slate-600 text-slate-300 text-xs sm:text-sm h-8 sm:h-10">
-                    <SelectValue placeholder="Select template" />
+                  <SelectTrigger className="w-full bg-slate-700/40 border-slate-600/50 text-slate-300 text-xs h-7">
+                    <SelectValue placeholder="Template" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None (Custom)</SelectItem>
@@ -1139,118 +1133,82 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 </Select>
                 <Button
                   onClick={handleSaveTemplateClick}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-10"
+                  className="w-full bg-indigo-600/80 hover:bg-indigo-500 text-white flex items-center justify-center gap-1.5 text-xs h-7"
                 >
-                  <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm">Save Current Settings</span>
+                  <Save className="w-3 h-3" />
+                  <span>Save Template</span>
                 </Button>
               </div>
 
-              {/* Upload Section */}
-              <div className="space-y-2 sm:space-y-3">
-                <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
-                  <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Upload
-                </h3>
-                <div>
-                  <input
-                    type="file"
-                    id="imageUploader"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => document.getElementById('imageUploader')?.click()}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-10"
-                  >
-                    <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-sm">Upload Image</span>
-                  </Button>
-                </div>
+              {/* Upload Section - Compact */}
+              <div>
+                <input
+                  type="file"
+                  id="imageUploader"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  onClick={() => document.getElementById('imageUploader')?.click()}
+                  className="w-full bg-slate-700/40 hover:bg-slate-600/50 text-slate-300 flex items-center justify-center gap-1.5 text-xs h-7 border border-slate-600/50"
+                >
+                  <Upload className="w-3 h-3" />
+                  <span>Upload</span>
+                </Button>
               </div>
 
-              {/* Transform Section */}
-              <div className="space-y-2 sm:space-y-3">
-                <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
-                  <Crop className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  Transform
-                </h3>
-                
+              {/* Transform Section - Compact */}
+              <div className="space-y-2">
                 {isCropping ? (
                   // When cropping, show aspect ratio selector and crop controls
                   <div className="space-y-2">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-slate-400">Crop Aspect Ratio</Label>
-                      <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
-                        <SelectTrigger className="w-full bg-slate-700/50 border-slate-600 text-slate-300 text-xs sm:text-sm h-8 sm:h-9">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="free">Free (No Constraint)</SelectItem>
-                          <SelectItem value="square">Square (1:1)</SelectItem>
-                          <SelectItem value="4:3">Landscape (4:3)</SelectItem>
-                          <SelectItem value="16:9">Widescreen (16:9)</SelectItem>
-                          <SelectItem value="4:5">Portrait (4:5)</SelectItem>
-                          <SelectItem value="9:16">Vertical (9:16)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-2">
+                    <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
+                      <SelectTrigger className="w-full bg-slate-700/40 border-slate-600/50 text-slate-300 text-xs h-7">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="free">Free</SelectItem>
+                        <SelectItem value="square">Square (1:1)</SelectItem>
+                        <SelectItem value="4:3">Landscape (4:3)</SelectItem>
+                        <SelectItem value="16:9">Widescreen (16:9)</SelectItem>
+                        <SelectItem value="4:5">Portrait (4:5)</SelectItem>
+                        <SelectItem value="9:16">Vertical (9:16)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-1.5">
                       <Button
                         onClick={cancelCrop}
-                        className="flex-1 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm h-9"
+                        className="flex-1 bg-red-600/80 hover:bg-red-500 text-white text-xs h-7"
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={applyCrop}
-                        className="flex-1 bg-green-600 hover:bg-green-500 text-white text-xs sm:text-sm h-9"
+                        className="flex-1 bg-green-600/80 hover:bg-green-500 text-white text-xs h-7"
                       >
                         ✓ Apply
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => handleTransform('crop')}
-                      className="w-full p-2 sm:p-3 rounded-lg border bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50 transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2"
-                    >
-                      <Crop className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span className="text-[10px] sm:text-xs">Crop</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleTransform('crop')}
+                    className="w-full p-2 rounded-md border bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/50 transition-all duration-200 flex items-center justify-center gap-1.5 text-xs h-7"
+                  >
+                    <Crop className="w-3.5 h-3.5" />
+                    <span>Crop</span>
+                  </button>
                 )}
 
                 {/* Adjustments Section - Hidden when cropping */}
                 {!isCropping && (
-                  <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
-                    <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
-                      <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      Adjustments
-                    </h3>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span className="capitalize">{activeFilter}</span>
-                      <span>{sliderValue}%</span>
+                    <div className="flex justify-between items-center text-xs text-slate-400 mb-1">
+                      <span className="capitalize font-medium">{activeFilter}</span>
+                      <span className="text-slate-300 font-semibold">{sliderValue}%</span>
                     </div>
-                    <div className="relative">
-                      {/* Tick marks */}
-                      <div className="absolute inset-0 flex justify-between items-center pointer-events-none px-0.5">
-                        {[0, 25, 50, 75, 100].map((percent) => {
-                          // Calculate position based on slider range
-                          const position = ((percent - ((sliderMin / sliderMax) * 100)) / ((sliderMax - sliderMin) / sliderMax * 100)) * 100;
-                          if (position < 0 || position > 100) return null;
-                          return (
-                            <div
-                              key={percent}
-                              className="w-0.5 h-2 bg-white/40"
-                              style={{ position: 'absolute', left: `${position}%` }}
-                            />
-                          );
-                        })}
-                      </div>
+                    <div className="relative py-1">
                       <input
                         type="range"
                         min={sliderMin}
@@ -1268,59 +1226,84 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                           }
                           handleSliderChange(value);
                         }}
-                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer slider relative z-10"
+                        className="modern-slider w-full appearance-none cursor-pointer relative z-10"
                         style={{
                           background: sliderRange > 0
-                            ? `linear-gradient(to right, #475569 0%, #6c5ce7 ${((sliderValue - sliderMin) / sliderRange) * 100}%, #6c5ce7 ${((sliderValue - sliderMin) / sliderRange) * 100}%, #475569 100%)`
-                            : '#475569'
+                            ? `linear-gradient(to right, rgba(71, 85, 105, 0.4) 0%, rgba(99, 102, 241, 0.8) ${((sliderValue - sliderMin) / sliderRange) * 100}%, rgba(99, 102, 241, 0.8) ${((sliderValue - sliderMin) / sliderRange) * 100}%, rgba(71, 85, 105, 0.4) 100%)`
+                            : 'rgba(71, 85, 105, 0.4)'
                         }}
                       />
                     </div>
                   </div>
-                </div>
                 )}
 
                 {/* Filters Section - Hidden when cropping */}
                 {!isCropping && (
-                  <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-4">
-                    <h3 className="hidden sm:flex text-xs sm:text-sm font-medium text-slate-300 items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      Filters
-                    </h3>
-                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-1.5">
                     {[
-                      { id: 'brightness', icon: BrightnessIcon, label: 'Brightness' },
+                      { id: 'brightness', icon: BrightnessIcon, label: 'Bright' },
                       { id: 'contrast', icon: Contrast, label: 'Contrast' },
-                      { id: 'saturate', icon: Palette, label: 'Saturation' },
+                      { id: 'saturate', icon: Palette, label: 'Saturate' },
                     ].map(({ id, icon: Icon, label }) => (
                       <button
                         key={id}
                         onClick={() => handleFilterClick(id)}
-                        className={`p-2 sm:p-3 rounded-lg border transition-all duration-300 flex flex-col items-center gap-1 sm:gap-2 ${
+                        className={`p-1.5 rounded-md border transition-all duration-200 flex flex-col items-center gap-1 ${
                           activeFilter === id
-                            ? 'bg-indigo-600 border-indigo-400 text-white'
-                            : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-indigo-600/50'
+                            ? 'bg-indigo-600/80 border-indigo-400/50 text-white shadow-md'
+                            : 'bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/40 hover:border-indigo-500/30'
                         }`}
                       >
-                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="text-[10px] sm:text-xs">{label}</span>
+                        <Icon className="w-3.5 h-3.5" />
+                        <span className="text-[10px] leading-tight">{label}</span>
                       </button>
                     ))}
+                  </div>
+                  
+                  {/* Action Buttons - Desktop only */}
+                  <div className="hidden md:flex flex-col gap-2 pt-2">
+                    {/* Reset All - only show when there are changes from ORIGINAL */}
+                    {hasChangesFromOriginal() && (
+                      <Button
+                        onClick={resetAll}
+                        className="w-full bg-red-600/80 hover:bg-red-500 text-white flex items-center justify-center gap-1.5 text-xs h-7"
+                      >
+                        <Undo2 className="w-3 h-3" />
+                        <span>Reset All</span>
+                      </Button>
+                    )}
+                    
+                    {/* Save/Done button */}
+                    <Button
+                      onClick={(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges ? () => onOpenChange(false) : handleSave}
+                      className="w-full bg-green-600/80 hover:bg-green-500 text-white flex items-center justify-center gap-1.5 text-xs h-7 font-medium"
+                      disabled={!imgSrc}
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>
+                        {(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges
+                          ? 'Done' 
+                          : hasMultipleImages 
+                            ? `Save Image ${currentImageIndex + 1}` 
+                            : 'Save Image'}
+                      </span>
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-            {/* Main Content */}
-            <div className="ant-col ant-col-10 w-full md:flex-1 flex flex-col min-w-0 h-[400px] md:h-full overflow-hidden mt-auto md:mt-0 mb-0" style={{ paddingLeft: '8px', paddingRight: '8px', scale: 1, outline: 'none', background: isCropping ? '#f8fafc' : 'transparent' }}>
+            {/* Main Content - Image takes most space */}
+            <div className="w-full md:flex-1 flex flex-col min-w-0 h-[400px] md:h-full overflow-hidden" style={{ paddingLeft: '12px', scale: 1, outline: 'none', background: isCropping ? '#f8fafc' : 'transparent' }}>
               <div 
-                className="image-edit-container w-full h-full rounded-lg overflow-hidden flex items-center justify-center" 
+                className="image-edit-container w-full h-full overflow-hidden flex items-center justify-center rounded-lg" 
                 style={{ 
                   scale: 1,
                   outline: 'none',
                   background: isCropping ? '#ffffff' : '#0f172a',
-                  border: isCropping ? '2px solid #e2e8f0' : '1px solid #334155'
+                  border: isCropping ? '1px solid #e2e8f0' : '1px solid rgba(51, 65, 85, 0.3)'
                 }}
               >
                 {imgSrc && (
@@ -1368,12 +1351,12 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                       ref={imageRef}
                       src={imgSrc}
                       alt="Editor Preview"
-                      className="block object-contain max-w-[90%] max-h-[90%]"
+                      className="block object-contain"
                       style={{
                         width: 'auto',
                         height: 'auto',
-                        maxWidth: window.innerWidth >= 768 ? '60%' : '90%',
-                        maxHeight: window.innerWidth >= 768 ? '60vh' : '90%',
+                        maxWidth: '95%',
+                        maxHeight: '95%',
                         filter: `brightness(${filters.brightness}%) 
                                   contrast(${filters.contrast}%) 
                                   saturate(${filters.saturate}%)`,
@@ -1384,26 +1367,26 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     {/* Rotate buttons overlay - always visible */}
                     <div style={{
                       position: 'absolute',
-                      bottom: '16px',
+                      bottom: '12px',
                       left: '50%',
                       transform: 'translateX(-50%)',
                       display: 'flex',
-                      gap: '12px',
+                      gap: '8px',
                       zIndex: 1000
                     }}>
                       <button
                         onClick={() => handleTransform('rotate_left')}
-                        className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
+                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-slate-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
                         title="Rotate Left"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-blue-600" />
+                        <RotateCcw className="w-4 h-4 text-slate-700" />
                       </button>
                       <button
                         onClick={() => handleTransform('rotate_right')}
-                        className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-blue-500 shadow-lg hover:bg-blue-50 flex items-center justify-center transition-all hover:scale-110"
+                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-slate-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
                         title="Rotate Right"
                       >
-                        <RotateCw className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-blue-600" />
+                        <RotateCw className="w-4 h-4 text-slate-700" />
                       </button>
                     </div>
                   </div>
@@ -1417,16 +1400,16 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="px-3 sm:px-5 pt-2 pb-6 sm:py-3 border-t border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
+          {/* Footer - Mobile only */}
+          <div className="md:hidden px-4 py-2.5 border-t border-slate-700/30 bg-slate-800/30 backdrop-blur-sm flex flex-col gap-2 flex-shrink-0">
             {/* Reset All - only show when there are changes from ORIGINAL */}
             {hasChangesFromOriginal() && (
               <Button
                 onClick={resetAll}
-                className="flex-1 bg-red-600 hover:bg-red-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="flex-1 bg-red-600/80 hover:bg-red-500 text-white flex items-center justify-center gap-1.5 text-xs h-7"
               >
-                <Undo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="text-xs sm:text-base">Reset All</span>
+                <Undo2 className="w-3 h-3" />
+                <span>Reset All</span>
               </Button>
             )}
             
@@ -1434,26 +1417,26 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             {hasUnsavedChanges && hasMultipleImages && onApplyToAll && (
               <Button
                 onClick={handleApplyFiltersToAll}
-                className="md:hidden flex-1 bg-purple-600 hover:bg-purple-500 text-white text-xs sm:text-sm"
+                className="flex-1 bg-purple-600/80 hover:bg-purple-500 text-white text-xs h-7"
               >
                 ✨ Apply to All
               </Button>
             )}
             
-            {/* Save/Done button - ALWAYS visible */}
+            {/* Save/Done button - Mobile only */}
             {!isCropping && (
               <Button
                 onClick={(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges ? () => onOpenChange(false) : handleSave}
-                className="flex-1 bg-green-600 hover:bg-green-500 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="flex-1 bg-green-600/80 hover:bg-green-500 text-white flex items-center justify-center gap-1.5 text-xs h-7"
                 disabled={!imgSrc}
               >
-                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="text-xs sm:text-base">
+                <Download className="w-3 h-3" />
+                <span>
                   {(appliedToAll || editedImages.has(currentImageIndex)) && !hasUnsavedChanges
                     ? 'Done' 
                     : hasMultipleImages 
-                      ? `Save Image ${currentImageIndex + 1}` 
-                      : 'Save Image'}
+                      ? `Save ${currentImageIndex + 1}` 
+                      : 'Save'}
                 </span>
               </Button>
             )}
