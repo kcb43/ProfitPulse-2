@@ -29,6 +29,14 @@ const platformOptions = [
   { value: "offer_up", label: "OfferUp" }
 ];
 
+const platformIcons = {
+  ebay: "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg",
+  facebook_marketplace: "https://upload.wikimedia.org/wikipedia/commons/b/b9/2023_Facebook_icon.svg",
+  mercari: "https://cdn.brandfetch.io/idjAt9LfED/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B",
+  etsy: "https://cdn.brandfetch.io/idzyTAzn6G/theme/dark/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B",
+  offer_up: "https://cdn.brandfetch.io/id5p1Knwlt/theme/dark/symbol.svg?c=1dxbfHSJFAPEGdCLU4o5B"
+};
+
 const FACEBOOK_ICON_URL = "https://upload.wikimedia.org/wikipedia/commons/b/b9/2023_Facebook_icon.svg";
 
 const PREDEFINED_SOURCES = ["Amazon", "Walmart", "Best Buy"];
@@ -830,12 +838,32 @@ export default function AddSale() {
                     required
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select platform" />
+                      <SelectValue placeholder="Select platform">
+                        {formData.platform && platformIcons[formData.platform] ? (
+                          <div className="flex items-center gap-2">
+                            <img 
+                              src={platformIcons[formData.platform]} 
+                              alt={platformOptions.find(opt => opt.value === formData.platform)?.label || formData.platform} 
+                              className="w-5 h-5 object-contain"
+                            />
+                            <span>{platformOptions.find(opt => opt.value === formData.platform)?.label || formData.platform}</span>
+                          </div>
+                        ) : null}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {platformOptions.map(option => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          <div className="flex items-center gap-2">
+                            {platformIcons[option.value] && (
+                              <img 
+                                src={platformIcons[option.value]} 
+                                alt={option.label} 
+                                className="w-5 h-5 object-contain"
+                              />
+                            )}
+                            <span>{option.label}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>

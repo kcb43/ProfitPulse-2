@@ -826,8 +826,8 @@ export default function SalesHistory() {
         </div>
 
         <Card className="border-0 shadow-lg mb-6">
-          <CardHeader className="border-b bg-gray-800 dark:bg-gray-800">
-            <CardTitle className="flex items-center gap-2 text-white break-words">
+          <CardHeader className="border-b bg-gray-50 dark:bg-gray-800">
+            <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white break-words">
               <Filter className="w-5 h-5 flex-shrink-0" />
               Filters & Sort
             </CardTitle>
@@ -906,11 +906,11 @@ export default function SalesHistory() {
         </Card>
 
         <Card className="border-0 shadow-lg w-full min-w-0 max-w-full overflow-x-hidden">
-          <CardHeader className="border-b bg-gray-800 dark:bg-gray-800">
+          <CardHeader className="border-b bg-gray-50 dark:bg-gray-800">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 min-w-0">
               {selectedSales.length > 0 ? (
                 <>
-                  <CardTitle className="text-white break-words">{selectedSales.length} sale(s) selected</CardTitle>
+                  <CardTitle className="text-gray-900 dark:text-white break-words">{selectedSales.length} sale(s) selected</CardTitle>
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
@@ -1052,20 +1052,15 @@ export default function SalesHistory() {
                       return (
                         <Card 
                           key={sale.id} 
-                          className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-slate-700/50'}`}
+                          className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-700 ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-slate-700/50'} shadow-sm dark:shadow-lg`}
                           style={{
-                            background: 'linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(51, 65, 85) 100%)',
                             borderRadius: '16px',
-                            boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                           }}
                         >
                           <div className="relative">
                             <div 
                               onClick={() => handleSelect(sale.id)}
-                              className={`relative aspect-square overflow-hidden cursor-pointer transition-all duration-200 ${selectedSales.includes(sale.id) ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
-                              style={{
-                                background: 'rgba(255, 255, 255, 0.05)',
-                              }}
+                              className={`relative aspect-square overflow-hidden cursor-pointer transition-all duration-200 bg-gray-50 dark:bg-slate-900/50 ${selectedSales.includes(sale.id) ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
                             >
                               {sale.image_url ? (
                                 <OptimizedImage
@@ -1087,12 +1082,12 @@ export default function SalesHistory() {
                                 </div>
                               )}
                               {platformIcons[sale.platform] && (
-                                <div className="absolute top-2 right-2 z-10 bg-black/60 backdrop-blur-sm rounded-lg p-1.5">
+                                <div className="absolute top-2 right-2 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-1.5 border border-gray-200 shadow-md">
                                   <img 
                                     src={platformIcons[sale.platform]} 
                                     alt={platformNames[sale.platform]}
                                     className="w-5 h-5 object-contain"
-                                    style={{ filter: sale.platform === 'ebay' ? 'none' : 'brightness(0) invert(1)' }}
+                                    style={{ filter: sale.platform === 'ebay' ? 'none' : 'none' }}
                                   />
                                 </div>
                               )}
@@ -1111,28 +1106,28 @@ export default function SalesHistory() {
                           </div>
                           <CardContent className="p-4">
                             <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)}>
-                              <h3 className="font-bold text-white text-sm mb-2 line-clamp-2 hover:text-blue-400 transition-colors">
+                              <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                 {sale.item_name || 'Untitled Item'}
                               </h3>
                             </Link>
                             <div className="space-y-1.5 text-xs mb-3">
-                              <div className="flex justify-between text-gray-300">
+                              <div className="flex justify-between text-gray-700 dark:text-gray-300">
                                 <span>Sold Price:</span>
-                                <span className="font-semibold text-white">${sale.selling_price?.toFixed(2)}</span>
+                                <span className="font-semibold text-gray-900 dark:text-white">${sale.selling_price?.toFixed(2)}</span>
                               </div>
-                              <div className="flex justify-between text-gray-300">
+                              <div className="flex justify-between text-gray-700 dark:text-gray-300">
                                 <span>Date:</span>
-                                <span className="text-white">{format(parseISO(sale.sale_date), 'MM/dd/yyyy')}</span>
+                                <span className="text-gray-900 dark:text-white">{format(parseISO(sale.sale_date), 'MM/dd/yyyy')}</span>
                               </div>
-                              <div className="flex justify-between text-gray-300">
+                              <div className="flex justify-between text-gray-700 dark:text-gray-300">
                                 <span>Profit:</span>
-                                <span className={`font-bold ${sale.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                <span className={`font-bold ${sale.profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                   {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(2) || '0.00'}
                                 </span>
                               </div>
                             </div>
                             {isDeleted && daysUntilPermanentDelete !== null && (
-                              <div className="mb-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200 text-xs">
+                              <div className="mb-3 p-2 bg-orange-100 border-l-2 border-orange-500 rounded-r text-orange-800 text-xs">
                                 <p className="font-semibold flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until deletion
@@ -1173,14 +1168,11 @@ export default function SalesHistory() {
                   const totalCosts = ((sale.purchase_price || 0) + (sale.shipping_cost || 0) + (sale.platform_fees || 0) + (sale.other_costs || 0));
                   
                   return (
-                  <div key={sale.id} className={`product-list-item relative flex flex-row sm:flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full ${isDeleted ? 'opacity-75' : ''}`}
+                  <div key={sale.id} className={`product-list-item relative flex flex-row sm:flex-row items-start sm:items-center mb-4 sm:mb-6 min-w-0 w-full max-w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700/50 shadow-sm dark:shadow-lg ${isDeleted ? 'opacity-75' : ''}`}
                     style={{
                       minHeight: 'auto',
                       height: 'auto',
                       borderRadius: '16px',
-                      border: '1px solid rgba(51, 65, 85, 0.6)',
-                      background: 'rgb(30, 41, 59)',
-                      boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                       overflow: 'hidden',
                       maxWidth: '100%',
                       width: '100%',
@@ -1192,11 +1184,9 @@ export default function SalesHistory() {
                       {/* Product Image Section - Clickable */}
                       <div 
                         onClick={() => handleSelect(sale.id)}
-                        className={`glass flex items-center justify-center relative w-[62px] sm:w-[220px] min-w-[62px] sm:min-w-[220px] max-w-[62px] sm:max-w-[220px] h-[62px] sm:h-[210px] p-1 sm:p-4 cursor-pointer transition-all duration-200 ${selectedSales.includes(sale.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
+                        className={`glass flex items-center justify-center relative w-[62px] sm:w-[220px] min-w-[62px] sm:min-w-[220px] max-w-[62px] sm:max-w-[220px] h-[62px] sm:h-[210px] p-1 sm:p-4 cursor-pointer transition-all duration-200 bg-gray-50 dark:bg-slate-900/50 border ${selectedSales.includes(sale.id) ? 'border-green-500 dark:border-green-500 opacity-80 shadow-lg shadow-green-500/50' : 'border-gray-200 dark:border-slate-700/50 hover:opacity-90 hover:shadow-md'}`}
                         style={{
                           borderRadius: '12px',
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          border: selectedSales.includes(sale.id) ? '2px solid rgba(34, 197, 94, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
                           flexShrink: 0
                         }}>
                         {sale.image_url ? (
@@ -1212,13 +1202,11 @@ export default function SalesHistory() {
                         )}
                         {/* Platform Icon Overlay - hidden on mobile */}
                         {platformIcons[sale.platform] && (
-                          <div className="glass absolute top-2 right-2 hidden sm:flex items-center justify-center z-10"
+                          <div className="glass absolute top-2 right-2 hidden sm:flex items-center justify-center z-10 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-md"
                             style={{
                               width: '43px',
                               height: '55px',
                               borderRadius: '12px',
-                              background: 'rgba(255, 255, 255, 0.1)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
                               padding: '8px'
                             }}>
                             <img 
@@ -1254,12 +1242,12 @@ export default function SalesHistory() {
                     {/* Details Section */}
                     <div className="flex-1 flex flex-col justify-start px-1.5 sm:px-6 py-1 sm:py-6 border-r min-w-0 overflow-hidden relative"
                       style={{
-                        borderColor: 'rgba(51, 65, 85, 0.6)',
+                        borderColor: 'rgba(229, 231, 235, 0.8)',
                         flexShrink: 1,
                         minWidth: 0
                       }}>
                       {/* Vertical Divider - Centered on mobile */}
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-[60%] sm:h-full sm:top-0 sm:translate-y-0 bg-slate-600/60"></div>
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-[60%] sm:h-full sm:top-0 sm:translate-y-0 bg-gray-300"></div>
                       {/* Resale Value Badge - Desktop Only */}
                       <div className="mb-2 sm:mb-3 hidden sm:block">
                         <div className="glass inline-block px-4 sm:px-6 py-2 rounded-xl text-white text-xs sm:text-sm font-medium"
@@ -1277,7 +1265,7 @@ export default function SalesHistory() {
 
                       {/* Title - Now starts right after image on mobile */}
                       <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block mb-0.5 sm:mb-3">
-                        <h3 className="text-xs sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2"
+                        <h3 className="text-xs sm:text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2"
                           style={{ letterSpacing: '0.5px', lineHeight: '1.25' }}>
                           {sale.item_name || 'Untitled Item'}
                         </h3>
@@ -1285,7 +1273,7 @@ export default function SalesHistory() {
 
                       {/* Sold Price - Under title on mobile */}
                       <div className="mb-0 sm:hidden">
-                        <p className="text-gray-300 text-[9px] break-words leading-[12px]"
+                        <p className="text-gray-700 dark:text-gray-300 text-[9px] break-words leading-[12px]"
                           style={{ letterSpacing: '0.4px' }}>
                           <span className="font-semibold">Sold Price:</span> ${sale.selling_price?.toFixed(2)}
                         </p>
@@ -1293,14 +1281,14 @@ export default function SalesHistory() {
 
                       {/* Date - Under sold price on mobile */}
                       <div className="mb-0.5 sm:hidden">
-                        <p className="text-gray-300 text-[9px] break-words leading-[12px]"
+                        <p className="text-gray-700 dark:text-gray-300 text-[9px] break-words leading-[12px]"
                           style={{ letterSpacing: '0.4px' }}>
                           {format(parseISO(sale.sale_date), 'MM/dd/yyyy')}
                         </p>
                       </div>
 
                       {/* Description/Details - Desktop only (mobile shows under image and under title) */}
-                      <p className="hidden sm:block text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm break-words line-clamp-1 sm:line-clamp-2 leading-[18px] sm:leading-[23.8px]"
+                      <p className="hidden sm:block text-gray-700 dark:text-gray-300 mb-2 sm:mb-4 text-xs sm:text-sm break-words line-clamp-1 sm:line-clamp-2 leading-[18px] sm:leading-[23.8px]"
                         style={{ 
                           letterSpacing: '0.7px'
                         }}>
@@ -1310,7 +1298,7 @@ export default function SalesHistory() {
 
                       {/* Deletion Warnings */}
                       {isDeleted && daysUntilPermanentDelete !== null && (
-                        <div className="mt-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200">
+                        <div className="mt-3 p-2 bg-orange-100 border-l-2 border-orange-500 rounded-r text-orange-800">
                           <p className="font-semibold text-xs flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
@@ -1319,7 +1307,7 @@ export default function SalesHistory() {
                       )}
 
                       {isDeleted && daysUntilPermanentDelete === null && (
-                        <div className="mt-3 p-2 bg-red-900/30 border-l-2 border-red-500 rounded-r text-red-200">
+                        <div className="mt-3 p-2 bg-red-100 border-l-2 border-red-500 rounded-r text-red-800">
                           <p className="font-semibold text-xs">
                             Will be permanently deleted soon
                           </p>
@@ -1328,19 +1316,14 @@ export default function SalesHistory() {
                     </div>
 
                     {/* Actions Section */}
-                    <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-1 sm:py-3 mr-1.5 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[75px] sm:w-[200px] min-w-[75px] sm:min-w-[200px] max-w-[75px] sm:max-w-[200px]"
+                    <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-1 sm:px-3 py-1 sm:py-3 mr-1.5 sm:mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 w-[75px] sm:w-[200px] min-w-[75px] sm:min-w-[200px] max-w-[75px] sm:max-w-[200px]"
                       style={{
-                        background: 'rgb(51, 65, 85)',
                         flexShrink: 0
                       }}>
                       {/* Profit Display - Desktop Only */}
-                      <div className="hidden sm:block glass px-3 py-1.5 rounded-xl text-white font-bold text-base text-center border border-gray-700"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          borderColor: 'rgb(55, 69, 88)'
-                        }}>
+                      <div className="hidden sm:block glass px-3 py-1.5 rounded-xl font-bold text-base text-center border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white">
                         <span className="font-semibold">Profit: </span>
-                        <span className={`${sale.profit >= 0 ? 'text-green-400' : 'text-red-500'}`}>
+                        <span className={`${sale.profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {sale.profit >= 0 ? '+' : ''}${sale.profit?.toFixed(2) || '0.00'}
                         </span>
                       </div>
@@ -1420,7 +1403,7 @@ export default function SalesHistory() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="glass text-white hover:text-gray-300 hover:bg-gray-700/50 h-7 w-7 sm:h-8 sm:w-8"
+                                className="glass text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 h-7 w-7 sm:h-8 sm:w-8"
                                 style={{
                                   background: 'rgba(255, 255, 255, 0.1)',
                                   borderRadius: '8px',

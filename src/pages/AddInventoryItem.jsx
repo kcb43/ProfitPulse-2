@@ -26,6 +26,14 @@ import { ReactSortable } from "react-sortablejs";
 
 const MAX_PHOTOS = 12;
 const PREDEFINED_SOURCES = ["Amazon", "Walmart", "Best Buy", "eBay", "eBay - SalvationArmy"];
+
+const sourceIcons = {
+  "Amazon": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+  "Walmart": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Walmart_logo.svg",
+  "Best Buy": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Best_Buy_Logo.svg",
+  "eBay": "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg",
+  "eBay - SalvationArmy": "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg"
+};
 const PREDEFINED_CATEGORIES = [
   "Antiques",
   "Books, Movies & Music",
@@ -905,11 +913,35 @@ export default function AddInventoryItem() {
                         value={isOtherSource ? 'other' : formData.source} 
                       >
                         <SelectTrigger id="source_select" className="w-full">
-                          <SelectValue placeholder="Select a source">{isOtherSource && formData.source ? formData.source : (PREDEFINED_SOURCES.includes(formData.source) ? formData.source : "Select a source")}</SelectValue>
+                          <SelectValue placeholder="Select a source">
+                            {formData.source && !isOtherSource && sourceIcons[formData.source] ? (
+                              <div className="flex items-center gap-2">
+                                <img 
+                                  src={sourceIcons[formData.source]} 
+                                  alt={formData.source} 
+                                  className="w-5 h-5 object-contain"
+                                />
+                                <span>{formData.source}</span>
+                              </div>
+                            ) : (
+                              isOtherSource && formData.source ? formData.source : (PREDEFINED_SOURCES.includes(formData.source) ? formData.source : "Select a source")
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {PREDEFINED_SOURCES.map(source => (
-                            <SelectItem key={source} value={source}>{source}</SelectItem>
+                            <SelectItem key={source} value={source}>
+                              <div className="flex items-center gap-2">
+                                {sourceIcons[source] && (
+                                  <img 
+                                    src={sourceIcons[source]} 
+                                    alt={source} 
+                                    className="w-5 h-5 object-contain"
+                                  />
+                                )}
+                                <span>{source}</span>
+                              </div>
+                            </SelectItem>
                           ))}
                           <SelectItem value="other">Other...</SelectItem>
                         </SelectContent>

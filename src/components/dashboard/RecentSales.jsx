@@ -89,7 +89,7 @@ export default function RecentSales({ sales }) {
                               </div>
                             )}
                             
-                            <div className="absolute top-2 right-2 z-10">
+                            <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-2">
                               {(() => {
                                 const profitValue = sale.profit ?? 0;
                                 const profitPositive = profitValue >= 0;
@@ -103,6 +103,15 @@ export default function RecentSales({ sales }) {
                                   </Badge>
                                 );
                               })()}
+                              {sale.platform && platformIcons[sale.platform] && (
+                                <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg p-1.5 shadow-md border border-white/20 dark:border-gray-700/50">
+                                  <img 
+                                    src={platformIcons[sale.platform]} 
+                                    alt={sale.platform} 
+                                    className="w-5 h-5 object-contain"
+                                  />
+                                </div>
+                              )}
                             </div>
                             
                             <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">

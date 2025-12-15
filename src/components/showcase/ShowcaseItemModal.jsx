@@ -3,10 +3,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
-import { DollarSign, TrendingUp, Calendar, Info, Package } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, Info, Package, Pencil, Trash2 } from 'lucide-react';
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { stripCustomFeeNotes } from "@/utils/customFees";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DEFAULT_IMAGE_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png";
 
@@ -19,6 +31,46 @@ const platformNames = {
 };
 
 export default function ShowcaseItemModal({ item, isOpen, onClose }) {
+  const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [feesExpanded, setFeesExpanded] = React.useState(false);
+  
+  const deleteMutation = useMutation({
+    mutationFn: async (saleId) => {
+      const saleToDelete = await base44.entities.Sale.get(saleId);
+      
+      if (saleToDelete.inventory_id) {
+        try {
+          const inventoryItem = await base44.entities.InventoryItem.get(saleToDelete.inventory_id);
+          const quantitySoldInSale = saleToDelete.quantity_sold || 1;
+          const newQuantitySold = Math.max((inventoryItem.quantity_sold || 0) - quantitySoldInSale, 0);
+          const isSoldOut = newQuantitySold >= inventoryItem.quantity;
+          
+          await base44.entities.InventoryItem.update(saleToDelete.inventory_id, {
+            quantity_sold: newQuantitySold,
+            status: isSoldOut ? "sold" : (inventoryItem.status === "sold" && newQuantitySold < inventoryItem.quantity ? "available" : inventoryItem.status),
+          });
+        } catch (error) {
+          console.error("Failed to update inventory item:", error);
+        }
+      }
+      
+      return base44.entities.Sale.delete(saleId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
+      setDeleteDialogOpen(false);
+      onClose();
+    },
+  });
+
+  const handleDelete = () => {
+    if (item?.id) {
+      deleteMutation.mutate(item.id);
+    }
+  };
+
   if (!item) return null;
 
   const purchasePrice = item.purchase_price ?? 0;
@@ -27,18 +79,19 @@ export default function ShowcaseItemModal({ item, isOpen, onClose }) {
   const otherCosts = item.other_costs ?? 0;
   const vatFees = item.vat_fees ?? 0;
   const totalCosts = purchasePrice + shippingCost + platformFees + otherCosts + vatFees;
-  const [feesExpanded, setFeesExpanded] = React.useState(false);
+  const sellingPrice = item.selling_price ?? 0;
+  const profit = item.profit ?? 0;
   const displayNotes = stripCustomFeeNotes(item.notes || "");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0">
         <div className="flex flex-col md:grid md:grid-cols-2">
-          <div className="order-1 md:order-2">
+          <div className="order-1 md:order-2 min-h-[340px] md:min-h-0">
             <img 
               src={item.image_url || DEFAULT_IMAGE_URL} 
               alt={item.item_name} 
-              className="w-full h-48 md:h-full object-cover md:rounded-r-lg" 
+              className="w-full h-[340px] md:h-full object-cover md:rounded-r-lg" 
             />
           </div>
           <div className="p-4 md:p-6 order-2 md:order-1">
@@ -80,38 +133,52 @@ export default function ShowcaseItemModal({ item, isOpen, onClose }) {
                   </div>
                   <p className="font-semibold">${totalCosts.toFixed(2)}</p>
                   {feesExpanded && (
-                    <div className="mt-2 space-y-1 text-[11px] sm:text-xs text-red-500 dark:text-red-300">
+                    <div className="mt-2 space-y-2 border-t dark:border-gray-700 pt-2 text-[11px] sm:text-xs">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="break-words">Purchase Price</span>
-                        <span className="font-semibold break-words">${purchasePrice.toFixed(2)}</span>
+                        <span className="break-words text-gray-700 dark:text-gray-300">Sold Price</span>
+                        <span className="font-semibold break-words text-green-600 dark:text-green-400">${sellingPrice.toFixed(2)}</span>
                       </div>
-                      {shippingCost > 0 && (
+                      <div className="border-t dark:border-gray-700 pt-2 mt-2 space-y-1 text-red-500 dark:text-red-300">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="break-words">Shipping</span>
-                          <span className="font-semibold break-words">${shippingCost.toFixed(2)}</span>
+                          <span className="break-words">Purchase Price</span>
+                          <span className="font-semibold break-words">${purchasePrice.toFixed(2)}</span>
                         </div>
-                      )}
-                      {platformFees > 0 && (
+                        {shippingCost > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="break-words">Shipping</span>
+                            <span className="font-semibold break-words">${shippingCost.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {platformFees > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="break-words">Platform Fees</span>
+                            <span className="font-semibold break-words">${platformFees.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {otherCosts > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="break-words">Other Costs</span>
+                            <span className="font-semibold break-words">${otherCosts.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {vatFees > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="break-words">VAT Fees</span>
+                            <span className="font-semibold break-words">${vatFees.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {shippingCost <= 0 && platformFees <= 0 && otherCosts <= 0 && vatFees <= 0 && (
+                          <p className="text-muted-foreground">No additional fees recorded.</p>
+                        )}
+                      </div>
+                      <div className="border-t dark:border-gray-700 pt-2 mt-2">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="break-words">Platform Fees</span>
-                          <span className="font-semibold break-words">${platformFees.toFixed(2)}</span>
+                          <span className="break-words text-gray-700 dark:text-gray-300">Profit</span>
+                          <span className={`font-semibold break-words ${profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                            {profit >= 0 ? '+' : ''}${profit.toFixed(2)}
+                          </span>
                         </div>
-                      )}
-                      {otherCosts > 0 && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="break-words">Other Costs</span>
-                          <span className="font-semibold break-words">${otherCosts.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {vatFees > 0 && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="break-words">VAT Fees</span>
-                          <span className="font-semibold break-words">${vatFees.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {shippingCost <= 0 && platformFees <= 0 && otherCosts <= 0 && vatFees <= 0 && (
-                        <p className="text-muted-foreground">No additional fees recorded.</p>
-                      )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -161,10 +228,48 @@ export default function ShowcaseItemModal({ item, isOpen, onClose }) {
               )}
 
               <div className="pt-4 border-t" />
+              
+              {/* Edit and Delete Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t">
+                <Link to={createPageUrl(`AddSale?id=${item.id}`)} className="flex-1 min-w-0">
+                  <Button variant="outline" className="w-full dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white text-sm sm:text-base h-9 sm:h-10">
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                </Link>
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="flex-1 dark:bg-red-700 dark:hover:bg-red-600 dark:text-white text-sm sm:text-base h-9 sm:h-10"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </DialogContent>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700 dark:text-white max-w-[90vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="dark:text-white break-words">Delete Sale?</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-300 break-words">
+              Are you sure you want to delete this sale? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white w-full sm:w-auto">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 dark:text-white w-full sm:w-auto"
+            >
+              {deleteMutation.isLoading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

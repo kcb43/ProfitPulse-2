@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Cropper from 'cropperjs';
 import imageCompression from 'browser-image-compression';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +66,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('free');
   const [cropData, setCropData] = useState(null); // Store crop coordinates for applying to all images
   
@@ -924,6 +927,50 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
     });
   };
 
+  // Show delete confirmation dialog
+  const handleDeleteTemplate = (templateId, templateName, e) => {
+    e.stopPropagation(); // Prevent SelectItem from being selected
+    setTemplateToDelete({ id: templateId, name: templateName });
+    setShowDeleteConfirmDialog(true);
+  };
+
+  // Actually delete template from database after confirmation
+  const confirmDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    
+    try {
+      // Soft delete by setting deleted_at
+      await base44.entities.ImageEditorTemplate.update(templateToDelete.id, {
+        deleted_at: new Date().toISOString()
+      });
+      
+      // If this template was selected, reset to "None (Custom)"
+      if (selectedTemplate === templateToDelete.id) {
+        setSelectedTemplate(null);
+        resetAll();
+      }
+      
+      // Refresh templates list
+      await refetchTemplates();
+      
+      toast({
+        title: "Template Deleted",
+        description: `Template "${templateToDelete.name}" has been deleted.`,
+      });
+      
+      // Close dialog and reset state
+      setShowDeleteConfirmDialog(false);
+      setTemplateToDelete(null);
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete template. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Save template to database
   const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
@@ -1129,10 +1176,10 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[95vw] sm:w-[85vw] max-w-[1200px] max-h-[90vh] p-0 overflow-hidden bg-slate-900 border-slate-700/50 flex flex-col shadow-2xl">
-          <DialogHeader className="px-4 py-2.5 border-b border-slate-700/30 bg-slate-800/30 backdrop-blur-sm flex-shrink-0" style={{ paddingTop: '17px', paddingBottom: '17px' }}>
+        <DialogContent className="w-[95vw] sm:w-[85vw] max-w-[1200px] max-h-[90vh] p-0 overflow-hidden bg-white border-gray-200 flex flex-col shadow-2xl">
+          <DialogHeader className="px-4 py-2.5 border-b border-gray-200 bg-gray-50 backdrop-blur-sm flex-shrink-0" style={{ paddingTop: '17px', paddingBottom: '17px' }}>
             <div className="flex items-center gap-3">
-              <DialogTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
+              <DialogTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
                 <Camera className="w-4 h-4" />
                 <span>Photo Editor</span>
               </DialogTitle>
@@ -1152,7 +1199,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
           <div className="ant-modal-body flex flex-col md:flex-row h-auto md:flex-1 overflow-y-auto md:overflow-hidden min-h-0" style={{ scale: 1, outline: 'none', padding: '16px' }}>
             {/* Compact Sidebar */}
-            <div className="w-full md:w-[220px] bg-slate-800/30 backdrop-blur-sm md:border-r border-slate-700/30 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 max-h-none md:max-h-full flex-shrink-0">
+            <div className="w-full md:w-[220px] bg-gray-50 backdrop-blur-sm md:border-r border-gray-200 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 max-h-none md:max-h-full flex-shrink-0">
               {/* Template Section - Compact */}
               <div className="space-y-2">
                 <Select
@@ -1169,14 +1216,29 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full bg-slate-700/40 border-slate-600/50 text-slate-300 text-xs h-7">
+                  <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 text-xs h-7">
                     <SelectValue placeholder="Template" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None (Custom)</SelectItem>
                     {templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
+                      <SelectItem 
+                        key={template.id} 
+                        value={template.id}
+                        className="group relative"
+                      >
+                        <div className="flex items-center justify-between w-full gap-2 pr-6">
+                          <span className="flex-1 truncate">{template.name}</span>
+                          <button
+                            onClick={(e) => handleDeleteTemplate(template.id, template.name, e)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded flex items-center justify-center flex-shrink-0 z-10"
+                            title="Delete template"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <X className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                          </button>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1201,7 +1263,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 />
                 <Button
                   onClick={() => document.getElementById('imageUploader')?.click()}
-                  className="w-full bg-slate-700/40 hover:bg-slate-600/50 text-slate-300 flex items-center justify-center gap-1.5 text-xs h-7 border border-slate-600/50"
+                  className="w-full bg-white hover:bg-gray-100 text-gray-900 flex items-center justify-center gap-1.5 text-xs h-7 border border-gray-300"
                 >
                   <Upload className="w-3 h-3" />
                   <span>Upload</span>
@@ -1214,7 +1276,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                   // When cropping, show aspect ratio selector and crop controls
                   <div className="space-y-2">
                     <Select value={aspectRatio} onValueChange={handleAspectRatioChange}>
-                      <SelectTrigger className="w-full bg-slate-700/40 border-slate-600/50 text-slate-300 text-xs h-7">
+                      <SelectTrigger className="w-full bg-white border-gray-300 text-gray-900 text-xs h-7">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1244,7 +1306,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 ) : (
                   <button
                     onClick={() => handleTransform('crop')}
-                    className="w-full p-2 rounded-md border bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/50 transition-all duration-200 flex items-center justify-center gap-1.5 text-xs h-[54px]"
+                    className="w-full p-2 rounded-md border bg-white border-gray-300 text-gray-900 hover:bg-indigo-50 hover:border-indigo-400 transition-all duration-200 flex items-center justify-center gap-1.5 text-xs h-[54px]"
                   >
                     <Crop className="w-3.5 h-3.5" />
                     <span>Crop</span>
@@ -1254,9 +1316,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 {/* Adjustments Section - Hidden when cropping */}
                 {!isCropping && (
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs text-slate-400 mb-1">
+                    <div className="flex justify-between items-center text-xs text-gray-600 mb-1">
                       <span className="capitalize font-medium">{activeFilter}</span>
-                      <span className="text-slate-300 font-semibold">{sliderValue}%</span>
+                      <span className="text-gray-900 font-semibold">{sliderValue}%</span>
                     </div>
                     <div className="relative py-1">
                       {/* Tick marks */}
@@ -1267,7 +1329,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                           return (
                             <div
                               key={tick}
-                              className="w-0.5 h-1 bg-slate-500/40"
+                              className="w-0.5 h-1 bg-gray-400"
                               style={{
                                 position: 'absolute',
                                 left: `${position}%`,
@@ -1297,8 +1359,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         className="modern-slider w-full appearance-none cursor-pointer relative z-10"
                         style={{
                           background: sliderRange > 0
-                            ? `linear-gradient(to right, rgba(71, 85, 105, 0.4) 0%, rgba(99, 102, 241, 0.8) ${((sliderValue - sliderMin) / sliderRange) * 100}%, rgba(99, 102, 241, 0.8) ${((sliderValue - sliderMin) / sliderRange) * 100}%, rgba(71, 85, 105, 0.4) 100%)`
-                            : 'rgba(71, 85, 105, 0.4)'
+                            ? `linear-gradient(to right, rgba(209, 213, 219, 0.6) 0%, rgba(99, 102, 241, 0.8) ${((sliderValue - sliderMin) / sliderRange) * 100}%, rgba(99, 102, 241, 0.8) ${((sliderValue - sliderMin) / sliderRange) * 100}%, rgba(209, 213, 219, 0.6) 100%)`
+                            : 'rgba(209, 213, 219, 0.6)'
                         }}
                       />
                     </div>
@@ -1319,8 +1381,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         onClick={() => handleFilterClick(id)}
                         className={`p-1.5 rounded-md border transition-all duration-200 flex flex-col items-center gap-1 ${
                           activeFilter === id
-                            ? 'bg-indigo-600/80 border-indigo-400/50 text-white shadow-md'
-                            : 'bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/40 hover:border-indigo-500/30'
+                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
+                            : 'bg-white border-gray-300 text-gray-900 hover:bg-indigo-50 hover:border-indigo-400'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -1339,8 +1401,8 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         onClick={() => handleFilterClick(id)}
                         className={`p-1.5 rounded-md border transition-all duration-200 flex flex-col items-center gap-1 ${
                           activeFilter === id
-                            ? 'bg-indigo-600/80 border-indigo-400/50 text-white shadow-md'
-                            : 'bg-slate-700/40 border-slate-600/50 text-slate-300 hover:bg-indigo-600/40 hover:border-indigo-500/30'
+                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
+                            : 'bg-white border-gray-300 text-gray-900 hover:bg-indigo-50 hover:border-indigo-400'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -1385,18 +1447,16 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
             {/* Main Content - Image takes most space */}
-            <div className="w-full md:flex-1 flex flex-col min-w-0 h-[400px] md:h-full overflow-hidden" style={{ paddingLeft: '12px', scale: 1, outline: 'none', background: isCropping ? '#f8fafc' : 'transparent' }}>
+            <div className="w-full md:flex-1 flex flex-col min-w-0 h-[400px] md:h-full overflow-hidden bg-transparent dark:bg-transparent" style={{ paddingLeft: '12px', scale: 1, outline: 'none' }}>
               <div 
-                className="image-edit-container w-full h-full overflow-hidden flex items-center justify-center rounded-lg" 
+                className={`image-edit-container w-full h-full overflow-hidden flex items-center justify-center rounded-lg ${isCropping ? 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700'}`}
                 style={{ 
                   scale: 1,
-                  outline: 'none',
-                  background: isCropping ? '#ffffff' : '#0f172a',
-                  border: isCropping ? '1px solid #e2e8f0' : '1px solid rgba(51, 65, 85, 0.3)'
+                  outline: 'none'
                 }}
               >
                 {imgSrc && (
-                  <div className="relative flex items-center justify-center" style={{ outline: 'none', border: 'none', width: '100%', height: '100%' }}>
+                  <div className="relative flex items-center justify-center" style={{ outline: 'none', border: 'none', width: '100%', height: '100%', backgroundColor: 'rgba(255, 255, 255, 1)' }}>
                     {/* Image edited checkmark - top right */}
                     {editedImages.has(currentImageIndex) && (
                       <div className="absolute top-4 right-4 z-20">
@@ -1430,7 +1490,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                         )}
 
                         {/* Image counter */}
-                        <div className="absolute top-4 left-4 bg-black/60 text-white text-sm px-3 py-1.5 rounded-full z-10">
+                        <div className="absolute top-4 left-4 bg-white/90 text-gray-900 text-sm px-3 py-1.5 rounded-full z-10 border border-gray-200 shadow-md">
                           {currentImageIndex + 1} / {normalizedImages.length}
                         </div>
                       </>
@@ -1461,32 +1521,32 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     }}>
                       <button
                         onClick={() => handleTransform('rotate_left')}
-                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-slate-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
+                        className="w-8 h-8 rounded-full bg-white hover:bg-gray-50 border border-gray-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
                         style={{
-                          borderColor: 'rgba(250, 250, 249, 1)',
-                          boxShadow: '0px 1px 10px 4px rgba(0, 0, 0, 0.15), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1)'
+                          borderColor: 'rgba(209, 213, 219, 1)',
+                          boxShadow: '0px 1px 10px 4px rgba(0, 0, 0, 0.1), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 2px 4px -2px rgba(0, 0, 0, 0.05)'
                         }}
                         title="Rotate Left"
                       >
-                        <RotateCcw className="w-4 h-4 text-slate-700" />
+                        <RotateCcw className="w-4 h-4 text-gray-700" />
                       </button>
                       <button
                         onClick={() => handleTransform('rotate_right')}
-                        className="w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-slate-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
+                        className="w-8 h-8 rounded-full bg-white hover:bg-gray-50 border border-gray-300 shadow-md hover:shadow-lg flex items-center justify-center transition-all hover:scale-105"
                         style={{
-                          borderColor: 'rgba(250, 250, 249, 1)',
-                          boxShadow: '0px 1px 10px 4px rgba(0, 0, 0, 0.15), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1)'
+                          borderColor: 'rgba(209, 213, 219, 1)',
+                          boxShadow: '0px 1px 10px 4px rgba(0, 0, 0, 0.1), 0px 0px 0px 0px rgba(0, 0, 0, 0), 0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 2px 4px -2px rgba(0, 0, 0, 0.05)'
                         }}
                         title="Rotate Right"
                       >
-                        <RotateCw className="w-4 h-4 text-slate-700" />
+                        <RotateCw className="w-4 h-4 text-gray-700" />
                       </button>
                     </div>
                   </div>
                 )}
               </div>
               {isCropping && (
-                <div className="mt-3 text-center text-slate-700 text-sm bg-white px-4 py-2 rounded-lg border border-slate-200">
+                <div className="mt-3 text-center text-gray-700 text-sm bg-gray-50 px-4 py-2 rounded-lg border border-gray-200">
                   <p className="font-medium">✨ Drag the crop box or resize using the corners and edges</p>
                 </div>
               )}
@@ -1494,7 +1554,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
           {/* Footer - Mobile only */}
-          <div className="md:hidden px-4 py-2.5 border-t border-slate-700/30 bg-slate-800/30 backdrop-blur-sm flex flex-col gap-2 flex-shrink-0">
+          <div className="md:hidden px-4 py-2.5 border-t border-gray-200 bg-gray-50 backdrop-blur-sm flex flex-col gap-2 flex-shrink-0">
             {/* Reset All - only show when there are changes from ORIGINAL */}
             {hasChangesFromOriginal() && (
               <Button
@@ -1539,22 +1599,22 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
 
       {/* Template Name Dialog */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="bg-slate-800 border-slate-700">
+        <DialogContent className="bg-white border-gray-200">
           <DialogHeader>
-            <DialogTitle className="text-white">Save Template</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogTitle className="text-gray-900">Save Template</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Give your image adjustment template a name so you can use it again later.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="template-name" className="text-slate-300">Template Name</Label>
+              <Label htmlFor="template-name" className="text-gray-900">Template Name</Label>
               <Input
                 id="template-name"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 placeholder="e.g., Bright & Vibrant"
-                className="bg-slate-700 border-slate-600 text-white"
+                className="bg-white border-gray-300 text-gray-900"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && templateName.trim()) {
                     handleSaveTemplate();
@@ -1570,7 +1630,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                 setShowTemplateDialog(false);
                 setTemplateName('');
               }}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              className="border-gray-300 text-gray-900 hover:bg-gray-100"
             >
               Cancel
             </Button>
@@ -1584,6 +1644,27 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Template Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete the template "{templateToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTemplateToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTemplate}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

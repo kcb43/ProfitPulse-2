@@ -194,7 +194,7 @@ export default function Gamification({ sales, stats }) {
                 {/* Tier info - bigger */}
                 <div className="min-w-0 flex-1">
                   <div className="text-white/70 text-[10px] sm:text-xs font-semibold uppercase tracking-wider leading-tight mb-0.5 break-words">Your Tier</div>
-                  <h4 className="text-white text-lg sm:text-xl font-black tracking-tight drop-shadow-lg leading-tight break-words">{tierInfo.name}</h4>
+                  <h4 className="!text-white text-lg sm:text-xl font-black tracking-tight drop-shadow-lg leading-tight break-words" style={{ color: 'white' }}>{tierInfo.name}</h4>
                   <div className="text-white/80 text-xs sm:text-sm font-medium leading-tight">{points.toLocaleString()}</div>
                 </div>
               </div>

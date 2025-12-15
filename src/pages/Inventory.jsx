@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import SoldLookupDialog from "../components/SoldLookupDialog";
 import { useInventoryTags } from "@/hooks/useInventoryTags";
 import { ImageEditor } from "@/components/ImageEditor";
@@ -102,6 +103,14 @@ export default function InventoryPage() {
   const [itemForFacebookListing, setItemForFacebookListing] = useState(null);
   const [ebaySearchDialogOpen, setEbaySearchDialogOpen] = useState(false);
   const [ebaySearchInitialQuery, setEbaySearchInitialQuery] = useState("");
+  const [dismissedDuplicates, setDismissedDuplicates] = useState(() => {
+    try {
+      const stored = localStorage.getItem('dismissedDuplicateAlerts');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   const {
     toggleFavorite,
@@ -851,6 +860,48 @@ export default function InventoryPage() {
     }).length;
   }, [inventoryItems]);
 
+  // Detect duplicate items by title (excluding sold items)
+  const duplicateItems = React.useMemo(() => {
+    if (!Array.isArray(inventoryItems)) return [];
+    const titleMap = new Map();
+    const duplicates = [];
+    
+    inventoryItems.forEach(item => {
+      // Skip deleted items and sold items
+      if (!item.item_name || item.deleted_at || item.status === "sold") return;
+      const normalizedTitle = item.item_name.trim().toLowerCase();
+      if (!titleMap.has(normalizedTitle)) {
+        titleMap.set(normalizedTitle, []);
+      }
+      titleMap.get(normalizedTitle).push(item);
+    });
+    
+    titleMap.forEach((items, title) => {
+      if (items.length > 1) {
+        duplicates.push({
+          title: items[0].item_name, // Use original case
+          items: items,
+          normalizedTitle: title
+        });
+      }
+    });
+    
+    return duplicates;
+  }, [inventoryItems]);
+
+  // Filter out dismissed duplicates
+  const activeDuplicates = React.useMemo(() => {
+    return duplicateItems.filter(dup => 
+      !dismissedDuplicates.includes(dup.normalizedTitle)
+    );
+  }, [duplicateItems, dismissedDuplicates]);
+
+  const handleDismissDuplicate = (normalizedTitle) => {
+    const updated = [...dismissedDuplicates, normalizedTitle];
+    setDismissedDuplicates(updated);
+    localStorage.setItem('dismissedDuplicateAlerts', JSON.stringify(updated));
+  };
+
   const handleTagEditorToggle = (itemId) => {
     setTagEditorFor((prev) => (prev === itemId ? null : itemId));
     setTagDrafts((prev) => ({ ...prev, [itemId]: prev[itemId] || "" }));
@@ -1104,8 +1155,8 @@ export default function InventoryPage() {
           </div>
 
           <Card className="border-0 shadow-lg mb-4">
-            <CardHeader className="border-b bg-gray-800 dark:bg-gray-800">
-              <CardTitle className="text-base sm:text-lg text-white">Filters & Sort</CardTitle>
+            <CardHeader className="border-b bg-gray-50 dark:bg-gray-800">
+              <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Filters & Sort</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1212,6 +1263,45 @@ export default function InventoryPage() {
             </CardContent>
           </Card>
 
+          {/* Duplicate Items Alert */}
+          {activeDuplicates.length > 0 && (
+            <Alert className="mb-4 border-orange-200 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-800">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <AlertDescription className="text-orange-800 dark:text-orange-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-semibold">Duplicate Items Detected</span>
+                    </div>
+                    <p className="text-sm mt-1">
+                      Found {activeDuplicates.length} item{activeDuplicates.length === 1 ? '' : 's'} with duplicate titles. Please check:
+                    </p>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                      {activeDuplicates.slice(0, 5).map((dup, idx) => (
+                        <li key={idx}>
+                          <span className="font-medium">"{dup.title}"</span> - {dup.items.length} item{dup.items.length === 1 ? '' : 's'}
+                        </li>
+                      ))}
+                      {activeDuplicates.length > 5 && (
+                        <li className="text-xs opacity-75">...and {activeDuplicates.length - 5} more</li>
+                      )}
+                    </ul>
+                  </AlertDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    activeDuplicates.forEach(dup => handleDismissDuplicate(dup.normalizedTitle));
+                  }}
+                  className="text-orange-800 hover:bg-orange-100 dark:text-orange-200 dark:hover:bg-orange-900/40 flex-shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </Alert>
+          )}
+
           {(showDeletedOnly || showDismissedReturns) && (
             <div className="sticky top-0 z-40 mb-4 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-lg shadow-lg border border-blue-400 dark:border-blue-500">
               <div className="flex items-center justify-between gap-3">
@@ -1283,7 +1373,7 @@ export default function InventoryPage() {
           )}
 
           {sortedItems.length > 0 && (
-            <div className="flex items-center gap-3 p-4 bg-gray-800 dark:bg-gray-800 rounded-t-lg">
+            <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
               <Checkbox
                 checked={selectedItems.length === sortedItems.length && sortedItems.length > 0}
                 onCheckedChange={handleSelectAll}
@@ -1291,13 +1381,13 @@ export default function InventoryPage() {
                 className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&[data-state=checked]]:!bg-green-600 [&[data-state=checked]]:!border-green-600 flex-shrink-0 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
               />
               <div className="flex flex-col">
-                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-white">
+                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-gray-900 dark:text-white">
                   Select All ({sortedItems.length})
                 </label>
-                <span className="text-xs text-gray-400 md:hidden">
+                <span className="text-xs text-gray-600 dark:text-gray-400 md:hidden">
                   {viewMode === "list" ? "Tap image to select for bulk edit" : "Tap image to select for bulk edit"}
                 </span>
-                <span className="text-xs text-gray-400 hidden md:block">Click image to select for bulk edit</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 hidden md:block">Click image to select for bulk edit</span>
               </div>
             </div>
           )}
@@ -1332,30 +1422,26 @@ export default function InventoryPage() {
                   return (
                     <div 
                       key={item.id} 
-                      className={`product-list-item relative flex flex-row flex-wrap sm:flex-nowrap items-stretch sm:items-center mb-6 sm:mb-6 min-w-0 w-full ${isDeleted ? 'opacity-75' : ''} ${selectedItems.includes(item.id) ? 'ring-2 ring-green-500' : ''}`}
+                      className={`product-list-item relative flex flex-row flex-wrap sm:flex-nowrap items-stretch sm:items-center mb-6 sm:mb-6 min-w-0 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700/50 shadow-sm dark:shadow-lg ${isDeleted ? 'opacity-75' : ''} ${selectedItems.includes(item.id) ? 'ring-2 ring-green-500' : ''}`}
                       style={{
                         minHeight: 'auto',
                         height: 'auto',
                         borderRadius: '16px',
-                        border: '1px solid rgba(51, 65, 85, 0.6)',
-                        background: 'rgb(30, 41, 59)',
-                        boxShadow: selectedItems.includes(item.id) ? 'rgba(34, 197, 94, 0.4) 0px 10px 30px -5px' : 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                         overflow: 'hidden',
                         maxWidth: '100%',
                         width: '100%',
                         boxSizing: 'border-box',
                         flexShrink: 0,
-                        paddingBottom: window.innerWidth < 768 ? '2.50rem' : '0'
+                        paddingBottom: window.innerWidth < 768 ? '2.50rem' : '0',
+                        boxShadow: selectedItems.includes(item.id) ? 'rgba(34, 197, 94, 0.4) 0px 10px 30px -5px' : undefined
                       }}
                     >
                       <div className="flex flex-col sm:block flex-shrink-0 m-1 sm:m-4">
                         <div
                           onClick={() => handleSelect(item.id)}
-                          className={`md:cursor-default cursor-pointer glass flex items-center justify-center relative w-[130px] sm:w-[220px] min-w-[130px] sm:min-w-[220px] max-w-[130px] sm:max-w-[220px] h-[130px] sm:h-[210px] p-1 sm:p-1 transition-all duration-200 overflow-hidden ${selectedItems.includes(item.id) ? 'opacity-80 shadow-lg shadow-green-500/50' : 'hover:opacity-90 hover:shadow-md'}`}
+                          className={`md:cursor-default cursor-pointer glass flex items-center justify-center relative w-[130px] sm:w-[220px] min-w-[130px] sm:min-w-[220px] max-w-[130px] sm:max-w-[220px] h-[130px] sm:h-[210px] p-1 sm:p-1 transition-all duration-200 overflow-hidden bg-gray-50 dark:bg-slate-900/50 border ${selectedItems.includes(item.id) ? 'border-green-500 dark:border-green-500 opacity-80 shadow-lg shadow-green-500/50' : 'border-gray-200 dark:border-slate-600/50 hover:opacity-90 hover:shadow-md'}`}
                           style={{
                             borderRadius: '12px',
-                            background: 'rgba(255, 255, 255, 0.1)',
-                            border: selectedItems.includes(item.id) ? '2px solid rgba(34, 197, 94, 0.6)' : '1px solid rgba(255, 255, 255, 0.1)',
                             flexShrink: 0
                           }}
                         >
@@ -1452,12 +1538,12 @@ export default function InventoryPage() {
 
                       <div className="flex-1 flex flex-col justify-start items-start px-2 sm:px-6 py-2 sm:py-6 sm:border-r min-w-0 overflow-hidden relative"
                         style={{
-                          borderColor: 'rgba(51, 65, 85, 0.6)',
+                          borderColor: 'rgba(229, 231, 235, 0.8)',
                           flexShrink: 1,
                           minWidth: 0
                         }}
                       >
-                        <div className="absolute left-0 top-0 w-px h-[130px] sm:h-full bg-slate-600/60"></div>
+                        <div className="absolute left-0 top-0 w-px h-[130px] sm:h-full bg-gray-300"></div>
                         
                         {/* Status badge above title - Desktop only */}
                         <div className="hidden sm:block mb-2">
@@ -1467,51 +1553,51 @@ export default function InventoryPage() {
                         </div>
                         
                         <Link to={createPageUrl(`AddInventoryItem?id=${item.id}`)} state={returnStateForInventory} className="block mb-1 sm:mb-3 w-full text-left">
-                          <h3 className="text-sm sm:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2 text-left"
+                          <h3 className="text-sm sm:text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer break-words line-clamp-3 sm:line-clamp-2 text-left"
                             style={{ letterSpacing: '0.3px', lineHeight: '1.35' }}>
                             {item.item_name || 'Untitled Item'}
                           </h3>
                         </Link>
 
                         <div className="mb-1 sm:hidden space-y-0.5 w-full text-left">
-                          <p className="text-gray-300 text-[11px] break-words leading-[14px]">
+                          <p className="text-gray-700 dark:text-gray-300 text-[11px] break-words leading-[14px]">
                             <span className="font-semibold">Qty:</span> {item.quantity}
                             {quantitySold > 0 && (
-                              <span className={isSoldOut ? 'text-red-400' : 'text-blue-400'}>
+                              <span className={isSoldOut ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}>
                                 {isSoldOut ? ' (Sold Out)' : ` (${quantitySold} sold)`}
                               </span>
                             )}
                           </p>
                           
-                          <p className="text-gray-300 text-[11px] break-words leading-[14px] pt-1">
+                          <p className="text-gray-700 dark:text-gray-300 text-[11px] break-words leading-[14px] pt-1">
                             <span className="font-semibold">Price:</span> ${item.purchase_price.toFixed(2)}
                             {item.quantity > 1 && (
-                              <span className="text-gray-400 text-[10px] ml-1">
+                              <span className="text-gray-600 dark:text-gray-400 text-[10px] ml-1">
                                 (${perItemPrice.toFixed(2)} ea)
                               </span>
                             )}
                           </p>
                         </div>
 
-                        <div className="hidden sm:block space-y-1.5 text-xs sm:text-sm mb-2 sm:mb-4 text-gray-300 break-words">
+                        <div className="hidden sm:block space-y-1.5 text-xs sm:text-sm mb-2 sm:mb-4 text-gray-700 dark:text-gray-300 break-words">
                           <div>
                             <span>Price: </span>
-                            <span className="font-medium text-white">
+                            <span className="font-medium text-gray-900 dark:text-white">
                               ${item.purchase_price.toFixed(2)}
-                              {item.quantity > 1 && <span className="text-gray-400 ml-1">(${perItemPrice.toFixed(2)} ea)</span>}
+                              {item.quantity > 1 && <span className="text-gray-600 dark:text-gray-400 ml-1">(${perItemPrice.toFixed(2)} ea)</span>}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span>Qty: {item.quantity}</span>
                             {quantitySold > 0 && (
-                              <span className={`font-medium ${isSoldOut ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
+                              <span className={`font-medium ${isSoldOut ? 'text-red-600 dark:text-red-400 font-bold' : 'text-blue-600 dark:text-blue-400'}`}>
                                 {isSoldOut ? '(Sold Out)' : `(${quantitySold} sold)`}
                               </span>
                             )}
                           </div>
                           <div>
                             <span>Purchase Date: </span>
-                            <span className="font-medium text-white">
+                            <span className="font-medium text-gray-900 dark:text-white">
                               {item.purchase_date ? format(parseISO(item.purchase_date), 'MMM dd, yyyy') : '—'}
                             </span>
                           </div>
@@ -1573,7 +1659,7 @@ export default function InventoryPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveTagFromItem(item.id, tag)}
-                                  className="inline-flex h-3 w-3 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-black/10 text-muted-foreground hover:bg-black/20"
+                                  className="inline-flex h-3 w-3 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500"
                                 >
                                   <X className="h-2 w-2 sm:h-3 sm:w-3" />
                                 </button>
@@ -1583,7 +1669,7 @@ export default function InventoryPage() {
                         )}
 
                         {isDeleted && daysUntilPermanentDelete !== null && (
-                          <div className="mt-2 sm:mt-3 p-2 bg-orange-900/30 border-l-2 border-orange-500 rounded-r text-orange-200">
+                          <div className="mt-2 sm:mt-3 p-2 bg-orange-100 border-l-2 border-orange-500 rounded-r text-orange-800">
                             <p className="font-semibold text-xs flex items-center gap-1">
                               <AlarmClock className="w-3 h-3" />
                               {daysUntilPermanentDelete} day{daysUntilPermanentDelete !== 1 ? 's' : ''} until permanent deletion
@@ -1592,9 +1678,8 @@ export default function InventoryPage() {
                         )}
                       </div>
 
-                      <div className="hidden sm:flex flex-col items-center justify-center gap-2 px-3 py-3 mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-700 w-[200px] min-w-[200px] max-w-[200px]"
+                      <div className="hidden sm:flex flex-col items-center justify-center gap-2 px-3 py-3 mr-0 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 w-[200px] min-w-[200px] max-w-[200px]"
                         style={{
-                          background: 'rgb(51, 65, 85)',
                           flexShrink: 0
                         }}
                       >
@@ -1625,7 +1710,7 @@ export default function InventoryPage() {
                       </div>
                       
                       {/* Mobile: Mark Sold and View Details buttons at bottom */}
-                      <div className="md:hidden flex gap-2 px-2 pt-3 mt-5 border-t border-gray-700 w-full -mb-2">
+                      <div className="md:hidden flex gap-2 px-2 pt-3 mt-5 border-t border-gray-200 w-full -mb-2">
                         {!isSoldOut && item.status !== 'sold' && (
                           <Button
                             onClick={() => handleMarkAsSold(item)}
@@ -1688,17 +1773,12 @@ export default function InventoryPage() {
             return (
               <Card 
                 key={item.id} 
-                className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-slate-700/50'}`}
+                className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 shadow-sm dark:shadow-lg ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-slate-700/50'}`}
                 style={{
-                  background: 'linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(51, 65, 85) 100%)',
                   borderRadius: '16px',
-                  boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                 }}
               >
-                <div className="relative aspect-square overflow-hidden"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                  }}
+                <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-slate-900/50"
                 >
                   <div
                     onClick={() => handleSelect(item.id)}
@@ -1741,7 +1821,7 @@ export default function InventoryPage() {
                           className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent transition ${
                             favoriteMarked
                               ? "bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
-                              : "text-gray-300 hover:text-amber-500 hover:bg-amber-500/10"
+                              : "text-gray-700 dark:text-gray-300 hover:text-amber-500 hover:bg-amber-500/10"
                           }`}
                         >
                           <Star className={`h-4 w-4 ${favoriteMarked ? "fill-current" : ""}`} />
@@ -1754,7 +1834,7 @@ export default function InventoryPage() {
                               type="button"
                               variant="secondary"
                               size="sm"
-                              className="h-7 px-2 text-xs gap-1 bg-slate-700/50 hover:bg-slate-600/50 text-white border-slate-600"
+                              className="h-7 px-2 text-xs gap-1 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-900 dark:text-white border-gray-300 dark:border-slate-600"
                               onClick={(e) => handleEditImage(e, item)}
                             >
                               <ImageIcon className="h-3 w-3" />
@@ -1766,7 +1846,7 @@ export default function InventoryPage() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-7 px-2 text-xs gap-1 border-slate-600 text-gray-300 hover:bg-slate-700/50"
+                            className="h-7 px-2 text-xs gap-1 border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700"
                             onClick={() => handleTagEditorToggle(item.id)}
                           >
                             <Tag className="h-3.5 w-3.5" />
@@ -1779,47 +1859,47 @@ export default function InventoryPage() {
                         to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
                         state={returnStateForInventory}
                       >
-                        <h3 className="font-bold text-white text-sm mb-3 line-clamp-2 hover:text-blue-400 transition-colors">
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-3 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           {item.item_name || 'Untitled Item'}
                         </h3>
                       </Link>
                       
                       <div className="space-y-1.5 text-xs mb-3">
-                        <div className="flex justify-between text-gray-300">
+                        <div className="flex justify-between text-gray-700 dark:text-gray-300">
                           <span>Price:</span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-gray-900 dark:text-white">
                             ${item.purchase_price.toFixed(2)}
                             {item.quantity > 1 && (
-                              <span className="text-gray-400 ml-1">(${perItemPrice.toFixed(2)} ea)</span>
+                              <span className="text-gray-600 dark:text-gray-400 ml-1">(${perItemPrice.toFixed(2)} ea)</span>
                             )}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-gray-300">
+                        <div className="flex justify-between items-center text-gray-700 dark:text-gray-300">
                           <span>Qty:</span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-gray-900 dark:text-white">
                             {item.quantity}
                             {quantitySold > 0 && (
-                              <span className={`ml-1 ${isSoldOut ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
+                              <span className={`ml-1 ${isSoldOut ? 'text-red-600 dark:text-red-400 font-bold' : 'text-blue-600 dark:text-blue-400'}`}>
                                 {isSoldOut ? '(Sold Out)' : `(${quantitySold} sold)`}
                               </span>
                             )}
                           </span>
                         </div>
-                        <div className="flex justify-between text-gray-300">
+                        <div className="flex justify-between text-gray-700 dark:text-gray-300">
                           <span>Purchase Date:</span>
-                          <span className="text-white">{item.purchase_date ? format(parseISO(item.purchase_date), 'MMM dd, yyyy') : '—'}</span>
+                          <span className="text-gray-900 dark:text-white">{item.purchase_date ? format(parseISO(item.purchase_date), 'MMM dd, yyyy') : '—'}</span>
                         </div>
                       </div>
 
                       {itemTags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-3">
                           {itemTags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="flex items-center gap-1 text-[11px] bg-slate-700/50 text-gray-300 border-slate-600">
+                            <Badge key={tag} variant="secondary" className="flex items-center gap-1 text-[11px] bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-slate-600">
                               {tag}
                               <button
                                 type="button"
                                 onClick={() => handleRemoveTagFromItem(item.id, tag)}
-                                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-black/20 text-gray-400 hover:bg-black/30"
+                                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500"
                               >
                                 <X className="h-3 w-3" />
                                 <span className="sr-only">Remove tag</span>
@@ -1988,7 +2068,7 @@ export default function InventoryPage() {
                               state={returnStateForInventory}
                               className="flex-1"
                             >
-                              <Button variant="outline" size="sm" className="w-full h-8 text-xs border-slate-600 text-gray-300 hover:bg-slate-700/50">
+                              <Button variant="outline" size="sm" className="w-full h-8 text-xs border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                                 <Edit className="w-3 h-3 mr-1" />
                                 Edit
                               </Button>
@@ -2001,7 +2081,7 @@ export default function InventoryPage() {
                                   setItemForFacebookListing(item);
                                   setFacebookListingDialogOpen(true);
                                 }}
-                                className="h-8 text-xs border-blue-600/50 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                                className="h-8 text-xs border-blue-600/50 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               >
                                 <Facebook className="w-3 h-3 mr-1" />
                                 List on FB
@@ -2012,7 +2092,7 @@ export default function InventoryPage() {
                               size="sm" 
                               onClick={() => handleDeleteClick(item)} 
                               disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
-                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 h-8 text-xs border-red-600/50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-xs border-red-600/50"
                             >
                               <Trash2 className="w-3 h-3 mr-1" />
                               Delete
@@ -2028,7 +2108,7 @@ export default function InventoryPage() {
             )
           ) : (
             <div className="text-center py-20">
-              <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <p className="text-muted-foreground text-lg">No inventory items found</p>
               <p className="text-muted-foreground text-sm mt-1">Try adjusting your filters or add a new item.</p>
             </div>

@@ -10,9 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, DollarSign, Tag, ShoppingCart, Calendar, Upload, BarChart, Info, FileText, TrendingUp, Percent, Zap, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, DollarSign, Tag, ShoppingCart, Calendar, FileText, TrendingUp, Percent, Zap, Pencil, Trash2 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 
 import {
@@ -48,51 +46,6 @@ const sourceIcons = {
 };
 
 const DEFAULT_IMAGE_URL = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png";
-
-function ImageUploader({ saleId, saleItemName }) {
-  const queryClient = useQueryClient();
-  const [isUploading, setIsUploading] = React.useState(false);
-
-  const mutation = useMutation({
-    mutationFn: async ({ file, itemName }) => {
-      setIsUploading(true);
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const salesToUpdate = await base44.entities.Sale.filter({ item_name: itemName });
-      const updatePromises = salesToUpdate.map(sale => 
-        base44.entities.Sale.update(sale.id, { image_url: file_url })
-      );
-      await Promise.all(updatePromises);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
-      queryClient.invalidateQueries({ queryKey: ['sale'] });
-      setIsUploading(false);
-    },
-    onError: () => {
-      setIsUploading(false);
-    }
-  });
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && saleItemName) {
-      mutation.mutate({ file, itemName: saleItemName });
-    }
-  };
-
-  return (
-    <div className="mt-4 sm:mt-6 min-w-0">
-      <Label htmlFor="image-upload" className="font-semibold text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">Update Image</Label>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2">
-        <Input id="image-upload" type="file" onChange={handleFileChange} className="flex-1 dark:bg-gray-800 dark:text-white dark:border-gray-700 w-full min-w-0" disabled={isUploading} accept="image/*" />
-        <Button onClick={() => document.getElementById('image-upload').click()} disabled={isUploading} className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 whitespace-nowrap w-full sm:w-auto">
-          <Upload className="w-4 h-4 mr-2" />
-          {isUploading ? "Uploading..." : "Upload"}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 export default function SoldItemDetail() {
   const location = useLocation();
@@ -234,9 +187,6 @@ export default function SoldItemDetail() {
                   className="w-full h-full object-contain max-w-full"
                 />
               </div>
-              <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
-                <ImageUploader saleId={sale.id} saleItemName={sale.item_name} />
-              </CardContent>
             </Card>
 
             {displayNotes && (
@@ -328,38 +278,52 @@ export default function SoldItemDetail() {
                 </button>
 
                 {feesExpanded && (
-                  <div className="space-y-2 border-t dark:border-gray-700 pt-3 text-[13px] sm:text-sm text-red-500 dark:text-red-300">
+                  <div className="space-y-2 border-t dark:border-gray-700 pt-3 text-[13px] sm:text-sm">
                     <div className="flex justify-between items-center gap-2 min-w-0">
-                      <span className="break-words">Purchase Price</span>
-                      <span className="font-semibold break-words">${purchasePrice?.toFixed(2)}</span>
+                      <span className="break-words text-gray-700 dark:text-gray-300">Sold Price</span>
+                      <span className="font-semibold break-words text-green-600 dark:text-green-400">${sellingPrice?.toFixed(2)}</span>
                     </div>
-                    {shippingCost > 0 && (
+                    <div className="border-t dark:border-gray-700 pt-2 mt-2 space-y-2 text-red-500 dark:text-red-300">
                       <div className="flex justify-between items-center gap-2 min-w-0">
-                        <span className="break-words">Shipping</span>
-                        <span className="font-semibold break-words">${shippingCost?.toFixed(2)}</span>
+                        <span className="break-words">Purchase Price</span>
+                        <span className="font-semibold break-words">${purchasePrice?.toFixed(2)}</span>
                       </div>
-                    )}
-                    {platformFees > 0 && (
+                      {shippingCost > 0 && (
+                        <div className="flex justify-between items-center gap-2 min-w-0">
+                          <span className="break-words">Shipping</span>
+                          <span className="font-semibold break-words">${shippingCost?.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {platformFees > 0 && (
+                        <div className="flex justify-between items-center gap-2 min-w-0">
+                          <span className="break-words">Platform Fees</span>
+                          <span className="font-semibold break-words">${platformFees?.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {otherCosts > 0 && (
+                        <div className="flex justify-between items-center gap-2 min-w-0">
+                          <span className="break-words">Other Costs</span>
+                          <span className="font-semibold break-words">${otherCosts?.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {vatFees > 0 && (
+                        <div className="flex justify-between items-center gap-2 min-w-0">
+                          <span className="break-words">VAT Fees</span>
+                          <span className="font-semibold break-words">${vatFees?.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {shippingCost <= 0 && platformFees <= 0 && otherCosts <= 0 && vatFees <= 0 && (
+                        <p className="text-muted-foreground text-[11px] sm:text-xs">No additional fees recorded.</p>
+                      )}
+                    </div>
+                    <div className="border-t dark:border-gray-700 pt-2 mt-2">
                       <div className="flex justify-between items-center gap-2 min-w-0">
-                        <span className="break-words">Platform Fees</span>
-                        <span className="font-semibold break-words">${platformFees?.toFixed(2)}</span>
+                        <span className="break-words text-gray-700 dark:text-gray-300">Profit</span>
+                        <span className={`font-semibold break-words ${profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                          {profit >= 0 ? '+' : ''}${profit?.toFixed(2)}
+                        </span>
                       </div>
-                    )}
-                    {otherCosts > 0 && (
-                      <div className="flex justify-between items-center gap-2 min-w-0">
-                        <span className="break-words">Other Costs</span>
-                        <span className="font-semibold break-words">${otherCosts?.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {vatFees > 0 && (
-                      <div className="flex justify-between items-center gap-2 min-w-0">
-                        <span className="break-words">VAT Fees</span>
-                        <span className="font-semibold break-words">${vatFees?.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {shippingCost <= 0 && platformFees <= 0 && otherCosts <= 0 && vatFees <= 0 && (
-                      <p className="text-muted-foreground text-[11px] sm:text-xs">No additional fees recorded.</p>
-                    )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -403,12 +367,6 @@ export default function SoldItemDetail() {
             </Card>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 min-w-0">
-              <Link to={createPageUrl("AddSale", { searchItemName: sale?.item_name })} className="flex-1 min-w-0">
-                <Button variant="outline" className="w-full dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white text-sm sm:text-base h-9 sm:h-10">
-                  <BarChart className="w-4 h-4 mr-2" />
-                  Search
-                </Button>
-              </Link>
               <Link to={createPageUrl(`AddSale?id=${sale?.id}`)} className="flex-1 min-w-0">
                 <Button variant="outline" className="w-full dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white text-sm sm:text-base h-9 sm:h-10">
                   <Pencil className="w-4 h-4 mr-2" />

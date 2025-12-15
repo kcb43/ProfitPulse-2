@@ -1202,8 +1202,8 @@ export default function Crosslist() {
         </div>
 
         <Card className="border-0 shadow-lg">
-          <CardHeader className="border-b bg-gray-800 dark:bg-gray-800">
-            <CardTitle className="text-white text-base flex items-center gap-2">
+          <CardHeader className="border-b bg-gray-50 dark:bg-gray-800">
+            <CardTitle className="text-gray-900 dark:text-white text-base flex items-center gap-2">
               <Filter className="w-4 h-4" />
               Filters & Marketplaces
             </CardTitle>
@@ -1307,7 +1307,7 @@ export default function Crosslist() {
         ) : (
           <>
             {filtered.length > 0 && (
-              <div className="flex items-center gap-3 p-4 bg-gray-800 dark:bg-gray-800 rounded-t-lg">
+              <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
                 <Checkbox
                   checked={selected.length === filtered.length && filtered.length > 0}
                   onCheckedChange={toggleAll}
@@ -1315,13 +1315,13 @@ export default function Crosslist() {
                   className="!h-[22px] !w-[22px] !bg-transparent !border-green-600 border-2 data-[state=checked]:!bg-green-600 data-[state=checked]:!border-green-600 [&[data-state=checked]]:!bg-green-600 [&[data-state=checked]]:!border-green-600 flex-shrink-0 [&_svg]:!h-[16px] [&_svg]:!w-[16px]"
                 />
                 <div className="flex flex-col">
-                  <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-white">
+                  <label htmlFor="select-all" className="text-sm font-medium cursor-pointer text-gray-900 dark:text-white">
                     Select All ({filtered.length})
                   </label>
-                  <span className="text-xs text-gray-400 md:hidden">
+                  <span className="text-xs text-gray-600 dark:text-gray-400 md:hidden">
                     Tap image to select for bulk edit
                   </span>
-                  <span className="text-xs text-gray-400 hidden md:block">Click image to select for bulk edit</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400 hidden md:block">Click image to select for bulk edit</span>
                 </div>
               </div>
             )}
@@ -1332,25 +1332,20 @@ export default function Crosslist() {
               const listedCount = Object.values(map).filter(Boolean).length;
               
               return (
-                <div key={it.id} className="product-list-item relative flex flex-col sm:flex-row items-start sm:items-center min-w-0"
+                <div key={it.id} className="product-list-item relative flex flex-col sm:flex-row items-start sm:items-center min-w-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700/50 shadow-sm dark:shadow-lg"
                   style={{
                     minHeight: '248px',
                     height: 'auto',
                     borderRadius: '16px',
-                    border: '1px solid rgba(51, 65, 85, 0.6)',
-                    background: 'rgb(30, 41, 59)',
-                    boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                     overflow: 'hidden'
                   }}>
                   {/* Product Image Section */}
-                  <div className="glass flex items-center justify-center relative flex-shrink-0 m-4"
+                  <div className="glass flex items-center justify-center relative flex-shrink-0 m-4 bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-slate-700/50"
                     style={{
                       width: '220px',
                       minWidth: '220px',
                       height: '210px',
                       borderRadius: '12px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
                       padding: '16px'
                     }}>
                     <div
@@ -1378,7 +1373,7 @@ export default function Crosslist() {
                   {/* Details Section */}
                   <div className="flex-1 flex flex-col justify-between h-full px-4 sm:px-6 py-4 sm:py-6 border-l border-r min-w-0"
                     style={{
-                      borderColor: 'rgba(51, 65, 85, 0.6)',
+                      borderColor: 'rgba(229, 231, 235, 0.8)',
                       minHeight: '210px'
                     }}>
                     {/* Status Badge */}
@@ -1393,13 +1388,13 @@ export default function Crosslist() {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg sm:text-xl font-bold text-white break-words line-clamp-2 mb-2"
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words line-clamp-2 mb-2"
                       style={{ letterSpacing: '0.5px' }}>
                       {it.item_name || 'Untitled Item'}
                     </h3>
 
                     {/* Category and Source */}
-                    <p className="text-gray-300 mb-4 text-xs sm:text-sm break-words"
+                    <p className="text-gray-700 dark:text-gray-300 mb-4 text-xs sm:text-sm break-words"
                       style={{ 
                         letterSpacing: '0.7px',
                         lineHeight: '23.8px'
@@ -1435,26 +1430,23 @@ export default function Crosslist() {
                         );
                       })}
                       {listedCount > 0 && (
-                        <span className="text-xs text-gray-400 ml-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-400 ml-2">
                           {listedCount} of {MARKETPLACES.length} listed
                         </span>
                       )}
                     </div>
 
                     {/* Purchase Price */}
-                    <div className="mt-3 flex items-center text-white">
+                    <div className="mt-3 flex items-center text-gray-900 dark:text-white">
                       <span className="text-xs sm:text-sm font-semibold mr-2">Purchase Price:</span>
-                      <span className="text-sm sm:text-base font-bold text-white">
+                      <span className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
                         ${(it.purchase_price || 0).toFixed(2)}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions Section */}
-                  <div className="flex flex-col items-stretch justify-center gap-2 px-3 py-3 flex-shrink-0 w-full sm:w-[200px] border-t sm:border-t-0 sm:border-l border-gray-700"
-                    style={{
-                      background: 'rgb(51, 65, 85)'
-                    }}>
+                  <div className="flex flex-col items-stretch justify-center gap-2 px-3 py-3 flex-shrink-0 w-full sm:w-[200px] border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80">
                     {/* Crosslist Button */}
                     <Button
                       onClick={() => openComposer([it.id], false)}
@@ -1471,11 +1463,7 @@ export default function Crosslist() {
                     <Button
                       variant="ghost"
                       onClick={() => navigate(createPageUrl(`AddInventoryItem?id=${it.id}`))}
-                      className="w-full glass text-white hover:text-gray-300 hover:bg-gray-700/50 py-1.5 px-3 rounded-xl text-xs font-semibold"
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: '12px'
-                      }}
+                      className="w-full glass text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 py-1.5 px-3 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-600"
                     >
                       Edit
                     </Button>
@@ -1492,17 +1480,12 @@ export default function Crosslist() {
               return (
                 <Card 
                   key={it.id} 
-                  className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] border-slate-700/50"
+                  className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] border-gray-200 dark:border-slate-700/50 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 shadow-sm dark:shadow-lg"
                   style={{
-                    background: 'linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(51, 65, 85) 100%)',
                     borderRadius: '16px',
-                    boxShadow: 'rgba(0, 0, 0, 0.3) 0px 10px 25px -5px',
                   }}
                 >
-                  <div className="relative aspect-square overflow-hidden"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.05)',
-                    }}
+                  <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-slate-900/50"
                   >
                     <div
                       onClick={() => toggleSelect(it.id)}
@@ -1530,10 +1513,10 @@ export default function Crosslist() {
                     </div>
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-2 line-clamp-2">
                       {it.item_name}
                     </h3>
-                    <div className="text-xs text-gray-300 mb-3">{it.category || "—"}</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-300 mb-3">{it.category || "—"}</div>
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {MARKETPLACES.map((m) => {
                         const isListed = map[m.id];
@@ -1550,7 +1533,7 @@ export default function Crosslist() {
                               className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-all backdrop-blur-sm ${
                                 isListed
                                   ? "bg-green-600/30 border-green-500/50 opacity-100"
-                                  : "bg-slate-700/50 border-slate-600/50 opacity-40"
+                                  : "bg-gray-200 border-gray-300 opacity-40"
                               }`}
                               title={isListed ? `Listed on ${m.label}` : `Not listed on ${m.label}`}
                             >
@@ -1594,7 +1577,7 @@ export default function Crosslist() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="w-full border-slate-600 text-gray-300 hover:bg-slate-700/50 text-xs" 
+                        className="w-full border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 text-xs" 
                         onClick={() => navigate(createPageUrl(`AddInventoryItem?id=${it.id}`))}
                       >
                         Edit

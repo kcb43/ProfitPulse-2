@@ -217,6 +217,141 @@ button:focus-visible {
   color: #000000 !important;
 }
 
+/* Fix Add Sale page CardHeader background for Default Light theme only */
+[data-theme="default-light"] .bg-gray-800.border-b {
+  background-color: hsl(var(--card)) !important;
+}
+
+[data-theme="default-light"] .bg-gray-800.border-b .text-white,
+[data-theme="default-light"] .bg-gray-800 .text-white {
+  color: hsl(var(--card-foreground)) !important;
+}
+
+/* Fix Profit Calendar page dark elements for Default Light theme only */
+/* Target elements with dark backgrounds using attribute selectors for Tailwind arbitrary values */
+[data-theme="default-light"] [class*="md:bg-[#0b1220]"],
+[data-theme="default-light"] [style*="background-color: rgb(11, 18, 32)"] {
+  background-color: hsl(var(--background)) !important;
+}
+
+/* Page title - target h1 with white text on md screens */
+[data-theme="default-light"] h1[class*="md:text-white"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Page subtitle */
+[data-theme="default-light"] p[class*="md:text-slate-300"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Main card background */
+[data-theme="default-light"] [class*="md:bg-[#111b2d]"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Card title text - more specific */
+[data-theme="default-light"] .text-white.text-lg,
+[data-theme="default-light"] .text-white.text-xl,
+[data-theme="default-light"] h1.text-white,
+[data-theme="default-light"] h2.text-white,
+[data-theme="default-light"] h3.text-white {
+  color: hsl(var(--card-foreground)) !important;
+}
+
+/* Button text and borders - target buttons specifically */
+[data-theme="default-light"] button[class*="md:text-white"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-theme="default-light"] button[class*="md:border-white"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+[data-theme="default-light"] button[class*="md:hover:bg-white"]:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Month total section background */
+[data-theme="default-light"] [class*="bg-[#0d1728]"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Month total section text - target all slate colors */
+[data-theme="default-light"] .text-slate-300,
+[data-theme="default-light"] .text-slate-400,
+[data-theme="default-light"] .text-slate-500 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Emerald text colors - keep green but darker for light theme */
+[data-theme="default-light"] .text-emerald-300 {
+  color: rgb(34 197 94) !important; /* emerald-600 */
+}
+
+[data-theme="default-light"] .text-emerald-200 {
+  color: rgb(16 185 129) !important; /* emerald-500 */
+}
+
+/* Day headers */
+[data-theme="default-light"] [class*="md:text-slate-400"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Calendar day heat styles - override dark backgrounds using attribute selectors */
+[data-theme="default-light"] [class*="md:bg-[#1b2534]"] {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+[data-theme="default-light"] [class*="md:bg-[#10271b]"] {
+  background-color: rgb(220 252 231) !important; /* green-100 */
+  color: rgb(22 163 74) !important; /* green-700 */
+  border-color: rgb(187 247 208) !important; /* green-200 */
+}
+
+[data-theme="default-light"] [class*="md:bg-[#124227]"] {
+  background-color: rgb(187 247 208) !important; /* green-200 */
+  color: rgb(21 128 61) !important; /* green-800 */
+  border-color: rgb(134 239 172) !important; /* green-300 */
+}
+
+[data-theme="default-light"] [class*="md:bg-[#0f6131]"] {
+  background-color: rgb(134 239 172) !important; /* green-300 */
+  color: rgb(20 83 45) !important; /* green-900 */
+  border-color: rgb(74 222 128) !important; /* green-400 */
+}
+
+[data-theme="default-light"] [class*="md:bg-[#0f7a3c]"] {
+  background-color: rgb(74 222 128) !important; /* green-400 */
+  color: rgb(20 83 45) !important; /* green-900 */
+  border-color: rgb(34 197 94) !important; /* green-500 */
+}
+
+/* Stat cards text */
+[data-theme="default-light"] [class*="md:text-white"].text-lg,
+[data-theme="default-light"] [class*="md:text-white"].text-xl,
+[data-theme="default-light"] p[class*="md:text-white"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Border colors */
+[data-theme="default-light"] [class*="md:border-white"] {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Icon colors in stat cards */
+[data-theme="default-light"] [class*="md:text-emerald-300"] {
+  color: rgb(34 197 94) !important; /* emerald-600 */
+}
+
+[data-theme="default-light"] [class*="md:text-blue-300"] {
+  color: rgb(37 99 235) !important; /* blue-600 */
+}
+
+[data-theme="default-light"] [class*="md:text-purple-300"] {
+  color: rgb(147 51 234) !important; /* purple-600 */
+}
+
 
 /* Replace green with blue for specific buttons in Default Dark theme only */
 /* Crosslist button */
@@ -822,4 +957,281 @@ input[type="range"].modern-slider::-moz-range-thumb:active {
 /* SortableJS ghost element - completely hidden */
 .sortable-ghost {
   display: none !important;
+}
+
+/* Photo Editor theme styling for Default Dark and Money Green themes */
+/* Target DialogContent that contains image-edit-container */
+[data-theme="default-dark"] [role="dialog"].bg-white:has(.image-edit-container),
+[data-theme="money-green-dark"] [role="dialog"].bg-white:has(.image-edit-container) {
+  background-color: hsl(var(--background)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"].border-gray-200:has(.image-edit-container),
+[data-theme="money-green-dark"] [role="dialog"].border-gray-200:has(.image-edit-container) {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* DialogHeader styling */
+[data-theme="default-dark"] .bg-gray-50.backdrop-blur-sm:has(+ .ant-modal-body .image-edit-container),
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .bg-gray-50.backdrop-blur-sm,
+[data-theme="money-green-dark"] .bg-gray-50.backdrop-blur-sm:has(+ .ant-modal-body .image-edit-container),
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .bg-gray-50.backdrop-blur-sm {
+  background-color: hsl(var(--card)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-200.border-b,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-200.border-b {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* DialogTitle text color */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-900,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-900 {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Sidebar background */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .bg-gray-50.backdrop-blur-sm,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .bg-gray-50.backdrop-blur-sm {
+  background-color: hsl(var(--card)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-200.border-r,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-200.border-r {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Image edit container background */
+[data-theme="default-dark"] .image-edit-container.bg-white,
+[data-theme="money-green-dark"] .image-edit-container.bg-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+[data-theme="default-dark"] .image-edit-container.border-gray-200,
+[data-theme="money-green-dark"] .image-edit-container.border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Image container inner div background - override inline style */
+[data-theme="default-dark"] .image-edit-container > div.relative[style*="background-color"],
+[data-theme="money-green-dark"] .image-edit-container > div.relative[style*="background-color"] {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* All text colors - gray variants to white */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-900,
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-800,
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700,
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-600,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-900,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-800,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-600 {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Select triggers and inputs */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .bg-white.border-gray-300,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .bg-white.border-gray-300 {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Buttons with white/gray backgrounds */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-100,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-100 {
+  background-color: hsl(var(--secondary)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-100:hover,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-100:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Navigation buttons (prev/next) */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white\/90,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white\/90 {
+  background-color: hsl(var(--card) / 0.9) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white\/90:hover,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white\/90:hover {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Image counter badge */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .bg-white\/90.text-gray-900,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .bg-white\/90.text-gray-900 {
+  background-color: hsl(var(--card) / 0.9) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .bg-white\/90.border-gray-200,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .bg-white\/90.border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Rotate buttons */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-50,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-50 {
+  background-color: hsl(var(--card)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-50:hover,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.bg-white.hover\:bg-gray-50:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) button.border-gray-300,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) button.border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Icon colors in buttons */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700 svg,
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-800 svg,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700 svg,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-800 svg {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Borders */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-200,
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-300,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-200,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Template dialog */
+[data-theme="default-dark"] [role="dialog"]:has([class*="DialogDescription"]) .bg-white,
+[data-theme="money-green-dark"] [role="dialog"]:has([class*="DialogDescription"]) .bg-white {
+  background-color: hsl(var(--background)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has([class*="DialogDescription"]) .border-gray-200,
+[data-theme="money-green-dark"] [role="dialog"]:has([class*="DialogDescription"]) .border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has([class*="DialogDescription"]) .text-gray-900,
+[data-theme="default-dark"] [role="dialog"]:has([class*="DialogDescription"]) .text-gray-600,
+[data-theme="money-green-dark"] [role="dialog"]:has([class*="DialogDescription"]) .text-gray-900,
+[data-theme="money-green-dark"] [role="dialog"]:has([class*="DialogDescription"]) .text-gray-600 {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Info text */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700.bg-gray-50,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700.bg-gray-50 {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700.border-gray-200,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .text-gray-700.border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Footer section */
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) ~ div.bg-gray-50.border-t,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) ~ div.bg-gray-50.border-t,
+[data-theme="default-dark"] [role="dialog"]:has(.image-edit-container) .bg-gray-50.border-t,
+[data-theme="money-green-dark"] [role="dialog"]:has(.image-edit-container) .bg-gray-50.border-t {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Convert white backgrounds to BLACK for Default Dark theme only */
+/* Pure white backgrounds */
+[data-theme="default-dark"] .bg-white {
+  background-color: #000000 !important; /* BLACK */
+}
+
+/* White backgrounds with opacity */
+[data-theme="default-dark"] .bg-white\/90,
+[data-theme="default-dark"] [class*="bg-white/90"] {
+  background-color: rgba(0, 0, 0, 0.9) !important; /* BLACK with 90% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/80,
+[data-theme="default-dark"] [class*="bg-white/80"] {
+  background-color: rgba(0, 0, 0, 0.8) !important; /* BLACK with 80% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/70,
+[data-theme="default-dark"] [class*="bg-white/70"] {
+  background-color: rgba(0, 0, 0, 0.7) !important; /* BLACK with 70% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/60,
+[data-theme="default-dark"] [class*="bg-white/60"] {
+  background-color: rgba(0, 0, 0, 0.6) !important; /* BLACK with 60% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/50,
+[data-theme="default-dark"] [class*="bg-white/50"] {
+  background-color: rgba(0, 0, 0, 0.5) !important; /* BLACK with 50% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/40,
+[data-theme="default-dark"] [class*="bg-white/40"] {
+  background-color: rgba(0, 0, 0, 0.4) !important; /* BLACK with 40% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/30,
+[data-theme="default-dark"] [class*="bg-white/30"] {
+  background-color: rgba(0, 0, 0, 0.3) !important; /* BLACK with 30% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/20,
+[data-theme="default-dark"] [class*="bg-white/20"] {
+  background-color: rgba(0, 0, 0, 0.2) !important; /* BLACK with 20% opacity */
+}
+
+[data-theme="default-dark"] .bg-white\/10,
+[data-theme="default-dark"] [class*="bg-white/10"] {
+  background-color: rgba(0, 0, 0, 0.1) !important; /* BLACK with 10% opacity */
+}
+
+/* Light gray backgrounds that should be black */
+[data-theme="default-dark"] .bg-gray-50 {
+  background-color: #000000 !important; /* BLACK */
+}
+
+[data-theme="default-dark"] .bg-gray-100 {
+  background-color: #000000 !important; /* BLACK */
+}
+
+/* Cards and containers with white backgrounds */
+[data-theme="default-dark"] .bg-white.border,
+[data-theme="default-dark"] .bg-white.shadow,
+[data-theme="default-dark"] .bg-white.rounded {
+  background-color: #000000 !important; /* BLACK */
+}
+
+/* Product list items */
+[data-theme="default-dark"] .product-list-item.bg-white {
+  background-color: #000000 !important; /* BLACK */
+}
+
+/* Glass effects with white backgrounds */
+[data-theme="default-dark"] .glass.bg-white {
+  background-color: rgba(0, 0, 0, 0.9) !important; /* BLACK with opacity */
+}
+
+/* Sticky headers and sidebars */
+[data-theme="default-dark"] .sticky.bg-white,
+[data-theme="default-dark"] [class*="sticky"].bg-white {
+  background-color: #000000 !important; /* BLACK */
+}
+
+/* Any element with inline white background */
+[data-theme="default-dark"] [style*="background-color: rgb(255, 255, 255)"],
+[data-theme="default-dark"] [style*="background-color: #ffffff"],
+[data-theme="default-dark"] [style*="background-color: #FFFFFF"],
+[data-theme="default-dark"] [style*="background-color: white"] {
+  background-color: #000000 !important; /* BLACK */
 }
