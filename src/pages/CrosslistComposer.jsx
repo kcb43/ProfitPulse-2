@@ -36307,7 +36307,8 @@ export default function CrosslistComposer() {
   
   return (
     <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      <div className="max-w-5xl mx-auto space-y-6 min-w-0">
+      {/* Mobile Layout - Keep existing structure */}
+      <div className="md:hidden max-w-5xl mx-auto space-y-6 min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -36642,8 +36643,8 @@ export default function CrosslistComposer() {
           </div>
         )}
 
-        {/* Form selector */}
-        <div>
+        {/* Form selector - Mobile only */}
+        <div className="md:hidden">
           <Label className="text-sm mb-2 block font-semibold">Select Form</Label>
           <div className="flex flex-wrap gap-3">
             <button
@@ -36841,6 +36842,7 @@ export default function CrosslistComposer() {
                       onClick={() => photoInputRef.current?.click()}
                       disabled={isUploadingPhotos}
                       className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                      style={{ width: '150px' }}
                     >
                       <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                       <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
@@ -37875,6 +37877,7 @@ export default function CrosslistComposer() {
                         onClick={() => ebayPhotoInputRef.current?.click()}
                         disabled={isUploadingPhotos}
                         className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                        style={{ width: '150px' }}
                       >
                         <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                         <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
@@ -39281,6 +39284,7 @@ export default function CrosslistComposer() {
                         onClick={() => etsyPhotoInputRef.current?.click()}
                         disabled={isUploadingPhotos}
                         className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                        style={{ width: '150px' }}
                       >
                         <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                         <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
@@ -39842,6 +39846,7 @@ export default function CrosslistComposer() {
                         onClick={() => mercariPhotoInputRef.current?.click()}
                         disabled={isUploadingPhotos}
                         className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                        style={{ width: '150px' }}
                       >
                         <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                         <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
@@ -40785,6 +40790,7 @@ export default function CrosslistComposer() {
                         onClick={() => facebookPhotoInputRef.current?.click()}
                         disabled={isUploadingPhotos}
                         className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                        style={{ width: '150px' }}
                       >
                         <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                         <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
@@ -41594,6 +41600,5527 @@ export default function CrosslistComposer() {
           >
             Cancel
           </Button>
+        </div>
+      </div>
+
+      {/* Desktop Layout - Top Nav, Left Sidebar, Main Content */}
+      <div className="hidden md:flex flex-col min-h-screen">
+        {/* Top Navigation Bar */}
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="max-w-[1200px] mx-auto px-5 py-4 w-full">
+            <div className="flex items-center justify-between gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(createPageUrl("Crosslist"))}
+                className="text-sm"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to my items
+              </Button>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">Import from:</span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    eBay
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Mercari
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Facebook
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Etsy
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Poshmark
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Depop
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Container: Left Sidebar + Main Content */}
+        <div className="flex flex-1 max-w-[1200px] mx-auto w-full">
+          {/* Left Sidebar - Form Selector */}
+          <div className="sticky top-[73px] h-[calc(100vh-73px)] w-[350px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-y-auto">
+            <div className="p-5">
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveForm("general")}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
+                    activeForm === "general"
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-foreground"
+                  }`}
+                >
+                  <span className="font-medium">Universal Form</span>
+                </button>
+                {MARKETPLACES.map((m) => {
+                  const active = activeForm === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setActiveForm(m.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-foreground"
+                      }`}
+                    >
+                      <img src={m.icon} alt={m.label} className="w-5 h-5" />
+                      <span className="font-medium">{m.label}</span>
+                    </button>
+                  );
+                })}
+                {/* Additional marketplace placeholders */}
+                <button
+                  type="button"
+                  disabled
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left bg-gray-50 dark:bg-gray-800 text-muted-foreground opacity-60 cursor-not-allowed"
+                >
+                  <span className="font-medium">Depop</span>
+                  <Badge variant="outline" className="ml-auto text-xs">Coming soon</Badge>
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left bg-gray-50 dark:bg-gray-800 text-muted-foreground opacity-60 cursor-not-allowed"
+                >
+                  <span className="font-medium">Shopify</span>
+                  <Badge variant="outline" className="ml-auto text-xs">Coming soon</Badge>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 bg-gray-50 dark:bg-gray-900">
+            <div className="p-5 max-w-[800px] mx-auto w-full">
+              <div className="space-y-6">
+                {/* Header */}
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">
+                    {bulkSelectedItems.length > 1 ? "Bulk Crosslist" : "Compose Listing"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {bulkSelectedItems.length > 1
+                      ? `Editing ${bulkSelectedItems.length} items. Select an item to configure its listing.`
+                      : "Choose marketplaces and set the base fields. Full per-market fine-tuning can follow."}
+                  </p>
+                </div>
+
+                {/* Account Connection Sections - Same as mobile */}
+                {activeForm === "ebay" && (
+                  <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <img src={EBAY_ICON_URL} alt="eBay" className="w-5 h-5" />
+                        <Label className="text-base font-semibold">eBay Account</Label>
+                      </div>
+                      {ebayToken ? (
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("ebay")}>
+                            <RefreshCw className="h-4 w-4" />
+                            Reconnect
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive" onClick={handleDisconnectEbay}>
+                            <X className="h-4 w-4" />
+                            Disconnect
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="default" size="sm" className="gap-2 w-fit" onClick={handleConnectEbay}>
+                          <Check className="h-4 w-4" />
+                          Connect eBay Account
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Status</Label>
+                        <div className="flex items-center gap-2">
+                          {ebayToken ? (
+                            <>
+                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                              <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                              <span className="text-sm font-medium text-red-600 dark:text-red-400">Not Connected</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Token Expires</Label>
+                        <div className="text-sm">
+                          {ebayToken?.expires_at ? (
+                            <span>{new Date(ebayToken.expires_at).toLocaleDateString()}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">eBay Account</Label>
+                        <div className="text-sm">
+                          {ebayUsername ? (
+                            <span className="font-medium">{ebayUsername}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeForm === "facebook" && (
+                  <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <img src={FACEBOOK_ICON_URL} alt="Facebook" className="w-5 h-5" />
+                        <Label className="text-base font-semibold">Facebook Account</Label>
+                      </div>
+                      {facebookToken ? (
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("facebook")}>
+                            <RefreshCw className="h-4 w-4" />
+                            Reconnect
+                          </Button>
+                          <Button variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive" onClick={handleDisconnectFacebook}>
+                            <X className="h-4 w-4" />
+                            Disconnect
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button variant="default" size="sm" className="gap-2 w-fit" onClick={handleConnectFacebook}>
+                          <Check className="h-4 w-4" />
+                          Connect Facebook Account
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Status</Label>
+                        <div className="flex items-center gap-2">
+                          {facebookToken ? (
+                            <>
+                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                              <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                              <span className="text-sm font-medium text-red-600 dark:text-red-400">Not Connected</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Token Expires</Label>
+                        <div className="text-sm">
+                          {facebookToken?.expires_at ? (
+                            <span>{new Date(facebookToken.expires_at).toLocaleDateString()}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Available Pages</Label>
+                        <div className="text-sm">
+                          {facebookPages.length > 0 ? (
+                            <span className="font-medium">{facebookPages.length} page{facebookPages.length !== 1 ? 's' : ''}</span>
+                          ) : facebookToken ? (
+                            <span className="text-muted-foreground">Loading...</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {facebookPages.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <Label className="text-xs text-muted-foreground mb-2 block">Selected Page</Label>
+                        <Select
+                          value={facebookSelectedPage?.id || ""}
+                          onValueChange={(value) => {
+                            const page = facebookPages.find(p => p.id === value);
+                            setFacebookSelectedPage(page);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a page">
+                              {facebookSelectedPage?.name || "Select a page"}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {facebookPages.map((page) => (
+                              <SelectItem key={page.id} value={page.id}>
+                                {page.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Listings will be posted on behalf of this page.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeForm === "mercari" && (
+                  <div className="rounded-lg border border-muted-foreground/30 bg-card p-4 space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <img src={MERCARI_ICON_URL} alt="Mercari" className="w-5 h-5" />
+                        <Label className="text-base font-semibold">Mercari Account</Label>
+                      </div>
+                      {mercariConnected ? (
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2 text-destructive hover:text-destructive" 
+                            onClick={() => {
+                              localStorage.removeItem('profit_orbit_mercari_connected');
+                              localStorage.removeItem('profit_orbit_mercari_username');
+                              setMercariConnected(false);
+                              setMercariUsername(null);
+                              toast({
+                                title: "Disconnected",
+                                description: "Mercari account has been disconnected.",
+                              });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                            Disconnect
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="gap-2 w-fit" 
+                          onClick={() => {
+                            window.open('https://www.mercari.com/mypage/', 'mercari-login', 'width=600,height=700');
+                            toast({
+                              title: "Mercari Login",
+                              description: "Please log into your Mercari account in the popup window.",
+                            });
+                          }}
+                        >
+                          <Check className="h-4 w-4" />
+                          Connect Mercari Account
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Connection Status</Label>
+                        <div className="flex items-center gap-2">
+                          {mercariConnected ? (
+                            <>
+                              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                              <span className="text-sm font-medium text-green-600 dark:text-green-400">Connected</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                              <span className="text-sm font-medium text-red-600 dark:text-red-400">Not Connected</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-1">Logged in as</Label>
+                        <div className="text-sm">
+                          {mercariUsername ? (
+                            <span className="font-medium">{mercariUsername}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bulk item selector */}
+                {bulkSelectedItems.length > 1 && (
+                  <div className="space-y-3">
+                    <Label className="text-xs mb-1.5 block">Select Item to Edit</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {bulkSelectedItems.map((item) => {
+                        const isCurrent = currentEditingItemId === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => switchToItem(item.id)}
+                            className={`relative flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                              isCurrent
+                                ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                : "border-muted-foreground/40 hover:border-primary/50 bg-muted/30"
+                            }`}
+                          >
+                            <img
+                              src={item.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
+                              alt={item.item_name}
+                              className="w-16 h-16 rounded-md object-cover"
+                            />
+                            <span className={`text-xs text-center max-w-[80px] truncate ${
+                              isCurrent ? "font-semibold text-primary" : "text-muted-foreground"
+                            }`}>
+                              {item.item_name}
+                            </span>
+                            {isCurrent && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="w-3 h-3 text-primary-foreground" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {currentEditingItemId && (
+                      <Alert className="bg-primary/10 border-primary/20">
+                        <AlertDescription className="flex items-center gap-2">
+                          <Package className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-primary">
+                            You are currently editing: {bulkSelectedItems.find(item => item.id === currentEditingItemId)?.item_name || "Unknown Item"}
+                          </span>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
+
+                {/* Form Content - Same as mobile */}
+                <div className="space-y-6">
+                  {/* General Form */}
+                  {activeForm === "general" && (
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                          {generalForm.photos && generalForm.photos.length > 0 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleDeleteAllPhotos}
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Delete All
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                          {/* Main Photo - spans 2 columns and 2 rows */}
+                          {generalForm.photos.length > 0 && (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", "0");
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = 0;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex);
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
+                            >
+                              <img src={generalForm.photos[0].preview} alt={generalForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                                Main
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: generalForm.photos[0].preview, 
+                                      photoId: generalForm.photos[0].id, 
+                                      marketplace: 'general',
+                                      index: 0
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(generalForm.photos[0].id);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Other Photos */}
+                          {generalForm.photos.slice(1).map((photo, index) => (
+                            <div
+                              key={photo.id}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", String(index + 1));
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = index + 1;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex);
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                            >
+                              <img src={photo.preview} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: photo.preview, 
+                                      photoId: photo.id, 
+                                      marketplace: 'general',
+                                      index: index + 1
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(photo.id);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Upload Button */}
+                          {generalForm.photos.length < 16 && (
+                            <label className="relative aspect-square overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/40 bg-muted hover:border-primary/50 hover:bg-muted/80 cursor-pointer transition flex flex-col items-center justify-center" style={{ width: '140px' }}>
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handlePhotoUpload}
+                                disabled={generalForm.photos.length >= 16}
+                              />
+                              <ImagePlus className="h-8 w-8 text-muted-foreground mb-1" />
+                              <span className="text-xs text-muted-foreground text-center px-2">Upload</span>
+                            </label>
+                          )}
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {generalForm.photos.length}/16 photos • Drag to reorder
+                        </p>
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label htmlFor="general-title" className="text-xs mb-1.5 block">Title</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="general-title"
+                              name="general-title"
+                              placeholder=""
+                              value={generalForm.title || ""}
+                              onChange={(e) => handleGeneralChange("title", e.target.value)}
+                              className="w-full"
+                            />
+                            {generalForm.title?.trim() && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setSoldDialogOpen(true);
+                                }}
+                                className="whitespace-nowrap"
+                              >
+                                <BarChart className="w-4 h-4 mr-2" />
+                                Search
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="general-price" className="text-xs mb-1.5 block">Listing Price</Label>
+                          <Input
+                            id="general-price"
+                            name="general-price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={generalForm.price || ""}
+                            onChange={(e) => handleGeneralChange("price", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">Price you'll list this item for</p>
+                        </div>
+                        <div>
+                          <Label htmlFor="general-cost" className="text-xs mb-1.5 block">Purchase Price</Label>
+                          <Input
+                            id="general-cost"
+                            name="general-cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={generalForm.cost || ""}
+                            onChange={(e) => handleGeneralChange("cost", e.target.value)}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
+                            <Label htmlFor="general-description" className="text-xs">Description</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCollapsedDescriptions(prev => ({ ...prev, general: !prev.general }))}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                {collapsedDescriptions.general ? (
+                                  <>
+                                    <Maximize2 className="h-3 w-3" />
+                                    Expand
+                                  </>
+                                ) : (
+                                  <>
+                                    <Minimize2 className="h-3 w-3" />
+                                    Minimize
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedDescription('general')}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                <Maximize2 className="h-3 w-3" />
+                                Full
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionGeneratorOpen(true)}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                AI Generate
+                              </Button>
+                            </div>
+                          </div>
+                          <RichTextarea
+                            id="general-description"
+                            name="general-description"
+                            placeholder="Enter a detailed description of your item..."
+                            value={generalForm.description || ""}
+                            onChange={(e) => handleGeneralChange("description", e.target.value)}
+                            className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                              collapsedDescriptions.general ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="general-brand" className="text-xs mb-1.5 block">Brand</Label>
+                          {brandIsCustom ? (
+                            <div className="flex gap-2">
+                              <Input
+                                id="general-brand"
+                                name="general-brand"
+                                placeholder="Enter brand name and press Enter to save"
+                                value={generalForm.brand || ""}
+                                onChange={(e) => handleGeneralChange("brand", e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && generalForm.brand?.trim()) {
+                                    e.preventDefault();
+                                    const savedBrand = addCustomBrand(generalForm.brand);
+                                    if (savedBrand) {
+                                      setBrandIsCustom(false);
+                                    }
+                                  }
+                                }}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  if (generalForm.brand?.trim()) {
+                                    const savedBrand = addCustomBrand(generalForm.brand);
+                                    if (savedBrand) {
+                                      setBrandIsCustom(false);
+                                    }
+                                  }
+                                }}
+                                disabled={!generalForm.brand?.trim()}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setBrandIsCustom(false);
+                                  handleGeneralChange("brand", "");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Popover 
+                              open={brandSearchOpen} 
+                              onOpenChange={(open) => {
+                                setBrandSearchOpen(open);
+                                if (!open) {
+                                  setBrandSearchValue("");
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={brandSearchOpen}
+                                  className="w-full justify-between"
+                                >
+                                  {generalForm.brand
+                                    ? POPULAR_BRANDS.find((brand) => brand === generalForm.brand) || generalForm.brand
+                                    : "Search brand..."}
+                                  <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0" align="start">
+                                <Command shouldFilter={false}>
+                                  <CommandInput 
+                                    placeholder="Search brand..." 
+                                    value={brandSearchValue}
+                                    onValueChange={setBrandSearchValue}
+                                  />
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {brandSearchValue.trim() && 
+                                       !POPULAR_BRANDS.some(b => b.toLowerCase().includes(brandSearchValue.toLowerCase())) &&
+                                       !customBrands.some(b => b.toLowerCase().includes(brandSearchValue.toLowerCase())) && (
+                                        <CommandItem
+                                          value={`add-custom-${brandSearchValue}`}
+                                          onSelect={() => {
+                                            const trimmed = brandSearchValue.trim();
+                                            if (trimmed) {
+                                              const savedBrand = addCustomBrand(trimmed);
+                                              if (savedBrand) {
+                                                handleGeneralChange("brand", savedBrand);
+                                                setBrandSearchValue("");
+                                                setBrandSearchOpen(false);
+                                              }
+                                            }
+                                          }}
+                                          className="bg-primary/5 font-medium"
+                                        >
+                                          <span className="mr-2">+</span>
+                                          Add "{brandSearchValue.trim()}" as custom brand
+                                        </CommandItem>
+                                      )}
+                                      {customBrands
+                                        .filter(brand => 
+                                          !brandSearchValue.trim() || 
+                                          brand.toLowerCase().includes(brandSearchValue.toLowerCase())
+                                        )
+                                        .map((brand) => (
+                                          <CommandItem
+                                            key={`custom-${brand}`}
+                                            value={brand}
+                                            onSelect={() => {
+                                              handleGeneralChange("brand", brand);
+                                              setBrandSearchValue("");
+                                              setBrandSearchOpen(false);
+                                            }}
+                                            className="flex items-center justify-between group"
+                                          >
+                                            <div className="flex items-center flex-1">
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  generalForm.brand === brand ? "opacity-100" : "opacity-0"
+                                                )}
+                                              />
+                                              <span className="flex-1">{brand}</span>
+                                              <span className="text-xs text-muted-foreground ml-2">⭐</span>
+                                            </div>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteCustomBrand(brand);
+                                              }}
+                                              className="ml-2 h-5 w-5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                              title="Delete custom brand"
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </CommandItem>
+                                        ))}
+                                      {customBrands.some(brand => 
+                                        !brandSearchValue.trim() || 
+                                        brand.toLowerCase().includes(brandSearchValue.toLowerCase())
+                                      ) && <div className="border-t my-1" />}
+                                      {POPULAR_BRANDS
+                                        .filter(brand => 
+                                          !brandSearchValue.trim() || 
+                                          brand.toLowerCase().includes(brandSearchValue.toLowerCase())
+                                        )
+                                        .map((brand) => (
+                                          <CommandItem
+                                            key={brand}
+                                            value={brand}
+                                            onSelect={() => {
+                                              handleGeneralChange("brand", brand);
+                                              setBrandSearchValue("");
+                                              setBrandSearchOpen(false);
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                generalForm.brand === brand ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            {brand}
+                                          </CommandItem>
+                                        ))}
+                                      {!brandSearchValue.trim() && (
+                                        <CommandItem
+                                          value="custom"
+                                          onSelect={() => {
+                                            setBrandIsCustom(true);
+                                            setBrandSearchValue("");
+                                            setBrandSearchOpen(false);
+                                            handleGeneralChange("brand", "");
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              "opacity-0"
+                                            )}
+                                          />
+                                          Add Custom...
+                                        </CommandItem>
+                                      )}
+                                    </CommandGroup>
+                                    {brandSearchValue.trim() && 
+                                     POPULAR_BRANDS.filter(b => b.toLowerCase().includes(brandSearchValue.toLowerCase())).length === 0 &&
+                                     customBrands.filter(b => b.toLowerCase().includes(brandSearchValue.toLowerCase())).length === 0 &&
+                                     !brandSearchValue.trim().match(/^add-custom-/) && (
+                                      <CommandEmpty>No brand found. Use the option above to add it as a custom brand.</CommandEmpty>
+                                    )}
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+                        <div>
+                          <Label htmlFor="general-condition" className="text-xs mb-1.5 block">Condition</Label>
+                          <Select
+                            value={generalForm.condition ? String(generalForm.condition) : undefined}
+                            onValueChange={(value) => {
+                              handleGeneralChange("condition", value);
+                              const ebayCondition = mapGeneralConditionToEbay(value);
+                              if (ebayCondition) {
+                                handleMarketplaceChange("ebay", "condition", ebayCondition);
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select condition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="New With Tags/Box">New With Tags/Box</SelectItem>
+                              <SelectItem value="New Without Tags/Box">New Without Tags/Box</SelectItem>
+                              <SelectItem value="New With Imperfections">New With Imperfections</SelectItem>
+                              <SelectItem value="Pre - Owned - Excellent">Pre - Owned - Excellent</SelectItem>
+                              <SelectItem value="Pre - Owned - Good">Pre - Owned - Good</SelectItem>
+                              <SelectItem value="Pre - Owned - Fair">Pre - Owned - Fair</SelectItem>
+                              <SelectItem value="Poor (Major flaws)">Poor (Major flaws)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="general-sku" className="text-xs mb-1.5 block">SKU</Label>
+                          <Input
+                            id="general-sku"
+                            name="general-sku"
+                            placeholder=""
+                            value={generalForm.sku || ""}
+                            onChange={(e) => handleGeneralChange("sku", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Primary Color</Label>
+                          <Button
+                            type="button"
+                            variant={generalForm.color1 ? "default" : "outline"}
+                            onClick={() => openColorPicker("color1")}
+                            className="w-full justify-start"
+                          >
+                            {generalForm.color1 ? (
+                              <>
+                                <div
+                                  className="w-4 h-4 mr-2 rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                                  style={{ backgroundColor: getColorHex(generalForm.color1) || "#808080" }}
+                                />
+                                <span className="flex-1 text-left">{getColorName(generalForm.color1)}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Palette className="w-4 h-4 mr-2" />
+                                <span>Select color</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Secondary Color</Label>
+                          <Button
+                            type="button"
+                            variant={generalForm.color2 ? "default" : "outline"}
+                            onClick={() => openColorPicker("color2")}
+                            className="w-full justify-start"
+                          >
+                            {generalForm.color2 ? (
+                              <>
+                                <div
+                                  className="w-4 h-4 mr-2 rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                                  style={{ backgroundColor: getColorHex(generalForm.color2) || "#808080" }}
+                                />
+                                <span className="flex-1 text-left">{getColorName(generalForm.color2)}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Palette className="w-4 h-4 mr-2" />
+                                <span>Select color</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Category</Label>
+                          
+                          {generalCategoryPath.length > 0 && (
+                            <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setGeneralCategoryPath([]);
+                                  handleGeneralChange("category", "");
+                                  handleGeneralChange("categoryId", "");
+                                }}
+                                className="hover:text-foreground underline"
+                              >
+                                Home
+                              </button>
+                              {generalCategoryPath.map((cat, index) => (
+                                <React.Fragment key={cat.categoryId}>
+                                  <span>/</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newPath = generalCategoryPath.slice(0, index + 1);
+                                      setGeneralCategoryPath(newPath);
+                                      const lastCat = newPath[newPath.length - 1];
+                                      const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                      handleGeneralChange("category", fullPath);
+                                      if (lastCat?.categoryId) {
+                                        handleGeneralChange("categoryId", lastCat.categoryId);
+                                      }
+                                    }}
+                                    className="hover:text-foreground underline"
+                                  >
+                                    {cat.categoryName}
+                                  </button>
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {isLoadingCategoryTree || isLoadingCategories ? (
+                            <div className="flex items-center gap-2 p-3 border rounded-md">
+                              <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">Loading categories...</span>
+                            </div>
+                          ) : categoriesError ? (
+                            <div className="p-3 border rounded-md border-destructive/50 bg-destructive/10">
+                              <p className="text-sm text-destructive">Error loading categories: {categoriesError.message}</p>
+                              {categoriesError?.response?.details && (
+                                <p className="text-xs text-destructive mt-2">
+                                  Details: {JSON.stringify(categoriesError.response.details)}
+                                </p>
+                              )}
+                            </div>
+                          ) : sortedCategories.length > 0 ? (
+                            (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") ? (
+                              <Popover 
+                                open={categorySearchOpen && (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari")} 
+                                onOpenChange={(open) => {
+                                  if (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari") {
+                                    setCategorySearchOpen(open);
+                                    if (!open) {
+                                      setGeneralCategorySearchValue("");
+                                      setFacebookCategorySearchValue("");
+                                      setMercariCategorySearchValue("");
+                                    }
+                                  }
+                                }}
+                              >
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={categorySearchOpen && (activeForm === "general" || activeForm === "facebook" || activeForm === "mercari")}
+                                    className="w-full justify-between"
+                                  >
+                                    {(activeForm === "general" ? generalForm.category : activeForm === "facebook" ? facebookForm.category : mercariForm.category) || generalCategoryPath.length > 0
+                                      ? ((activeForm === "general" ? generalForm.category : activeForm === "facebook" ? facebookForm.category : mercariForm.category) || generalCategoryPath.map(c => c.categoryName).join(" > "))
+                                      : (generalCategoryPath.length > 0 ? "Select subcategory" : "Search category...")}
+                                    <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-full p-0" align="start">
+                                  <Command shouldFilter={false}>
+                                    <CommandInput 
+                                      placeholder="Search all categories..." 
+                                      value={activeForm === "general" ? generalCategorySearchValue : 
+                                             activeForm === "facebook" ? facebookCategorySearchValue : 
+                                             mercariCategorySearchValue}
+                                      onValueChange={(value) => {
+                                        if (activeForm === "general") {
+                                          setGeneralCategorySearchValue(value);
+                                        } else if (activeForm === "facebook") {
+                                          setFacebookCategorySearchValue(value);
+                                        } else if (activeForm === "mercari") {
+                                          setMercariCategorySearchValue(value);
+                                        }
+                                      }}
+                                    />
+                                    <CommandList>
+                                      <CommandGroup>
+                                        {getSearchValue().trim().length >= 2 && categorySuggestions.length > 0 && (
+                                          <>
+                                            {categorySuggestions.map((suggestion, index) => {
+                                              const categoryNode = suggestion.categoryTreeNode || suggestion;
+                                              const category = categoryNode?.category || categoryNode;
+                                              const categoryName = category?.categoryName || suggestion.categoryName || "";
+                                              const categoryId = category?.categoryId || suggestion.categoryId || String(index);
+                                              
+                                              let fullPath = suggestion.categoryPath || "";
+                                              if (!fullPath && categoryNode?.categoryPath) {
+                                                fullPath = categoryNode.categoryPath;
+                                              }
+                                              if (!fullPath && categoryName) {
+                                                fullPath = categoryName;
+                                              }
+                                              
+                                              return (
+                                                <CommandItem
+                                                  key={`suggestion-${categoryId}-${index}`}
+                                                  value={`suggestion-${categoryId}`}
+                                                  onSelect={() => {
+                                                    if (activeForm === "general") {
+                                                      handleGeneralChange("category", fullPath);
+                                                      handleGeneralChange("categoryId", categoryId);
+                                                      setGeneralCategoryPath([]);
+                                                    } else if (activeForm === "facebook") {
+                                                      handleMarketplaceChange("facebook", "category", fullPath);
+                                                      handleMarketplaceChange("facebook", "categoryId", categoryId);
+                                                      setGeneralCategoryPath([]);
+                                                    } else if (activeForm === "mercari") {
+                                                      handleMarketplaceChange("mercari", "category", fullPath);
+                                                      handleMarketplaceChange("mercari", "categoryId", categoryId);
+                                                      setGeneralCategoryPath([]);
+                                                    }
+                                                    setGeneralCategorySearchValue("");
+                                                    setFacebookCategorySearchValue("");
+                                                    setMercariCategorySearchValue("");
+                                                    setCategorySearchOpen(false);
+                                                  }}
+                                                >
+                                                  <Check className="mr-2 h-4 w-4 opacity-0" />
+                                                  {fullPath}
+                                                </CommandItem>
+                                              );
+                                            })}
+                                            <div className="border-t my-1" />
+                                          </>
+                                        )}
+                                        
+                                        {sortedCategories
+                                          .filter((categoryNode) => {
+                                            const searchValue = getSearchValue();
+                                            if (!searchValue.trim() || categorySuggestions.length === 0) return true;
+                                            const category = categoryNode.category;
+                                            if (!category) return false;
+                                            const searchLower = searchValue.toLowerCase();
+                                            const categoryName = category.categoryName?.toLowerCase() || "";
+                                            const fullPath = [...generalCategoryPath.map(c => c.categoryName), category.categoryName].join(" > ").toLowerCase();
+                                            return categoryName.includes(searchLower) || fullPath.includes(searchLower);
+                                          })
+                                          .map((categoryNode) => {
+                                            const category = categoryNode.category;
+                                            if (!category || !category.categoryId) return null;
+                                            
+                                            const hasChildren = categoryNode.childCategoryTreeNodes && 
+                                              categoryNode.childCategoryTreeNodes.length > 0 &&
+                                              !categoryNode.leafCategoryTreeNode;
+                                            
+                                            const fullPath = generalCategoryPath.length > 0
+                                              ? [...generalCategoryPath.map(c => c.categoryName), category.categoryName].join(" > ")
+                                              : category.categoryName;
+                                            
+                                            return (
+                                              <CommandItem
+                                                key={category.categoryId}
+                                                value={category.categoryId}
+                                                onSelect={() => {
+                                                  const newPath = [...generalCategoryPath, {
+                                                    categoryId: category.categoryId,
+                                                    categoryName: category.categoryName,
+                                                  }];
+                                                  
+                                                  if (hasChildren) {
+                                                    setGeneralCategoryPath(newPath);
+                                                  } else {
+                                                    const fullPathStr = newPath.map(c => c.categoryName).join(" > ");
+                                                    if (activeForm === "general") {
+                                                      handleGeneralChange("category", fullPathStr);
+                                                      handleGeneralChange("categoryId", category.categoryId);
+                                                    } else if (activeForm === "facebook") {
+                                                      handleMarketplaceChange("facebook", "category", fullPathStr);
+                                                      handleMarketplaceChange("facebook", "categoryId", category.categoryId);
+                                                    } else if (activeForm === "mercari") {
+                                                      handleMarketplaceChange("mercari", "category", fullPathStr);
+                                                      handleMarketplaceChange("mercari", "categoryId", category.categoryId);
+                                                    }
+                                                    setGeneralCategoryPath(newPath);
+                                                  }
+                                                  setGeneralCategorySearchValue("");
+                                                  setFacebookCategorySearchValue("");
+                                                  setMercariCategorySearchValue("");
+                                                  setCategorySearchOpen(false);
+                                                }}
+                                              >
+                                                <Check
+                                                  className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    (activeForm === "general" ? generalForm.categoryId : activeForm === "facebook" ? facebookForm.categoryId : mercariForm.categoryId) === category.categoryId ? "opacity-100" : "opacity-0"
+                                                  )}
+                                                />
+                                                <div className="flex items-center gap-2 flex-1">
+                                                  <span className="flex-1">{fullPath}</span>
+                                                  {hasChildren && (
+                                                    <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                                  )}
+                                                </div>
+                                              </CommandItem>
+                                            );
+                                          })}
+                                      </CommandGroup>
+                                      {getSearchValue().trim().length >= 2 && categorySuggestions.length === 0 && 
+                                       sortedCategories.filter((categoryNode) => {
+                                         const searchValue = getSearchValue();
+                                         if (!categoryNode.category) return false;
+                                         const searchLower = searchValue.toLowerCase();
+                                         const categoryName = categoryNode.category.categoryName?.toLowerCase() || "";
+                                         const fullPath = [...generalCategoryPath.map(c => c.categoryName), categoryNode.category.categoryName].join(" > ").toLowerCase();
+                                         return categoryName.includes(searchLower) || fullPath.includes(searchLower);
+                                       }).length === 0 && (
+                                        <CommandEmpty>No category found. Try a different search term.</CommandEmpty>
+                                      )}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            ) : (
+                              <Select
+                                value={undefined}
+                                onValueChange={(value) => {
+                                  const selectedCategory = sortedCategories.find(
+                                    cat => cat.category?.categoryId === value
+                                  );
+                                  
+                                  if (selectedCategory) {
+                                    const category = selectedCategory.category;
+                                    const newPath = [...generalCategoryPath, {
+                                      categoryId: category.categoryId,
+                                      categoryName: category.categoryName,
+                                    }];
+                                    
+                                    const hasChildren = selectedCategory.childCategoryTreeNodes && 
+                                      selectedCategory.childCategoryTreeNodes.length > 0 &&
+                                      !selectedCategory.leafCategoryTreeNode;
+                                    
+                                    if (hasChildren) {
+                                      setGeneralCategoryPath(newPath);
+                                    } else {
+                                      const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                      if (activeForm === "general") {
+                                        handleGeneralChange("category", fullPath);
+                                        handleGeneralChange("categoryId", category.categoryId);
+                                      } else if (activeForm === "facebook") {
+                                        handleMarketplaceChange("facebook", "category", fullPath);
+                                        handleMarketplaceChange("facebook", "categoryId", category.categoryId);
+                                      } else if (activeForm === "mercari") {
+                                        handleMarketplaceChange("mercari", "category", fullPath);
+                                        handleMarketplaceChange("mercari", "categoryId", category.categoryId);
+                                      }
+                                      setGeneralCategoryPath(newPath);
+                                    }
+                                  }
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={generalCategoryPath.length > 0 ? "Select subcategory" : "Select a category"} />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                  {sortedCategories.map((categoryNode) => {
+                                    const category = categoryNode.category;
+                                    if (!category || !category.categoryId) return null;
+                                    
+                                    const hasChildren = categoryNode.childCategoryTreeNodes && 
+                                      categoryNode.childCategoryTreeNodes.length > 0 &&
+                                      !categoryNode.leafCategoryTreeNode;
+                                    
+                                    return (
+                                      <SelectItem key={category.categoryId} value={category.categoryId}>
+                                        <div className="flex items-center gap-2">
+                                          <span>{category.categoryName}</span>
+                                          {hasChildren && (
+                                            <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            )
+                          ) : (
+                            <div className="p-3 border rounded-md">
+                              <p className="text-sm text-muted-foreground">No subcategories available.</p>
+                            </div>
+                          )}
+                          
+                          {generalForm.category && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                Selected: {generalForm.category}
+                              </Badge>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleGeneralChange("category", "");
+                                  handleGeneralChange("categoryId", "");
+                                  setGeneralCategoryPath([]);
+                                }}
+                                className="h-6 px-2 text-xs"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {shouldShowGeneralSize && (
+                          <div>
+                            <Label className="text-xs mb-1.5 block">US Size</Label>
+                            <Input
+                              placeholder="e.g. Men's M, 10, XL"
+                              value={generalForm.size}
+                              onChange={(e) => handleGeneralChange("size", e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Shipping Settings Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Save className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Shipping Settings</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label htmlFor="general-zip" className="text-xs mb-1.5 block">Zip Code</Label>
+                          <Input
+                            id="general-zip"
+                            name="general-zip"
+                            placeholder="Enter Zip Code"
+                            value={generalForm.zip || ""}
+                            onChange={(e) => handleGeneralChange("zip", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Quantity</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={generalForm.quantity}
+                            onChange={(e) => handleGeneralChange("quantity", e.target.value)}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Tags</Label>
+                          <TagInput
+                            placeholder="Type keywords and press space or comma to add tags (used for Mercari and Facebook)"
+                            value={generalForm.tags}
+                            onChange={(value) => handleGeneralChange("tags", value)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Package Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Package Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">
+                            Package Details <span className="text-red-500">*</span>
+                          </Label>
+                          <Button
+                            type="button"
+                            variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                            onClick={() => setPackageDetailsDialogOpen(true)}
+                            className="w-full justify-start"
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                              ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                              : "Enter weight & size"}
+                          </Button>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Custom Labels</Label>
+                          <Input
+                            placeholder="Comma-separated labels (e.g. Q4 Liquidation, Holiday Gift). These will appear as tags in inventory."
+                            value={generalForm.customLabels}
+                            onChange={(e) => handleGeneralChange("customLabels", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Custom labels will be saved as tags in your inventory page
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("general")}>
+                          <Save className="h-4 w-4" />
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* eBay Form - Desktop */}
+                  {activeForm === "ebay" && (
+                    <div className="space-y-6">
+                      {currentEditingItemId && (
+                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Item ID:</span>
+                          <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-foreground">eBay listing specifics</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Media, title, description, and pricing inherit from your General template.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Photos Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                          {(ebayForm.photos?.length > 0) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAllPhotos('ebay')}
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Delete All
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                          {ebayForm.photos?.length > 0 && (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", "0");
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = 0;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'ebay');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
+                            >
+                              <img src={ebayForm.photos[0].preview || ebayForm.photos[0].imageUrl} alt={ebayForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                                Main
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: ebayForm.photos[0].preview || ebayForm.photos[0].imageUrl, 
+                                      photoId: ebayForm.photos[0].id, 
+                                      marketplace: 'ebay',
+                                      index: 0
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(ebayForm.photos[0].id, 'ebay');
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {ebayForm.photos?.slice(1).map((photo, index) => (
+                            <div
+                              key={photo.id || index + 1}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", String(index + 1));
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = index + 1;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'ebay');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                            >
+                              <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                                <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: photo.preview || photo.imageUrl, 
+                                      photoId: photo.id, 
+                                      marketplace: 'ebay',
+                                      index: index + 1
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(photo.id, 'ebay');
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {(ebayForm.photos?.length || 0) < MAX_PHOTOS && (
+                            <button
+                              type="button"
+                              onClick={() => ebayPhotoInputRef.current?.click()}
+                              disabled={isUploadingPhotos}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                              style={{ width: '150px' }}
+                            >
+                              <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
+                            </button>
+                          )}
+                          <input
+                            ref={ebayPhotoInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handlePhotoUpload(e, 'ebay')}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {ebayForm.photos?.length || 0}/{MAX_PHOTOS} used.
+                          {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
+                        </p>
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {/* Title Section */}
+                        <div>
+                          <Label htmlFor="ebay-title" className="text-xs mb-1.5 block">Title</Label>
+                          <Input
+                            id="ebay-title"
+                            name="ebay-title"
+                            placeholder="Enter listing title"
+                            value={ebayForm.title || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "title", e.target.value)}
+                          />
+                        </div>
+
+                        {/* Description Section */}
+                        <div className="md:col-span-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
+                            <Label htmlFor="ebay-description" className="text-xs">Description</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCollapsedDescriptions(prev => ({ ...prev, ebay: !prev.ebay }))}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                {collapsedDescriptions.ebay ? (
+                                  <>
+                                    <Maximize2 className="h-3 w-3" />
+                                    Expand
+                                  </>
+                                ) : (
+                                  <>
+                                    <Minimize2 className="h-3 w-3" />
+                                    Minimize
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedDescription('ebay')}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                <Maximize2 className="h-3 w-3" />
+                                Full
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionGeneratorOpen(true)}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                AI Generate
+                              </Button>
+                            </div>
+                          </div>
+                          <RichTextarea
+                            id="ebay-description"
+                            name="ebay-description"
+                            placeholder={generalForm.description ? `Inherited from General` : "Enter eBay-specific description..."}
+                            value={ebayForm.description || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "description", e.target.value)}
+                            className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                              collapsedDescriptions.ebay ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                            }`}
+                          />
+                          {generalForm.description && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* eBay Brand - use same dropdown as general form */}
+                        <div className="md:col-span-2">
+                          <Label htmlFor="ebay-brand" className="text-xs mb-1.5 block">Brand <span className="text-red-500">*</span></Label>
+                          {brandIsCustom ? (
+                            <div className="flex gap-2">
+                              <Input
+                                id="ebay-brand"
+                                name="ebay-brand"
+                                placeholder="Enter brand name and press Enter to save"
+                                value={ebayForm.ebayBrand || ""}
+                                onChange={(e) => handleMarketplaceChange("ebay", "ebayBrand", e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && ebayForm.ebayBrand?.trim()) {
+                                    e.preventDefault();
+                                    const savedBrand = addCustomBrand(ebayForm.ebayBrand);
+                                    if (savedBrand) {
+                                      setBrandIsCustom(false);
+                                    }
+                                  }
+                                }}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  if (ebayForm.ebayBrand?.trim()) {
+                                    const savedBrand = addCustomBrand(ebayForm.ebayBrand);
+                                    if (savedBrand) {
+                                      setBrandIsCustom(false);
+                                    }
+                                  }
+                                }}
+                                disabled={!ebayForm.ebayBrand?.trim()}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setBrandIsCustom(false);
+                                  handleMarketplaceChange("ebay", "ebayBrand", "");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Popover 
+                              open={ebayBrandSearchOpen} 
+                              onOpenChange={(open) => {
+                                setEbayBrandSearchOpen(open);
+                                if (!open) {
+                                  setEbayBrandSearchValue("");
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={ebayBrandSearchOpen}
+                                  className="w-full justify-between"
+                                >
+                                  {ebayForm.ebayBrand || generalForm.brand
+                                    ? (POPULAR_BRANDS.find((brand) => brand === (ebayForm.ebayBrand || generalForm.brand)) || customBrands.find((brand) => brand === (ebayForm.ebayBrand || generalForm.brand)) || (ebayForm.ebayBrand || generalForm.brand))
+                                    : "Search brand..."}
+                                  <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0" align="start">
+                                <Command shouldFilter={false}>
+                                  <CommandInput 
+                                    placeholder="Search brand..." 
+                                    value={ebayBrandSearchValue}
+                                    onValueChange={setEbayBrandSearchValue}
+                                  />
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {ebayBrandSearchValue.trim() && 
+                                       !POPULAR_BRANDS.some(b => b.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())) &&
+                                       !customBrands.some(b => b.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())) && (
+                                        <CommandItem
+                                          value={`add-custom-${ebayBrandSearchValue}`}
+                                          onSelect={() => {
+                                            const trimmed = ebayBrandSearchValue.trim();
+                                            if (trimmed) {
+                                              const savedBrand = addCustomBrand(trimmed);
+                                              if (savedBrand) {
+                                                handleMarketplaceChange("ebay", "ebayBrand", savedBrand);
+                                                setEbayBrandSearchValue("");
+                                                setEbayBrandSearchOpen(false);
+                                              }
+                                            }
+                                          }}
+                                          className="bg-primary/5 font-medium"
+                                        >
+                                          <span className="mr-2">+</span>
+                                          Add "{ebayBrandSearchValue.trim()}" as custom brand
+                                        </CommandItem>
+                                      )}
+                                      {customBrands
+                                        .filter(brand => 
+                                          !ebayBrandSearchValue.trim() || 
+                                          brand.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())
+                                        )
+                                        .map((brand) => (
+                                          <CommandItem
+                                            key={`custom-${brand}`}
+                                            value={brand}
+                                            onSelect={() => {
+                                              handleMarketplaceChange("ebay", "ebayBrand", brand);
+                                              setEbayBrandSearchValue("");
+                                              setEbayBrandSearchOpen(false);
+                                            }}
+                                            className="flex items-center justify-between group"
+                                          >
+                                            <div className="flex items-center flex-1">
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  (ebayForm.ebayBrand || generalForm.brand) === brand ? "opacity-100" : "opacity-0"
+                                                )}
+                                              />
+                                              <span className="flex-1">{brand}</span>
+                                              <span className="text-xs text-muted-foreground ml-2">⭐</span>
+                                            </div>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteCustomBrand(brand);
+                                              }}
+                                              className="ml-2 h-5 w-5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                              title="Delete custom brand"
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </CommandItem>
+                                        ))}
+                                      {customBrands.some(brand => 
+                                        !ebayBrandSearchValue.trim() || 
+                                        brand.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())
+                                      ) && <div className="border-t my-1" />}
+                                      {POPULAR_BRANDS
+                                        .filter(brand => 
+                                          !ebayBrandSearchValue.trim() || 
+                                          brand.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())
+                                        )
+                                        .map((brand) => (
+                                          <CommandItem
+                                            key={brand}
+                                            value={brand}
+                                            onSelect={() => {
+                                              handleMarketplaceChange("ebay", "ebayBrand", brand);
+                                              setEbayBrandSearchValue("");
+                                              setEbayBrandSearchOpen(false);
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                (ebayForm.ebayBrand || generalForm.brand) === brand ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            {brand}
+                                          </CommandItem>
+                                        ))}
+                                      {!ebayBrandSearchValue.trim() && (
+                                        <CommandItem
+                                          value="custom"
+                                          onSelect={() => {
+                                            setBrandIsCustom(true);
+                                            setEbayBrandSearchValue("");
+                                            setEbayBrandSearchOpen(false);
+                                            handleMarketplaceChange("ebay", "ebayBrand", "");
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              "opacity-0"
+                                            )}
+                                          />
+                                          Add Custom...
+                                        </CommandItem>
+                                      )}
+                                    </CommandGroup>
+                                    {ebayBrandSearchValue.trim() && 
+                                     POPULAR_BRANDS.filter(b => b.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())).length === 0 &&
+                                     customBrands.filter(b => b.toLowerCase().includes(ebayBrandSearchValue.toLowerCase())).length === 0 &&
+                                     !ebayBrandSearchValue.trim().match(/^add-custom-/) && (
+                                      <CommandEmpty>No brand found. Use the option above to add it as a custom brand.</CommandEmpty>
+                                    )}
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+
+                        {/* Category Section */}
+                        <div className="md:col-span-2">
+                          <Label htmlFor="ebay-category" className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
+                          <div className="space-y-2">
+                            {selectedCategoryPath.length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap text-xs text-muted-foreground">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCategoryPath([]);
+                                    handleMarketplaceChange("ebay", "categoryId", "");
+                                    handleMarketplaceChange("ebay", "categoryName", "");
+                                  }}
+                                  className="hover:text-foreground underline"
+                                >
+                                  Home
+                                </button>
+                                {selectedCategoryPath.map((cat, index) => (
+                                  <React.Fragment key={cat.categoryId}>
+                                    <span>/</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newPath = selectedCategoryPath.slice(0, index + 1);
+                                        setSelectedCategoryPath(newPath);
+                                        const lastCat = newPath[newPath.length - 1];
+                                        const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                        handleMarketplaceChange("ebay", "categoryId", lastCat.categoryId);
+                                        handleMarketplaceChange("ebay", "categoryName", fullPath);
+                                      }}
+                                      className="hover:text-foreground underline"
+                                    >
+                                      {cat.categoryName}
+                                    </button>
+                                  </React.Fragment>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {isLoadingCategoryTree || isLoadingCategories ? (
+                              <div className="flex items-center gap-2 p-3 border rounded-md">
+                                <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">Loading categories...</span>
+                              </div>
+                            ) : categoriesError ? (
+                              <div className="p-3 border rounded-md border-destructive/50 bg-destructive/10">
+                                <p className="text-sm text-destructive">Error loading categories: {categoriesError.message}</p>
+                                {categoriesError?.response?.details && (
+                                  <p className="text-xs text-destructive mt-2">
+                                    Details: {JSON.stringify(categoriesError.response.details)}
+                                  </p>
+                                )}
+                              </div>
+                            ) : sortedCategories.length > 0 ? (
+                              activeForm === "ebay" ? (
+                                <Popover 
+                                  open={categorySearchOpen && activeForm === "ebay"} 
+                                  onOpenChange={(open) => {
+                                    if (activeForm === "ebay") {
+                                      setCategorySearchOpen(open);
+                                      if (!open) {
+                                        setEbayCategorySearchValue("");
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={categorySearchOpen && activeForm === "ebay"}
+                                      className="w-full justify-between"
+                                    >
+                                      {ebayForm.categoryName || selectedCategoryPath.length > 0
+                                        ? (ebayForm.categoryName || selectedCategoryPath.map(c => c.categoryName).join(" > "))
+                                        : (selectedCategoryPath.length > 0 ? "Select subcategory" : "Search category...")}
+                                      <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-full p-0" align="start">
+                                    <Command shouldFilter={false}>
+                                      <CommandInput 
+                                        placeholder="Search all categories..." 
+                                        value={ebayCategorySearchValue}
+                                        onValueChange={setEbayCategorySearchValue}
+                                      />
+                                      <CommandList>
+                                        <CommandGroup>
+                                          {ebayCategorySearchValue.trim().length >= 2 && categorySuggestions.length > 0 && (
+                                            <>
+                                              {categorySuggestions.map((suggestion, index) => {
+                                                const categoryNode = suggestion.categoryTreeNode || suggestion;
+                                                const category = categoryNode?.category || categoryNode;
+                                                const categoryName = category?.categoryName || suggestion.categoryName || "";
+                                                const categoryId = category?.categoryId || suggestion.categoryId || String(index);
+                                                
+                                                let fullPath = suggestion.categoryPath || "";
+                                                if (!fullPath && categoryNode?.categoryPath) {
+                                                  fullPath = categoryNode.categoryPath;
+                                                }
+                                                if (!fullPath && categoryName) {
+                                                  fullPath = categoryName;
+                                                }
+                                                
+                                                return (
+                                                  <CommandItem
+                                                    key={`suggestion-${categoryId}-${index}`}
+                                                    value={`suggestion-${categoryId}`}
+                                                    onSelect={() => {
+                                                      handleMarketplaceChange("ebay", "categoryId", categoryId);
+                                                      handleMarketplaceChange("ebay", "categoryName", fullPath);
+                                                      setSelectedCategoryPath([]);
+                                                      setEbayCategorySearchValue("");
+                                                      setCategorySearchOpen(false);
+                                                    }}
+                                                  >
+                                                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                                                    {fullPath}
+                                                  </CommandItem>
+                                                );
+                                              })}
+                                              <div className="border-t my-1" />
+                                            </>
+                                          )}
+                                          
+                                          {sortedCategories
+                                            .filter((categoryNode) => {
+                                              if (!ebayCategorySearchValue.trim() || categorySuggestions.length === 0) return true;
+                                              const category = categoryNode.category;
+                                              if (!category) return false;
+                                              const searchLower = ebayCategorySearchValue.toLowerCase();
+                                              const categoryName = category.categoryName?.toLowerCase() || "";
+                                              const fullPath = [...selectedCategoryPath.map(c => c.categoryName), category.categoryName].join(" > ").toLowerCase();
+                                              return categoryName.includes(searchLower) || fullPath.includes(searchLower);
+                                            })
+                                            .map((categoryNode) => {
+                                              const category = categoryNode.category;
+                                              if (!category || !category.categoryId) return null;
+                                              
+                                              const hasChildren = categoryNode.childCategoryTreeNodes && 
+                                                categoryNode.childCategoryTreeNodes.length > 0 &&
+                                                !categoryNode.leafCategoryTreeNode;
+                                              
+                                              const fullPath = selectedCategoryPath.length > 0
+                                                ? [...selectedCategoryPath.map(c => c.categoryName), category.categoryName].join(" > ")
+                                                : category.categoryName;
+                                              
+                                              return (
+                                                <CommandItem
+                                                  key={category.categoryId}
+                                                  value={category.categoryId}
+                                                  onSelect={() => {
+                                                    const newPath = [...selectedCategoryPath, {
+                                                      categoryId: category.categoryId,
+                                                      categoryName: category.categoryName,
+                                                    }];
+                                                    
+                                                    if (hasChildren) {
+                                                      setSelectedCategoryPath(newPath);
+                                                    } else {
+                                                      const fullPathStr = newPath.map(c => c.categoryName).join(" > ");
+                                                      handleMarketplaceChange("ebay", "categoryId", category.categoryId);
+                                                      handleMarketplaceChange("ebay", "categoryName", fullPathStr);
+                                                      setSelectedCategoryPath(newPath);
+                                                    }
+                                                    setEbayCategorySearchValue("");
+                                                    setCategorySearchOpen(false);
+                                                  }}
+                                                >
+                                                  <Check
+                                                    className={cn(
+                                                      "mr-2 h-4 w-4",
+                                                      ebayForm.categoryId === category.categoryId ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                  />
+                                                  <div className="flex items-center gap-2 flex-1">
+                                                    <span className="flex-1">{fullPath}</span>
+                                                    {hasChildren && (
+                                                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                                    )}
+                                                  </div>
+                                                </CommandItem>
+                                              );
+                                            })}
+                                        </CommandGroup>
+                                        {ebayCategorySearchValue.trim().length >= 2 && categorySuggestions.length === 0 && 
+                                         sortedCategories.filter((categoryNode) => {
+                                           if (!categoryNode.category) return false;
+                                           const searchLower = ebayCategorySearchValue.toLowerCase();
+                                           const categoryName = categoryNode.category.categoryName?.toLowerCase() || "";
+                                           const fullPath = [...selectedCategoryPath.map(c => c.categoryName), categoryNode.category.categoryName].join(" > ").toLowerCase();
+                                           return categoryName.includes(searchLower) || fullPath.includes(searchLower);
+                                         }).length === 0 && (
+                                          <CommandEmpty>No category found. Try a different search term.</CommandEmpty>
+                                        )}
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              ) : (
+                                <Select
+                                  value={undefined}
+                                  onValueChange={(value) => {
+                                    const selectedCategory = sortedCategories.find(
+                                      cat => cat.category?.categoryId === value
+                                    );
+                                    
+                                    if (selectedCategory) {
+                                      const category = selectedCategory.category;
+                                      const newPath = [...selectedCategoryPath, {
+                                        categoryId: category.categoryId,
+                                        categoryName: category.categoryName,
+                                      }];
+                                      
+                                      const hasChildren = selectedCategory.childCategoryTreeNodes && 
+                                        selectedCategory.childCategoryTreeNodes.length > 0 &&
+                                        !selectedCategory.leafCategoryTreeNode;
+                                      
+                                      if (hasChildren) {
+                                        setSelectedCategoryPath(newPath);
+                                      } else {
+                                        const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                        handleMarketplaceChange("ebay", "categoryId", category.categoryId);
+                                        handleMarketplaceChange("ebay", "categoryName", fullPath);
+                                        setSelectedCategoryPath(newPath);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder={selectedCategoryPath.length > 0 ? "Select subcategory" : "Select a category"} />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-[300px]">
+                                    {sortedCategories.map((categoryNode) => {
+                                      const category = categoryNode.category;
+                                      if (!category || !category.categoryId) return null;
+                                      
+                                      const hasChildren = categoryNode.childCategoryTreeNodes && 
+                                        categoryNode.childCategoryTreeNodes.length > 0 &&
+                                        !categoryNode.leafCategoryTreeNode;
+                                      
+                                      return (
+                                        <SelectItem key={category.categoryId} value={category.categoryId}>
+                                          <div className="flex items-center gap-2">
+                                            <span>{category.categoryName}</span>
+                                            {hasChildren && (
+                                              <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                            )}
+                                          </div>
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              )
+                            ) : (
+                              <div className="p-3 border rounded-md">
+                                <p className="text-sm text-muted-foreground">No subcategories available.</p>
+                              </div>
+                            )}
+                            
+                            {ebayForm.categoryName && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  Selected: {ebayForm.categoryName}
+                                </Badge>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    handleMarketplaceChange("ebay", "categoryId", "");
+                                    handleMarketplaceChange("ebay", "categoryName", "");
+                                    setSelectedCategoryPath([]);
+                                  }}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Category Specifics Section - Always show when category is selected */}
+                        {ebayForm.categoryId && (
+                          <div className="md:col-span-2 space-y-3 border-t pt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Category Specifics</Label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  queryClient.invalidateQueries(['ebayCategoryAspects', categoryTreeId, ebayForm.categoryId]);
+                                }}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            {isLoadingEbayAspects && (
+                              <div className="flex items-center gap-2 p-3 border rounded-md mb-4">
+                                <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">Loading category specifics...</span>
+                              </div>
+                            )}
+
+                            {ebayAspectsError && !isLoadingEbayAspects && (
+                              <div className="p-3 border rounded-md border-destructive/50 bg-destructive/10 mb-4">
+                                <p className="text-sm text-destructive">Error loading category specifics: {ebayAspectsError.message}</p>
+                                <details className="mt-2 text-xs">
+                                  <summary className="cursor-pointer">Full error details</summary>
+                                  <pre className="mt-1 whitespace-pre-wrap break-all">{JSON.stringify(ebayAspectsError, null, 2)}</pre>
+                                </details>
+                              </div>
+                            )}
+
+                            {process.env.NODE_ENV === 'development' && !isLoadingEbayAspects && !ebayAspectsError && ebayCategoryAspects.length === 0 && ebayCategoryAspectsData && (
+                              <div className="p-3 border rounded-md border-orange-500/50 bg-orange-500/10 mb-4">
+                                <p className="text-sm text-orange-600">⚠️ API returned data but no aspects were found. Raw response:</p>
+                                <details className="mt-2">
+                                  <summary className="cursor-pointer text-xs">View raw API response</summary>
+                                  <pre className="mt-1 text-xs whitespace-pre-wrap break-all">{JSON.stringify(ebayCategoryAspectsData, null, 2)}</pre>
+                                </details>
+                              </div>
+                            )}
+
+                            {process.env.NODE_ENV === 'development' && !isLoadingEbayAspects && ebayForm.categoryId && (
+                              <details className="text-xs text-muted-foreground p-2 bg-muted rounded mb-2">
+                                <summary className="cursor-pointer font-medium">
+                                  🔍 Debug: Category Aspects ({ebayCategoryAspects.length} found)
+                                </summary>
+                                <div className="space-y-1 mt-2">
+                                  <div>Category ID: {ebayForm.categoryId}</div>
+                                  <div>Category Name: {ebayForm.categoryName}</div>
+                                  {ebayAspectsError && (
+                                    <div className="text-red-600">Error: {ebayAspectsError.message}</div>
+                                  )}
+                                  {!ebayAspectsError && ebayCategoryAspects.length > 0 && (
+                                    <>
+                                      <div className="mt-2">Aspects:</div>
+                                      {ebayCategoryAspects.map((a, idx) => (
+                                        <div key={idx} className="ml-2 text-xs">
+                                          - {a.localizedAspectName || a.aspectName || a.name || 'Unknown'} 
+                                          ({a.aspectValues?.length || 0} values)
+                                          <details className="ml-2">
+                                            <summary className="cursor-pointer text-blue-600">View data</summary>
+                                            <pre className="text-xs mt-1 whitespace-pre-wrap break-all">{JSON.stringify(a, null, 2)}</pre>
+                                          </details>
+                                        </div>
+                                      ))}
+                                      {ebayTypeAspect ? (
+                                        <div className="text-green-600">
+                                          ✓ Model/Type aspect found: {ebayTypeAspect.localizedAspectName || ebayTypeAspect.aspectName || ebayTypeAspect.name} ({ebayTypeValues.length} values)
+                                        </div>
+                                      ) : (
+                                        <div className="text-orange-600">
+                                          ✗ No Model/Type aspect found. Check console for full aspect data.
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </details>
+                            )}
+                            
+                            {!isLoadingEbayAspects && !ebayAspectsError && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {ebayTypeAspect ? (
+                                  <div>
+                                    <Label className="text-xs mb-1.5 block">
+                                      {ebayTypeAspect.localizedAspectName} <span className="text-red-500">*</span>
+                                    </Label>
+                                    {ebayTypeValues.length > 0 ? (
+                                      <Select
+                                        value={ebayForm.itemType ? String(ebayForm.itemType) : undefined}
+                                        onValueChange={(value) => handleMarketplaceChange("ebay", "itemType", value)}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder={`Select ${ebayTypeAspect.localizedAspectName.toLowerCase()}`} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {ebayTypeValues.map((type) => (
+                                            <SelectItem key={type} value={type}>
+                                              {type}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    ) : (
+                                      <div className="text-xs text-muted-foreground p-2 border rounded">
+                                        Loading {ebayTypeAspect.localizedAspectName.toLowerCase()} options...
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-muted-foreground p-2 border rounded">
+                                    No Model/Type aspect available for this category.
+                                  </div>
+                                )}
+
+                                <div>
+                                  <Label className="text-xs mb-1.5 block">
+                                    Condition <span className="text-red-500">*</span>
+                                  </Label>
+                                  <Select
+                                    value={ebayForm.condition ? String(ebayForm.condition) : undefined}
+                                    onValueChange={(value) => handleMarketplaceChange("ebay", "condition", value)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select condition" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="New">New</SelectItem>
+                                      <SelectItem value="Open Box">Open Box</SelectItem>
+                                      <SelectItem value="Used">Used</SelectItem>
+                                      <SelectItem value="For parts or not working">For parts or not working</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {!ebayForm.categoryId && (
+                          <div>
+                            <Label className="text-xs mb-1.5 block">
+                              Condition <span className="text-red-500">*</span>
+                            </Label>
+                            <Select
+                              value={ebayForm.condition ? String(ebayForm.condition) : undefined}
+                              onValueChange={(value) => handleMarketplaceChange("ebay", "condition", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select condition" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="New">New</SelectItem>
+                                <SelectItem value="Open Box">Open Box</SelectItem>
+                                <SelectItem value="Used">Used</SelectItem>
+                                <SelectItem value="For parts or not working">For parts or not working</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        <div>
+                          <Label htmlFor="ebay-sku" className="text-xs mb-1.5 block">SKU</Label>
+                          <Input
+                            id="ebay-sku"
+                            name="ebay-sku"
+                            placeholder={generalForm.sku || "Enter SKU"}
+                            value={ebayForm.sku || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "sku", e.target.value)}
+                          />
+                          {generalForm.sku && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited {generalForm.sku} from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Color <span className="text-red-500">*</span></Label>
+                          <Button
+                            type="button"
+                            variant={ebayForm.color ? "default" : "outline"}
+                            onClick={() => openColorPicker("ebay.color")}
+                            className="w-full justify-start"
+                          >
+                            {ebayForm.color ? (
+                              <>
+                                <div
+                                  className="w-4 h-4 mr-2 rounded border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                                  style={{ backgroundColor: getColorHex(ebayForm.color) || "#808080" }}
+                                />
+                                <span className="flex-1 text-left">{getColorName(ebayForm.color)}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Palette className="w-4 h-4 mr-2" />
+                                <span>Select color</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Pricing Section */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Pricing Format <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={ebayForm.pricingFormat ? String(ebayForm.pricingFormat) : undefined}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "pricingFormat", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="fixed">Fixed Price</SelectItem>
+                              <SelectItem value="auction">Auction</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Duration <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={ebayForm.duration ? String(ebayForm.duration) : undefined}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "duration", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Good 'Til Canceled">Good 'Til Canceled</SelectItem>
+                              <SelectItem value="30 Days">30 Days</SelectItem>
+                              <SelectItem value="7 Days">7 Days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Buy It Now Price <span className="text-red-500">*</span></Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder={generalForm.price || "0.00"}
+                            value={ebayForm.buyItNowPrice || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "buyItNowPrice", e.target.value)}
+                          />
+                          {generalForm.price && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited ${generalForm.price} from General form. You can edit this price.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Allow Best Offer</Label>
+                          <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
+                            <Switch
+                              id="ebay-best-offer"
+                              checked={ebayForm.allowBestOffer}
+                              onCheckedChange={(checked) => handleMarketplaceChange("ebay", "allowBestOffer", checked)}
+                            />
+                            <Label htmlFor="ebay-best-offer" className="text-sm">Allow buyers to submit offers</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Save Default Button for Shipping Fields */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Save className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Shipping Settings</Label>
+                        </div>
+                        <div className="group relative">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSaveShippingDefaults}
+                            className="gap-2"
+                          >
+                            <Save className="h-4 w-4" />
+                            Save
+                          </Button>
+                          <div className="absolute right-0 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
+                            <div className="bg-popover text-popover-foreground text-xs px-2 py-1 rounded-md shadow-lg border whitespace-nowrap">
+                              Save Default
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Shipping Method <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={ebayForm.shippingMethod ? String(ebayForm.shippingMethod) : undefined}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "shippingMethod", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Standard: Small to medium items">Standard: Small to medium items</SelectItem>
+                              <SelectItem value="Local pickup only: Sell to buyer nears you">Local pickup only: Sell to buyer nears you</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Shipping Cost Type <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={ebayForm.shippingCostType ? String(ebayForm.shippingCostType) : undefined}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "shippingCostType", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Calculated: Cost varies based on buyer location">Calculated: Cost varies based on buyer location</SelectItem>
+                              <SelectItem value="Flat: Same cost regardless of buyer location">Flat: Same cost regardless of buyer location</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Shipping Cost <span className="text-red-500">*</span></Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={ebayForm.shippingCost || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "shippingCost", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Handling Time <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={ebayForm.handlingTime ? String(ebayForm.handlingTime) : undefined}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "handlingTime", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1 business day">1 business day</SelectItem>
+                              <SelectItem value="2 business days">2 business days</SelectItem>
+                              <SelectItem value="3 business days">3 business days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Ship From Country</Label>
+                          <Select
+                            value={ebayForm.shipFromCountry ? String(ebayForm.shipFromCountry) : "United States"}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "shipFromCountry", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {COUNTRIES.map((country) => (
+                                <SelectItem key={country} value={country}>
+                                  {country}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Shipping Service <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={ebayForm.shippingService ? String(ebayForm.shippingService) : undefined}
+                            onValueChange={(value) => handleMarketplaceChange("ebay", "shippingService", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Standard Shipping (3 to 5 business days)">Standard Shipping (3 to 5 business days)</SelectItem>
+                              <SelectItem value="Expedited Shipping (1 to 3 business days)">Expedited Shipping (1 to 3 business days)</SelectItem>
+                              <SelectItem value="USPS Priority Mail">USPS Priority Mail</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Location Descriptions</Label>
+                          <Input
+                            placeholder="(e.g., 'Spain')"
+                            value={ebayForm.locationDescriptions || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "locationDescriptions", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Optional descriptive text shown to buyers (e.g., "Spain")
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Shipping Location</Label>
+                          <Input
+                            placeholder={generalForm.zip || "Zip or region"}
+                            value={ebayForm.shippingLocation || ""}
+                            onChange={(e) => handleMarketplaceChange("ebay", "shippingLocation", e.target.value)}
+                          />
+                          {generalForm.zip && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited {generalForm.zip} from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Accept Returns <span className="text-red-500">*</span></Label>
+                          <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
+                            <Switch
+                              id="ebay-accept-returns"
+                              checked={ebayForm.acceptReturns}
+                              onCheckedChange={(checked) => handleMarketplaceChange("ebay", "acceptReturns", checked)}
+                            />
+                            <Label htmlFor="ebay-accept-returns" className="text-sm">Accept returns</Label>
+                          </div>
+                        </div>
+                        
+                        {ebayForm.acceptReturns && (
+                          <>
+                            <div>
+                              <Label className="text-xs mb-1.5 block">Return Within <span className="text-red-500">*</span></Label>
+                              <Select
+                                value={ebayForm.returnWithin ? String(ebayForm.returnWithin) : "30 days"}
+                                onValueChange={(value) => handleMarketplaceChange("ebay", "returnWithin", value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="30 days">30 days</SelectItem>
+                                  <SelectItem value="60 days">60 days</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1.5 block">Return Shipping Payer <span className="text-red-500">*</span></Label>
+                              <Select
+                                value={ebayForm.returnShippingPayer ? String(ebayForm.returnShippingPayer) : "Buyer"}
+                                onValueChange={(value) => handleMarketplaceChange("ebay", "returnShippingPayer", value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Buyer">Buyer</SelectItem>
+                                  <SelectItem value="Free for buyer, you pay">Free for buyer, you pay</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-xs mb-1.5 block">Return Refund Method <span className="text-red-500">*</span></Label>
+                              <Select
+                                value={ebayForm.returnRefundMethod ? String(ebayForm.returnRefundMethod) : "Full Refund"}
+                                onValueChange={(value) => handleMarketplaceChange("ebay", "returnRefundMethod", value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Full Refund">Full Refund</SelectItem>
+                                  <SelectItem value="Full Refund or Replacement">Full Refund or Replacement</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Package Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Package Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">
+                            Package Details <span className="text-red-500">*</span>
+                          </Label>
+                          <Button
+                            type="button"
+                            variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                            onClick={() => setPackageDetailsDialogOpen(true)}
+                            className="w-full justify-start"
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                              ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                              : "Enter weight & size"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {ebayListingId && (
+                        <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Lock className="h-4 w-4 text-green-600" />
+                              <Label className="text-sm font-semibold">Listing Active</Label>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1">eBay Listing ID</Label>
+                              <div className="flex items-center gap-2">
+                                <code className="text-sm bg-background px-2 py-1 rounded border">{ebayListingId}</code>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => {
+                                  const url = getEbayItemUrl(ebayListingId);
+                                  window.open(url, '_blank', 'noopener,noreferrer');
+                                }}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                View Listing
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="gap-2"
+                                onClick={async () => {
+                                  if (!confirm('Are you sure you want to end this eBay listing? This action cannot be undone.')) {
+                                    return;
+                                  }
+                                  
+                                  try {
+                                    setIsSaving(true);
+                                    const response = await fetch('/api/ebay/listing', {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        operation: 'EndItem',
+                                        itemId: ebayListingId,
+                                        userToken: ebayToken?.access_token,
+                                      }),
+                                    });
+
+                                    if (!response.ok) {
+                                      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                                      throw new Error(errorData.error || errorData.details || `HTTP ${response.status}`);
+                                    }
+
+                                    const result = await response.json();
+                                    
+                                    if (result.Ack === 'Success' || result.Ack === 'Warning') {
+                                      setEbayListingId(null);
+                                      if (currentEditingItemId) {
+                                        localStorage.removeItem(`ebay_listing_${currentEditingItemId}`);
+                                      }
+                                      
+                                      if (currentEditingItemId) {
+                                        try {
+                                          await base44.entities.InventoryItem.update(currentEditingItemId, {
+                                            status: 'available',
+                                            ebay_listing_id: '',
+                                          });
+                                          queryClient.invalidateQueries(['inventoryItems']);
+                                        } catch (updateError) {
+                                          console.error('Error updating inventory item:', updateError);
+                                        }
+                                      }
+
+                                      toast({
+                                        title: "Listing ended",
+                                        description: "Your eBay listing has been ended successfully.",
+                                      });
+                                    } else {
+                                      throw new Error(result.Errors?.join(', ') || 'Failed to end listing');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error ending eBay listing:', error);
+                                    toast({
+                                      title: "Failed to end listing",
+                                      description: error.message || "An error occurred while ending the listing. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  } finally {
+                                    setIsSaving(false);
+                                  }
+                                }}
+                              >
+                                <Unlock className="h-4 w-4" />
+                                Delist
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!ebayListingId && (
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("ebay")}>
+                            <Save className="h-4 w-4" />
+                            Save
+                          </Button>
+                          <Button className="gap-2" onClick={() => handleListOnMarketplace("ebay")}>
+                            List on eBay
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Etsy Form - Desktop */}
+                  {activeForm === "etsy" && (
+                    <div className="space-y-6">
+                      {currentEditingItemId && (
+                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Item ID:</span>
+                          <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-foreground">Etsy listing profile</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Etsy loves rich listings—processing time and "who made it" details are required.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Photos Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                          {(etsyForm.photos?.length > 0) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAllPhotos('etsy')}
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Delete All
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                          {etsyForm.photos?.length > 0 && (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", "0");
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = 0;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'etsy');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
+                            >
+                              <img src={etsyForm.photos[0].preview || etsyForm.photos[0].imageUrl} alt={etsyForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                                Main
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: etsyForm.photos[0].preview || etsyForm.photos[0].imageUrl, 
+                                      photoId: etsyForm.photos[0].id, 
+                                      marketplace: 'etsy',
+                                      index: 0
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(etsyForm.photos[0].id, 'etsy');
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {etsyForm.photos?.slice(1).map((photo, index) => (
+                            <div
+                              key={photo.id || index + 1}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", String(index + 1));
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = index + 1;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'etsy');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                            >
+                              <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                                <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: photo.preview || photo.imageUrl, 
+                                      photoId: photo.id, 
+                                      marketplace: 'etsy',
+                                      index: index + 1
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(photo.id, 'etsy');
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {(etsyForm.photos?.length || 0) < MAX_PHOTOS && (
+                            <button
+                              type="button"
+                              onClick={() => etsyPhotoInputRef.current?.click()}
+                              disabled={isUploadingPhotos}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                              style={{ width: '150px' }}
+                            >
+                              <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
+                            </button>
+                          )}
+                          <input
+                            ref={etsyPhotoInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handlePhotoUpload(e, 'etsy')}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {etsyForm.photos?.length || 0}/{MAX_PHOTOS} used.
+                          {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
+                        </p>
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Title</Label>
+                          <Input
+                            placeholder="Enter listing title"
+                            value={etsyForm.title || ""}
+                            onChange={(e) => handleMarketplaceChange("etsy", "title", e.target.value)}
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
+                            <Label className="text-xs">Description</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCollapsedDescriptions(prev => ({ ...prev, etsy: !prev.etsy }))}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                {collapsedDescriptions.etsy ? (
+                                  <>
+                                    <Maximize2 className="h-3 w-3" />
+                                    Expand
+                                  </>
+                                ) : (
+                                  <>
+                                    <Minimize2 className="h-3 w-3" />
+                                    Minimize
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedDescription('etsy')}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                <Maximize2 className="h-3 w-3" />
+                                Full
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionGeneratorOpen(true)}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                AI Generate
+                              </Button>
+                            </div>
+                          </div>
+                          <RichTextarea
+                            placeholder={generalForm.description ? `Inherited from General` : "Enter Etsy-specific description..."}
+                            value={etsyForm.description || ""}
+                            onChange={(e) => handleMarketplaceChange("etsy", "description", e.target.value)}
+                            className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                              collapsedDescriptions.etsy ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                            }`}
+                          />
+                          {generalForm.description && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Brand</Label>
+                          {brandIsCustom ? (
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Enter brand name and press Enter to save"
+                                value={etsyForm.brand || ""}
+                                onChange={(e) => handleMarketplaceChange("etsy", "brand", e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && etsyForm.brand?.trim()) {
+                                    e.preventDefault();
+                                    const savedBrand = addCustomBrand(etsyForm.brand);
+                                    if (savedBrand) {
+                                      setBrandIsCustom(false);
+                                    }
+                                  }
+                                }}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  if (etsyForm.brand?.trim()) {
+                                    const savedBrand = addCustomBrand(etsyForm.brand);
+                                    if (savedBrand) {
+                                      setBrandIsCustom(false);
+                                    }
+                                  }
+                                }}
+                                disabled={!etsyForm.brand?.trim()}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setBrandIsCustom(false);
+                                  handleMarketplaceChange("etsy", "brand", "");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Popover open={etsyBrandSearchOpen} onOpenChange={setEtsyBrandSearchOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={etsyBrandSearchOpen}
+                                  className="w-full justify-between"
+                                >
+                                  {etsyForm.brand || generalForm.brand
+                                    ? (POPULAR_BRANDS.find((brand) => brand === (etsyForm.brand || generalForm.brand)) || customBrands.find((brand) => brand === (etsyForm.brand || generalForm.brand)) || (etsyForm.brand || generalForm.brand))
+                                    : "Search brand..."}
+                                  <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0" align="start">
+                                <Command>
+                                  <CommandInput placeholder="Search brand..." />
+                                  <CommandList>
+                                    <CommandEmpty>No brand found.</CommandEmpty>
+                                    <CommandGroup>
+                                      {customBrands.length > 0 && (
+                                        <>
+                                          {customBrands.map((brand) => (
+                                            <CommandItem
+                                              key={`custom-${brand}`}
+                                              value={brand}
+                                              onSelect={() => {
+                                                handleMarketplaceChange("etsy", "brand", brand);
+                                                setEtsyBrandSearchOpen(false);
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  (etsyForm.brand || generalForm.brand) === brand ? "opacity-100" : "opacity-0"
+                                                )}
+                                              />
+                                              <span>{brand}</span>
+                                              <span className="text-xs text-muted-foreground ml-2">⭐</span>
+                                            </CommandItem>
+                                          ))}
+                                          <div className="border-t my-1" />
+                                        </>
+                                      )}
+                                      {POPULAR_BRANDS.map((brand) => (
+                                        <CommandItem
+                                          key={brand}
+                                          value={brand}
+                                          onSelect={() => {
+                                            handleMarketplaceChange("etsy", "brand", brand);
+                                            setEtsyBrandSearchOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              (etsyForm.brand || generalForm.brand) === brand ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          {brand}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">SKU</Label>
+                          <Input
+                            placeholder={generalForm.sku || "Enter SKU"}
+                            value={etsyForm.sku || ""}
+                            onChange={(e) => handleMarketplaceChange("etsy", "sku", e.target.value)}
+                          />
+                          {generalForm.sku && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited {generalForm.sku} from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Processing Time</Label>
+                          <Select
+                            value={etsyForm.processingTime}
+                            onValueChange={(value) => handleMarketplaceChange("etsy", "processingTime", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1-2 business days">1-2 business days</SelectItem>
+                              <SelectItem value="1-3 business days">1-3 business days</SelectItem>
+                              <SelectItem value="3-5 business days">3-5 business days</SelectItem>
+                              <SelectItem value="1-2 weeks">1-2 weeks</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Renewal Option</Label>
+                          <Select
+                            value={etsyForm.renewalOption}
+                            onValueChange={(value) => handleMarketplaceChange("etsy", "renewalOption", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manual">Manual</SelectItem>
+                              <SelectItem value="automatic">Automatic</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Who made it?</Label>
+                          <Select
+                            value={etsyForm.whoMade}
+                            onValueChange={(value) => handleMarketplaceChange("etsy", "whoMade", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="i_did">I did</SelectItem>
+                              <SelectItem value="collective">A member of my shop</SelectItem>
+                              <SelectItem value="someone_else">Another company or person</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">When was it made?</Label>
+                          <Select
+                            value={etsyForm.whenMade}
+                            onValueChange={(value) => handleMarketplaceChange("etsy", "whenMade", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2020s">2020s</SelectItem>
+                              <SelectItem value="2010s">2010s</SelectItem>
+                              <SelectItem value="2000s">2000s</SelectItem>
+                              <SelectItem value="before_2000">Before 2000</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Shipping Profile</Label>
+                          <Input
+                            placeholder="Link your saved Etsy shipping profile"
+                            value={etsyForm.shippingProfile}
+                            onChange={(e) => handleMarketplaceChange("etsy", "shippingProfile", e.target.value)}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Tags</Label>
+                          <TagInput
+                            placeholder={etsyForm.inheritGeneral ? "Inherits general tags" : "Type keywords and press space or comma to add tags"}
+                            value={etsyForm.tags}
+                            onChange={(value) => handleMarketplaceChange("etsy", "tags", value)}
+                            disabled={false}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Digital Download</Label>
+                          <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
+                            <Switch
+                              id="etsy-digital"
+                              checked={etsyForm.isDigital}
+                              onCheckedChange={(checked) => handleMarketplaceChange("etsy", "isDigital", checked)}
+                            />
+                            <Label htmlFor="etsy-digital" className="text-sm">This is a digital product</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Package Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Package Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">
+                            Package Details <span className="text-red-500">*</span>
+                          </Label>
+                          <Button
+                            type="button"
+                            variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                            onClick={() => setPackageDetailsDialogOpen(true)}
+                            className="w-full justify-start"
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                              ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                              : "Enter weight & size"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <RefreshCw className="h-4 w-4" />
+                          Reconnect Etsy to refresh shipping profiles & shop policies.
+                        </div>
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("etsy")}>
+                          <RefreshCw className="h-4 w-4" />
+                          Reconnect Etsy
+                        </Button>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("etsy")}>
+                          <Save className="h-4 w-4" />
+                          Save
+                        </Button>
+                        <Button className="gap-2" onClick={() => handleListOnMarketplace("etsy")}>
+                          List on Etsy
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mercari Form - Desktop */}
+                  {activeForm === "mercari" && (
+                    <div className="space-y-6">
+                      {currentEditingItemId && (
+                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Item ID:</span>
+                          <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-foreground">Mercari smart pricing</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Control smart pricing and shipping preferences for Mercari listings.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Photos Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                          {(mercariForm.photos?.length > 0) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAllPhotos('mercari')}
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Delete All
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                          {mercariForm.photos?.length > 0 && (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", "0");
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = 0;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'mercari');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
+                            >
+                              <img src={mercariForm.photos[0].preview || mercariForm.photos[0].imageUrl} alt={mercariForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                                Main
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: mercariForm.photos[0].preview || mercariForm.photos[0].imageUrl, 
+                                      photoId: mercariForm.photos[0].id, 
+                                      marketplace: 'mercari',
+                                      index: 0
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(mercariForm.photos[0].id, 'mercari');
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {mercariForm.photos?.slice(1).map((photo, index) => (
+                            <div
+                              key={photo.id || index + 1}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", String(index + 1));
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = index + 1;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'mercari');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                            >
+                              <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                                <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: photo.preview || photo.imageUrl, 
+                                      photoId: photo.id, 
+                                      marketplace: 'mercari',
+                                      index: index + 1
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(photo.id, 'mercari');
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {(mercariForm.photos?.length || 0) < MAX_PHOTOS && (
+                            <button
+                              type="button"
+                              onClick={() => mercariPhotoInputRef.current?.click()}
+                              disabled={isUploadingPhotos}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                              style={{ width: '150px' }}
+                            >
+                              <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
+                            </button>
+                          )}
+                          <input
+                            ref={mercariPhotoInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handlePhotoUpload(e, 'mercari')}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {mercariForm.photos?.length || 0}/{MAX_PHOTOS} used.
+                          {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
+                        </p>
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Title <span className="text-red-500">*</span></Label>
+                          <Input
+                            placeholder={generalForm.title ? `Inherited: ${generalForm.title}` : "What are you selling?"}
+                            value={mercariForm.title || ""}
+                            onChange={(e) => handleMarketplaceChange("mercari", "title", e.target.value)}
+                          />
+                          {generalForm.title && !mercariForm.title && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
+                            <Label className="text-xs">Description <span className="text-red-500">*</span></Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCollapsedDescriptions(prev => ({ ...prev, mercari: !prev.mercari }))}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                {collapsedDescriptions.mercari ? (
+                                  <>
+                                    <Maximize2 className="h-3 w-3" />
+                                    Expand
+                                  </>
+                                ) : (
+                                  <>
+                                    <Minimize2 className="h-3 w-3" />
+                                    Minimize
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedDescription('mercari')}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                <Maximize2 className="h-3 w-3" />
+                                Full
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionGeneratorOpen(true)}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                AI Generate
+                              </Button>
+                            </div>
+                          </div>
+                          <RichTextarea
+                            placeholder={generalForm.description ? `Inherited from General` : "Describe your item (5+ words)"}
+                            value={mercariForm.description || ""}
+                            onChange={(e) => handleMarketplaceChange("mercari", "description", e.target.value)}
+                            className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                              collapsedDescriptions.mercari ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                            }`}
+                          />
+                          {generalForm.description && !mercariForm.description && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Category Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Category</Label>
+                        </div>
+                      </div>
+
+                      <div className="mb-6">
+                        <Label className="text-xs mb-1.5 block">Category <span className="text-red-500">*</span></Label>
+                        
+                        {mercariCategoryPath.length > 0 && (
+                          <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMercariCategoryPath([]);
+                                handleMarketplaceChange("mercari", "mercariCategory", "");
+                                handleMarketplaceChange("mercari", "mercariCategoryId", "");
+                              }}
+                              className="hover:text-foreground underline"
+                            >
+                              Home
+                            </button>
+                            {mercariCategoryPath.map((cat, index) => (
+                              <React.Fragment key={cat.id}>
+                                <span>/</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newPath = mercariCategoryPath.slice(0, index + 1);
+                                    setMercariCategoryPath(newPath);
+                                    const fullPath = newPath.map(c => c.name).join(" > ");
+                                    handleMarketplaceChange("mercari", "mercariCategory", fullPath);
+                                    handleMarketplaceChange("mercari", "mercariCategoryId", newPath[newPath.length - 1].id);
+                                  }}
+                                  className="hover:text-foreground underline"
+                                >
+                                  {cat.name}
+                                </button>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {mercariForm.mercariCategory && (
+                          <div className="mb-2">
+                            <Badge variant="secondary" className="text-xs">
+                              Selected: {mercariForm.mercariCategory}
+                            </Badge>
+                          </div>
+                        )}
+                        
+                        <Popover 
+                          open={categorySearchOpen && activeForm === "mercari"} 
+                          onOpenChange={(open) => {
+                            if (activeForm === "mercari") {
+                              setCategorySearchOpen(open);
+                              if (!open) {
+                                setMercariCategorySearchValue("");
+                              }
+                            }
+                          }}
+                        >
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={categorySearchOpen && activeForm === "mercari"}
+                              className="w-full justify-between"
+                            >
+                              {mercariForm.mercariCategory || mercariCategoryPath.length > 0
+                                ? (mercariForm.mercariCategory || mercariCategoryPath.map(c => c.name).join(" > "))
+                                : (mercariCategoryPath.length > 0 ? "Select subcategory" : "Search category...")}
+                              <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command shouldFilter={false}>
+                              <CommandInput 
+                                placeholder="Search all categories..." 
+                                value={mercariCategorySearchValue}
+                                onValueChange={setMercariCategorySearchValue}
+                              />
+                              <CommandList>
+                                <CommandGroup>
+                                  {mercariCategorySearchValue.trim().length >= 2 && (
+                                    <>
+                                      {allMercariCategories
+                                        .filter((cat) => {
+                                          const searchLower = mercariCategorySearchValue.toLowerCase();
+                                          return cat.name.toLowerCase().includes(searchLower) || 
+                                                 cat.fullPath.toLowerCase().includes(searchLower);
+                                        })
+                                        .map((cat) => (
+                                          <CommandItem
+                                            key={`search-${cat.id}`}
+                                            value={`search-${cat.id}`}
+                                            onSelect={() => {
+                                              const pathParts = cat.path;
+                                              const newPath = pathParts.map((name, index) => {
+                                                let currentLevel = MERCARI_CATEGORIES;
+                                                let foundId = "";
+                                                for (let i = 0; i <= index; i++) {
+                                                  for (const [id, category] of Object.entries(currentLevel)) {
+                                                    if (category.name === pathParts[i]) {
+                                                      foundId = id;
+                                                      if (i < index && category.subcategories) {
+                                                        currentLevel = category.subcategories;
+                                                      }
+                                                      break;
+                                                    }
+                                                  }
+                                                }
+                                                return { id: foundId, name: name };
+                                              });
+                                              
+                                              if (cat.hasSubcategories) {
+                                                setMercariCategoryPath(newPath);
+                                              } else {
+                                                handleMarketplaceChange("mercari", "mercariCategory", cat.fullPath);
+                                                handleMarketplaceChange("mercari", "mercariCategoryId", cat.id);
+                                                setMercariCategoryPath(newPath);
+                                              }
+                                              setMercariCategorySearchValue("");
+                                              setCategorySearchOpen(false);
+                                            }}
+                                          >
+                                            <Check className="mr-2 h-4 w-4 opacity-0" />
+                                            {cat.fullPath}
+                                            {cat.hasSubcategories && (
+                                              <ArrowRight className="ml-auto w-3 h-3 text-muted-foreground" />
+                                            )}
+                                          </CommandItem>
+                                        ))}
+                                      {allMercariCategories.filter((cat) => {
+                                        const searchLower = mercariCategorySearchValue.toLowerCase();
+                                        return cat.name.toLowerCase().includes(searchLower) || 
+                                               cat.fullPath.toLowerCase().includes(searchLower);
+                                      }).length > 0 && (
+                                        <div className="border-t my-1" />
+                                      )}
+                                    </>
+                                  )}
+                                  
+                                  {(() => {
+                                    let currentLevel = MERCARI_CATEGORIES;
+                                    
+                                    for (const pathItem of mercariCategoryPath) {
+                                      currentLevel = currentLevel[pathItem.id]?.subcategories || {};
+                                    }
+                                    
+                                    const filteredCategories = Object.values(currentLevel).filter((cat) => {
+                                      if (!mercariCategorySearchValue.trim()) return true;
+                                      const searchLower = mercariCategorySearchValue.toLowerCase();
+                                      const fullPath = [...mercariCategoryPath.map(c => c.name), cat.name].join(" > ");
+                                      return cat.name.toLowerCase().includes(searchLower) || fullPath.toLowerCase().includes(searchLower);
+                                    });
+                                    
+                                    return filteredCategories.map((cat) => (
+                                      <CommandItem
+                                        key={cat.id}
+                                        value={cat.id}
+                                        onSelect={() => {
+                                          const newPath = [...mercariCategoryPath, { id: cat.id, name: cat.name }];
+                                          
+                                          if (cat.subcategories && Object.keys(cat.subcategories).length > 0) {
+                                            setMercariCategoryPath(newPath);
+                                          } else {
+                                            const fullPath = newPath.map(c => c.name).join(" > ");
+                                            handleMarketplaceChange("mercari", "mercariCategory", fullPath);
+                                            handleMarketplaceChange("mercari", "mercariCategoryId", cat.id);
+                                            setMercariCategoryPath(newPath);
+                                          }
+                                          setMercariCategorySearchValue("");
+                                          setCategorySearchOpen(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            mercariForm.mercariCategoryId === cat.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        <div className="flex items-center gap-2 flex-1">
+                                          <span className="flex-1">{cat.name}</span>
+                                          {cat.subcategories && Object.keys(cat.subcategories).length > 0 && (
+                                            <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                          )}
+                                        </div>
+                                      </CommandItem>
+                                    ));
+                                  })()}
+                                </CommandGroup>
+                                {mercariCategorySearchValue.trim().length >= 2 && 
+                                 allMercariCategories.filter((cat) => {
+                                   const searchLower = mercariCategorySearchValue.toLowerCase();
+                                   return cat.name.toLowerCase().includes(searchLower) || 
+                                          cat.fullPath.toLowerCase().includes(searchLower);
+                                 }).length === 0 && (
+                                  <CommandEmpty>No category found. Try a different search term.</CommandEmpty>
+                                )}
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        
+                        {generalForm.category && !mercariForm.mercariCategory && (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            💡 Suggested: 
+                            {generalForm.category.toLowerCase().includes('women') || (generalForm.category.toLowerCase().includes('clothing') && !generalForm.category.toLowerCase().includes('men')) ? ' Women' : ''}
+                            {generalForm.category.toLowerCase().includes('men') && !generalForm.category.toLowerCase().includes('women') ? ' Men' : ''}
+                            {generalForm.category.toLowerCase().includes('electronic') ? ' Electronics' : ''}
+                            {generalForm.category.toLowerCase().includes('toy') ? ' Toys & Collectibles' : ''}
+                            {generalForm.category.toLowerCase().includes('home') || generalForm.category.toLowerCase().includes('furniture') ? ' Home' : ''}
+                            {generalForm.category.toLowerCase().includes('beauty') ? ' Beauty' : ''}
+                            {generalForm.category.toLowerCase().includes('kid') || generalForm.category.toLowerCase().includes('baby') ? ' Kids' : ''}
+                            {generalForm.category.toLowerCase().includes('vintage') || generalForm.category.toLowerCase().includes('collectible') ? ' Vintage & collectibles' : ''}
+                            {generalForm.category.toLowerCase().includes('sport') || generalForm.category.toLowerCase().includes('outdoor') || generalForm.category.toLowerCase().includes('grill') || generalForm.category.toLowerCase().includes('cooking') ? ' Sports & outdoors or Garden & Outdoor' : ''}
+                            {generalForm.category.toLowerCase().includes('handmade') ? ' Handmade' : ''}
+                            {generalForm.category.toLowerCase().includes('art') || generalForm.category.toLowerCase().includes('craft') ? ' Arts & Crafts' : ''}
+                            {generalForm.category.toLowerCase().includes('pet') ? ' Pet Supplies' : ''}
+                            {generalForm.category.toLowerCase().includes('garden') || generalForm.category.toLowerCase().includes('yard') ? ' Garden & Outdoor' : ''}
+                            {generalForm.category.toLowerCase().includes('office') ? ' Office' : ''}
+                            {generalForm.category.toLowerCase().includes('tool') ? ' Tools' : ''}
+                            {generalForm.category.toLowerCase().includes('book') ? ' Books' : ''}
+                          </p>
+                        )}
+
+                        {((mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('clothing') ||
+                          (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('shoes') ||
+                          (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('apparel') ||
+                          (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('men') ||
+                          (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('women') ||
+                          (mercariForm.category !== undefined ? mercariForm.category : generalForm.category)?.toLowerCase().includes('kids')) && (
+                          <div className="mt-4">
+                            <Label className="text-xs mb-1.5 block">
+                              Size <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                              placeholder={generalForm.size ? `Inherited: ${generalForm.size}` : "e.g., M, L, XL, 32, 10"}
+                              value={mercariForm.size || ""}
+                              onChange={(e) => handleMarketplaceChange("mercari", "size", e.target.value)}
+                              required
+                            />
+                            {generalForm.size && !mercariForm.size && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Inherited from General form. You can edit this field.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Brand <span className="text-red-500">*</span></Label>
+                          <Popover 
+                            open={mercariBrandSearchOpen} 
+                            onOpenChange={(open) => {
+                              setMercariBrandSearchOpen(open);
+                              if (open) {
+                                setMercariBrandSearchValue("");
+                              } else {
+                                setMercariBrandSearchValue("");
+                              }
+                            }}
+                          >
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={mercariBrandSearchOpen}
+                                className="w-full justify-between"
+                              >
+                                {(() => {
+                                  if (mercariForm.inheritGeneral && generalForm.brand) {
+                                    const matched = findSimilarBrand(generalForm.brand, MERCARI_BRANDS);
+                                    if (matched) {
+                                      return matched;
+                                    }
+                                    return "Search brand...";
+                                  }
+                                  if (mercariForm.brand) {
+                                    const exactMatch = MERCARI_BRANDS.find((brand) => brand === mercariForm.brand);
+                                    if (exactMatch) {
+                                      return exactMatch;
+                                    }
+                                    const matched = findSimilarBrand(mercariForm.brand, MERCARI_BRANDS);
+                                    return matched || mercariForm.brand;
+                                  }
+                                  return "Search brand...";
+                                })()}
+                                <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0" align="start">
+                              <Command 
+                                shouldFilter={false}
+                              >
+                                <CommandInput 
+                                  placeholder="Search brand..." 
+                                  value={mercariBrandSearchValue}
+                                  onValueChange={(value) => {
+                                    setMercariBrandSearchValue(value);
+                                  }}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>No brand found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {filteredMercariBrands.customBrands.map(({ original, matched }) => (
+                                      <CommandItem
+                                        key={`custom-${original}`}
+                                        value={matched || original}
+                                        onSelect={() => {
+                                          if (matched) {
+                                            handleMarketplaceChange("mercari", "brand", matched);
+                                          }
+                                          setMercariBrandSearchOpen(false);
+                                          setMercariBrandSearchValue("");
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            mercariForm.brand === matched ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        <span>{matched}</span>
+                                        <span className="text-xs text-muted-foreground ml-2">⭐ Custom</span>
+                                      </CommandItem>
+                                    ))}
+                                    {filteredMercariBrands.customBrands.length > 0 && (
+                                      <div className="border-t my-1" />
+                                    )}
+                                    {filteredMercariBrands.mercariBrands.map((brand) => (
+                                      <CommandItem
+                                        key={brand}
+                                        value={brand}
+                                        onSelect={() => {
+                                          handleMarketplaceChange("mercari", "brand", brand);
+                                          setMercariBrandSearchOpen(false);
+                                          setMercariBrandSearchValue("");
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            mercariForm.brand === brand ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {brand}
+                                      </CommandItem>
+                                    ))}
+                                    {filteredMercariBrands.hasMore && (
+                                      <div className="px-2 py-1.5 text-xs text-muted-foreground text-center">
+                                        Type to search {MERCARI_BRANDS.length.toLocaleString()} brands...
+                                      </div>
+                                    )}
+                                    {filteredMercariBrands.totalMatches && filteredMercariBrands.mercariBrands.length >= 100 && (
+                                      <div className="px-2 py-1.5 text-xs text-muted-foreground text-center border-t">
+                                        Showing first 100 results. Refine your search for more specific results.
+                                      </div>
+                                    )}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          {mercariForm.inheritGeneral && generalForm.brand && !mercariForm.brand && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {(() => {
+                                const matched = findSimilarBrand(generalForm.brand, MERCARI_BRANDS);
+                                return matched 
+                                  ? `Brand "${generalForm.brand}" not found in Mercari list. Similar brand "${matched}" available.`
+                                  : `Brand "${generalForm.brand}" not available in Mercari brand list. Please select a brand from the dropdown.`;
+                              })()}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Condition <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={mercariForm.condition || generalForm.condition || ""}
+                            onValueChange={(value) => handleMarketplaceChange("mercari", "condition", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={generalForm.condition ? `Inherited: ${generalForm.condition}` : "Select condition"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="New">New</SelectItem>
+                              <SelectItem value="Like New">Like New</SelectItem>
+                              <SelectItem value="Good">Good</SelectItem>
+                              <SelectItem value="Fair">Fair</SelectItem>
+                              <SelectItem value="Poor">Poor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {generalForm.condition && !mercariForm.condition && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Color</Label>
+                          <Select
+                            value={mercariForm.color || generalForm.color || ""}
+                            onValueChange={(value) => handleMarketplaceChange("mercari", "color", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={generalForm.color ? `Inherited: ${generalForm.color}` : "Select color (optional)"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Black">Black</SelectItem>
+                              <SelectItem value="White">White</SelectItem>
+                              <SelectItem value="Gray">Gray</SelectItem>
+                              <SelectItem value="Brown">Brown</SelectItem>
+                              <SelectItem value="Beige">Beige</SelectItem>
+                              <SelectItem value="Red">Red</SelectItem>
+                              <SelectItem value="Pink">Pink</SelectItem>
+                              <SelectItem value="Orange">Orange</SelectItem>
+                              <SelectItem value="Yellow">Yellow</SelectItem>
+                              <SelectItem value="Green">Green</SelectItem>
+                              <SelectItem value="Blue">Blue</SelectItem>
+                              <SelectItem value="Purple">Purple</SelectItem>
+                              <SelectItem value="Gold">Gold</SelectItem>
+                              <SelectItem value="Silver">Silver</SelectItem>
+                              <SelectItem value="Multi-Color">Multi-Color</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {generalForm.color && !mercariForm.color && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Pricing & Inventory Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Pricing & Inventory</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Listing Price <span className="text-red-500">*</span></Label>
+                          <Input
+                            type="number"
+                            placeholder={generalForm.price ? `Inherited: $${generalForm.price}` : "(min $1/max $2000)"}
+                            value={mercariForm.price || ""}
+                            onChange={(e) => handleMarketplaceChange("mercari", "price", e.target.value)}
+                            className="text-right"
+                          />
+                          {generalForm.price && !mercariForm.price && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                          
+                          {(mercariForm.price || generalForm.price) && (
+                            <div className="mt-4 space-y-3">
+                              <div className="p-3 border rounded-md bg-muted/30">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Label htmlFor="mercari-smart-pricing" className="text-xs font-medium cursor-pointer">
+                                      Smart Pricing
+                                    </Label>
+                                    <span className="text-xs text-muted-foreground">(Auto-adjust price based on market)</span>
+                                  </div>
+                                  <Switch
+                                    id="mercari-smart-pricing"
+                                    checked={mercariForm.smartPricing || false}
+                                    onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartPricing", checked)}
+                                  />
+                                </div>
+                                {mercariForm.smartPricing && (
+                                  <div className="mt-3">
+                                    <Label htmlFor="mercari-floor-price" className="text-xs mb-1.5 block">
+                                      Floor Price
+                                    </Label>
+                                    <Input
+                                      id="mercari-floor-price"
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="Enter minimum price"
+                                      value={mercariForm.floorPrice || ""}
+                                      onChange={(e) => handleMarketplaceChange("mercari", "floorPrice", e.target.value)}
+                                      className="text-sm"
+                                    />
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Applicable fees will be deducted from the final sale price.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="p-3 border rounded-md bg-muted/30">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Label htmlFor="mercari-smart-offers" className="text-xs font-medium cursor-pointer">
+                                      Smart Offers
+                                    </Label>
+                                    <span className="text-xs text-muted-foreground">(Auto-accept reasonable offers)</span>
+                                  </div>
+                                  <Switch
+                                    id="mercari-smart-offers"
+                                    checked={mercariForm.smartOffers || false}
+                                    onCheckedChange={(checked) => handleMarketplaceChange("mercari", "smartOffers", checked)}
+                                  />
+                                </div>
+                                {mercariForm.smartOffers && (
+                                  <div className="mt-3">
+                                    <Label htmlFor="mercari-minimum-price" className="text-xs mb-1.5 block">
+                                      Minimum Price
+                                    </Label>
+                                    <Input
+                                      id="mercari-minimum-price"
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="Enter minimum offer price"
+                                      value={mercariForm.minimumPrice || ""}
+                                      onChange={(e) => handleMarketplaceChange("mercari", "minimumPrice", e.target.value)}
+                                      className="text-sm"
+                                    />
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Applicable fees will be deducted from the final sale price.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Quantity</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder={generalForm.quantity ? `Inherited: ${generalForm.quantity}` : "1"}
+                            value={mercariForm.quantity || ""}
+                            onChange={(e) => handleMarketplaceChange("mercari", "quantity", e.target.value)}
+                          />
+                          {generalForm.quantity && !mercariForm.quantity && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Shipping Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Shipping</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Ships From (Zip Code) <span className="text-red-500">*</span></Label>
+                          <Input
+                            placeholder="Enter your zip code"
+                            value={mercariForm.shipsFrom || ""}
+                            onChange={(e) => handleMarketplaceChange("mercari", "shipsFrom", e.target.value)}
+                            maxLength={5}
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Delivery Method <span className="text-red-500">*</span></Label>
+                          <Select
+                            value={mercariForm.deliveryMethod || "prepaid"}
+                            onValueChange={(value) => handleMarketplaceChange("mercari", "deliveryMethod", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="prepaid">Mercari Prepaid Label</SelectItem>
+                              <SelectItem value="ship_on_own">Ship on Your Own</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <RefreshCw className="h-4 w-4" />
+                          Update Mercari connection to sync latest shipping labels & rates.
+                        </div>
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("mercari")}>
+                          <RefreshCw className="h-4 w-4" />
+                          Reconnect Mercari
+                        </Button>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("mercari")}>
+                          <Save className="h-4 w-4" />
+                          Save
+                        </Button>
+                        <Button className="gap-2" onClick={() => handleListOnMarketplace("mercari")}>
+                          List on Mercari
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Facebook Form - Desktop */}
+                  {activeForm === "facebook" && (
+                    <div className="space-y-6">
+                      {currentEditingItemId && (
+                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Item ID:</span>
+                          <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-foreground">Facebook Marketplace</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Configure shipping vs pickup defaults and whether offers are allowed.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Photos Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                          {(facebookForm.photos?.length > 0) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAllPhotos('facebook')}
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Delete All
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                          {facebookForm.photos?.length > 0 && (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", "0");
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = 0;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'facebook');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
+                            >
+                              <img src={facebookForm.photos[0].preview || facebookForm.photos[0].imageUrl} alt={facebookForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                                Main
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: facebookForm.photos[0].preview || facebookForm.photos[0].imageUrl, 
+                                      photoId: facebookForm.photos[0].id, 
+                                      marketplace: 'facebook',
+                                      index: 0
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(facebookForm.photos[0].id, 'facebook');
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {facebookForm.photos?.slice(1).map((photo, index) => (
+                            <div
+                              key={photo.id || index + 1}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", String(index + 1));
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = index + 1;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex, 'facebook');
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                            >
+                              <img src={photo.preview || photo.imageUrl} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                                <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: photo.preview || photo.imageUrl, 
+                                      photoId: photo.id, 
+                                      marketplace: 'facebook',
+                                      index: index + 1
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(photo.id, 'facebook');
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {(facebookForm.photos?.length || 0) < MAX_PHOTOS && (
+                            <button
+                              type="button"
+                              onClick={() => facebookPhotoInputRef.current?.click()}
+                              disabled={isUploadingPhotos}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                              style={{ width: '150px' }}
+                            >
+                              <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
+                            </button>
+                          )}
+                          <input
+                            ref={facebookPhotoInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handlePhotoUpload(e, 'facebook')}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {facebookForm.photos?.length || 0}/{MAX_PHOTOS} used.
+                          {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
+                        </p>
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Title</Label>
+                          <Input
+                            placeholder="Enter listing title"
+                            value={facebookForm.title || ""}
+                            onChange={(e) => handleMarketplaceChange("facebook", "title", e.target.value)}
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
+                            <Label className="text-xs">Description</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCollapsedDescriptions(prev => ({ ...prev, facebook: !prev.facebook }))}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                {collapsedDescriptions.facebook ? (
+                                  <>
+                                    <Maximize2 className="h-3 w-3" />
+                                    Expand
+                                  </>
+                                ) : (
+                                  <>
+                                    <Minimize2 className="h-3 w-3" />
+                                    Minimize
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedDescription('facebook')}
+                                className="gap-2 h-7 text-xs md:hidden"
+                              >
+                                <Maximize2 className="h-3 w-3" />
+                                Full
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionGeneratorOpen(true)}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                AI Generate
+                              </Button>
+                            </div>
+                          </div>
+                          <RichTextarea
+                            placeholder={generalForm.description ? `Inherited from General` : "Enter Facebook-specific description..."}
+                            value={facebookForm.description || ""}
+                            onChange={(e) => handleMarketplaceChange("facebook", "description", e.target.value)}
+                            className={`min-h-[120px] md:min-h-[120px] transition-all duration-200 ${
+                              collapsedDescriptions.facebook ? 'md:max-h-none max-h-[60px] overflow-hidden' : 'max-h-none'
+                            }`}
+                          />
+                          {generalForm.description && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Category Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Category</Label>
+                        </div>
+                      </div>
+
+                      <div className="mb-6">
+                        <Label className="text-xs mb-1.5 block">
+                          Category <span className="text-red-500">*</span>
+                        </Label>
+                        
+                        {generalCategoryPath.length > 0 && (
+                          <div className="flex items-center gap-1 mb-2 text-xs text-muted-foreground flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setGeneralCategoryPath([]);
+                                handleMarketplaceChange("facebook", "category", "");
+                                handleMarketplaceChange("facebook", "categoryId", "");
+                              }}
+                              className="hover:text-foreground underline"
+                            >
+                              Home
+                            </button>
+                            {generalCategoryPath.map((cat, index) => (
+                              <React.Fragment key={cat.categoryId}>
+                                <span>/</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newPath = generalCategoryPath.slice(0, index + 1);
+                                    setGeneralCategoryPath(newPath);
+                                    const lastCat = newPath[newPath.length - 1];
+                                    const fullPath = newPath.map(c => c.categoryName).join(" > ");
+                                    handleMarketplaceChange("facebook", "category", fullPath);
+                                    if (lastCat?.categoryId) {
+                                      handleMarketplaceChange("facebook", "categoryId", lastCat.categoryId);
+                                    }
+                                  }}
+                                  className="hover:text-foreground underline"
+                                >
+                                  {cat.categoryName}
+                                </button>
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {((facebookForm.category !== undefined ? facebookForm.category : generalForm.category) || generalCategoryPath.length > 0) && (
+                          <div className="mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                Selected: {facebookForm.category !== undefined ? facebookForm.category : generalForm.category}
+                              </Badge>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  handleMarketplaceChange("facebook", "category", "");
+                                  handleMarketplaceChange("facebook", "categoryId", "");
+                                  setGeneralCategoryPath([]);
+                                }}
+                                className="h-6 px-2 text-xs"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {!isLoadingCategoryTree && categoryTreeId ? (
+                          generalCategoryPath.length > 0 && sortedCategories.length === 0 ? (
+                            <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-md">
+                              <p className="text-sm text-green-700 dark:text-green-400">
+                                ✓ Category selected: {facebookForm.category || generalForm.category}
+                              </p>
+                            </div>
+                          ) : sortedCategories.length > 0 ? (
+                            <Popover 
+                              open={categorySearchOpen && activeForm === "facebook"} 
+                              onOpenChange={(open) => {
+                                if (activeForm === "facebook") {
+                                  setCategorySearchOpen(open);
+                                  if (!open) {
+                                    setFacebookCategorySearchValue("");
+                                  }
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={categorySearchOpen && activeForm === "facebook"}
+                                  className="w-full justify-between"
+                                >
+                                  {facebookForm.category || generalForm.category || generalCategoryPath.length > 0
+                                    ? (facebookForm.category || generalForm.category || generalCategoryPath.map(c => c.categoryName).join(" > "))
+                                    : (generalCategoryPath.length > 0 ? "Select subcategory" : "Search category...")}
+                                  <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0" align="start">
+                                <Command shouldFilter={false}>
+                                  <CommandInput 
+                                    placeholder="Search all categories..." 
+                                    value={facebookCategorySearchValue}
+                                    onValueChange={setFacebookCategorySearchValue}
+                                  />
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {facebookCategorySearchValue.trim().length >= 2 && categorySuggestions.length > 0 && (
+                                        <>
+                                          {categorySuggestions.map((suggestion, index) => {
+                                            const categoryNode = suggestion.categoryTreeNode || suggestion;
+                                            const category = categoryNode?.category || categoryNode;
+                                            const categoryName = category?.categoryName || suggestion.categoryName || "";
+                                            const categoryId = category?.categoryId || suggestion.categoryId || String(index);
+                                            
+                                            let fullPath = suggestion.categoryPath || "";
+                                            if (!fullPath && categoryNode?.categoryPath) {
+                                              fullPath = categoryNode.categoryPath;
+                                            }
+                                            if (!fullPath && categoryName) {
+                                              fullPath = categoryName;
+                                            }
+                                            
+                                            return (
+                                              <CommandItem
+                                                key={`suggestion-${categoryId}-${index}`}
+                                                value={`suggestion-${categoryId}`}
+                                                onSelect={() => {
+                                                  handleMarketplaceChange("facebook", "category", fullPath);
+                                                  handleMarketplaceChange("facebook", "categoryId", categoryId);
+                                                  setGeneralCategoryPath([]);
+                                                  setFacebookCategorySearchValue("");
+                                                  setCategorySearchOpen(false);
+                                                }}
+                                              >
+                                                <Check className="mr-2 h-4 w-4 opacity-0" />
+                                                {fullPath}
+                                              </CommandItem>
+                                            );
+                                          })}
+                                          <div className="border-t my-1" />
+                                        </>
+                                      )}
+                                      
+                                      {sortedCategories
+                                        .filter((categoryNode) => {
+                                          if (!facebookCategorySearchValue.trim() || categorySuggestions.length === 0) return true;
+                                          const category = categoryNode.category;
+                                          if (!category) return false;
+                                          const searchLower = facebookCategorySearchValue.toLowerCase();
+                                          const categoryName = category.categoryName?.toLowerCase() || "";
+                                          const fullPath = [...generalCategoryPath.map(c => c.categoryName), category.categoryName].join(" > ").toLowerCase();
+                                          return categoryName.includes(searchLower) || fullPath.includes(searchLower);
+                                        })
+                                        .map((categoryNode) => {
+                                          const category = categoryNode.category;
+                                          if (!category || !category.categoryId) return null;
+                                          
+                                          const hasChildren = categoryNode.childCategoryTreeNodes && 
+                                            categoryNode.childCategoryTreeNodes.length > 0 &&
+                                            !categoryNode.leafCategoryTreeNode;
+                                          
+                                          const fullPath = generalCategoryPath.length > 0
+                                            ? [...generalCategoryPath.map(c => c.categoryName), category.categoryName].join(" > ")
+                                            : category.categoryName;
+                                          
+                                          return (
+                                            <CommandItem
+                                              key={category.categoryId}
+                                              value={category.categoryId}
+                                              onSelect={() => {
+                                                const newPath = [...generalCategoryPath, {
+                                                  categoryId: category.categoryId,
+                                                  categoryName: category.categoryName,
+                                                }];
+                                                
+                                                if (hasChildren) {
+                                                  setGeneralCategoryPath(newPath);
+                                                } else {
+                                                  const fullPathStr = newPath.map(c => c.categoryName).join(" > ");
+                                                  handleMarketplaceChange("facebook", "category", fullPathStr);
+                                                  handleMarketplaceChange("facebook", "categoryId", category.categoryId);
+                                                  setGeneralCategoryPath(newPath);
+                                                }
+                                                setFacebookCategorySearchValue("");
+                                                setCategorySearchOpen(false);
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  facebookForm.categoryId === category.categoryId ? "opacity-100" : "opacity-0"
+                                                )}
+                                              />
+                                              <div className="flex items-center gap-2 flex-1">
+                                                <span className="flex-1">{fullPath}</span>
+                                                {hasChildren && (
+                                                  <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                                                )}
+                                              </div>
+                                            </CommandItem>
+                                          );
+                                        })}
+                                    </CommandGroup>
+                                    {facebookCategorySearchValue.trim().length >= 2 && categorySuggestions.length === 0 && 
+                                     sortedCategories.filter((categoryNode) => {
+                                       if (!categoryNode.category) return false;
+                                       const searchLower = facebookCategorySearchValue.toLowerCase();
+                                       const categoryName = categoryNode.category.categoryName?.toLowerCase() || "";
+                                       const fullPath = [...generalCategoryPath.map(c => c.categoryName), categoryNode.category.categoryName].join(" > ").toLowerCase();
+                                       return categoryName.includes(searchLower) || fullPath.includes(searchLower);
+                                     }).length === 0 && (
+                                      <CommandEmpty>No category found. Try a different search term.</CommandEmpty>
+                                    )}
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          ) : (
+                            <div className="p-3 bg-muted/50 border rounded-md text-sm text-muted-foreground">
+                              {generalForm.category 
+                                ? `Using category from General: ${generalForm.category}`
+                                : 'Loading categories...'}
+                            </div>
+                          )
+                        ) : (
+                          <div className="p-3 bg-muted/50 border rounded-md text-sm text-muted-foreground">
+                            {generalForm.category 
+                              ? `Inherited from General: ${generalForm.category}`
+                              : 'Category tree loading...'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Category Specifics - Show when category is selected */}
+                      {(facebookForm.category || generalForm.category || facebookForm.categoryId || generalForm.categoryId) && (
+                        <div className="mb-6">
+                          <div className="flex items-center justify-between mb-3">
+                            <Label className="text-sm font-medium">Category Specifics</Label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: "Refreshed",
+                                  description: "Category specifics updated",
+                                });
+                              }}
+                              className="h-6 px-2"
+                              title="Refresh category specifics"
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-xs mb-1.5 block">
+                                Condition <span className="text-red-500">*</span>
+                              </Label>
+                              <Select
+                                value={facebookForm.condition || generalForm.condition || undefined}
+                                onValueChange={(value) => handleMarketplaceChange("facebook", "condition", value)}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={generalForm.condition ? `Inherited: ${generalForm.condition}` : "Select condition"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="new">New</SelectItem>
+                                  <SelectItem value="used_like_new">Used - Like New</SelectItem>
+                                  <SelectItem value="used_good">Used - Good</SelectItem>
+                                  <SelectItem value="used_fair">Used - Fair</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {(facebookForm.category?.toLowerCase().includes('clothing') || 
+                              facebookForm.category?.toLowerCase().includes('shoes') ||
+                              facebookForm.category?.toLowerCase().includes('apparel') ||
+                              generalForm.category?.toLowerCase().includes('clothing') ||
+                              generalForm.category?.toLowerCase().includes('shoes') ||
+                              generalForm.category?.toLowerCase().includes('apparel')) && (
+                              <div>
+                                <Label className="text-xs mb-1.5 block">
+                                  Size <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                  placeholder={generalForm.size ? `Inherited: ${generalForm.size}` : "Enter size (e.g., M, L, XL, 10, 42)"}
+                                  value={facebookForm.size || ""}
+                                  onChange={(e) => handleMarketplaceChange("facebook", "size", e.target.value)}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowFacebookMoreDetails(!showFacebookMoreDetails)}
+                            className="mt-4 mb-4"
+                          >
+                            {showFacebookMoreDetails ? 'Hide Optional Details' : 'Show More Details'}
+                          </Button>
+
+                          {showFacebookMoreDetails && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-md border">
+                              <div>
+                                <Label className="text-xs mb-1.5 block">Brand</Label>
+                                {brandIsCustom ? (
+                                  <div className="flex gap-2">
+                                    <Input
+                                      placeholder="Enter brand and press Enter"
+                                      value={facebookForm.brand || ""}
+                                      onChange={(e) => handleMarketplaceChange("facebook", "brand", e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && facebookForm.brand?.trim()) {
+                                          e.preventDefault();
+                                          addCustomBrand(facebookForm.brand);
+                                          setBrandIsCustom(false);
+                                        }
+                                      }}
+                                      className="flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setBrandIsCustom(false);
+                                        handleMarketplaceChange("facebook", "brand", "");
+                                      }}
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Popover open={facebookBrandSearchOpen} onOpenChange={setFacebookBrandSearchOpen}>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={facebookBrandSearchOpen}
+                                        className="w-full justify-between"
+                                      >
+                                        {facebookForm.brand || generalForm.brand
+                                          ? (POPULAR_BRANDS.find((brand) => brand === (facebookForm.brand || generalForm.brand)) || customBrands.find((brand) => brand === (facebookForm.brand || generalForm.brand)) || (facebookForm.brand || generalForm.brand))
+                                          : "Search brand..."}
+                                        <ArrowRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-full p-0" align="start">
+                                      <Command>
+                                        <CommandInput placeholder="Search brand..." />
+                                        <CommandList>
+                                          <CommandEmpty>No brand found.</CommandEmpty>
+                                          <CommandGroup>
+                                            {customBrands.length > 0 && (
+                                              <>
+                                                {customBrands.map((brand) => (
+                                                  <CommandItem
+                                                    key={`custom-${brand}`}
+                                                    value={brand}
+                                                    onSelect={() => {
+                                                      handleMarketplaceChange("facebook", "brand", brand);
+                                                      setFacebookBrandSearchOpen(false);
+                                                    }}
+                                                  >
+                                                    <Check
+                                                      className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        (facebookForm.brand || generalForm.brand) === brand ? "opacity-100" : "opacity-0"
+                                                      )}
+                                                    />
+                                                    <span>{brand}</span>
+                                                    <span className="text-xs text-muted-foreground ml-2">⭐</span>
+                                                  </CommandItem>
+                                                ))}
+                                                <div className="border-t my-1" />
+                                              </>
+                                            )}
+                                            {POPULAR_BRANDS.map((brand) => (
+                                              <CommandItem
+                                                key={brand}
+                                                value={brand}
+                                                onSelect={() => {
+                                                  handleMarketplaceChange("facebook", "brand", brand);
+                                                  setFacebookBrandSearchOpen(false);
+                                                }}
+                                              >
+                                                <Check
+                                                  className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    (facebookForm.brand || generalForm.brand) === brand ? "opacity-100" : "opacity-0"
+                                                  )}
+                                                />
+                                                {brand}
+                                              </CommandItem>
+                                            ))}
+                                          </CommandGroup>
+                                        </CommandList>
+                                      </Command>
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
+                              </div>
+
+                              <div>
+                                <Label className="text-xs mb-1.5 block">Type</Label>
+                                <Input
+                                  placeholder="e.g., DSLR, Point & Shoot, Mirrorless"
+                                  value={facebookForm.itemType || ""}
+                                  onChange={(e) => handleMarketplaceChange("facebook", "itemType", e.target.value)}
+                                />
+                              </div>
+
+                              <div>
+                                <Label className="text-xs mb-1.5 block">Color</Label>
+                                <Input
+                                  placeholder={generalForm.color1 ? `Inherited: ${generalForm.color1}` : "Primary color"}
+                                  value={facebookForm.color || ""}
+                                  onChange={(e) => handleMarketplaceChange("facebook", "color", e.target.value)}
+                                />
+                              </div>
+
+                              {facebookForm.category?.toLowerCase().includes('camera') && (
+                                <div>
+                                  <Label className="text-xs mb-1.5 block">Camera Megapixels</Label>
+                                  <Input
+                                    placeholder="e.g., 24 MP"
+                                    value={facebookForm.megapixels || ""}
+                                    onChange={(e) => handleMarketplaceChange("facebook", "megapixels", e.target.value)}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Pricing and Quantity Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Pricing & Inventory</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">
+                            Listing Price <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder={generalForm.price ? `Inherited: $${generalForm.price}` : "Enter price"}
+                            value={facebookForm.price || ""}
+                            onChange={(e) => handleMarketplaceChange("facebook", "price", e.target.value)}
+                          />
+                          {generalForm.price && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited ${generalForm.price} from General form
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label className="text-xs mb-1.5 block">
+                            Quantity <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder={generalForm.quantity ? `Inherited: ${generalForm.quantity}` : "1"}
+                            value={facebookForm.quantity || ""}
+                            onChange={(e) => handleMarketplaceChange("facebook", "quantity", e.target.value)}
+                          />
+                          {generalForm.quantity && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited from General form
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Shipping Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Shipping & Pickup</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Delivery Method</Label>
+                          <Select
+                            value={facebookForm.deliveryMethod}
+                            onValueChange={(value) => handleMarketplaceChange("facebook", "deliveryMethod", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="shipping_and_pickup">Shipping & Local Pickup</SelectItem>
+                              <SelectItem value="shipping_only">Shipping Only</SelectItem>
+                              <SelectItem value="pickup_only">Pickup Only</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Flat Shipping Price</Label>
+                          <Input
+                            placeholder="Optional override"
+                            value={facebookForm.shippingPrice}
+                            onChange={(e) => handleMarketplaceChange("facebook", "shippingPrice", e.target.value)}
+                            disabled={false}
+                          />
+                          {facebookForm.inheritGeneral && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Uses General pricing when sync is enabled.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Meetup Location</Label>
+                          <Input
+                            placeholder={generalForm.zip ? `Inherited from General: ${generalForm.zip}` : "Preferred meetup details"}
+                            value={facebookForm.meetUpLocation}
+                            onChange={(e) => handleMarketplaceChange("facebook", "meetUpLocation", e.target.value)}
+                          />
+                          {generalForm.zip && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Inherited {generalForm.zip} from General form. You can edit this field.
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Allow Offers</Label>
+                          <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
+                            <Switch
+                              id="facebook-allow-offers"
+                              checked={facebookForm.allowOffers}
+                              onCheckedChange={(checked) => handleMarketplaceChange("facebook", "allowOffers", checked)}
+                            />
+                            <Label htmlFor="facebook-allow-offers" className="text-sm">Allow Messenger offers</Label>
+                          </div>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Local Pickup</Label>
+                          <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-2">
+                            <Switch
+                              id="facebook-local-pickup"
+                              checked={facebookForm.localPickup}
+                              onCheckedChange={(checked) => handleMarketplaceChange("facebook", "localPickup", checked)}
+                            />
+                            <Label htmlFor="facebook-local-pickup" className="text-sm">Offer local pickup</Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Options Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Additional Options</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">Tags</Label>
+                          <Input
+                            placeholder={generalForm.tags ? `Inherited: ${generalForm.tags}` : "Comma-separated tags (e.g., vintage, luxury, gift)"}
+                            value={facebookForm.tags || ""}
+                            onChange={(e) => handleMarketplaceChange("facebook", "tags", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Use up to 20 tags someone might search for
+                          </p>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <Label className="text-xs mb-1.5 block">SKU</Label>
+                          <Input
+                            placeholder={generalForm.sku ? `Inherited: ${generalForm.sku}` : "Internal SKU (optional)"}
+                            value={facebookForm.sku || ""}
+                            onChange={(e) => handleMarketplaceChange("facebook", "sku", e.target.value)}
+                          />
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Only visible to you
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Privacy Settings Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Privacy Settings</Label>
+                        </div>
+                      </div>
+
+                      <div className="mb-6">
+                        <div className="flex items-center gap-2 rounded-md border border-dashed border-muted-foreground/40 px-3 py-3">
+                          <Switch
+                            id="facebook-hide-from-friends"
+                            checked={facebookForm.hideFromFriends}
+                            onCheckedChange={(checked) => handleMarketplaceChange("facebook", "hideFromFriends", checked)}
+                          />
+                          <div>
+                            <Label htmlFor="facebook-hide-from-friends" className="text-sm cursor-pointer">Hide from friends</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              This listing will be hidden from your Facebook friends but visible to other people on Facebook
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Package Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4 mt-6">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Package Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label className="text-xs mb-1.5 block">
+                            Package Details <span className="text-red-500">*</span>
+                          </Label>
+                          <Button
+                            type="button"
+                            variant={generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight ? "default" : "outline"}
+                            onClick={() => setPackageDetailsDialogOpen(true)}
+                            className="w-full justify-start"
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            {generalForm.packageWeight && generalForm.packageLength && generalForm.packageWidth && generalForm.packageHeight
+                              ? `${generalForm.packageWeight} lbs • ${generalForm.packageLength}" × ${generalForm.packageWidth}" × ${generalForm.packageHeight}"`
+                              : "Enter weight & size"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/30 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <RefreshCw className="h-4 w-4" />
+                          Reconnect Facebook to refresh shipping policies & payout options.
+                        </div>
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => handleReconnect("facebook")}>
+                          <RefreshCw className="h-4 w-4" />
+                          Reconnect Facebook
+                        </Button>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("facebook")}>
+                          <Save className="h-4 w-4" />
+                          Save
+                        </Button>
+                        <Button className="gap-2" onClick={() => handleListOnMarketplace("facebook")}>
+                          List on Facebook
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Poshmark Form - Desktop */}
+                  {activeForm === "poshmark" && (
+                    <div className="space-y-6">
+                      {currentEditingItemId && (
+                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Item ID:</span>
+                          <span className="text-sm text-muted-foreground font-mono">{currentEditingItemId}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-foreground">Poshmark listing</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Configure your Poshmark listing details.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Photos Section */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Item Photos</Label>
+                          {(generalForm.photos?.length > 0) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleDeleteAllPhotos}
+                              className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Delete All
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 md:grid-cols-6 gap-3 auto-rows-fr">
+                          {generalForm.photos?.length > 0 && (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", "0");
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = 0;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex);
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative col-span-2 row-span-2 aspect-square overflow-hidden rounded-lg border-2 border-primary bg-muted cursor-move"
+                            >
+                              <img src={generalForm.photos[0].preview} alt={generalForm.photos[0].fileName || "Main photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-1 left-1 inline-flex items-center justify-center rounded px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] font-semibold uppercase">
+                                Main
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: generalForm.photos[0].preview, 
+                                      photoId: generalForm.photos[0].id, 
+                                      marketplace: 'general',
+                                      index: 0
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-3 w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(generalForm.photos[0].id);
+                                  }}
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {generalForm.photos?.slice(1).map((photo, index) => (
+                            <div
+                              key={photo.id}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", String(index + 1));
+                                e.currentTarget.classList.add("opacity-50");
+                              }}
+                              onDragEnd={(e) => {
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+                                const dropIndex = index + 1;
+                                if (dragIndex !== dropIndex) {
+                                  handlePhotoReorder(dragIndex, dropIndex);
+                                }
+                                e.currentTarget.classList.remove("opacity-50");
+                              }}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/40 bg-muted cursor-move hover:border-muted-foreground/60 transition"
+                            >
+                              <img src={photo.preview} alt={photo.fileName || "Listing photo"} className="h-full w-full object-cover" />
+                              <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+                                <GripVertical className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                              </div>
+                              <div className="absolute top-1 right-1 flex gap-1 z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setImageToEdit({ 
+                                      url: photo.preview, 
+                                      photoId: photo.id, 
+                                      marketplace: 'general',
+                                      index: index + 1
+                                    });
+                                    setEditorOpen(true);
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-blue-600/80 text-white hover:bg-blue-700/90"
+                                  title="Edit photo"
+                                >
+                                  <ImageIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                  <span className="sr-only">Edit photo</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePhotoRemove(photo.id);
+                                  }}
+                                  className="inline-flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                                >
+                                  <X className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                                  <span className="sr-only">Remove photo</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {(generalForm.photos?.length || 0) < MAX_PHOTOS && (
+                            <button
+                              type="button"
+                              onClick={() => photoInputRef.current?.click()}
+                              disabled={isUploadingPhotos}
+                              className="relative aspect-square overflow-hidden rounded-lg border border-dashed border-muted-foreground/50 bg-muted/30 hover:bg-muted/50 hover:border-muted-foreground/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center"
+                              style={{ width: '150px' }}
+                            >
+                              <ImagePlus className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                              <span className="mt-1 text-[10px] md:text-xs font-medium text-muted-foreground">Add</span>
+                            </button>
+                          )}
+                          <input
+                            ref={photoInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handlePhotoUpload}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Up to {MAX_PHOTOS} photos, {MAX_FILE_SIZE_MB}MB per photo. {generalForm.photos?.length || 0}/{MAX_PHOTOS} used.
+                          {isUploadingPhotos && <span className="ml-2 text-amber-600 dark:text-amber-400">Processing photos...</span>}
+                        </p>
+                      </div>
+
+                      {/* Item Details Section */}
+                      <div className="flex items-center justify-between pb-2 border-b mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <Label className="text-sm font-medium">Item Details</Label>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <Label htmlFor="poshmark-title" className="text-xs mb-1.5 block">Title</Label>
+                          <Input
+                            id="poshmark-title"
+                            name="poshmark-title"
+                            placeholder="Enter listing title"
+                            value={generalForm.title || ""}
+                            onChange={(e) => handleGeneralChange("title", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="poshmark-price" className="text-xs mb-1.5 block">Listing Price</Label>
+                          <Input
+                            id="poshmark-price"
+                            name="poshmark-price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={generalForm.price || ""}
+                            onChange={(e) => handleGeneralChange("price", e.target.value)}
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-1.5">
+                            <Label htmlFor="poshmark-description" className="text-xs">Description</Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDescriptionGeneratorOpen(true)}
+                                className="gap-2 h-7 text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                AI Generate
+                              </Button>
+                            </div>
+                          </div>
+                          <RichTextarea
+                            id="poshmark-description"
+                            name="poshmark-description"
+                            placeholder="Enter a detailed description of your item..."
+                            value={generalForm.description || ""}
+                            onChange={(e) => handleGeneralChange("description", e.target.value)}
+                            className="min-h-[120px] md:min-h-[120px]"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="poshmark-brand" className="text-xs mb-1.5 block">Brand</Label>
+                          <Input
+                            id="poshmark-brand"
+                            name="poshmark-brand"
+                            placeholder="Enter brand"
+                            value={generalForm.brand || ""}
+                            onChange={(e) => handleGeneralChange("brand", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="poshmark-condition" className="text-xs mb-1.5 block">Condition</Label>
+                          <Select
+                            value={generalForm.condition ? String(generalForm.condition) : undefined}
+                            onValueChange={(value) => handleGeneralChange("condition", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select condition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="New With Tags/Box">New With Tags/Box</SelectItem>
+                              <SelectItem value="New Without Tags/Box">New Without Tags/Box</SelectItem>
+                              <SelectItem value="New With Imperfections">New With Imperfections</SelectItem>
+                              <SelectItem value="Pre - Owned - Excellent">Pre - Owned - Excellent</SelectItem>
+                              <SelectItem value="Pre - Owned - Good">Pre - Owned - Good</SelectItem>
+                              <SelectItem value="Pre - Owned - Fair">Pre - Owned - Fair</SelectItem>
+                              <SelectItem value="Poor (Major flaws)">Poor (Major flaws)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="poshmark-size" className="text-xs mb-1.5 block">Size</Label>
+                          <Input
+                            id="poshmark-size"
+                            name="poshmark-size"
+                            placeholder="e.g. Men's M, 10, XL"
+                            value={generalForm.size || ""}
+                            onChange={(e) => handleGeneralChange("size", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="poshmark-color" className="text-xs mb-1.5 block">Color</Label>
+                          <Input
+                            id="poshmark-color"
+                            name="poshmark-color"
+                            placeholder="Enter color"
+                            value={generalForm.color1 || ""}
+                            onChange={(e) => handleGeneralChange("color1", e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" className="gap-2" onClick={() => handleTemplateSave("general")}>
+                          <Save className="h-4 w-4" />
+                          Save
+                        </Button>
+                        <Button className="gap-2" onClick={() => handleListOnMarketplace("poshmark")}>
+                          List on Poshmark
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-end items-center gap-4 pt-6 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(createPageUrl("Crosslist"))}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
