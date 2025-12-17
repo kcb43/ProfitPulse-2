@@ -33122,15 +33122,20 @@ export default function CrosslistComposer() {
     mercari: true,
     facebook: true,
   }); // Track which descriptions are collapsed on mobile (true = collapsed, false = expanded)
-  const [brandSearchOpen, setBrandSearchOpen] = useState(false);
+  const [brandSearchOpenMobile, setBrandSearchOpenMobile] = useState(false);
+  const [brandSearchOpenDesktop, setBrandSearchOpenDesktop] = useState(false);
   const [brandSearchValue, setBrandSearchValue] = useState("");
-  const [ebayBrandSearchOpen, setEbayBrandSearchOpen] = useState(false);
+  const [ebayBrandSearchOpenMobile, setEbayBrandSearchOpenMobile] = useState(false);
+  const [ebayBrandSearchOpenDesktop, setEbayBrandSearchOpenDesktop] = useState(false);
   const [ebayBrandSearchValue, setEbayBrandSearchValue] = useState("");
-  const [facebookBrandSearchOpen, setFacebookBrandSearchOpen] = useState(false);
-  const [mercariBrandSearchOpen, setMercariBrandSearchOpen] = useState(false);
+  const [facebookBrandSearchOpenMobile, setFacebookBrandSearchOpenMobile] = useState(false);
+  const [facebookBrandSearchOpenDesktop, setFacebookBrandSearchOpenDesktop] = useState(false);
+  const [mercariBrandSearchOpenMobile, setMercariBrandSearchOpenMobile] = useState(false);
+  const [mercariBrandSearchOpenDesktop, setMercariBrandSearchOpenDesktop] = useState(false);
   const [mercariBrandSearchValue, setMercariBrandSearchValue] = useState("");
   const [mercariBrandSearchDebounced, setMercariBrandSearchDebounced] = useState("");
-  const [etsyBrandSearchOpen, setEtsyBrandSearchOpen] = useState(false);
+  const [etsyBrandSearchOpenMobile, setEtsyBrandSearchOpenMobile] = useState(false);
+  const [etsyBrandSearchOpenDesktop, setEtsyBrandSearchOpenDesktop] = useState(false);
   const [categorySearchOpen, setCategorySearchOpen] = useState(false);
   const [categorySearchOpenMobile, setCategorySearchOpenMobile] = useState(false);
   const [categorySearchOpenDesktop, setCategorySearchOpenDesktop] = useState(false);
@@ -37036,19 +37041,21 @@ export default function CrosslistComposer() {
                     </div>
                   ) : (
                     <Popover 
-                      open={brandSearchOpen} 
+                      open={brandSearchOpenMobile} 
                       onOpenChange={(open) => {
-                        setBrandSearchOpen(open);
+                        setBrandSearchOpenMobile(open);
+                        setBrandSearchOpenDesktop(false); // Close desktop if mobile opens
                         if (!open) {
                           setBrandSearchValue("");
                         }
                       }}
+                      modal={true}
                     >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           role="combobox"
-                          aria-expanded={brandSearchOpen}
+                          aria-expanded={brandSearchOpenMobile}
                           className="w-full justify-between"
                         >
                           {generalForm.brand
@@ -37079,7 +37086,8 @@ export default function CrosslistComposer() {
                                       if (savedBrand) {
                                         handleGeneralChange("brand", savedBrand);
                                         setBrandSearchValue("");
-                                        setBrandSearchOpen(false);
+                                        setBrandSearchOpenMobile(false);
+                                        setBrandSearchOpenDesktop(false);
                                       }
                                     }
                                   }}
@@ -37102,7 +37110,8 @@ export default function CrosslistComposer() {
                                     onSelect={() => {
                                       handleGeneralChange("brand", brand);
                                       setBrandSearchValue("");
-                                      setBrandSearchOpen(false);
+                                      setBrandSearchOpenMobile(false);
+                                      setBrandSearchOpenDesktop(false);
                                     }}
                                     className="flex items-center justify-between group"
                                   >
@@ -37146,7 +37155,8 @@ export default function CrosslistComposer() {
                                     onSelect={() => {
                                       handleGeneralChange("brand", brand);
                                       setBrandSearchValue("");
-                                      setBrandSearchOpen(false);
+                                      setBrandSearchOpenMobile(false);
+                                      setBrandSearchOpenDesktop(false);
                                     }}
                                   >
                                     <Check
@@ -37165,7 +37175,8 @@ export default function CrosslistComposer() {
                                   onSelect={() => {
                                     setBrandIsCustom(true);
                                     setBrandSearchValue("");
-                                    setBrandSearchOpen(false);
+                                    setBrandSearchOpenMobile(false);
+                                    setBrandSearchOpenDesktop(false);
                                     handleGeneralChange("brand", "");
                                   }}
                                 >
@@ -38042,19 +38053,21 @@ export default function CrosslistComposer() {
                     </div>
                   ) : (
                     <Popover 
-                      open={ebayBrandSearchOpen} 
+                      open={ebayBrandSearchOpenMobile} 
                       onOpenChange={(open) => {
-                        setEbayBrandSearchOpen(open);
+                        setEbayBrandSearchOpenMobile(open);
+                        setEbayBrandSearchOpenDesktop(false); // Close desktop if mobile opens
                         if (!open) {
                           setEbayBrandSearchValue("");
                         }
                       }}
+                      modal={true}
                     >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           role="combobox"
-                          aria-expanded={ebayBrandSearchOpen}
+                          aria-expanded={ebayBrandSearchOpenMobile}
                           className="w-full justify-between"
                         >
                           {ebayForm.ebayBrand || generalForm.brand
@@ -38085,7 +38098,8 @@ export default function CrosslistComposer() {
                                       if (savedBrand) {
                                         handleMarketplaceChange("ebay", "ebayBrand", savedBrand);
                                         setEbayBrandSearchValue("");
-                                        setEbayBrandSearchOpen(false);
+                                        setEbayBrandSearchOpenMobile(false);
+                                        setEbayBrandSearchOpenDesktop(false);
                                       }
                                     }
                                   }}
@@ -38108,7 +38122,8 @@ export default function CrosslistComposer() {
                                     onSelect={() => {
                                       handleMarketplaceChange("ebay", "ebayBrand", brand);
                                       setEbayBrandSearchValue("");
-                                      setEbayBrandSearchOpen(false);
+                                      setEbayBrandSearchOpenMobile(false);
+                                      setEbayBrandSearchOpenDesktop(false);
                                     }}
                                     className="flex items-center justify-between group"
                                   >
@@ -38152,7 +38167,8 @@ export default function CrosslistComposer() {
                                     onSelect={() => {
                                       handleMarketplaceChange("ebay", "ebayBrand", brand);
                                       setEbayBrandSearchValue("");
-                                      setEbayBrandSearchOpen(false);
+                                      setEbayBrandSearchOpenMobile(false);
+                                      setEbayBrandSearchOpenDesktop(false);
                                     }}
                                   >
                                     <Check
@@ -38171,7 +38187,8 @@ export default function CrosslistComposer() {
                                   onSelect={() => {
                                     setBrandIsCustom(true);
                                     setEbayBrandSearchValue("");
-                                    setEbayBrandSearchOpen(false);
+                                    setEbayBrandSearchOpenMobile(false);
+                                    setEbayBrandSearchOpenDesktop(false);
                                     handleMarketplaceChange("ebay", "ebayBrand", "");
                                   }}
                                 >
@@ -39447,12 +39464,19 @@ export default function CrosslistComposer() {
                       </Button>
                     </div>
                   ) : (
-                    <Popover open={etsyBrandSearchOpen} onOpenChange={setEtsyBrandSearchOpen}>
+                    <Popover 
+                      open={etsyBrandSearchOpenMobile} 
+                      onOpenChange={(open) => {
+                        setEtsyBrandSearchOpenMobile(open);
+                        setEtsyBrandSearchOpenDesktop(false); // Close desktop if mobile opens
+                      }}
+                      modal={true}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           role="combobox"
-                          aria-expanded={etsyBrandSearchOpen}
+                          aria-expanded={etsyBrandSearchOpenMobile}
                           className="w-full justify-between"
                         >
                           {etsyForm.brand || generalForm.brand
@@ -39476,7 +39500,8 @@ export default function CrosslistComposer() {
                                       value={brand}
                                       onSelect={() => {
                                         handleMarketplaceChange("etsy", "brand", brand);
-                                        setEtsyBrandSearchOpen(false);
+                                        setEtsyBrandSearchOpenMobile(false);
+                                        setEtsyBrandSearchOpenDesktop(false);
                                       }}
                                     >
                                       <Check
@@ -39499,7 +39524,8 @@ export default function CrosslistComposer() {
                                   value={brand}
                                   onSelect={() => {
                                     handleMarketplaceChange("etsy", "brand", brand);
-                                    setEtsyBrandSearchOpen(false);
+                                    setEtsyBrandSearchOpenMobile(false);
+                                    setEtsyBrandSearchOpenDesktop(false);
                                   }}
                                 >
                                   <Check
@@ -40252,9 +40278,10 @@ export default function CrosslistComposer() {
                 <div>
                   <Label className="text-xs mb-1.5 block">Brand <span className="text-red-500">*</span></Label>
                   <Popover 
-                    open={mercariBrandSearchOpen} 
+                    open={mercariBrandSearchOpenMobile} 
                     onOpenChange={(open) => {
-                      setMercariBrandSearchOpen(open);
+                      setMercariBrandSearchOpenMobile(open);
+                      setMercariBrandSearchOpenDesktop(false); // Close desktop if mobile opens
                       if (open) {
                         // Clear search when opening
                         setMercariBrandSearchValue("");
@@ -40263,12 +40290,13 @@ export default function CrosslistComposer() {
                         setMercariBrandSearchValue("");
                       }
                     }}
+                    modal={true}
                   >
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         role="combobox"
-                        aria-expanded={mercariBrandSearchOpen}
+                        aria-expanded={mercariBrandSearchOpenMobile}
                         className="w-full justify-between"
                       >
                         {(() => {
@@ -40321,7 +40349,8 @@ export default function CrosslistComposer() {
                                   if (matched) {
                                     handleMarketplaceChange("mercari", "brand", matched);
                                   }
-                                  setMercariBrandSearchOpen(false);
+                                  setMercariBrandSearchOpenMobile(false);
+                                  setMercariBrandSearchOpenDesktop(false);
                                   setMercariBrandSearchValue("");
                                 }}
                               >
@@ -40345,7 +40374,8 @@ export default function CrosslistComposer() {
                                 value={brand}
                                 onSelect={() => {
                                   handleMarketplaceChange("mercari", "brand", brand);
-                                  setMercariBrandSearchOpen(false);
+                                  setMercariBrandSearchOpenMobile(false);
+                                  setMercariBrandSearchOpenDesktop(false);
                                   setMercariBrandSearchValue("");
                                 }}
                               >
@@ -41269,12 +41299,19 @@ export default function CrosslistComposer() {
                             </Button>
                           </div>
                         ) : (
-                          <Popover open={facebookBrandSearchOpen} onOpenChange={setFacebookBrandSearchOpen}>
+                          <Popover 
+                            open={facebookBrandSearchOpenMobile} 
+                            onOpenChange={(open) => {
+                              setFacebookBrandSearchOpenMobile(open);
+                              setFacebookBrandSearchOpenDesktop(false); // Close desktop if mobile opens
+                            }}
+                            modal={true}
+                          >
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
                                 role="combobox"
-                                aria-expanded={facebookBrandSearchOpen}
+                                aria-expanded={facebookBrandSearchOpenMobile}
                                 className="w-full justify-between"
                               >
                                 {facebookForm.brand || generalForm.brand
@@ -41298,7 +41335,8 @@ export default function CrosslistComposer() {
                                             value={brand}
                                             onSelect={() => {
                                               handleMarketplaceChange("facebook", "brand", brand);
-                                              setFacebookBrandSearchOpen(false);
+                                              setFacebookBrandSearchOpenMobile(false);
+                                              setFacebookBrandSearchOpenDesktop(false);
                                             }}
                                           >
                                             <Check
@@ -41321,7 +41359,8 @@ export default function CrosslistComposer() {
                                         value={brand}
                                         onSelect={() => {
                                           handleMarketplaceChange("facebook", "brand", brand);
-                                          setFacebookBrandSearchOpen(false);
+                                          setFacebookBrandSearchOpenMobile(false);
+                                          setFacebookBrandSearchOpenDesktop(false);
                                         }}
                                       >
                                         <Check
@@ -42393,19 +42432,21 @@ export default function CrosslistComposer() {
                             </div>
                           ) : (
                             <Popover 
-                              open={brandSearchOpen} 
+                              open={brandSearchOpenDesktop} 
                               onOpenChange={(open) => {
-                                setBrandSearchOpen(open);
+                                setBrandSearchOpenDesktop(open);
+                                setBrandSearchOpenMobile(false); // Close mobile if desktop opens
                                 if (!open) {
                                   setBrandSearchValue("");
                                 }
                               }}
+                              modal={true}
                             >
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
                                   role="combobox"
-                                  aria-expanded={brandSearchOpen}
+                                  aria-expanded={brandSearchOpenDesktop}
                                   className="w-full justify-between"
                                 >
                                   {generalForm.brand
@@ -42435,7 +42476,8 @@ export default function CrosslistComposer() {
                                               if (savedBrand) {
                                                 handleGeneralChange("brand", savedBrand);
                                                 setBrandSearchValue("");
-                                                setBrandSearchOpen(false);
+                                                setBrandSearchOpenMobile(false);
+                                                setBrandSearchOpenDesktop(false);
                                               }
                                             }
                                           }}
@@ -42457,7 +42499,8 @@ export default function CrosslistComposer() {
                                             onSelect={() => {
                                               handleGeneralChange("brand", brand);
                                               setBrandSearchValue("");
-                                              setBrandSearchOpen(false);
+                                              setBrandSearchOpenMobile(false);
+                                              setBrandSearchOpenDesktop(false);
                                             }}
                                             className="flex items-center justify-between group"
                                           >
@@ -42500,7 +42543,8 @@ export default function CrosslistComposer() {
                                             onSelect={() => {
                                               handleGeneralChange("brand", brand);
                                               setBrandSearchValue("");
-                                              setBrandSearchOpen(false);
+                                              setBrandSearchOpenMobile(false);
+                                              setBrandSearchOpenDesktop(false);
                                             }}
                                           >
                                             <Check
@@ -42518,7 +42562,8 @@ export default function CrosslistComposer() {
                                           onSelect={() => {
                                             setBrandIsCustom(true);
                                             setBrandSearchValue("");
-                                            setBrandSearchOpen(false);
+                                            setBrandSearchOpenMobile(false);
+                                            setBrandSearchOpenDesktop(false);
                                             handleGeneralChange("brand", "");
                                           }}
                                         >
@@ -43387,19 +43432,21 @@ export default function CrosslistComposer() {
                             </div>
                           ) : (
                             <Popover 
-                              open={ebayBrandSearchOpen} 
+                              open={ebayBrandSearchOpenDesktop} 
                               onOpenChange={(open) => {
-                                setEbayBrandSearchOpen(open);
+                                setEbayBrandSearchOpenDesktop(open);
+                                setEbayBrandSearchOpenMobile(false); // Close mobile if desktop opens
                                 if (!open) {
                                   setEbayBrandSearchValue("");
                                 }
                               }}
+                              modal={true}
                             >
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
                                   role="combobox"
-                                  aria-expanded={ebayBrandSearchOpen}
+                                  aria-expanded={ebayBrandSearchOpenDesktop}
                                   className="w-full justify-between"
                                 >
                                   {ebayForm.ebayBrand || generalForm.brand
@@ -43429,7 +43476,8 @@ export default function CrosslistComposer() {
                                               if (savedBrand) {
                                                 handleMarketplaceChange("ebay", "ebayBrand", savedBrand);
                                                 setEbayBrandSearchValue("");
-                                                setEbayBrandSearchOpen(false);
+                                                setEbayBrandSearchOpenMobile(false);
+                                                setEbayBrandSearchOpenDesktop(false);
                                               }
                                             }
                                           }}
@@ -43451,7 +43499,8 @@ export default function CrosslistComposer() {
                                             onSelect={() => {
                                               handleMarketplaceChange("ebay", "ebayBrand", brand);
                                               setEbayBrandSearchValue("");
-                                              setEbayBrandSearchOpen(false);
+                                              setEbayBrandSearchOpenMobile(false);
+                                              setEbayBrandSearchOpenDesktop(false);
                                             }}
                                             className="flex items-center justify-between group"
                                           >
@@ -43494,7 +43543,8 @@ export default function CrosslistComposer() {
                                             onSelect={() => {
                                               handleMarketplaceChange("ebay", "ebayBrand", brand);
                                               setEbayBrandSearchValue("");
-                                              setEbayBrandSearchOpen(false);
+                                              setEbayBrandSearchOpenMobile(false);
+                                              setEbayBrandSearchOpenDesktop(false);
                                             }}
                                           >
                                             <Check
@@ -43512,7 +43562,8 @@ export default function CrosslistComposer() {
                                           onSelect={() => {
                                             setBrandIsCustom(true);
                                             setEbayBrandSearchValue("");
-                                            setEbayBrandSearchOpen(false);
+                                            setEbayBrandSearchOpenMobile(false);
+                                            setEbayBrandSearchOpenDesktop(false);
                                             handleMarketplaceChange("ebay", "ebayBrand", "");
                                           }}
                                         >
@@ -44762,12 +44813,19 @@ export default function CrosslistComposer() {
                               </Button>
                             </div>
                           ) : (
-                            <Popover open={etsyBrandSearchOpen} onOpenChange={setEtsyBrandSearchOpen}>
+                            <Popover 
+                              open={etsyBrandSearchOpenDesktop} 
+                              onOpenChange={(open) => {
+                                setEtsyBrandSearchOpenDesktop(open);
+                                setEtsyBrandSearchOpenMobile(false); // Close mobile if desktop opens
+                              }}
+                              modal={true}
+                            >
                               <PopoverTrigger asChild>
                                 <Button
                                   variant="outline"
                                   role="combobox"
-                                  aria-expanded={etsyBrandSearchOpen}
+                                  aria-expanded={etsyBrandSearchOpenDesktop}
                                   className="w-full justify-between"
                                 >
                                   {etsyForm.brand || generalForm.brand
@@ -44790,7 +44848,8 @@ export default function CrosslistComposer() {
                                               value={brand}
                                               onSelect={() => {
                                                 handleMarketplaceChange("etsy", "brand", brand);
-                                                setEtsyBrandSearchOpen(false);
+                                                setEtsyBrandSearchOpenMobile(false);
+                                                setEtsyBrandSearchOpenDesktop(false);
                                               }}
                                             >
                                               <Check
@@ -44812,7 +44871,8 @@ export default function CrosslistComposer() {
                                           value={brand}
                                           onSelect={() => {
                                             handleMarketplaceChange("etsy", "brand", brand);
-                                            setEtsyBrandSearchOpen(false);
+                                            setEtsyBrandSearchOpenMobile(false);
+                                            setEtsyBrandSearchOpenDesktop(false);
                                           }}
                                         >
                                           <Check
@@ -45540,21 +45600,23 @@ export default function CrosslistComposer() {
                         <div>
                           <Label className="text-xs mb-1.5 block">Brand <span className="text-red-500">*</span></Label>
                           <Popover 
-                            open={mercariBrandSearchOpen} 
+                            open={mercariBrandSearchOpenDesktop} 
                             onOpenChange={(open) => {
-                              setMercariBrandSearchOpen(open);
+                              setMercariBrandSearchOpenDesktop(open);
+                              setMercariBrandSearchOpenMobile(false); // Close mobile if desktop opens
                               if (open) {
                                 setMercariBrandSearchValue("");
                               } else {
                                 setMercariBrandSearchValue("");
                               }
                             }}
+                            modal={true}
                           >
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
                                 role="combobox"
-                                aria-expanded={mercariBrandSearchOpen}
+                                aria-expanded={mercariBrandSearchOpenDesktop}
                                 className="w-full justify-between"
                               >
                                 {(() => {
@@ -45600,7 +45662,8 @@ export default function CrosslistComposer() {
                                           if (matched) {
                                             handleMarketplaceChange("mercari", "brand", matched);
                                           }
-                                          setMercariBrandSearchOpen(false);
+                                          setMercariBrandSearchOpenMobile(false);
+                                          setMercariBrandSearchOpenDesktop(false);
                                           setMercariBrandSearchValue("");
                                         }}
                                       >
@@ -45623,7 +45686,8 @@ export default function CrosslistComposer() {
                                         value={brand}
                                         onSelect={() => {
                                           handleMarketplaceChange("mercari", "brand", brand);
-                                          setMercariBrandSearchOpen(false);
+                                          setMercariBrandSearchOpenMobile(false);
+                                          setMercariBrandSearchOpenDesktop(false);
                                           setMercariBrandSearchValue("");
                                         }}
                                       >
@@ -46519,12 +46583,19 @@ export default function CrosslistComposer() {
                                     </Button>
                                   </div>
                                 ) : (
-                                  <Popover open={facebookBrandSearchOpen} onOpenChange={setFacebookBrandSearchOpen}>
+                                  <Popover 
+                                    open={facebookBrandSearchOpenDesktop} 
+                                    onOpenChange={(open) => {
+                                      setFacebookBrandSearchOpenDesktop(open);
+                                      setFacebookBrandSearchOpenMobile(false); // Close mobile if desktop opens
+                                    }}
+                                    modal={true}
+                                  >
                                     <PopoverTrigger asChild>
                                       <Button
                                         variant="outline"
                                         role="combobox"
-                                        aria-expanded={facebookBrandSearchOpen}
+                                        aria-expanded={facebookBrandSearchOpenDesktop}
                                         className="w-full justify-between"
                                       >
                                         {facebookForm.brand || generalForm.brand
@@ -46547,7 +46618,8 @@ export default function CrosslistComposer() {
                                                     value={brand}
                                                     onSelect={() => {
                                                       handleMarketplaceChange("facebook", "brand", brand);
-                                                      setFacebookBrandSearchOpen(false);
+                                                      setFacebookBrandSearchOpenMobile(false);
+                                                      setFacebookBrandSearchOpenDesktop(false);
                                                     }}
                                                   >
                                                     <Check
@@ -46569,7 +46641,8 @@ export default function CrosslistComposer() {
                                                 value={brand}
                                                 onSelect={() => {
                                                   handleMarketplaceChange("facebook", "brand", brand);
-                                                  setFacebookBrandSearchOpen(false);
+                                                  setFacebookBrandSearchOpenMobile(false);
+                                                  setFacebookBrandSearchOpenDesktop(false);
                                                 }}
                                               >
                                                 <Check
