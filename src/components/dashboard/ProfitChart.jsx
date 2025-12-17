@@ -76,14 +76,26 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
     <Card className="border-0 shadow-sm">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <CardTitle className="text-xl font-bold text-foreground flex items-center flex-wrap gap-3">
-              <span className="leading-tight">{baseTitle}</span>
-              {badgeLabel ? (
-                <span className={`inline-flex items-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm ${badgeClass}`}>
-                  {badgeLabel}
-                </span>
-              ) : null}
-            </CardTitle>
+            <div className="flex items-center flex-wrap gap-3">
+              <CardTitle className="text-xl font-bold text-foreground flex items-center flex-wrap gap-3">
+                <span className="leading-tight">{baseTitle}</span>
+                {badgeLabel ? (
+                  <span className={`inline-flex items-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm ${badgeClass}`}>
+                    {badgeLabel}
+                  </span>
+                ) : null}
+              </CardTitle>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-auto sm:w-9 px-2 sm:px-0 sm:hidden">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <ReportsExportPopup sales={sales} totalProfit={totalProfit} totalSales={totalSales} />
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="flex items-center gap-3">
               <Tabs value={range} onValueChange={onRangeChange}>
                 <TabsList>
@@ -94,7 +106,7 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
               </Tabs>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-auto sm:w-9 px-3 sm:px-0 -ml-[0.10rem]">
+                  <Button variant="outline" size="icon" className="h-9 w-9 hidden sm:inline-flex -ml-[0.10rem]">
                     <Download className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
