@@ -405,139 +405,204 @@ async function fillMercariFormWithPuppeteer(page, data) {
       }
     }
 
-    // 13. PHOTOS - This is why we use Puppeteer!
+    // 13. PHOTOS - Upload using Mercari's GraphQL API
     if (data.photos && data.photos.length > 0) {
-      console.log(`  → Uploading ${data.photos.length} photo(s)...`);
+      console.log(`  → Uploading ${data.photos.length} photo(s) via GraphQL API...`);
       
-      // Mercari photo upload: The file input might be hidden or inside PhotoUploadBox
-      // First, try to find the file input directly
-      let fileInput = await page.$('input[type="file"]');
+      // Download/convert images from URLs or base64 to local file paths
+      const photoPaths = await downloadPhotosIfNeeded(data.photos);
       
-      // If not found, try clicking PhotoUploadBox to reveal it
-      if (!fileInput) {
-        const photoUploadBox = await page.$('[data-testid="PhotoUploadBox"]');
-        if (photoUploadBox) {
-          // Click the upload area - this might trigger file input to appear
-          await photoUploadBox.click();
-          await page.waitForTimeout(500);
-          
-          // Try to find file input again
-          fileInput = await page.$('input[type="file"]');
-        }
+      if (photoPaths.length === 0) {
+        console.warn('  ⚠️ No valid photo paths found after processing');
+        return;
       }
       
-      // If still not found, use evaluateHandle to find hidden file inputs
-      if (!fileInput) {
-        const fileInputHandle = await page.evaluateHandle(() => {
-          // Look for file input anywhere on the page (might be hidden)
-          const inputs = document.querySelectorAll('input[type="file"]');
-          return inputs.length > 0 ? inputs[0] : null;
-        });
+      // Get cookies and headers from the page
+      const cookies = await page.cookies();
+      const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+      
+      // Extract headers from the page context
+      const pageHeaders = await page.evaluate(() => {
+        // Try to get authorization token from localStorage or sessionStorage
+        const authToken = localStorage.getItem('auth_token') || 
+                         sessionStorage.getItem('auth_token') ||
+                         document.cookie.match(/auth_token=([^;]+)/)?.[1];
         
-        if (fileInputHandle && fileInputHandle.asElement) {
-          fileInput = fileInputHandle.asElement();
-        } else if (fileInputHandle) {
-          fileInput = fileInputHandle;
-        }
-      }
-      
-      // Alternative: Try to create/trigger file input via click on PhotoUploadBox
-      if (!fileInput) {
-        const photoUploadBox = await page.$('[data-testid="PhotoUploadBox"]');
-        if (photoUploadBox) {
-          // Try clicking and then immediately looking for file input
-          await photoUploadBox.click();
-          await page.waitForTimeout(300);
-          fileInput = await page.$('input[type="file"]');
-        }
-      }
-      
-      if (fileInput) {
-        // Download/convert images from URLs or base64 to local file paths
-        const photoPaths = await downloadPhotosIfNeeded(data.photos);
+        // Try to get CSRF token from meta tag or cookie
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ||
+                         document.cookie.match(/csrf-token=([^;]+)/)?.[1] ||
+                         document.cookie.match(/X-CSRF-Token=([^;]+)/)?.[1];
         
-        if (photoPaths.length > 0) {
-          console.log(`  → Uploading ${photoPaths.length} photo file(s)...`);
-          
-          // Puppeteer's uploadFile method - correct syntax: element.uploadFile(filePath)
-          // According to Puppeteer docs, uploadFile accepts a single file path
-          // For multiple files, we need to either:
-          // 1. Set the input's multiple attribute and upload all at once
-          // 2. Upload files one by one to separate inputs
-          
+        return {
+          authToken,
+          csrfToken,
+          userAgent: navigator.userAgent
+        };
+      });
+      
+      // Upload each photo using Mercari's GraphQL API
+      const uploadIds = [];
+      
+      for (let i = 0; i < photoPaths.length; i++) {
+        const photoPath = photoPaths[i];
+        console.log(`  → Uploading photo ${i + 1}/${photoPaths.length}...`);
+        
+        try {
+          // Read file as base64 for serialization
+          let fs;
           try {
-            // First, check if the input supports multiple files
-            const supportsMultiple = await page.evaluate(el => {
-              return el.hasAttribute('multiple') || el.getAttribute('multiple') !== null;
-            }, fileInput);
+            const fsModule = await import('fs');
+            fs = fsModule.default || fsModule;
+          } catch {
+            fs = require('fs');
+          }
+          
+          const fileBuffer = fs.readFileSync(photoPath);
+          const fileBase64 = fileBuffer.toString('base64');
+          const fileName = photoPath.split('/').pop() || `photo-${i}.jpg`;
+          
+          // Determine MIME type from file extension
+          const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+          const mimeType = ext === 'png' ? 'image/png' : 
+                          ext === 'gif' ? 'image/gif' : 
+                          ext === 'webp' ? 'image/webp' : 'image/jpeg';
+          
+          // Upload using page.evaluate to make fetch call in browser context
+          const uploadResult = await page.evaluate(async ({ fileBase64, fileName, mimeType, headers }) => {
+            // Convert base64 to Blob
+            const byteCharacters = atob(fileBase64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let j = 0; j < byteCharacters.length; j++) {
+              byteNumbers[j] = byteCharacters.charCodeAt(j);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: mimeType });
             
-            if (photoPaths.length === 1) {
-              // Single file upload
-              await fileInput.uploadFile(photoPaths[0]);
-            } else if (supportsMultiple) {
-              // Multiple files - try uploading all at once
-              // Note: Some Puppeteer versions support array, others need individual calls
-              try {
-                await fileInput.uploadFile(...photoPaths);
-              } catch (error) {
-                // If spread operator fails, upload one by one
-                for (const photoPath of photoPaths) {
-                  await fileInput.uploadFile(photoPath);
-                  await page.waitForTimeout(300);
-                }
-              }
-            } else {
-              // Input doesn't support multiple - upload one by one
-              // Note: Mercari might have multiple file inputs or need separate uploads
-              for (let i = 0; i < photoPaths.length; i++) {
-                // For each file after the first, try to find a new file input
-                // (Mercari might create new inputs for each photo)
-                if (i === 0) {
-                  await fileInput.uploadFile(photoPaths[i]);
-                } else {
-                  // Wait a bit for Mercari to process the previous upload
-                  await page.waitForTimeout(500);
-                  
-                  // Try to find a new file input (Mercari might create one for the next photo)
-                  const nextFileInput = await page.$('input[type="file"]');
-                  if (nextFileInput) {
-                    await nextFileInput.uploadFile(photoPaths[i]);
-                  } else {
-                    // Fallback: try the same input again (if it supports multiple)
-                    await fileInput.uploadFile(photoPaths[i]);
+            // Create FormData
+            const formData = new FormData();
+            
+            // GraphQL operation
+            const operations = {
+              operationName: "uploadTempListingPhotos",
+              variables: {
+                input: {
+                  photos: [null]
+                },
+                extensions: {
+                  persistedQuery: {
+                    version: 1,
+                    sha256Hash: "9aa889ac01e549a01c66c7baabc968b0e4a7fa4cd0b6bd32b7599ce10ca09a10"
                   }
                 }
-                await page.waitForTimeout(300);
+              }
+            };
+            
+            // Map file to operation
+            const map = {
+              "1": ["variables.input.photos.0"]
+            };
+            
+            formData.append('operations', JSON.stringify(operations));
+            formData.append('map', JSON.stringify(map));
+            formData.append('1', blob, fileName);
+            
+            // Get CSRF token from meta tag or cookie if not provided
+            let csrfToken = headers.csrfToken;
+            if (!csrfToken) {
+              const metaTag = document.querySelector('meta[name="csrf-token"]');
+              csrfToken = metaTag?.content || 
+                         document.cookie.match(/csrf-token=([^;]+)/)?.[1] ||
+                         document.cookie.match(/X-CSRF-Token=([^;]+)/)?.[1];
+            }
+            
+            // Get authorization token from cookie if not provided
+            let authToken = headers.authToken;
+            if (!authToken) {
+              // Try to extract from cookies
+              const cookies = document.cookie.split(';');
+              for (const cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name.includes('token') || name.includes('auth')) {
+                  authToken = value;
+                  break;
+                }
               }
             }
-          } catch (error) {
-            console.error('  ❌ Error uploading photos:', error);
-            throw error;
-          }
-          
-          // Wait for uploads to process - Mercari shows upload progress
-          console.log('  → Waiting for photos to upload...');
-          await page.waitForTimeout(4000); // Give Mercari more time to process uploads
-          
-          // Verify photos were uploaded by checking for image previews or upload indicators
-          const photoPreviews = await page.$$('[data-testid*="Photo"] img, [data-testid*="photo"] img, .photo-preview img, img[alt*="photo" i]');
-          if (photoPreviews.length > 0) {
-            console.log(`  ✓ ${photoPreviews.length} photo(s) uploaded successfully`);
-          } else {
-            // Also check for upload progress indicators
-            const uploadIndicators = await page.$$('[class*="upload"], [class*="progress"], [aria-label*="upload" i]');
-            if (uploadIndicators.length === 0) {
-              console.log('  ✓ Photos uploaded (verification pending)');
-            } else {
-              console.log('  → Photos are uploading...');
+            
+            // Build headers
+            const fetchHeaders = {
+              'accept': '*/*',
+              'accept-language': 'en-US,en;q=0.9',
+              'apollo-require-preflight': 'true',
+              'x-platform': 'web',
+              'x-double-web': '1',
+              'x-app-version': '1'
+            };
+            
+            if (csrfToken) {
+              fetchHeaders['x-csrf-token'] = csrfToken;
             }
+            
+            if (authToken) {
+              fetchHeaders['authorization'] = `Bearer ${authToken}`;
+            }
+            
+            // Make fetch request
+            const response = await fetch('https://www.mercari.com/v1/api', {
+              method: 'POST',
+              headers: fetchHeaders,
+              credentials: 'include',
+              body: formData
+            });
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText.substring(0, 200)}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.data?.uploadTempListingPhotos?.uploadIds?.[0]) {
+              return {
+                success: true,
+                uploadId: result.data.uploadTempListingPhotos.uploadIds[0]
+              };
+            } else {
+              console.error('Upload response:', result);
+              throw new Error('No uploadId in response: ' + JSON.stringify(result));
+            }
+          }, {
+            fileBase64,
+            fileName,
+            mimeType,
+            headers: pageHeaders
+          });
+          
+          if (uploadResult.success) {
+            uploadIds.push(uploadResult.uploadId);
+            console.log(`  ✓ Photo ${i + 1} uploaded successfully (ID: ${uploadResult.uploadId})`);
+          } else {
+            throw new Error(`Upload failed for photo ${i + 1}`);
           }
-        } else {
-          console.warn('  ⚠️ No valid photo paths found after processing');
+          
+          // Small delay between uploads
+          if (i < photoPaths.length - 1) {
+            await page.waitForTimeout(500);
+          }
+          
+        } catch (error) {
+          console.error(`  ❌ Error uploading photo ${i + 1}:`, error.message);
+          throw error;
         }
-      } else {
-        console.warn('  ⚠️ File input not found - photos may need manual upload');
       }
+      
+      // Store uploadIds in page context for form submission
+      await page.evaluate((ids) => {
+        window.__mercariUploadIds = ids;
+      }, uploadIds);
+      
+      console.log(`  ✓ All ${uploadIds.length} photo(s) uploaded successfully`);
+      console.log(`  → Upload IDs: ${uploadIds.join(', ')}`);
     }
 
     console.log('✅ All form fields filled!');
