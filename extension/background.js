@@ -14,6 +14,64 @@ let marketplaceStatus = {
   etsy: { loggedIn: false, userName: null, lastChecked: null }
 };
 
+// Required headers to capture from Mercari API requests
+const requiredHeaders = [
+  'accept', 'accept-language', 'apollo-require-preflight', 'authorization', 
+  'baggage', 'content-type', 'priority', 'sec-ch-ua', 'sec-ch-ua-mobile', 
+  'sec-ch-ua-platform', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site', 
+  'sentry-trace', 'x-app-version', 'x-csrf-token', 'x-de-device-token', 
+  'x-double-web', 'x-ld-variants', 'x-platform', 'x-socure-device'
+];
+
+// Intercept Mercari API requests to capture headers
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  (details) => {
+    // Only intercept requests to Mercari's GraphQL API
+    if (details.url.includes('mercari.com/v1/api')) {
+      // Extract headers we need
+      const capturedHeaders = {};
+      
+      if (details.requestHeaders) {
+        for (const header of details.requestHeaders) {
+          const headerName = header.name.toLowerCase();
+          if (requiredHeaders.includes(headerName)) {
+            capturedHeaders[headerName] = header.value;
+          }
+        }
+      }
+      
+      // Store captured headers in chrome.storage for content script to access
+      if (Object.keys(capturedHeaders).length > 0) {
+        chrome.storage.local.set({ 
+          mercariApiHeaders: capturedHeaders,
+          mercariApiHeadersTimestamp: Date.now()
+        }, () => {
+          console.log('📡 [WEB REQUEST] Captured Mercari API headers:', Object.keys(capturedHeaders));
+        });
+        
+        // Also send to content script if it's listening
+        chrome.tabs.query({ url: 'https://www.mercari.com/*' }, (tabs) => {
+          for (const tab of tabs) {
+            chrome.tabs.sendMessage(tab.id, {
+              type: 'MERCARI_HEADERS_CAPTURED',
+              headers: capturedHeaders
+            }).catch(() => {
+              // Content script not ready, that's okay
+            });
+          }
+        });
+      }
+    }
+  },
+  {
+    urls: ['https://www.mercari.com/v1/api*'],
+    types: ['xmlhttprequest']
+  },
+  ['requestHeaders']
+);
+
+console.log('📡 [WEB REQUEST] Network request interceptor installed for Mercari API');
+
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Background received message:', message, 'from sender:', sender);

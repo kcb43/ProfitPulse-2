@@ -3,83 +3,6 @@
  * Detects login and automates listings across multiple platforms
  */
 
-// Visual overlay for showing progress
-function showProgressOverlay(message, data = null) {
-  // Remove existing overlay if any
-  const existing = document.getElementById('profit-orbit-progress-overlay');
-  if (existing) {
-    existing.remove();
-  }
-
-  // Create overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'profit-orbit-progress-overlay';
-  overlay.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    z-index: 999999;
-    max-width: 400px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    animation: slideIn 0.3s ease-out;
-  `;
-
-  // Add animation
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-  `;
-  if (!document.getElementById('profit-orbit-overlay-styles')) {
-    style.id = 'profit-orbit-overlay-styles';
-    document.head.appendChild(style);
-  }
-
-  // Create content
-  const content = document.createElement('div');
-  content.innerHTML = `
-    <div style="font-weight: 600; font-size: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-      <span>${message}</span>
-    </div>
-    ${data ? `<pre style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 6px; overflow-x: auto; margin: 0; font-size: 12px; white-space: pre-wrap; word-wrap: break-word;">${JSON.stringify(data, null, 2)}</pre>` : ''}
-    <button id="profit-orbit-overlay-close" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; padding: 0;">×</button>
-  `;
-
-  overlay.appendChild(content);
-  document.body.appendChild(overlay);
-
-  // Close button
-  const closeBtn = overlay.querySelector('#profit-orbit-overlay-close');
-  closeBtn.addEventListener('click', () => {
-    overlay.remove();
-  });
-
-  // Auto-remove after 5 seconds (unless it's an error or final step)
-  if (!message.includes('❌') && !message.includes('✅ Listing Created')) {
-    setTimeout(() => {
-      if (overlay.parentNode) {
-        overlay.style.animation = 'slideIn 0.3s ease-out reverse';
-        setTimeout(() => overlay.remove(), 300);
-      }
-    }, 5000);
-  }
-}
-
 // Detect which marketplace we're on
 const MARKETPLACE = (() => {
   const hostname = window.location.hostname;
@@ -272,6 +195,29 @@ function updateLoginStatus() {
   }
 }
 
+// Store captured Mercari API headers (from webRequest API in background script)
+let capturedMercariHeaders = null;
+
+// Load headers from chrome.storage on startup and periodically refresh
+if (MARKETPLACE === 'mercari') {
+  const loadHeadersFromStorage = () => {
+    chrome.storage.local.get(['mercariApiHeaders'], (result) => {
+      if (result.mercariApiHeaders) {
+        capturedMercariHeaders = result.mercariApiHeaders;
+        console.log('📡 [HEADER LOAD] Loaded Mercari API headers from storage:', Object.keys(capturedMercariHeaders));
+      }
+    });
+  };
+  
+  // Load on startup
+  loadHeadersFromStorage();
+  
+  // Refresh headers every 5 seconds (in case new requests come in)
+  setInterval(loadHeadersFromStorage, 5000);
+  
+  console.log('📡 [HEADER INTERCEPT] Ready to receive headers from webRequest API');
+}
+
 // Check login on page load
 if (MARKETPLACE) {
   window.addEventListener('load', () => {
@@ -313,6 +259,12 @@ if (MARKETPLACE) {
       
       return true; // Keep channel open for async response
     }
+    
+    if (message.type === 'MERCARI_HEADERS_CAPTURED') {
+      capturedMercariHeaders = message.headers;
+      console.log('📡 [HEADER UPDATE] Received Mercari API headers from background:', Object.keys(capturedMercariHeaders));
+      return false; // No response needed
+    }
   });
 
   // Initial check
@@ -345,12 +297,10 @@ async function createMercariListing(listingData) {
       brand: listingData.brand
     };
     console.log('📋 [MERCARI] Listing data:', summaryData);
-    showProgressOverlay('🚀 Starting Mercari Listing Creation', summaryData);
     
     // Navigate to sell page if not already there
     if (!window.location.href.includes('/sell')) {
       console.log('🌐 [MERCARI] Navigating to sell page...');
-      showProgressOverlay('🌐 Navigating to Mercari sell page...');
       window.location.href = 'https://www.mercari.com/sell/';
       
       // Wait for page to load, then retry
@@ -361,11 +311,9 @@ async function createMercariListing(listingData) {
     }
     
     console.log('⏳ [MERCARI] Waiting for form to load...');
-    showProgressOverlay('⏳ Waiting for form to load...');
     // Wait for form to be ready (use actual Mercari selectors)
     await waitForElement('[data-testid="Title"], #sellName', 10000);
     console.log('✅ [MERCARI] Form loaded, starting to fill fields...');
-    showProgressOverlay('✅ Form loaded! Starting to fill fields...');
     
     // Fill in form fields
     const fillResult = await fillMercariForm(listingData);
@@ -378,7 +326,22 @@ async function createMercariListing(listingData) {
     const hasPhotos = listingData.photos && listingData.photos.length > 0;
     if (hasPhotos) {
       console.log(`📸 [MERCARI] Starting photo upload for ${listingData.photos.length} photo(s)...`);
-      alert(`📸 Starting photo upload for ${listingData.photos.length} photo(s)...`);
+      
+      // Wait a bit to ensure we've captured headers from Mercari's initial API calls
+      if (!capturedMercariHeaders || Object.keys(capturedMercariHeaders).length === 0) {
+        console.log('⏳ [MERCARI] Waiting for API headers to be captured...');
+        await sleep(3000); // Wait 3 seconds for Mercari to make API calls
+        
+        // Check again
+        if (!capturedMercariHeaders || Object.keys(capturedMercariHeaders).length === 0) {
+          console.warn('⚠️ [MERCARI] No headers captured yet, proceeding with fallback headers');
+        } else {
+          console.log(`✅ [MERCARI] Captured ${Object.keys(capturedMercariHeaders).length} headers from Mercari API`);
+        }
+      } else {
+        console.log(`✅ [MERCARI] Using ${Object.keys(capturedMercariHeaders).length} captured headers`);
+      }
+      
       try {
         const uploadResult = await uploadMercariPhotos(listingData.photos);
         if (!uploadResult.success) {
@@ -391,11 +354,9 @@ async function createMercariListing(listingData) {
           };
         }
         console.log(`✅ [MERCARI] All photos uploaded successfully! Upload IDs: ${uploadResult.uploadIds.join(', ')}`);
-        showProgressOverlay('✅ All Photos Uploaded Successfully!', { uploadIds: uploadResult.uploadIds, count: uploadResult.uploadIds.length });
         // Upload IDs are stored in window.__mercariUploadIds for form submission
       } catch (error) {
         console.error('❌ [MERCARI] Photo upload error:', error);
-        showProgressOverlay('❌ Photo Upload Error', { error: error.message });
         return {
           success: false,
           error: `Photo upload error: ${error.message}`,
@@ -410,7 +371,6 @@ async function createMercariListing(listingData) {
     
     if (photoCount === 0 && !photosInData) {
       console.log('⚠️ [MERCARI] No photos provided, manual upload required');
-      showProgressOverlay('⚠️ No Photos Provided', { message: 'Manual photo upload required.' });
       return {
         success: true,
         message: 'Form filled successfully. Please upload at least one photo manually and click the List button.',
@@ -420,23 +380,19 @@ async function createMercariListing(listingData) {
     }
     
     console.log('📤 [MERCARI] Submitting form...');
-    showProgressOverlay('📤 Submitting form...');
     // Submit the form (only if photos are present)
     const submitResult = await submitMercariForm();
     
     if (submitResult.success) {
       console.log('✅ [MERCARI] Listing created successfully!', submitResult.listingUrl);
-      showProgressOverlay('✅ Listing Created Successfully!', { listingId: submitResult.listingId, listingUrl: submitResult.listingUrl });
     } else {
       console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
-      showProgressOverlay('❌ Form Submission Failed', { error: submitResult.error });
     }
     
     return submitResult;
     
   } catch (error) {
     console.error('❌ [MERCARI] Error during listing creation:', error);
-    showProgressOverlay('❌ Error During Listing Creation', { error: error.message });
     return { success: false, error: error.message };
   }
 }
@@ -739,7 +695,11 @@ async function uploadMercariPhotos(photos) {
     }
 
     console.log(`🔍 [PHOTO UPLOAD] Extracting authentication tokens...`);
-    showProgressOverlay('🔍 Extracting Authentication Tokens...');
+    
+    // Wait a bit for page to fully load and make initial API calls (CSRF token might be set during this)
+    console.log('⏳ [PHOTO UPLOAD] Waiting for page to initialize...');
+    await sleep(2000);
+    
     // Extract auth tokens from page
     let authToken = localStorage.getItem('auth_token') ||
                    localStorage.getItem('token') ||
@@ -767,29 +727,136 @@ async function uploadMercariPhotos(photos) {
       console.log(`🔑 [PHOTO UPLOAD] Found auth token in storage`);
     }
 
-    // Get CSRF token
+    // Get CSRF token - try multiple methods
     console.log('🔍 [PHOTO UPLOAD] Extracting CSRF token...');
+    
+    // Method 1: Check meta tag
     let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ||
-                   document.cookie.match(/csrf-token=([^;]+)/)?.[1] ||
-                   document.cookie.match(/X-CSRF-Token=([^;]+)/)?.[1] ||
-                   document.cookie.match(/csrf_token=([^;]+)/)?.[1];
+                   document.querySelector('meta[name="csrf_token"]')?.content ||
+                   document.querySelector('meta[name="X-CSRF-Token"]')?.content;
+    
+    // Method 2: Check cookies (multiple patterns)
+    if (!csrfToken) {
+      const cookiePatterns = [
+        /csrf-token=([^;]+)/i,
+        /csrf_token=([^;]+)/i,
+        /X-CSRF-Token=([^;]+)/i,
+        /x-csrf-token=([^;]+)/i,
+        /_csrf=([^;]+)/i,
+        /csrf=([^;]+)/i
+      ];
+      
+      for (const pattern of cookiePatterns) {
+        const match = document.cookie.match(pattern);
+        if (match && match[1]) {
+          csrfToken = match[1];
+          console.log(`🔑 [PHOTO UPLOAD] Found CSRF token in cookie: ${csrfToken.substring(0, 10)}...`);
+          break;
+        }
+      }
+    }
+    
+    // Method 3: Check localStorage/sessionStorage
+    if (!csrfToken) {
+      csrfToken = localStorage.getItem('csrf-token') ||
+                 localStorage.getItem('csrf_token') ||
+                 localStorage.getItem('X-CSRF-Token') ||
+                 sessionStorage.getItem('csrf-token') ||
+                 sessionStorage.getItem('csrf_token') ||
+                 sessionStorage.getItem('X-CSRF-Token');
+    }
+    
+    // Method 4: Try to get CSRF token from existing fetch interceptors or make a test call
+    if (!csrfToken) {
+      console.log('🔍 [PHOTO UPLOAD] Attempting to get CSRF token from API call...');
+      try {
+        // Try to get from window if it was stored by interceptors
+        if (window.__mercariCsrfToken) {
+          csrfToken = window.__mercariCsrfToken;
+          console.log(`🔑 [PHOTO UPLOAD] Found CSRF token from window cache`);
+        } else {
+          // Make a lightweight API call - Mercari might return CSRF token in response
+          // Use OPTIONS preflight which is less likely to fail
+          const testResponse = await fetch('https://www.mercari.com/v1/api', {
+            method: 'OPTIONS',
+            headers: {
+              'apollo-require-preflight': 'true',
+              'x-platform': 'web'
+            },
+            credentials: 'include'
+          });
+          
+          // Wait a moment for cookies to be set
+          await sleep(500);
+          
+          // Re-check cookies after the API call
+          for (const pattern of [
+            /csrf-token=([^;]+)/i,
+            /csrf_token=([^;]+)/i,
+            /X-CSRF-Token=([^;]+)/i,
+            /x-csrf-token=([^;]+)/i
+          ]) {
+            const match = document.cookie.match(pattern);
+            if (match && match[1]) {
+              csrfToken = match[1];
+              console.log(`🔑 [PHOTO UPLOAD] Found CSRF token in cookies after API call`);
+              break;
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ [PHOTO UPLOAD] Could not get CSRF token from test API call:', error.message);
+      }
+    }
+    
+    // Method 5: Check all cookies more thoroughly
+    if (!csrfToken) {
+      console.log('🔍 [PHOTO UPLOAD] Checking all cookies for CSRF token...');
+      const allCookies = document.cookie.split(';');
+      for (const cookie of allCookies) {
+        const [name, value] = cookie.trim().split('=');
+        const nameLower = name.toLowerCase();
+        if (value && (
+          nameLower.includes('csrf') ||
+          nameLower.includes('token') ||
+          (nameLower.includes('x') && nameLower.includes('csrf'))
+        )) {
+          // Check if it looks like a CSRF token (not too short, not too long)
+          if (value.length > 10 && value.length < 200) {
+            csrfToken = value;
+            console.log(`🔑 [PHOTO UPLOAD] Found potential CSRF token in cookie: ${name}`);
+            break;
+          }
+        }
+      }
+    }
 
     if (!authToken) {
       console.error('❌ [PHOTO UPLOAD] Could not find authorization token');
-      showProgressOverlay('❌ Token Extraction Failed', { error: 'Could not find authorization token. Please ensure you are logged into Mercari.' });
       return { success: false, error: 'Could not find authorization token. Please ensure you are logged into Mercari.' };
     }
 
     if (!csrfToken) {
-      console.error('❌ [PHOTO UPLOAD] Could not find CSRF token');
-      showProgressOverlay('❌ Token Extraction Failed', { error: 'Could not find CSRF token. Please ensure you are logged into Mercari.' });
-      return { success: false, error: 'Could not find CSRF token. Please ensure you are logged into Mercari.' };
+      console.warn('⚠️ [PHOTO UPLOAD] Could not find CSRF token initially');
+      console.warn('🔍 [PHOTO UPLOAD] Debug info:', {
+        cookies: document.cookie.substring(0, 500),
+        metaTags: Array.from(document.querySelectorAll('meta[name*="csrf" i]')).map(m => ({ name: m.name, content: m.content?.substring(0, 20) })),
+        localStorage: Object.keys(localStorage).filter(k => k.toLowerCase().includes('csrf')),
+        sessionStorage: Object.keys(sessionStorage).filter(k => k.toLowerCase().includes('csrf'))
+      });
+      
+      // Try to proceed without CSRF token - browser might include it automatically
+      // or we'll extract it from error response
+      console.log('⚠️ [PHOTO UPLOAD] Proceeding without CSRF token - will try to extract from error if needed');
     }
 
     console.log(`✅ [PHOTO UPLOAD] Tokens extracted successfully`);
     console.log(`   Auth token: ${authToken.substring(0, 20)}...`);
-    console.log(`   CSRF token: ${csrfToken.substring(0, 10)}...`);
-    showProgressOverlay('✅ Tokens Extracted Successfully', { authToken: authToken.substring(0, 20) + '...', csrfToken: csrfToken.substring(0, 10) + '...' });
+    if (csrfToken) {
+      console.log(`   CSRF token: ${csrfToken.substring(0, 10)}...`);
+    } else {
+      console.log(`   CSRF token: Not found (will try without it)`);
+    }
 
     const uploadIds = [];
 
@@ -807,7 +874,6 @@ async function uploadMercariPhotos(photos) {
 
       try {
         console.log(`📥 [PHOTO UPLOAD ${i + 1}/${photos.length}] Fetching image from: ${photoUrl.substring(0, 50)}...`);
-        showProgressOverlay(`📥 Photo ${i + 1}/${photos.length} - Fetching image...`, { photoUrl: photoUrl.substring(0, 80) + '...', photoIndex: i + 1, totalPhotos: photos.length });
         // Fetch the image
         const imageResponse = await fetch(photoUrl);
         if (!imageResponse.ok) {
@@ -818,7 +884,6 @@ async function uploadMercariPhotos(photos) {
         console.log(`✅ [PHOTO UPLOAD ${i + 1}/${photos.length}] Image fetched (${(imageBlob.size / 1024).toFixed(2)} KB)`);
 
         console.log(`🖼️ [PHOTO UPLOAD ${i + 1}/${photos.length}] Converting to JPG format...`);
-        showProgressOverlay(`🖼️ Photo ${i + 1}/${photos.length} - Converting to JPG...`, { originalSize: (imageBlob.size / 1024).toFixed(2) + ' KB', photoIndex: i + 1 });
         // Convert image to JPG format using Canvas API (Mercari requires .jpg)
         const img = await new Promise((resolve, reject) => {
           const img = new Image();
@@ -874,21 +939,114 @@ async function uploadMercariPhotos(photos) {
         // Mercari expects filename to be "blob" in the FormData, and file must be .jpg
         formData.append('1', jpgBlob, 'blob');
 
-        // Build headers
-        // NOTE: Do NOT set Content-Type header - let FormData/browser set it automatically with boundary
-        const fetchHeaders = {
-          'accept': '*/*',
-          'accept-language': 'en-US,en;q=0.9',
-          'apollo-require-preflight': 'true',
-          'x-platform': 'web',
-          'x-double-web': '1',
-          'x-app-version': '1',
-          'x-csrf-token': csrfToken,
-          'authorization': `Bearer ${authToken}`
-        };
+        // Build headers - use intercepted headers if available, otherwise fallback to manual construction
+        let fetchHeaders = {};
+        
+        if (capturedMercariHeaders && Object.keys(capturedMercariHeaders).length > 0) {
+          // Use intercepted headers as base
+          fetchHeaders = { ...capturedMercariHeaders };
+          console.log(`📡 [PHOTO UPLOAD ${i + 1}/${photos.length}] Using intercepted headers (${Object.keys(fetchHeaders).length} headers)`);
+          
+          // Ensure authorization token is set (use intercepted or extracted)
+          if (authToken) {
+            fetchHeaders['authorization'] = `Bearer ${authToken}`;
+          }
+          
+          // Ensure CSRF token is set (use intercepted or extracted)
+          if (csrfToken) {
+            fetchHeaders['x-csrf-token'] = csrfToken;
+          }
+          
+          // Remove content-type if present (browser will set it with boundary for FormData)
+          delete fetchHeaders['content-type'];
+        } else {
+          // Fallback to manual header construction if interception didn't capture headers
+          console.log(`⚠️ [PHOTO UPLOAD ${i + 1}/${photos.length}] No intercepted headers found, using fallback headers`);
+          fetchHeaders = {
+            'accept': '*/*',
+            'accept-language': 'en-US,en;q=0.9',
+            'apollo-require-preflight': 'true',
+            'x-platform': 'web',
+            'x-double-web': '1',
+            'x-app-version': '1',
+            'authorization': `Bearer ${authToken}`
+          };
+          
+          // Only add CSRF token if we found it
+          if (csrfToken) {
+            fetchHeaders['x-csrf-token'] = csrfToken;
+          }
+        }
 
         console.log(`📤 [PHOTO UPLOAD ${i + 1}/${photos.length}] Uploading to Mercari API...`);
-        showProgressOverlay(`📤 Photo ${i + 1}/${photos.length} - Uploading to Mercari API...`, { jpgSize: (jpgBlob.size / 1024).toFixed(2) + ' KB', photoIndex: i + 1, totalPhotos: photos.length });
+        console.log(`   JPG size: ${(jpgBlob.size / 1024).toFixed(2)} KB`);
+        
+        // Log the complete fetch request details
+        console.log(`📋 [PHOTO UPLOAD ${i + 1}/${photos.length}] Fetch Request Details:`);
+        console.log(`   URL: https://www.mercari.com/v1/api`);
+        console.log(`   Method: POST`);
+        console.log(`   Headers:`, JSON.stringify(fetchHeaders, null, 2));
+        console.log(`   Operations:`, JSON.stringify(operations, null, 2));
+        console.log(`   Map:`, JSON.stringify(map, null, 2));
+        console.log(`   File: blob (${(jpgBlob.size / 1024).toFixed(2)} KB, type: image/jpeg)`);
+        console.log(`   Credentials: include`);
+        
+        // Store blob reference for testing BEFORE making the request
+        window[`__testBlob${i}`] = jpgBlob;
+        
+        // Log copyable fetch request for testing
+        const operationsStr = JSON.stringify(operations);
+        const mapStr = JSON.stringify(map);
+        const headersStr = JSON.stringify(fetchHeaders, null, 2);
+        
+        // Create a properly formatted headers object string for copy-paste
+        const headersForCopy = Object.entries(fetchHeaders).map(([key, value]) => {
+          return `    '${key}': ${JSON.stringify(value)}`;
+        }).join(',\n');
+        
+        const copyableRequest = `// ========================================
+// COPY-PASTE THIS INTO CONSOLE TO TEST:
+// ========================================
+const formData = new FormData();
+formData.append('operations', ${JSON.stringify(operationsStr)});
+formData.append('map', ${JSON.stringify(mapStr)});
+formData.append('1', window.__testBlob${i}, 'blob');
+
+fetch('https://www.mercari.com/v1/api', {
+  method: 'POST',
+  headers: {
+${headersForCopy}
+  },
+  credentials: 'include',
+  body: formData
+})
+.then(r => {
+  console.log('Response status:', r.status, r.statusText);
+  return r.json();
+})
+.then(data => {
+  console.log('Response data:', data);
+  return data;
+})
+.catch(err => {
+  console.error('Error:', err);
+});
+// ========================================`;
+        
+        console.log(`📋 [PHOTO UPLOAD ${i + 1}/${photos.length}] Copy-paste ready fetch request:`);
+        console.log(copyableRequest);
+        
+        // Log which headers were intercepted vs manually set
+        const interceptedCount = capturedMercariHeaders ? Object.keys(capturedMercariHeaders).length : 0;
+        console.log(`📋 [PHOTO UPLOAD ${i + 1}/${photos.length}] Header source: ${interceptedCount > 0 ? `${interceptedCount} intercepted + manual` : 'manual fallback'}`);
+        
+        // Also log individual components for easier debugging
+        console.log(`📋 [PHOTO UPLOAD ${i + 1}/${photos.length}] Request components:`);
+        console.log(`   Operations JSON:`, operationsStr);
+        console.log(`   Map JSON:`, mapStr);
+        console.log(`   Headers object:`, fetchHeaders);
+        console.log(`   Blob available as: window.__testBlob${i} (${(jpgBlob.size / 1024).toFixed(2)} KB)`);
+        
         // Make fetch request
         // Browser will automatically set Content-Type with boundary for FormData
         const response = await fetch('https://www.mercari.com/v1/api', {
@@ -897,11 +1055,48 @@ async function uploadMercariPhotos(photos) {
           credentials: 'include',
           body: formData
         });
+        
+        console.log(`📥 [PHOTO UPLOAD ${i + 1}/${photos.length}] Response received:`);
+        console.log(`   Status: ${response.status} ${response.statusText}`);
+        console.log(`   Headers:`, Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`❌ [PHOTO UPLOAD ${i + 1}/${photos.length}] Upload failed: ${response.status} ${response.statusText}`);
-          showProgressOverlay(`❌ Photo ${i + 1}/${photos.length} Upload Failed`, { status: response.status, statusText: response.statusText, error: errorText.substring(0, 200) });
+          
+          // If CSRF error and we didn't have token, try to extract it and retry
+          if ((response.status === 403 || response.status === 401) && !csrfToken && errorText.includes('csrf')) {
+            console.log('🔄 [PHOTO UPLOAD] CSRF error detected, attempting to extract token and retry...');
+            
+            // Wait a moment and re-check cookies
+            await sleep(1000);
+            const retryCsrfToken = document.cookie.match(/csrf-token=([^;]+)/i)?.[1] ||
+                                  document.cookie.match(/X-CSRF-Token=([^;]+)/i)?.[1];
+            
+            if (retryCsrfToken) {
+              console.log(`🔑 [PHOTO UPLOAD] Found CSRF token after error, retrying upload...`);
+              csrfToken = retryCsrfToken;
+              
+              // Retry the upload with CSRF token
+              const retryHeaders = { ...fetchHeaders, 'x-csrf-token': csrfToken };
+              const retryResponse = await fetch('https://www.mercari.com/v1/api', {
+                method: 'POST',
+                headers: retryHeaders,
+                credentials: 'include',
+                body: formData
+              });
+              
+              if (retryResponse.ok) {
+                const retryResult = await retryResponse.json();
+                if (retryResult.data?.uploadTempListingPhotos?.uploadIds?.[0]) {
+                  uploadIds.push(retryResult.data.uploadTempListingPhotos.uploadIds[0]);
+                  console.log(`✅ [PHOTO UPLOAD ${i + 1}/${photos.length}] Uploaded successfully after retry! Upload ID: ${retryResult.data.uploadTempListingPhotos.uploadIds[0]}`);
+                  continue; // Skip to next photo
+                }
+              }
+            }
+          }
+          
           throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText.substring(0, 200)}`);
         }
 
@@ -910,10 +1105,8 @@ async function uploadMercariPhotos(photos) {
         if (result.data?.uploadTempListingPhotos?.uploadIds?.[0]) {
           uploadIds.push(result.data.uploadTempListingPhotos.uploadIds[0]);
           console.log(`✅ [PHOTO UPLOAD ${i + 1}/${photos.length}] Uploaded successfully! Upload ID: ${result.data.uploadTempListingPhotos.uploadIds[0]}`);
-          showProgressOverlay(`✅ Photo ${i + 1}/${photos.length} Uploaded Successfully!`, { uploadId: result.data.uploadTempListingPhotos.uploadIds[0], photoIndex: i + 1, totalPhotos: photos.length });
         } else {
           console.error(`❌ [PHOTO UPLOAD ${i + 1}/${photos.length}] Unexpected response:`, result);
-          showProgressOverlay(`❌ Photo ${i + 1}/${photos.length} Upload Failed`, { error: 'No uploadId in response', response: result });
           throw new Error('No uploadId in response: ' + JSON.stringify(result));
         }
 
@@ -949,9 +1142,6 @@ async function fillMercariForm(data) {
     // Wrap entire form fill in try-catch to prevent errors from stopping the process
     // 1. TITLE
     console.log(`📝 [FORM FILL] Setting title: "${data.title}"`);
-    if (data.title) {
-      showProgressOverlay('📝 Setting Title', { title: data.title });
-    }
     const titleInput = document.querySelector('[data-testid="Title"]') || 
                       document.querySelector('#sellName');
     if (titleInput && data.title) {
@@ -977,7 +1167,6 @@ async function fillMercariForm(data) {
     // 3. CATEGORY - Mercari-specific category (multi-level selection)
     if (data.mercariCategory) {
       console.log(`📝 [FORM FILL] Setting category: "${data.mercariCategory}"`);
-      showProgressOverlay('📝 Setting Category', { category: data.mercariCategory, categoryId: data.mercariCategoryId });
       // Split category path by " > " to get individual levels
       const categoryParts = data.mercariCategory.split(' > ').map(part => part.trim());
       
@@ -1041,7 +1230,6 @@ async function fillMercariForm(data) {
     // 4. BRAND
     if (data.brand) {
       console.log(`📝 [FORM FILL] Setting brand: "${data.brand}"`);
-      showProgressOverlay('📝 Setting Brand', { brand: data.brand });
       let brandSuccess = false;
       
       // Try multiple approaches - but stop as soon as one succeeds
@@ -1065,7 +1253,6 @@ async function fillMercariForm(data) {
     // 5. CONDITION
     if (data.condition) {
       console.log(`📝 [FORM FILL] Setting condition: "${data.condition}"`);
-      showProgressOverlay('📝 Setting Condition', { condition: data.condition });
       // Map condition values to Mercari's expected format
       const conditionMap = {
         'New': 'New',
@@ -1158,9 +1345,6 @@ async function fillMercariForm(data) {
     
     // 10. PRICE (do this last as it often triggers validation)
     console.log(`📝 [FORM FILL] Setting price: $${data.price}`);
-    if (data.price) {
-      showProgressOverlay('📝 Setting Price', { price: data.price, quantity: data.quantity || 1 });
-    }
     const priceInput = document.querySelector('[data-testid="Price"]') ||
                       document.querySelector('#Price') ||
                       document.querySelector('[name="sellPrice"]');
