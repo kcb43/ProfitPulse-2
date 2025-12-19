@@ -3,6 +3,83 @@
  * Detects login and automates listings across multiple platforms
  */
 
+// Visual overlay for showing progress
+function showProgressOverlay(message, data = null) {
+  // Remove existing overlay if any
+  const existing = document.getElementById('profit-orbit-progress-overlay');
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'profit-orbit-progress-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 999999;
+    max-width: 400px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease-out;
+  `;
+
+  // Add animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  `;
+  if (!document.getElementById('profit-orbit-overlay-styles')) {
+    style.id = 'profit-orbit-overlay-styles';
+    document.head.appendChild(style);
+  }
+
+  // Create content
+  const content = document.createElement('div');
+  content.innerHTML = `
+    <div style="font-weight: 600; font-size: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+      <span>${message}</span>
+    </div>
+    ${data ? `<pre style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 6px; overflow-x: auto; margin: 0; font-size: 12px; white-space: pre-wrap; word-wrap: break-word;">${JSON.stringify(data, null, 2)}</pre>` : ''}
+    <button id="profit-orbit-overlay-close" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; padding: 0;">×</button>
+  `;
+
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+
+  // Close button
+  const closeBtn = overlay.querySelector('#profit-orbit-overlay-close');
+  closeBtn.addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  // Auto-remove after 5 seconds (unless it's an error or final step)
+  if (!message.includes('❌') && !message.includes('✅ Listing Created')) {
+    setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.style.animation = 'slideIn 0.3s ease-out reverse';
+        setTimeout(() => overlay.remove(), 300);
+      }
+    }, 5000);
+  }
+}
+
 // Detect which marketplace we're on
 const MARKETPLACE = (() => {
   const hostname = window.location.hostname;
@@ -268,12 +345,12 @@ async function createMercariListing(listingData) {
       brand: listingData.brand
     };
     console.log('📋 [MERCARI] Listing data:', summaryData);
-    alert(`🚀 Starting Mercari Listing Creation\n\n${JSON.stringify(summaryData, null, 2)}`);
+    showProgressOverlay('🚀 Starting Mercari Listing Creation', summaryData);
     
     // Navigate to sell page if not already there
     if (!window.location.href.includes('/sell')) {
       console.log('🌐 [MERCARI] Navigating to sell page...');
-      alert('🌐 Navigating to Mercari sell page...');
+      showProgressOverlay('🌐 Navigating to Mercari sell page...');
       window.location.href = 'https://www.mercari.com/sell/';
       
       // Wait for page to load, then retry
@@ -284,11 +361,11 @@ async function createMercariListing(listingData) {
     }
     
     console.log('⏳ [MERCARI] Waiting for form to load...');
-    alert('⏳ Waiting for form to load...');
+    showProgressOverlay('⏳ Waiting for form to load...');
     // Wait for form to be ready (use actual Mercari selectors)
     await waitForElement('[data-testid="Title"], #sellName', 10000);
     console.log('✅ [MERCARI] Form loaded, starting to fill fields...');
-    alert('✅ Form loaded! Starting to fill fields...');
+    showProgressOverlay('✅ Form loaded! Starting to fill fields...');
     
     // Fill in form fields
     const fillResult = await fillMercariForm(listingData);
@@ -314,11 +391,11 @@ async function createMercariListing(listingData) {
           };
         }
         console.log(`✅ [MERCARI] All photos uploaded successfully! Upload IDs: ${uploadResult.uploadIds.join(', ')}`);
-        alert(`✅ All Photos Uploaded Successfully!\n\n${JSON.stringify({ uploadIds: uploadResult.uploadIds, count: uploadResult.uploadIds.length }, null, 2)}`);
+        showProgressOverlay('✅ All Photos Uploaded Successfully!', { uploadIds: uploadResult.uploadIds, count: uploadResult.uploadIds.length });
         // Upload IDs are stored in window.__mercariUploadIds for form submission
       } catch (error) {
         console.error('❌ [MERCARI] Photo upload error:', error);
-        alert(`❌ Photo Upload Error\n\n${JSON.stringify({ error: error.message }, null, 2)}`);
+        showProgressOverlay('❌ Photo Upload Error', { error: error.message });
         return {
           success: false,
           error: `Photo upload error: ${error.message}`,
@@ -333,7 +410,7 @@ async function createMercariListing(listingData) {
     
     if (photoCount === 0 && !photosInData) {
       console.log('⚠️ [MERCARI] No photos provided, manual upload required');
-      alert('⚠️ No Photos Provided\n\nManual photo upload required.');
+      showProgressOverlay('⚠️ No Photos Provided', { message: 'Manual photo upload required.' });
       return {
         success: true,
         message: 'Form filled successfully. Please upload at least one photo manually and click the List button.',
@@ -343,23 +420,23 @@ async function createMercariListing(listingData) {
     }
     
     console.log('📤 [MERCARI] Submitting form...');
-    alert('📤 Submitting form...');
+    showProgressOverlay('📤 Submitting form...');
     // Submit the form (only if photos are present)
     const submitResult = await submitMercariForm();
     
     if (submitResult.success) {
       console.log('✅ [MERCARI] Listing created successfully!', submitResult.listingUrl);
-      alert(`✅ Listing Created Successfully!\n\n${JSON.stringify({ listingId: submitResult.listingId, listingUrl: submitResult.listingUrl }, null, 2)}`);
+      showProgressOverlay('✅ Listing Created Successfully!', { listingId: submitResult.listingId, listingUrl: submitResult.listingUrl });
     } else {
       console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
-      alert(`❌ Form Submission Failed\n\n${JSON.stringify({ error: submitResult.error }, null, 2)}`);
+      showProgressOverlay('❌ Form Submission Failed', { error: submitResult.error });
     }
     
     return submitResult;
     
   } catch (error) {
     console.error('❌ [MERCARI] Error during listing creation:', error);
-    alert(`❌ Error During Listing Creation\n\n${JSON.stringify({ error: error.message, stack: error.stack }, null, 2)}`);
+    showProgressOverlay('❌ Error During Listing Creation', { error: error.message });
     return { success: false, error: error.message };
   }
 }
@@ -662,7 +739,7 @@ async function uploadMercariPhotos(photos) {
     }
 
     console.log(`🔍 [PHOTO UPLOAD] Extracting authentication tokens...`);
-    alert(`🔍 Extracting Authentication Tokens...`);
+    showProgressOverlay('🔍 Extracting Authentication Tokens...');
     // Extract auth tokens from page
     let authToken = localStorage.getItem('auth_token') ||
                    localStorage.getItem('token') ||
@@ -699,20 +776,20 @@ async function uploadMercariPhotos(photos) {
 
     if (!authToken) {
       console.error('❌ [PHOTO UPLOAD] Could not find authorization token');
-      alert(`❌ Token Extraction Failed\n\n${JSON.stringify({ error: 'Could not find authorization token. Please ensure you are logged into Mercari.' }, null, 2)}`);
+      showProgressOverlay('❌ Token Extraction Failed', { error: 'Could not find authorization token. Please ensure you are logged into Mercari.' });
       return { success: false, error: 'Could not find authorization token. Please ensure you are logged into Mercari.' };
     }
 
     if (!csrfToken) {
       console.error('❌ [PHOTO UPLOAD] Could not find CSRF token');
-      alert(`❌ Token Extraction Failed\n\n${JSON.stringify({ error: 'Could not find CSRF token. Please ensure you are logged into Mercari.' }, null, 2)}`);
+      showProgressOverlay('❌ Token Extraction Failed', { error: 'Could not find CSRF token. Please ensure you are logged into Mercari.' });
       return { success: false, error: 'Could not find CSRF token. Please ensure you are logged into Mercari.' };
     }
 
     console.log(`✅ [PHOTO UPLOAD] Tokens extracted successfully`);
     console.log(`   Auth token: ${authToken.substring(0, 20)}...`);
     console.log(`   CSRF token: ${csrfToken.substring(0, 10)}...`);
-    alert(`✅ Tokens Extracted Successfully\n\n${JSON.stringify({ authToken: authToken.substring(0, 20) + '...', csrfToken: csrfToken.substring(0, 10) + '...' }, null, 2)}`);
+    showProgressOverlay('✅ Tokens Extracted Successfully', { authToken: authToken.substring(0, 20) + '...', csrfToken: csrfToken.substring(0, 10) + '...' });
 
     const uploadIds = [];
 
@@ -730,7 +807,7 @@ async function uploadMercariPhotos(photos) {
 
       try {
         console.log(`📥 [PHOTO UPLOAD ${i + 1}/${photos.length}] Fetching image from: ${photoUrl.substring(0, 50)}...`);
-        alert(`📥 Photo ${i + 1}/${photos.length}\n\nFetching image...\n\n${JSON.stringify({ photoUrl: photoUrl.substring(0, 80) + '...', photoIndex: i + 1, totalPhotos: photos.length }, null, 2)}`);
+        showProgressOverlay(`📥 Photo ${i + 1}/${photos.length} - Fetching image...`, { photoUrl: photoUrl.substring(0, 80) + '...', photoIndex: i + 1, totalPhotos: photos.length });
         // Fetch the image
         const imageResponse = await fetch(photoUrl);
         if (!imageResponse.ok) {
@@ -741,7 +818,7 @@ async function uploadMercariPhotos(photos) {
         console.log(`✅ [PHOTO UPLOAD ${i + 1}/${photos.length}] Image fetched (${(imageBlob.size / 1024).toFixed(2)} KB)`);
 
         console.log(`🖼️ [PHOTO UPLOAD ${i + 1}/${photos.length}] Converting to JPG format...`);
-        alert(`🖼️ Photo ${i + 1}/${photos.length}\n\nConverting to JPG format...\n\n${JSON.stringify({ originalSize: (imageBlob.size / 1024).toFixed(2) + ' KB', photoIndex: i + 1 }, null, 2)}`);
+        showProgressOverlay(`🖼️ Photo ${i + 1}/${photos.length} - Converting to JPG...`, { originalSize: (imageBlob.size / 1024).toFixed(2) + ' KB', photoIndex: i + 1 });
         // Convert image to JPG format using Canvas API (Mercari requires .jpg)
         const img = await new Promise((resolve, reject) => {
           const img = new Image();
@@ -811,7 +888,7 @@ async function uploadMercariPhotos(photos) {
         };
 
         console.log(`📤 [PHOTO UPLOAD ${i + 1}/${photos.length}] Uploading to Mercari API...`);
-        alert(`📤 Photo ${i + 1}/${photos.length}\n\nUploading to Mercari API...\n\n${JSON.stringify({ jpgSize: (jpgBlob.size / 1024).toFixed(2) + ' KB', photoIndex: i + 1, totalPhotos: photos.length }, null, 2)}`);
+        showProgressOverlay(`📤 Photo ${i + 1}/${photos.length} - Uploading to Mercari API...`, { jpgSize: (jpgBlob.size / 1024).toFixed(2) + ' KB', photoIndex: i + 1, totalPhotos: photos.length });
         // Make fetch request
         // Browser will automatically set Content-Type with boundary for FormData
         const response = await fetch('https://www.mercari.com/v1/api', {
@@ -824,7 +901,7 @@ async function uploadMercariPhotos(photos) {
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`❌ [PHOTO UPLOAD ${i + 1}/${photos.length}] Upload failed: ${response.status} ${response.statusText}`);
-          alert(`❌ Photo ${i + 1}/${photos.length} Upload Failed\n\n${JSON.stringify({ status: response.status, statusText: response.statusText, error: errorText.substring(0, 200) }, null, 2)}`);
+          showProgressOverlay(`❌ Photo ${i + 1}/${photos.length} Upload Failed`, { status: response.status, statusText: response.statusText, error: errorText.substring(0, 200) });
           throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText.substring(0, 200)}`);
         }
 
@@ -833,10 +910,10 @@ async function uploadMercariPhotos(photos) {
         if (result.data?.uploadTempListingPhotos?.uploadIds?.[0]) {
           uploadIds.push(result.data.uploadTempListingPhotos.uploadIds[0]);
           console.log(`✅ [PHOTO UPLOAD ${i + 1}/${photos.length}] Uploaded successfully! Upload ID: ${result.data.uploadTempListingPhotos.uploadIds[0]}`);
-          alert(`✅ Photo ${i + 1}/${photos.length} Uploaded Successfully!\n\n${JSON.stringify({ uploadId: result.data.uploadTempListingPhotos.uploadIds[0], photoIndex: i + 1, totalPhotos: photos.length }, null, 2)}`);
+          showProgressOverlay(`✅ Photo ${i + 1}/${photos.length} Uploaded Successfully!`, { uploadId: result.data.uploadTempListingPhotos.uploadIds[0], photoIndex: i + 1, totalPhotos: photos.length });
         } else {
           console.error(`❌ [PHOTO UPLOAD ${i + 1}/${photos.length}] Unexpected response:`, result);
-          alert(`❌ Photo ${i + 1}/${photos.length} Upload Failed\n\n${JSON.stringify({ error: 'No uploadId in response', response: result }, null, 2)}`);
+          showProgressOverlay(`❌ Photo ${i + 1}/${photos.length} Upload Failed`, { error: 'No uploadId in response', response: result });
           throw new Error('No uploadId in response: ' + JSON.stringify(result));
         }
 
@@ -873,7 +950,7 @@ async function fillMercariForm(data) {
     // 1. TITLE
     console.log(`📝 [FORM FILL] Setting title: "${data.title}"`);
     if (data.title) {
-      alert(`📝 Setting Title\n\n${JSON.stringify({ title: data.title }, null, 2)}`);
+      showProgressOverlay('📝 Setting Title', { title: data.title });
     }
     const titleInput = document.querySelector('[data-testid="Title"]') || 
                       document.querySelector('#sellName');
@@ -900,7 +977,7 @@ async function fillMercariForm(data) {
     // 3. CATEGORY - Mercari-specific category (multi-level selection)
     if (data.mercariCategory) {
       console.log(`📝 [FORM FILL] Setting category: "${data.mercariCategory}"`);
-      alert(`📝 Setting Category\n\n${JSON.stringify({ category: data.mercariCategory, categoryId: data.mercariCategoryId }, null, 2)}`);
+      showProgressOverlay('📝 Setting Category', { category: data.mercariCategory, categoryId: data.mercariCategoryId });
       // Split category path by " > " to get individual levels
       const categoryParts = data.mercariCategory.split(' > ').map(part => part.trim());
       
@@ -964,7 +1041,7 @@ async function fillMercariForm(data) {
     // 4. BRAND
     if (data.brand) {
       console.log(`📝 [FORM FILL] Setting brand: "${data.brand}"`);
-      alert(`📝 Setting Brand\n\n${JSON.stringify({ brand: data.brand }, null, 2)}`);
+      showProgressOverlay('📝 Setting Brand', { brand: data.brand });
       let brandSuccess = false;
       
       // Try multiple approaches - but stop as soon as one succeeds
@@ -988,7 +1065,7 @@ async function fillMercariForm(data) {
     // 5. CONDITION
     if (data.condition) {
       console.log(`📝 [FORM FILL] Setting condition: "${data.condition}"`);
-      alert(`📝 Setting Condition\n\n${JSON.stringify({ condition: data.condition }, null, 2)}`);
+      showProgressOverlay('📝 Setting Condition', { condition: data.condition });
       // Map condition values to Mercari's expected format
       const conditionMap = {
         'New': 'New',
@@ -1082,7 +1159,7 @@ async function fillMercariForm(data) {
     // 10. PRICE (do this last as it often triggers validation)
     console.log(`📝 [FORM FILL] Setting price: $${data.price}`);
     if (data.price) {
-      alert(`📝 Setting Price\n\n${JSON.stringify({ price: data.price, quantity: data.quantity || 1 }, null, 2)}`);
+      showProgressOverlay('📝 Setting Price', { price: data.price, quantity: data.quantity || 1 });
     }
     const priceInput = document.querySelector('[data-testid="Price"]') ||
                       document.querySelector('#Price') ||
