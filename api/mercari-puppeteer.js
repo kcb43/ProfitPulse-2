@@ -186,6 +186,23 @@ export default async function handler(req, res) {
     } else {
       console.warn('⚠️ CSRF token not captured from network requests');
     }
+    
+    // Verify user is logged in by checking for login indicators
+    const isLoggedIn = await page.evaluate(() => {
+      // Check for common logged-in indicators
+      const hasAuthCookie = document.cookie.includes('auth') || 
+                           document.cookie.includes('token') ||
+                           document.cookie.includes('session');
+      const hasUserData = localStorage.getItem('user') || 
+                         sessionStorage.getItem('user') ||
+                         localStorage.getItem('auth_token') ||
+                         sessionStorage.getItem('auth_token');
+      return hasAuthCookie || hasUserData;
+    });
+    
+    if (!isLoggedIn && !capturedAuthToken) {
+      console.warn('⚠️ Warning: No authentication detected. User may need to log in to Mercari first.');
+    }
 
     // Wait for form to be ready
     console.log('⏳ Waiting for form to load...');
@@ -564,7 +581,8 @@ async function fillMercariFormWithPuppeteer(page, data, capturedTokens = {}) {
           const fileBase64 = fileBuffer.toString('base64');
           const fileName = photoPath.split('/').pop() || `photo-${i}.jpg`;
           
-          // Determine MIME type from file extension
+          // Determine original MIME type from file extension
+          // Note: All images will be converted to JPG format in browser context (Mercari requirement)
           const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
           const mimeType = ext === 'png' ? 'image/png' : 
                           ext === 'gif' ? 'image/gif' : 
@@ -572,14 +590,39 @@ async function fillMercariFormWithPuppeteer(page, data, capturedTokens = {}) {
           
           // Upload using page.evaluate to make fetch call in browser context
           const uploadResult = await page.evaluate(async ({ fileBase64, fileName, mimeType, authToken, csrfToken }) => {
-            // Convert base64 to Blob
+            // Convert base64 to Image, then to JPG Blob (Mercari requires .jpg format)
             const byteCharacters = atob(fileBase64);
             const byteNumbers = new Array(byteCharacters.length);
             for (let j = 0; j < byteCharacters.length; j++) {
               byteNumbers[j] = byteCharacters.charCodeAt(j);
             }
             const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: mimeType });
+            const originalBlob = new Blob([byteArray], { type: mimeType });
+            
+            // Convert image to JPG format using Canvas API (Mercari requires .jpg)
+            const img = await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = reject;
+              img.src = URL.createObjectURL(originalBlob);
+            });
+            
+            // Create canvas and draw image
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // Convert canvas to JPG Blob
+            const jpgBlob = await new Promise((resolve) => {
+              canvas.toBlob((blob) => {
+                resolve(blob);
+              }, 'image/jpeg', 0.95); // 95% quality
+            });
+            
+            // Clean up object URL
+            URL.revokeObjectURL(img.src);
             
             // Create FormData
             const formData = new FormData();
@@ -607,10 +650,11 @@ async function fillMercariFormWithPuppeteer(page, data, capturedTokens = {}) {
             
             formData.append('operations', JSON.stringify(operations));
             formData.append('map', JSON.stringify(map));
-            // Mercari expects filename to be "blob" in the FormData
-            formData.append('1', blob, 'blob');
+            // Mercari expects filename to be "blob" in the FormData, and file must be .jpg
+            formData.append('1', jpgBlob, 'blob');
             
             // Build headers with the provided tokens
+            // NOTE: Do NOT set Content-Type header - let FormData/browser set it automatically with boundary
             const fetchHeaders = {
               'accept': '*/*',
               'accept-language': 'en-US,en;q=0.9',
@@ -629,6 +673,7 @@ async function fillMercariFormWithPuppeteer(page, data, capturedTokens = {}) {
             }
             
             // Make fetch request
+            // Browser will automatically set Content-Type with boundary for FormData
             const response = await fetch('https://www.mercari.com/v1/api', {
               method: 'POST',
               headers: fetchHeaders,
