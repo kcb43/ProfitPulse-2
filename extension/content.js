@@ -624,6 +624,7 @@ async function selectMercariDropdown(testId, optionText, partialMatch = false) {
 // Helper: Type into autocomplete/searchable dropdown
 async function typeIntoMercariDropdown(testId, text) {
   try {
+    console.log(`🔍 [TYPE DROPDOWN ${testId}] Starting, text: "${text}"`);
     let dropdown = document.querySelector(`[data-testid="${testId}"]`);
     
     // Try alternative selectors
@@ -632,16 +633,20 @@ async function typeIntoMercariDropdown(testId, text) {
     }
     
     if (!dropdown) {
+      console.log(`❌ [TYPE DROPDOWN ${testId}] Dropdown not found`);
       return false;
     }
+    
+    console.log(`✅ [TYPE DROPDOWN ${testId}] Dropdown found`);
     
     // Scroll into view
     dropdown.scrollIntoView({ behavior: 'smooth', block: 'center' });
     await sleep(200);
     
     // Click to open/focus
+    console.log(`🖱️ [TYPE DROPDOWN ${testId}] Clicking dropdown to open...`);
     dropdown.click();
-    await sleep(500); // Wait for dropdown to open
+    await sleep(800); // Increased wait time for dropdown to open
     
     // Try to find an input field within or after the dropdown
     let input = dropdown.querySelector('input[type="text"]') ||
@@ -658,48 +663,82 @@ async function typeIntoMercariDropdown(testId, text) {
       }
     }
     
+    // Also try finding input by looking for search/autocomplete inputs
+    if (!input || input.tagName !== 'INPUT') {
+      input = document.querySelector('input[type="text"][placeholder*="brand" i]') ||
+              document.querySelector('input[type="text"][placeholder*="search" i]') ||
+              document.querySelector('input[autocomplete]') ||
+              document.querySelector('[role="combobox"] input');
+    }
+    
+    console.log(`🔍 [TYPE DROPDOWN ${testId}] Input found:`, input ? 'Yes' : 'No');
+    
     if (input && input.tagName === 'INPUT') {
+      console.log(`📝 [TYPE DROPDOWN ${testId}] Typing into input: "${text}"`);
+      
       // Focus the input
       input.focus();
-      await sleep(200);
+      await sleep(300);
       
       // Clear and set value
       input.value = '';
-      input.value = text;
       
-      // Dispatch events to trigger autocomplete
-      input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+      // Type character by character to trigger autocomplete properly
+      for (let i = 0; i < text.length; i++) {
+        input.value = text.substring(0, i + 1);
+        input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        input.dispatchEvent(new Event('keydown', { bubbles: true, cancelable: true }));
+        await sleep(100);
+      }
+      
+      // Dispatch final events
       input.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
-      input.dispatchEvent(new KeyboardEvent('keyup', { key: 'a', bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
       
-      await sleep(800); // Wait for autocomplete suggestions
+      await sleep(1200); // Wait for autocomplete suggestions
       
       // Try to find and click the matching option
       const options = Array.from(document.querySelectorAll('[role="option"]'));
-      const matchingOption = options.find(opt => 
-        opt.textContent?.toLowerCase().includes(text.toLowerCase())
-      );
+      console.log(`🔍 [TYPE DROPDOWN ${testId}] Found ${options.length} options`);
+      
+      const matchingOption = options.find(opt => {
+        const optText = opt.textContent?.trim().toLowerCase();
+        const searchText = text.toLowerCase();
+        return optText && (optText.includes(searchText) || searchText.includes(optText));
+      });
       
       if (matchingOption) {
+        console.log(`✅ [TYPE DROPDOWN ${testId}] Found matching option: "${matchingOption.textContent?.trim()}"`);
+        matchingOption.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        await sleep(200);
         matchingOption.click();
-        await sleep(300);
+        await sleep(500);
         return true;
+      } else {
+        console.log(`⚠️ [TYPE DROPDOWN ${testId}] No matching option found, trying Enter key...`);
+        
+        // If no matching option found, try pressing Enter to accept typed value
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true }));
+        input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', bubbles: true }));
+        await sleep(500);
+        
+        // Check if value was accepted by checking dropdown value
+        const dropdownAfter = document.querySelector(`[data-testid="${testId}"]`);
+        const dropdownValue = dropdownAfter?.textContent?.trim() || dropdownAfter?.value?.trim() || '';
+        console.log(`📋 [TYPE DROPDOWN ${testId}] Dropdown value after Enter: "${dropdownValue}"`);
+        
+        if (dropdownValue && dropdownValue.toLowerCase().includes(text.toLowerCase())) {
+          console.log(`✅ [TYPE DROPDOWN ${testId}] Value accepted via Enter key`);
+          return true;
+        }
       }
-      
-      // If no matching option found, try pressing Enter
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-      input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-      await sleep(300);
-      
-      // Check if value was accepted
-      if (input.value.toLowerCase().includes(text.toLowerCase())) {
-        return true;
-      }
+    } else {
+      console.log(`❌ [TYPE DROPDOWN ${testId}] Input field not found`);
     }
     
     return false;
   } catch (error) {
+    console.error(`❌ [TYPE DROPDOWN ${testId}] Error:`, error);
     console.error(`Error typing into dropdown [${testId}]:`, error);
     return false;
   }
@@ -1558,32 +1597,79 @@ async function setMercariBrand(brand) {
   if (!brand) return false;
   
   console.log(`📝 [BRAND] Setting brand: "${brand}"`);
+  
+  // First, find the brand dropdown element
+  let brandDropdown = document.querySelector('[data-testid="Brand"]');
+  console.log(`🔍 [BRAND] Brand dropdown found:`, brandDropdown ? 'Yes' : 'No');
+  
+  if (!brandDropdown) {
+    // Try alternative selectors
+    brandDropdown = document.querySelector('[data-testid*="Brand" i]') ||
+                    document.querySelector('[data-testid*="brand" i]');
+    console.log(`🔍 [BRAND] Brand dropdown (alternative):`, brandDropdown ? 'Yes' : 'No');
+  }
+  
+  if (!brandDropdown) {
+    console.error(`❌ [BRAND] Brand dropdown not found on page`);
+    return false;
+  }
+  
+  // Log current state
+  const currentValue = brandDropdown.textContent?.trim() || brandDropdown.value?.trim() || '';
+  console.log(`📋 [BRAND] Current brand value: "${currentValue}"`);
+  console.log(`📋 [BRAND] Dropdown element:`, brandDropdown);
+  console.log(`📋 [BRAND] Dropdown classes:`, brandDropdown.className);
+  console.log(`📋 [BRAND] Dropdown attributes:`, Array.from(brandDropdown.attributes).map(a => `${a.name}="${a.value}"`).join(', '));
+  
   let brandSuccess = false;
   
   // Try multiple approaches - but stop as soon as one succeeds
   // 1. Try typing first (Mercari brand is searchable)
+  console.log(`🔍 [BRAND] Attempting method 1: typeIntoMercariDropdown`);
   brandSuccess = await typeIntoMercariDropdown('Brand', brand);
+  console.log(`📋 [BRAND] Method 1 result:`, brandSuccess ? 'Success' : 'Failed');
+  
   if (!brandSuccess) {
     // 2. If typing failed, try dropdown selection with exact match
+    console.log(`🔍 [BRAND] Attempting method 2: selectMercariDropdown (exact match)`);
     brandSuccess = await selectMercariDropdown('Brand', brand, false);
+    console.log(`📋 [BRAND] Method 2 result:`, brandSuccess ? 'Success' : 'Failed');
+    
     if (!brandSuccess) {
       // 3. If exact match failed, try partial match
+      console.log(`🔍 [BRAND] Attempting method 3: selectMercariDropdown (partial match)`);
       brandSuccess = await selectMercariDropdown('Brand', brand, true);
+      console.log(`📋 [BRAND] Method 3 result:`, brandSuccess ? 'Success' : 'Failed');
+      
       if (!brandSuccess && brand.includes(' ')) {
         // 4. Try with just the first word if brand has multiple words
         const firstWord = brand.split(' ')[0];
+        console.log(`🔍 [BRAND] Attempting method 4: selectMercariDropdown (first word: "${firstWord}")`);
         brandSuccess = await selectMercariDropdown('Brand', firstWord, true);
+        console.log(`📋 [BRAND] Method 4 result:`, brandSuccess ? 'Success' : 'Failed');
       }
     }
   }
   
+  // Verify the brand was actually set
   if (brandSuccess) {
-    console.log(`✅ [BRAND] Brand set successfully: "${brand}"`);
+    await sleep(500); // Wait for UI to update
+    const brandDropdownAfter = document.querySelector('[data-testid="Brand"]');
+    const newValue = brandDropdownAfter?.textContent?.trim() || brandDropdownAfter?.value?.trim() || '';
+    console.log(`📋 [BRAND] Brand value after setting: "${newValue}"`);
+    
+    // Check if it actually changed
+    if (newValue && newValue !== 'Select brand' && newValue !== 'Brand' && newValue.length > 1) {
+      console.log(`✅ [BRAND] Brand set successfully: "${brand}" -> "${newValue}"`);
+      return true;
+    } else {
+      console.warn(`⚠️ [BRAND] Brand setting reported success but value is still: "${newValue}"`);
+      return false;
+    }
   } else {
-    console.warn(`⚠️ [BRAND] Failed to set brand: "${brand}"`);
+    console.warn(`⚠️ [BRAND] All methods failed to set brand: "${brand}"`);
+    return false;
   }
-  
-  return brandSuccess;
 }
 
 // Helper function to wait for and close popups
