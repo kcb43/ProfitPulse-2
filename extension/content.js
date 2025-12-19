@@ -382,7 +382,7 @@ async function createMercariListing(listingData) {
     // Handle any popups that might have appeared after photo upload
     console.log('🔍 [MERCARI] Checking for popups after photo upload...');
     await handleMercariPopups();
-    await sleep(1000); // Wait for popup to fully close
+    await sleep(300); // Reduced wait time
     
     // Verify and re-set brand if needed (popups might have cleared it)
     if (listingData.brand) {
@@ -394,14 +394,14 @@ async function createMercariListing(listingData) {
       if (!brandValue || brandValue === 'Select brand' || brandValue === 'Brand' || brandValue.length < 2) {
         console.log('⚠️ [MERCARI] Brand appears to be missing, re-setting...');
         await setMercariBrand(listingData.brand);
-        await sleep(1000); // Wait for brand to be set
+        await sleep(500); // Reduced wait time
       } else {
         console.log(`✅ [MERCARI] Brand is still set: "${brandValue}"`);
       }
     }
     
-    console.log('📤 [MERCARI] Submitting form...');
-    // Submit the form (only if photos are present)
+    console.log('📤 [MERCARI] Submitting form immediately...');
+    // Submit the form (only if photos are present) - brand verification happens inside
     const submitResult = await submitMercariForm(listingData.brand);
     
     if (submitResult.success) {
@@ -1702,30 +1702,36 @@ async function submitMercariForm(brandToVerify = null) {
   
   console.log('✅ [FORM SUBMIT] List button found');
   
-  // Handle any popups before submission
-  await handleMercariPopups();
-  await sleep(500);
+  // Quick popup check (non-blocking)
+  handleMercariPopups().catch(() => {}); // Don't wait for this
   
-  // Verify and re-set brand if needed (popups might have cleared it)
+  // Quick brand verification (only if needed)
   if (brandToVerify) {
-    console.log('🔍 [FORM SUBMIT] Verifying brand before submission...');
     const brandDropdown = document.querySelector('[data-testid="Brand"]');
     const brandValue = brandDropdown?.textContent?.trim() || brandDropdown?.value?.trim() || '';
     
-    // Check if brand is empty or shows placeholder
+    // Only re-set if brand is actually missing
     if (!brandValue || brandValue === 'Select brand' || brandValue === 'Brand' || brandValue.length < 2) {
-      console.log('⚠️ [FORM SUBMIT] Brand appears to be missing, re-setting before submission...');
-      const brandSet = await setMercariBrand(brandToVerify);
-      if (brandSet) {
-        await sleep(1000); // Wait for brand to be set
-      }
-    } else {
-      console.log(`✅ [FORM SUBMIT] Brand is set: "${brandValue}"`);
+      console.log('⚠️ [FORM SUBMIT] Brand missing, re-setting quickly...');
+      await setMercariBrand(brandToVerify);
+      await sleep(300); // Minimal wait
     }
   }
   
+  // Re-fetch button right before clicking to ensure we have the latest state
+  const finalSubmitBtn = document.querySelector('[data-testid="ListButton"]') ||
+                         document.querySelector('button[type="submit"]');
+  
+  if (!finalSubmitBtn) {
+    console.error('❌ [FORM SUBMIT] List button disappeared');
+    return {
+      success: false,
+      error: 'List button not found on page'
+    };
+  }
+  
   // Check if button is enabled (Mercari disables it if form is invalid)
-  if (submitBtn.disabled) {
+  if (finalSubmitBtn.disabled) {
     console.warn('⚠️ [FORM SUBMIT] List button is disabled - checking form validation...');
     // Try to identify what's missing
     const titleInput = document.querySelector('[data-testid="Title"]') || document.querySelector('#sellName');
@@ -1751,7 +1757,28 @@ async function submitMercariForm(brandToVerify = null) {
     };
   }
   
-  submitBtn.click();
+  // Click immediately - use multiple methods for reliability
+  console.log('🖱️ [FORM SUBMIT] Clicking List button immediately...');
+  
+  // Method 1: Direct click on button (immediate)
+  finalSubmitBtn.click();
+  
+  // Method 2: Also trigger form submit event (backup, immediate)
+  const form = finalSubmitBtn.closest('form');
+  if (form) {
+    const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+    form.dispatchEvent(submitEvent);
+  }
+  
+  // Method 3: Also dispatch mouse events for better compatibility (immediate)
+  const mouseDown = new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window });
+  const mouseUp = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window });
+  const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+  finalSubmitBtn.dispatchEvent(mouseDown);
+  finalSubmitBtn.dispatchEvent(mouseUp);
+  finalSubmitBtn.dispatchEvent(clickEvent);
+  
+  console.log('✅ [FORM SUBMIT] List button clicked');
   
   // Wait for navigation/success page
   await sleep(5000);
