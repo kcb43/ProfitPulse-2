@@ -322,10 +322,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         };
         
         // VENDOO-STYLE APPROACH: Create hidden tab, let content script load, work silently
-        // The tab is created with active: false so it never becomes visible
-        console.log('🔧 [MERCARI] Creating hidden background tab (like Vendoo - no visible tabs)...');
+        // AGGRESSIVE HIDING: Prevent tab from EVER becoming visible
+        console.log('🔧 [MERCARI] Creating hidden background tab (completely invisible)...');
         
-        // Create tab in background (active: false = never visible to user)
+        // STEP 1: Save current active tab to restore focus immediately
+        const currentTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const originalActiveTab = currentTabs[0];
+        const originalTabId = originalActiveTab?.id;
+        
+        // STEP 2: Create tab in background (active: false = never visible to user)
         const hiddenTab = await chrome.tabs.create({
           url: 'https://www.mercari.com/sell/',
           active: false, // CRITICAL: Never switch to this tab
@@ -334,30 +339,103 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         console.log('✅ [MERCARI] Hidden tab created:', hiddenTab.id);
         
-        // Immediately move tab to end (makes it even less visible)
+        // STEP 3: IMMEDIATELY restore focus to original tab (prevents any visible flash)
+        if (originalTabId) {
+          try {
+            await chrome.tabs.update(originalTabId, { active: true });
+            await chrome.windows.update((await chrome.tabs.get(originalTabId)).windowId, { focused: true });
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+        
+        // STEP 4: Move hidden tab to end IMMEDIATELY
         try {
           await chrome.tabs.move(hiddenTab.id, { index: -1 });
         } catch (e) {
           // Ignore move errors
         }
         
-        // Aggressive tab hiding: Ensure it stays hidden
+        // STEP 5: Aggressive tab hiding function
         const keepTabHidden = async () => {
           try {
+            // Multiple hiding strategies
             await chrome.tabs.update(hiddenTab.id, { active: false });
+            
+            // Restore original tab focus if we have it
+            if (originalTabId) {
+              try {
+                const currentActive = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (currentActive[0]?.id === hiddenTab.id) {
+                  // Hidden tab became active! Immediately switch back
+                  await chrome.tabs.update(originalTabId, { active: true });
+                }
+              } catch (e) {}
+            }
           } catch (e) {}
         };
         
-        // Keep tab hidden continuously for first few seconds
-        const hideInterval = setInterval(keepTabHidden, 100);
-        setTimeout(() => clearInterval(hideInterval), 3000);
+        // STEP 6: Set up aggressive hiding listeners BEFORE anything else
+        const hideTabListener = async (activeInfo) => {
+          if (activeInfo.tabId === hiddenTab.id) {
+            console.log('🛡️ [MERCARI] Hidden tab activated! Immediately hiding...');
+            await keepTabHidden();
+            // Also move to end
+            try {
+              await chrome.tabs.move(hiddenTab.id, { index: -1 });
+            } catch (e) {}
+          }
+        };
+        
+        // Window focus listener - prevent window from focusing due to hidden tab
+        const windowFocusListener = async (windowId) => {
+          if (windowId === chrome.windows.WINDOW_ID_NONE) return;
+          
+          try {
+            const windowInfo = await chrome.windows.get(windowId, { populate: true });
+            const activeTab = windowInfo.tabs?.find(tab => tab.active && tab.id === hiddenTab.id);
+            
+            if (activeTab) {
+              console.log('🛡️ [MERCARI] Window focused with hidden tab active! Immediately hiding...');
+              await keepTabHidden();
+              // Restore original tab focus
+              if (originalTabId) {
+                await chrome.tabs.update(originalTabId, { active: true });
+                await chrome.windows.update(windowId, { focused: true });
+              }
+            }
+          } catch (e) {
+            // Ignore errors
+          }
+        };
+        
+        chrome.tabs.onActivated.addListener(hideTabListener);
+        chrome.windows.onFocusChanged.addListener(windowFocusListener);
+        
+        // STEP 7: Keep tab hidden continuously (very aggressive - every 50ms)
+        const hideInterval = setInterval(keepTabHidden, 50);
+        
+        // Clean up listeners after automation completes
+        const cleanupListeners = () => {
+          clearInterval(hideInterval);
+          chrome.tabs.onActivated.removeListener(hideTabListener);
+          chrome.windows.onFocusChanged.removeListener(windowFocusListener);
+        };
+        
+        // Auto-cleanup after 30 seconds
+        setTimeout(cleanupListeners, 30000);
         
         // Wait for page to load and content script to be ready
         await new Promise((resolve) => {
           const listener = (tabId, info) => {
             if (tabId === hiddenTab.id && info.status === 'complete') {
               chrome.tabs.onUpdated.removeListener(listener);
-              keepTabHidden(); // Ensure hidden after load
+              // Aggressively ensure hidden after load
+              keepTabHidden();
+              // Restore original tab focus
+              if (originalTabId) {
+                chrome.tabs.update(originalTabId, { active: true }).catch(() => {});
+              }
               resolve();
             }
           };
@@ -366,6 +444,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Timeout after 15 seconds
           setTimeout(() => {
             chrome.tabs.onUpdated.removeListener(listener);
+            keepTabHidden(); // Ensure hidden on timeout too
             resolve();
           }, 15000);
         });
@@ -405,6 +484,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Wait a bit to ensure automation has started
         setTimeout(async () => {
           try {
+            // Clean up listeners first
+            cleanupListeners();
+            
             // Check if tab still exists before closing
             await chrome.tabs.get(hiddenTab.id);
             // Close tab silently
@@ -412,6 +494,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.log('🧹 [MERCARI] Hidden tab closed');
           } catch (e) {
             // Tab already closed or doesn't exist
+            cleanupListeners(); // Still clean up listeners
           }
         }, 5000); // Close after 5 seconds (automation should be done by then)
         
