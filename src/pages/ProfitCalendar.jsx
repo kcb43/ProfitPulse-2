@@ -75,9 +75,10 @@ export default function ProfitCalendar() {
 
       const formattedDate = format(saleDate, 'yyyy-MM-dd');
       if (!aggregatedProfitByDay[formattedDate]) {
-        aggregatedProfitByDay[formattedDate] = { profit: 0, sales: [] };
+        aggregatedProfitByDay[formattedDate] = { profit: 0, totalSpend: 0, sales: [] };
       }
       aggregatedProfitByDay[formattedDate].profit += (sale.profit || 0);
+      aggregatedProfitByDay[formattedDate].totalSpend += (sale.purchase_price || 0);
       aggregatedProfitByDay[formattedDate].sales.push(sale);
     });
 
@@ -234,7 +235,7 @@ export default function ProfitCalendar() {
                     key={index}
                     onClick={() => dayData && handleDayClick(day, dayData.sales)}
                     className={`
-                      aspect-square p-1 rounded-lg text-center flex flex-col justify-between
+                      aspect-square p-1 rounded-lg text-center flex flex-col justify-between items-center
                       ${!isCurrentMonth ? 'opacity-30' : ''}
                       ${isToday ? 'ring-2 ring-blue-500 md:ring-emerald-400/70' : ''}
                       ${dayData ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}
@@ -252,8 +253,13 @@ export default function ProfitCalendar() {
                       {format(day, 'd')}
                     </div>
                     {dayData && (
-                      <div className="text-[9px] sm:text-[10px] font-bold text-green-600 dark:text-green-400 md:text-sm md:text-inherit">
-                        ${profit.toFixed(0)}
+                      <div className="flex flex-col items-center gap-0.5 w-full">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-green-600 dark:text-green-400 md:text-sm md:text-inherit">
+                          ${profit.toFixed(0)}
+                        </div>
+                        <div className="text-[8px] sm:text-[9px] font-medium text-gray-500 dark:text-gray-400 md:text-xs md:text-slate-400">
+                          ${dayData.totalSpend.toFixed(0)} spent
+                        </div>
                       </div>
                     )}
                   </div>

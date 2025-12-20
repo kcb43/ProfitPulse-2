@@ -177,31 +177,15 @@ export default function SoldItemDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 min-w-0">
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6 min-w-0">
-            <Card className="border-0 shadow-lg overflow-hidden dark:bg-gray-800">
-              <div className="aspect-video bg-gray-100 dark:bg-gray-800 flex items-center justify-center p-4">
-                <img 
-                  src={sale?.image_url || DEFAULT_IMAGE_URL} 
-                  alt={sale?.item_name} 
-                  className="w-full h-full object-contain max-w-full"
-                />
-              </div>
-            </Card>
-
-            {displayNotes && (
-              <Card className="border-0 shadow-sm dark:bg-gray-800">
-                <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
-                  <CardTitle className="text-base sm:text-lg flex items-center gap-2 dark:text-white">
-                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                    <span className="break-words">Notes</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 sm:px-6">
-                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 italic break-words">"{displayNotes}"</p>
-                </CardContent>
-              </Card>
-            )}
+        <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8 min-w-0">
+          <div className="rounded-lg overflow-hidden shadow-lg bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700">
+            <div className="aspect-video bg-white dark:bg-gray-900 flex items-center justify-center p-6 sm:p-8">
+              <img 
+                src={sale?.image_url || DEFAULT_IMAGE_URL} 
+                alt={sale?.item_name} 
+                className="w-full h-full object-contain max-w-full rounded-lg"
+              />
+            </div>
           </div>
 
           <div className="space-y-4 sm:space-y-6 min-w-0">
@@ -382,6 +366,20 @@ export default function SoldItemDetail() {
                 Delete
               </Button>
             </div>
+
+            {displayNotes && (
+              <Card className="border-0 shadow-sm dark:bg-gray-800">
+                <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2 dark:text-white">
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                    <span className="break-words">Notes</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 sm:px-6">
+                  <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 italic break-words">"{displayNotes}"</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

@@ -178,11 +178,11 @@ export default function GalleryPage() {
                     />
                     <div className="absolute top-2 right-2">
                       {sale.profit >= 0 ? (
-                        <Badge className="bg-green-600 hover:bg-green-600 text-white text-[10px] px-1.5 py-0.5">
+                        <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs px-2 py-1">
                           +${sale.profit?.toFixed(0) || '0'}
                         </Badge>
                       ) : (
-                        <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] px-1.5 py-0.5">
+                        <Badge className="bg-red-600 hover:bg-red-600 text-white text-xs px-2 py-1">
                           -${Math.abs(sale.profit)?.toFixed(0) || '0'}
                         </Badge>
                       )}

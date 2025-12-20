@@ -86,15 +86,15 @@ export default function ShowcaseItemModal({ item, isOpen, onClose }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0">
-        <div className="flex flex-col md:grid md:grid-cols-2">
-          <div className="order-1 md:order-2 min-h-[340px] md:min-h-0">
+        <div className="flex flex-col">
+          <div className="min-h-[340px]">
             <img 
               src={item.image_url || DEFAULT_IMAGE_URL} 
               alt={item.item_name} 
-              className="w-full h-[340px] md:h-full object-cover md:rounded-r-lg" 
+              className="w-full h-[340px] object-cover rounded-t-lg" 
             />
           </div>
-          <div className="p-4 md:p-6 order-2 md:order-1">
+          <div className="p-4 md:p-6">
             <DialogHeader className="mb-4">
               <DialogTitle className="text-lg font-bold pr-6">{item.item_name}</DialogTitle>
             </DialogHeader>

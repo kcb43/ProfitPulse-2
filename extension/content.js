@@ -17,11 +17,18 @@ const MARKETPLACE = (() => {
 // Marketplace-specific login detection
 const LOGIN_DETECTORS = {
   mercari: () => {
+    // Fast check: Check cookies first (fastest)
+    if (document.cookie.includes('mercari_session') || document.cookie.includes('mercari_user')) {
+      return true;
+    }
+    // Then check DOM elements (in order of most likely to appear first)
     return !!(
       document.querySelector('[data-testid="UserMenuButton"]') ||
       document.querySelector('.merUserMenu') ||
       document.querySelector('[aria-label*="Account"]') ||
-      document.querySelector('a[href*="/mypage"]')
+      document.querySelector('a[href*="/mypage"]') ||
+      document.querySelector('[data-testid="user-menu"]') ||
+      document.querySelector('button[aria-label*="Account"]')
     );
   },
   
@@ -156,10 +163,23 @@ function getUserInfo() {
   };
 }
 
+// Cache login status to avoid repeated checks
+let cachedLoginStatus = null;
+let lastLoginCheck = 0;
+const LOGIN_CHECK_CACHE_MS = 500; // Cache for 500ms
+
 // Send login status to background script AND update localStorage for web app
-function updateLoginStatus() {
+function updateLoginStatus(force = false) {
   try {
+    // Use cache if recent check was done (unless forced)
+    const now = Date.now();
+    if (!force && cachedLoginStatus && (now - lastLoginCheck) < LOGIN_CHECK_CACHE_MS) {
+      return cachedLoginStatus;
+    }
+    
     const userInfo = getUserInfo();
+    cachedLoginStatus = userInfo;
+    lastLoginCheck = now;
     
     // Update localStorage so Profit Orbit web app can read it
     if (userInfo.loggedIn) {
@@ -173,7 +193,7 @@ function updateLoginStatus() {
     // Check if extension context is still valid before sending message
     if (!chrome.runtime?.id) {
       console.log('Extension context invalidated - please refresh the page');
-      return;
+      return userInfo;
     }
     
     // Send to background script
@@ -189,9 +209,21 @@ function updateLoginStatus() {
         console.log('Login status sent:', response);
       }
     });
+    
+    // Also update localStorage for Profit Orbit web app
+    localStorage.setItem(`profit_orbit_${MARKETPLACE}_connected`, userInfo.loggedIn ? 'true' : 'false');
+    if (userInfo.loggedIn && userInfo.userName) {
+      localStorage.setItem(`profit_orbit_${MARKETPLACE}_user`, JSON.stringify({
+        userName: userInfo.userName,
+        marketplace: userInfo.marketplace
+      }));
+    }
+    
+    return userInfo;
   } catch (error) {
     // Gracefully handle any errors
     console.log('Extension communication error (page may need refresh):', error.message);
+    return cachedLoginStatus || { loggedIn: false, marketplace: MARKETPLACE };
   }
 }
 
@@ -313,20 +345,50 @@ if (MARKETPLACE === 'mercari') {
 
 // Check login on page load
 if (MARKETPLACE) {
+  // Immediate check if DOM is ready
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    updateLoginStatus(true);
+  } else {
+    // Fast check on DOMContentLoaded (faster than 'load')
+    document.addEventListener('DOMContentLoaded', () => {
+      updateLoginStatus(true);
+    }, { once: true });
+  }
+  
+  // Also check on full page load (fallback)
   window.addEventListener('load', () => {
-    setTimeout(updateLoginStatus, 1500);
-  });
+    updateLoginStatus(true);
+  }, { once: true });
 
-  // Watch for login changes (SPA navigation)
+  // Watch for login changes (SPA navigation) - with debouncing
+  let mutationTimeout;
   const observer = new MutationObserver(() => {
-    clearTimeout(window.loginCheckTimeout);
-    window.loginCheckTimeout = setTimeout(updateLoginStatus, 2000);
+    clearTimeout(mutationTimeout);
+    // Reduced delay from 2000ms to 300ms for faster detection
+    mutationTimeout = setTimeout(() => updateLoginStatus(true), 300);
   });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  // Only observe if body exists, otherwise wait
+  if (document.body) {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  } else {
+    // Wait for body to exist
+    const bodyObserver = new MutationObserver(() => {
+      if (document.body) {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        bodyObserver.disconnect();
+      }
+    });
+    bodyObserver.observe(document.documentElement, {
+      childList: true
+    });
+  }
 
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -337,8 +399,9 @@ if (MARKETPLACE) {
     }
     
     if (message.type === 'CHECK_LOGIN') {
-      const userInfo = getUserInfo();
-      sendResponse({ status: userInfo });
+      // Force update and return fresh status
+      const userInfo = updateLoginStatus(true);
+      sendResponse({ status: userInfo || getUserInfo() });
       return true;
     }
     
