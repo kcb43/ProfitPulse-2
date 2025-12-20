@@ -504,7 +504,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       } catch (error) {
         console.error('❌ Error in Mercari listing flow:', error);
-        sendResponse({ success: false, error: error.message });
+        console.error('❌ Error stack:', error.stack);
+        console.error('❌ Error details:', {
+          message: error.message,
+          name: error.name,
+          workerWindowId: workerWindowId || 'none',
+          backgroundTabId: backgroundTab?.id || 'none'
+        });
+        
+        // Ensure we send a response even on error
+        try {
+          sendResponse({ 
+            success: false, 
+            error: error.message || 'Unknown error occurred during Mercari listing',
+            details: error.stack ? error.stack.split('\n')[0] : undefined
+          });
+        } catch (sendError) {
+          // Response already sent or channel closed
+          console.warn('⚠️ Could not send error response:', sendError);
+        }
       }
     })();
     
