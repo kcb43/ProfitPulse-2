@@ -304,6 +304,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     // Handle async response - Manifest V3 pattern
     (async () => {
+      // Declare variables outside try block so they're accessible in catch
+      let workerWindowId = null;
+      let backgroundTab = null;
+      
       try {
         // Helper function to check if content script is ready
         const isContentScriptReady = async (tabId, maxRetries = 5) => {
@@ -356,9 +360,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // User gesture ✅ (from website -> extension message)
         // Create popup window positioned off-screen - won't steal focus and is invisible
         
-        let workerWindowId = null;
-        let backgroundTab = null;
-        
         // Try to get existing worker window ID from storage
         try {
           const stored = await chrome.storage.session.get(['mercariWorkerWindowId']);
@@ -385,11 +386,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   });
                 }
                 
-                // Ensure window stays minimized and off-screen
-                await chrome.windows.update(workerWindowId, {
-                  focused: false,
-                  state: 'minimized'
-                });
+                // Ensure window stays off-screen and unfocused
+                try {
+                  await chrome.windows.update(workerWindowId, {
+                    focused: false,
+                    state: 'minimized'
+                  });
+                } catch (e) {
+                  // Popup windows might not support state, just ensure unfocused
+                  await chrome.windows.update(workerWindowId, {
+                    focused: false
+                  });
+                }
               } else {
                 // Window exists but wrong URL - update it
                 console.log('🔄 [MERCARI] Worker window exists but wrong URL, updating...');
@@ -397,10 +405,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   url: 'https://www.mercari.com/sell/'
                 });
                 backgroundTab = window.tabs[0];
-                await chrome.windows.update(workerWindowId, {
-                  focused: false,
-                  state: 'minimized'
-                });
+                try {
+                  await chrome.windows.update(workerWindowId, {
+                    focused: false,
+                    state: 'minimized'
+                  });
+                } catch (e) {
+                  // Popup windows might not support state, just ensure unfocused
+                  await chrome.windows.update(workerWindowId, {
+                    focused: false
+                  });
+                }
               }
             }
           } catch (e) {
@@ -420,9 +435,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             width: 1,
             height: 1,
             left: -10000, // Position off-screen
-            top: -10000,
-            state: 'minimized' // Minimize immediately
+            top: -10000
+            // Note: Popup windows don't support 'state' property
+            // They are effectively invisible due to size and position
           });
+          
+          // Try to minimize the window after creation (if supported)
+          try {
+            await chrome.windows.update(popupWindow.id, { state: 'minimized' });
+          } catch (e) {
+            // Popup windows might not support minimization, that's okay
+            console.log('ℹ️ [MERCARI] Could not minimize popup window (expected for popup type)');
+          }
           
           workerWindowId = popupWindow.id;
           backgroundTab = popupWindow.tabs?.[0] || (await chrome.tabs.query({ windowId: workerWindowId }))[0];
