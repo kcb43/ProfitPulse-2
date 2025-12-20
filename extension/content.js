@@ -683,10 +683,10 @@ async function createMercariListing(listingData, options = {}) {
     } else {
       // Only log as error if it's not a "might be processing" case
       if (submitResult.mightBeProcessing) {
-        // Silently handle - don't log (often false positive)
+        // Silently handle - don't log (often false positive, listing usually succeeds)
         // Frontend will show appropriate message
       } else {
-        // Only log actual errors, not warnings
+        // Log actual errors - these are real failures
         if (!submitResult.error?.includes('might be processing') && 
             !submitResult.error?.includes('status unclear')) {
           console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
@@ -2464,16 +2464,54 @@ async function submitMercariForm(brandToVerify = null) {
       }
     }
     
-    // Re-fetch button right before clicking to ensure we have the latest state (cache-busting)
-    await sleep(100); // Small delay to ensure DOM is stable
-    const finalSubmitBtn = document.querySelector('[data-testid="ListButton"]') ||
-                           document.querySelector('button[type="submit"]') ||
-                           Array.from(document.querySelectorAll('button')).find(btn => 
-                             btn.textContent?.trim().toLowerCase().includes('list')
-                           );
+    // Wait for Mercari's form validation to complete and button to become enabled
+    // Mercari validates the form asynchronously, so we need to wait
+    console.log('⏳ [FORM SUBMIT] Waiting for form validation to complete...');
+    let finalSubmitBtn = null;
+    let buttonEnabled = false;
+    
+    // Wait up to 5 seconds for button to become enabled
+    for (let waitAttempt = 0; waitAttempt < 10; waitAttempt++) {
+      await sleep(500); // Check every 500ms
+      
+      // Re-fetch button to get latest state
+      finalSubmitBtn = document.querySelector('[data-testid="ListButton"]') ||
+                       document.querySelector('button[type="submit"]') ||
+                       Array.from(document.querySelectorAll('button')).find(btn => 
+                         btn.textContent?.trim().toLowerCase().includes('list')
+                       );
+      
+      if (!finalSubmitBtn) {
+        console.warn(`⚠️ [FORM SUBMIT] Button not found (attempt ${waitAttempt + 1}/10)`);
+        continue;
+      }
+      
+      // Check if button is enabled
+      if (!finalSubmitBtn.disabled && finalSubmitBtn.offsetParent !== null) {
+        buttonEnabled = true;
+        console.log(`✅ [FORM SUBMIT] Button enabled after ${(waitAttempt + 1) * 500}ms`);
+        break;
+      }
+      
+      // Trigger validation by blurring active inputs (helps Mercari validate)
+      if (waitAttempt === 2 || waitAttempt === 5) {
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.tagName === 'INPUT') {
+          activeElement.blur();
+          activeElement.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+        // Also trigger change events on all inputs to help validation
+        const allInputs = document.querySelectorAll('input, textarea, select');
+        allInputs.forEach(input => {
+          if (input.value) {
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      }
+    }
     
     if (!finalSubmitBtn) {
-      console.error('❌ [FORM SUBMIT] List button disappeared after verification');
+      console.error('❌ [FORM SUBMIT] List button not found after waiting');
       isSubmittingMercariForm = false;
       return {
         success: false,
@@ -2482,7 +2520,7 @@ async function submitMercariForm(brandToVerify = null) {
     }
     
     // Check if button is enabled (Mercari disables it if form is invalid)
-    if (finalSubmitBtn.disabled) {
+    if (!buttonEnabled && finalSubmitBtn.disabled) {
       console.warn('⚠️ [FORM SUBMIT] List button is disabled - checking form validation...');
       // Try to identify what's missing (fresh queries to avoid cache)
       const titleInput = document.querySelector('[data-testid="Title"]') || document.querySelector('#sellName');
@@ -2550,10 +2588,47 @@ async function submitMercariForm(brandToVerify = null) {
         buttonVisible: finalSubmitBtn.offsetParent !== null
       });
       
+      // Try one more time to trigger validation by clicking on form elements
+      console.log('🔄 [FORM SUBMIT] Attempting to trigger validation one more time...');
+      const titleInputRetry = document.querySelector('[data-testid="Title"]');
+      const priceInputRetry = document.querySelector('[data-testid="Price"]');
+      
+      if (titleInputRetry) {
+        titleInputRetry.focus();
+        titleInputRetry.blur();
+        titleInputRetry.dispatchEvent(new Event('blur', { bubbles: true }));
+      }
+      if (priceInputRetry) {
+        priceInputRetry.focus();
+        priceInputRetry.blur();
+        priceInputRetry.dispatchEvent(new Event('blur', { bubbles: true }));
+      }
+      
+      // Wait a bit more for validation
+      await sleep(1000);
+      
+      // Check button again
+      finalSubmitBtn = document.querySelector('[data-testid="ListButton"]');
+      if (finalSubmitBtn && !finalSubmitBtn.disabled) {
+        console.log('✅ [FORM SUBMIT] Button enabled after validation trigger!');
+        buttonEnabled = true;
+      } else {
+        isSubmittingMercariForm = false;
+        return {
+          success: false,
+          error: `Form incomplete. Missing: ${missingFields.join(', ')}`,
+          details: { missingFields, fieldValues }
+        };
+      }
+    }
+    
+    // Final check - ensure button is enabled before clicking
+    if (!buttonEnabled && finalSubmitBtn.disabled) {
+      console.error('❌ [FORM SUBMIT] Button still disabled after all attempts');
       isSubmittingMercariForm = false;
       return {
         success: false,
-        error: `Form incomplete. Missing: ${missingFields.join(', ')}`,
+        error: 'List button is disabled - form validation failed',
         details: { missingFields, fieldValues }
       };
     }
@@ -2731,7 +2806,9 @@ async function submitMercariForm(brandToVerify = null) {
       // (not just processing - button disappearing is a good sign it's processing)
       if (stillHasButton) {
         console.error('❌ [FORM SUBMIT] Still on sell page after checks - error detected:', errorText);
-        console.error('📋 [FORM SUBMIT] Error element:', errorMsg);
+        if (errorMsg) {
+          console.error('📋 [FORM SUBMIT] Error element:', errorMsg);
+        }
         
         // Reset submission flag on error
         isSubmittingMercariForm = false;
