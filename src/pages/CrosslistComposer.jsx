@@ -33096,6 +33096,7 @@ export default function CrosslistComposer() {
   const [templateForms, setTemplateForms] = useState(() => createInitialTemplateState(null));
   const [activeForm, setActiveForm] = useState("general");
   const [isSaving, setIsSaving] = useState(false);
+  const [isMercariListing, setIsMercariListing] = useState(false);
   const [currentEditingItemId, setCurrentEditingItemId] = useState(null);
   const [packageDetailsDialogOpen, setPackageDetailsDialogOpen] = useState(false);
   const [brandIsCustom, setBrandIsCustom] = useState(false);
@@ -35578,6 +35579,10 @@ export default function CrosslistComposer() {
           minimumPrice: mercariForm.minimumPrice || '', // Minimum price for Smart Offers
         };
 
+        // Set loading state for Mercari listing
+        setIsMercariListing(true);
+        setIsSaving(true);
+
         // Send to extension for automation
         // The extension will handle the listing in a background tab
         window.postMessage({
@@ -35626,13 +35631,22 @@ export default function CrosslistComposer() {
                 }).catch(err => console.error('Error updating inventory:', err));
               }
             } else {
-              toast({
-                title: "Listing Failed",
-                description: event.data.error || "Failed to create Mercari listing. Please try manually.",
-                variant: "destructive",
-              });
+              // Only show error if it's not a "might be processing" case
+              if (!event.data.mightBeProcessing) {
+                toast({
+                  title: "Listing Failed",
+                  description: event.data.error || "Failed to create Mercari listing. Please check Mercari manually.",
+                  variant: "destructive",
+                });
+              } else {
+                toast({
+                  title: "Listing Processing",
+                  description: "The listing is being processed. Please check Mercari in a moment.",
+                });
+              }
             }
             
+            setIsMercariListing(false);
             setIsSaving(false);
           }
         };
@@ -35642,7 +35656,8 @@ export default function CrosslistComposer() {
         // Timeout after 60 seconds
         setTimeout(() => {
           window.removeEventListener('message', handleListingComplete);
-          if (isSaving) {
+          if (isMercariListing) {
+            setIsMercariListing(false);
             setIsSaving(false);
             toast({
               title: "Listing Timeout",
@@ -35652,12 +35667,6 @@ export default function CrosslistComposer() {
           }
         }, 60000);
 
-        // Timeout after 30 seconds
-        setTimeout(() => {
-          window.removeEventListener('message', handleListingComplete);
-          setIsSaving(false);
-        }, 30000);
-
       } catch (error) {
         console.error('Error creating Mercari listing:', error);
         toast({
@@ -35665,6 +35674,7 @@ export default function CrosslistComposer() {
           description: error.message || "Failed to create listing.",
           variant: "destructive",
         });
+        setIsMercariListing(false);
         setIsSaving(false);
       }
 
@@ -40704,8 +40714,21 @@ export default function CrosslistComposer() {
                   <Save className="h-4 w-4" />
                   Save
                 </Button>
-                <Button className="gap-2" onClick={() => handleListOnMarketplace("mercari")}>
-                  List on Mercari
+                <Button 
+                  className="gap-2" 
+                  onClick={() => handleListOnMarketplace("mercari")}
+                  disabled={isMercariListing}
+                >
+                  {isMercariListing ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Listing...
+                    </>
+                  ) : (
+                    <>
+                      List on Mercari
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -45995,8 +46018,21 @@ export default function CrosslistComposer() {
                           <Save className="h-4 w-4" />
                           Save
                         </Button>
-                        <Button className="gap-2" onClick={() => handleListOnMarketplace("mercari")}>
-                          List on Mercari
+                        <Button 
+                          className="gap-2" 
+                          onClick={() => handleListOnMarketplace("mercari")}
+                          disabled={isMercariListing}
+                        >
+                          {isMercariListing ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              Listing...
+                            </>
+                          ) : (
+                            <>
+                              List on Mercari
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>

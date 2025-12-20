@@ -321,7 +321,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         };
         
-        // Find Mercari tab or create new one (work silently like Vendoo)
+        // Find Mercari tab - ONLY use existing tabs, never create new ones
         const tabs = await chrome.tabs.query({ url: 'https://www.mercari.com/*' });
         
         let targetTab = null;
@@ -337,121 +337,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const isReady = await isContentScriptReady(mercariTab.id);
             if (isReady) {
               targetTab = mercariTab;
+              console.log('✅ [MERCARI TAB] Using existing Mercari tab:', targetTab.id);
             }
           }
         }
         
-        // If no valid tab found, create a new one (hidden in background like Vendoo)
+        // If no valid tab found, return error - don't create new tabs/windows
         if (!targetTab) {
-          // NEW STRATEGY: Create tab in a minimized window to prevent visibility
-          console.log('🔧 [MERCARI TAB] Creating hidden tab in minimized window...');
+          console.error('❌ [MERCARI TAB] No existing Mercari tab found');
+          sendResponse({ 
+            success: false, 
+            error: 'Please open a Mercari tab (https://www.mercari.com) and try again. The extension works silently in your existing tabs.' 
+          });
+          return;
+        }
+        
+        // Navigate existing tab to sell page if needed (silently, without switching to it)
+        if (!targetTab.url?.includes('/sell')) {
+          console.log('🌐 [MERCARI TAB] Navigating existing tab to sell page (staying in background)...');
+          await chrome.tabs.update(targetTab.id, { url: 'https://www.mercari.com/sell/' });
           
-          try {
-            // Try creating in a minimized window first
-            const newWindow = await chrome.windows.create({
-              url: 'https://www.mercari.com/sell/',
-              focused: false,
-              state: 'minimized', // Minimize immediately
-              type: 'normal'
-            });
-            
-            // Get the tab from the window
-            const tabs = await chrome.tabs.query({ windowId: newWindow.id });
-            targetTab = tabs[0];
-            
-            console.log('✅ [MERCARI TAB] Tab created in minimized window:', targetTab.id);
-            
-            // Add to tracking set for protection
-            mercariAutomationTabs.add(targetTab.id);
-            
-            // Remove from tracking after 60 seconds (cleanup)
-            setTimeout(() => {
-              mercariAutomationTabs.delete(targetTab.id);
-              console.log('🧹 [MERCARI TAB] Removed tab from tracking:', targetTab.id);
-            }, 60000);
-            
-            // Ensure window stays minimized
-            await chrome.windows.update(newWindow.id, { state: 'minimized' });
-            
-            // Set up continuous monitoring to keep window minimized
-            const keepWindowMinimized = setInterval(async () => {
-              try {
-                const windowInfo = await chrome.windows.get(newWindow.id);
-                if (windowInfo.state !== 'minimized') {
-                  console.log('🛡️ [MERCARI TAB] Window became visible, minimizing...');
-                  await chrome.windows.update(newWindow.id, { state: 'minimized' });
-                }
-                
-                // Also check tab active state
-                const tabInfo = await chrome.tabs.get(targetTab.id);
-                if (tabInfo.active) {
-                  await chrome.tabs.update(targetTab.id, { active: false });
-                }
-              } catch (error) {
-                // Window/tab might have been closed
-                clearInterval(keepWindowMinimized);
+          // Wait for navigation (but don't switch to the tab)
+          await new Promise((resolve) => {
+            const listener = (tabId, info) => {
+              if (tabId === targetTab.id && info.status === 'complete') {
+                chrome.tabs.onUpdated.removeListener(listener);
+                // Ensure tab stays inactive
+                chrome.tabs.update(targetTab.id, { active: false }).catch(() => {});
+                resolve();
               }
-            }, 100); // Check every 100ms
-            
-            // Clear the interval after 30 seconds
-            setTimeout(() => {
-              clearInterval(keepWindowMinimized);
-              console.log('🛡️ [MERCARI TAB] Stopped monitoring window visibility');
-            }, 30000);
-            
-            // Wait for page to load
-            await new Promise((resolve) => {
-              const listener = (tabId, info) => {
-                if (tabId === targetTab.id && info.status === 'complete') {
-                  chrome.tabs.onUpdated.removeListener(listener);
-                  // Ensure window stays minimized after load
-                  chrome.windows.update(newWindow.id, { state: 'minimized' }).catch(() => {});
-                  resolve();
-                }
-              };
-              chrome.tabs.onUpdated.addListener(listener);
-            });
-            
-            // Wait for content script
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
-            console.log('✅ [MERCARI TAB] Tab setup complete in minimized window');
-            
-          } catch (minimizedError) {
-            // Fallback: Create tab normally but with aggressive hiding
-            console.warn('⚠️ [MERCARI TAB] Minimized window failed, using fallback:', minimizedError);
-            
-            targetTab = await chrome.tabs.create({
-              url: 'https://www.mercari.com/sell/',
-              active: false,
-              pinned: false
-            });
-            
-            mercariAutomationTabs.add(targetTab.id);
-            setTimeout(() => mercariAutomationTabs.delete(targetTab.id), 60000);
-            
-            // Move to end and hide aggressively
-            await chrome.tabs.move(targetTab.id, { index: -1 }).catch(() => {});
-            await Promise.all([
-              chrome.tabs.update(targetTab.id, { active: false }),
-              chrome.tabs.update(targetTab.id, { active: false })
-            ]).catch(() => {});
-            
-            // Wait for page load
-            await new Promise((resolve) => {
-              const listener = (tabId, info) => {
-                if (tabId === targetTab.id && info.status === 'complete') {
-                  chrome.tabs.onUpdated.removeListener(listener);
-                  chrome.tabs.update(targetTab.id, { active: false }).catch(() => {});
-                  chrome.tabs.move(targetTab.id, { index: -1 }).catch(() => {});
-                  resolve();
-                }
-              };
-              chrome.tabs.onUpdated.addListener(listener);
-            });
-            
-            await new Promise(resolve => setTimeout(resolve, 300));
-          }
+            };
+            chrome.tabs.onUpdated.addListener(listener);
+          });
+          
+          // Wait for content script to be ready
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
         
         // Send listing data with retry logic (silently, like Vendoo)

@@ -249,11 +249,7 @@ let hasWarnedAboutInvalidContext = false;
 // Helper to safely access chrome.storage with invalidated context handling
 const safeChromeStorageGet = (keys, callback) => {
   if (!checkExtensionContext()) {
-    // Only warn once per page load to reduce console noise during development
-    if (!hasWarnedAboutInvalidContext) {
-      console.warn('⚠️ [CHROME STORAGE] Extension context invalidated - this is normal if you reloaded the extension. Please refresh this page.');
-      hasWarnedAboutInvalidContext = true;
-    }
+    // Silently handle invalidated context - don't log warnings (too noisy)
     if (callback) callback(null);
     return;
   }
@@ -471,7 +467,7 @@ let isCreatingMercariListing = false;
 async function createMercariListing(listingData, options = {}) {
   // Prevent multiple simultaneous calls
   if (isCreatingMercariListing) {
-    console.warn('⚠️ [MERCARI] Listing creation already in progress, skipping...');
+    // Silently return - don't log warning (user might click multiple times)
     return {
       success: false,
       error: 'Listing creation already in progress'
@@ -643,15 +639,14 @@ async function createMercariListing(listingData, options = {}) {
     } else {
       // Only log as error if it's not a "might be processing" case
       if (submitResult.mightBeProcessing) {
-        console.warn('⚠️ [MERCARI] Listing status unclear - might still be processing:', submitResult.error);
+        // Silently handle - don't log (often false positive)
+        // Frontend will show appropriate message
       } else {
-        console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
-        if (submitResult.details) {
-          console.error('📋 [MERCARI] Error details:', submitResult.details);
+        // Only log actual errors, not warnings
+        if (!submitResult.error?.includes('might be processing') && 
+            !submitResult.error?.includes('status unclear')) {
+          console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
         }
-      }
-      if (submitResult.url) {
-        console.log('📋 [MERCARI] Current URL:', submitResult.url);
       }
     }
     
@@ -2248,7 +2243,11 @@ async function setMercariBrand(brand) {
       return false;
     }
   } else {
-    console.warn(`⚠️ [BRAND] All methods failed to set brand: "${brand}"`);
+    // Don't log warning if brand setting failed - might be optional or already set
+    // Only log if we're in debug mode
+    if (window.location.search.includes('debug=true')) {
+      console.warn(`⚠️ [BRAND] All methods failed to set brand: "${brand}"`);
+    }
     return false;
   }
 }
@@ -2662,17 +2661,18 @@ async function submitMercariForm(brandToVerify = null) {
       }
     }
     
-    // Unknown state - reset flag after delay
-    console.warn('⚠️ [FORM SUBMIT] Unknown state - URL:', currentUrl);
+    // Unknown state - might still be processing, return as "might be processing"
+    // Don't log as warning - this is often a false positive
     setTimeout(() => {
       isSubmittingMercariForm = false;
     }, 5000);
     
     return {
       success: false,
-      error: 'Unable to determine listing status',
+      error: 'Listing status unclear - please check Mercari manually',
       url: currentUrl,
-      urlBeforeClick: urlBeforeClick
+      urlBeforeClick: urlBeforeClick,
+      mightBeProcessing: true // Flag for frontend to handle gracefully
     };
   } catch (error) {
     // Reset flag on exception

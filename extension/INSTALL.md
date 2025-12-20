@@ -11,8 +11,9 @@
 
 3. **Load the Extension**
    - Click "Load unpacked" button
-   - Navigate to this folder: `C:\Users\casey\Documents\GitHub\bareretail\extension`
+   - Navigate to the `extension` folder in this project
    - Select the `extension` folder and click "Select Folder"
+   - Example path: `F:\bareretail\extension` (or wherever you've cloned the project)
 
 4. **Verify Installation**
    - You should see "Profit Orbit - Crosslisting Assistant" in your extensions list
