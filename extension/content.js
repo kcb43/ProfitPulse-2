@@ -243,10 +243,17 @@ const checkExtensionContext = () => {
   }
 };
 
+// Track if we've already warned about invalidated context (to reduce noise)
+let hasWarnedAboutInvalidContext = false;
+
 // Helper to safely access chrome.storage with invalidated context handling
 const safeChromeStorageGet = (keys, callback) => {
   if (!checkExtensionContext()) {
-    console.warn('⚠️ [CHROME STORAGE] Extension context invalidated');
+    // Only warn once per page load to reduce console noise during development
+    if (!hasWarnedAboutInvalidContext) {
+      console.warn('⚠️ [CHROME STORAGE] Extension context invalidated - this is normal if you reloaded the extension. Please refresh this page.');
+      hasWarnedAboutInvalidContext = true;
+    }
     if (callback) callback(null);
     return;
   }
@@ -263,7 +270,11 @@ const safeChromeStorageGet = (keys, callback) => {
         if (chrome.runtime.lastError) {
           const errorMsg = chrome.runtime.lastError.message || '';
           if (errorMsg.includes('invalidated') || errorMsg.includes('Extension context')) {
-            console.warn('⚠️ [CHROME STORAGE] Extension context invalidated');
+            // Only warn once per page load to reduce console noise during development
+            if (!hasWarnedAboutInvalidContext) {
+              console.warn('⚠️ [CHROME STORAGE] Extension context invalidated - this is normal if you reloaded the extension. Please refresh this page.');
+              hasWarnedAboutInvalidContext = true;
+            }
             if (callback) callback(null);
             return;
           }
@@ -275,7 +286,11 @@ const safeChromeStorageGet = (keys, callback) => {
         if (callback) callback(result);
       } catch (error) {
         if (error.message && error.message.includes('invalidated')) {
-          console.warn('⚠️ [CHROME STORAGE] Extension context invalidated');
+          // Only warn once per page load to reduce console noise during development
+          if (!hasWarnedAboutInvalidContext) {
+            console.warn('⚠️ [CHROME STORAGE] Extension context invalidated - this is normal if you reloaded the extension. Please refresh this page.');
+            hasWarnedAboutInvalidContext = true;
+          }
         } else {
           console.error('❌ [CHROME STORAGE] Error processing result:', error);
         }
@@ -284,7 +299,11 @@ const safeChromeStorageGet = (keys, callback) => {
     });
   } catch (error) {
     if (error.message && error.message.includes('invalidated')) {
-      console.warn('⚠️ [CHROME STORAGE] Extension context invalidated');
+      // Only warn once per page load to reduce console noise during development
+      if (!hasWarnedAboutInvalidContext) {
+        console.warn('⚠️ [CHROME STORAGE] Extension context invalidated - this is normal if you reloaded the extension. Please refresh this page.');
+        hasWarnedAboutInvalidContext = true;
+      }
     } else {
       console.error('❌ [CHROME STORAGE] Error accessing chrome.storage:', error);
     }

@@ -33221,6 +33221,17 @@ export default function CrosslistComposer() {
     return localStorage.getItem('profit_orbit_mercari_connected') === 'true';
   });
   const [mercariUsername, setMercariUsername] = useState(() => {
+    // Try to get username from profit_orbit_mercari_user (JSON object) first
+    const userData = localStorage.getItem('profit_orbit_mercari_user');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        if (parsed.userName) return parsed.userName;
+      } catch (e) {
+        // Fallback to old format
+      }
+    }
+    // Fallback to old format
     return localStorage.getItem('profit_orbit_mercari_username') || null;
   });
   
@@ -33254,7 +33265,36 @@ export default function CrosslistComposer() {
     const handleStorageChange = (e) => {
       if (e.key === 'profit_orbit_mercari_connected') {
         setMercariConnected(e.newValue === 'true');
+        // When connection status changes, also check for user info
+        if (e.newValue === 'true') {
+          const userData = localStorage.getItem('profit_orbit_mercari_user');
+          if (userData) {
+            try {
+              const parsed = JSON.parse(userData);
+              if (parsed.userName) {
+                setMercariUsername(parsed.userName);
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      } else if (e.key === 'profit_orbit_mercari_user') {
+        // Handle user data update (JSON object)
+        if (e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (parsed.userName) {
+              setMercariUsername(parsed.userName);
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        } else {
+          setMercariUsername(null);
+        }
       } else if (e.key === 'profit_orbit_mercari_username') {
+        // Fallback to old format
         setMercariUsername(e.newValue);
       }
     };
@@ -33272,12 +33312,37 @@ export default function CrosslistComposer() {
       }
     };
     
+    // Listen for marketplaceStatusUpdate event from bridge script
+    const handleMarketplaceStatusUpdate = (event) => {
+      if (event.detail?.marketplace === 'mercari' && event.detail?.status?.loggedIn) {
+        setMercariConnected(true);
+        if (event.detail.status.userName) {
+          setMercariUsername(event.detail.status.userName);
+        }
+      }
+    };
+    
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('mercari-connection-update', handleMercariConnectionUpdate);
+    window.addEventListener('marketplaceStatusUpdate', handleMarketplaceStatusUpdate);
+    
+    // Check initial state
+    const userData = localStorage.getItem('profit_orbit_mercari_user');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        if (parsed.userName) {
+          setMercariUsername(parsed.userName);
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('mercari-connection-update', handleMercariConnectionUpdate);
+      window.removeEventListener('marketplaceStatusUpdate', handleMarketplaceStatusUpdate);
     };
   }, []);
   
@@ -36471,19 +36536,6 @@ export default function CrosslistComposer() {
               </div>
             </div>
 
-            {/* Facebook Pages */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1">Available Pages</Label>
-              <div className="text-sm">
-                {facebookPages.length > 0 ? (
-                  <span className="font-medium">{facebookPages.length} page{facebookPages.length !== 1 ? 's' : ''}</span>
-                ) : facebookToken ? (
-                  <span className="text-muted-foreground">Loading...</span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Show selected page if available */}
@@ -41913,18 +41965,6 @@ export default function CrosslistComposer() {
                         <div className="text-sm">
                           {facebookToken?.expires_at ? (
                             <span>{new Date(facebookToken.expires_at).toLocaleDateString()}</span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground mb-1">Available Pages</Label>
-                        <div className="text-sm">
-                          {facebookPages.length > 0 ? (
-                            <span className="font-medium">{facebookPages.length} page{facebookPages.length !== 1 ? 's' : ''}</span>
-                          ) : facebookToken ? (
-                            <span className="text-muted-foreground">Loading...</span>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}

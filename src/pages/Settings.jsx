@@ -166,6 +166,13 @@ export default function Settings() {
       
       if (event.detail.marketplace === 'mercari' && event.detail.status.loggedIn) {
         setMercariConnected(true);
+        // Update localStorage with user info
+        if (event.detail.status.userName) {
+          localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
+            userName: event.detail.status.userName,
+            marketplace: 'mercari'
+          }));
+        }
         toast({
           title: 'Mercari Detected!',
           description: `Logged in as ${event.detail.status.userName}`,
@@ -175,10 +182,22 @@ export default function Settings() {
     
     window.addEventListener('marketplaceStatusUpdate', handleMarketplaceUpdate);
     
-    // Check if already connected on mount
+    // Check if already connected on mount and get username
     const mercariStatus = localStorage.getItem('profit_orbit_mercari_connected');
     if (mercariStatus === 'true') {
       setMercariConnected(true);
+      // Try to get username from localStorage
+      const userData = localStorage.getItem('profit_orbit_mercari_user');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          if (parsed.userName) {
+            // Username will be displayed via getMarketplaceAccountStatus
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
     }
     
     return () => {
