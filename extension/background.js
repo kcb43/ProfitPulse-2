@@ -41,21 +41,34 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
   }
 });
 
-// Clean up stored worker tab ID when tab is closed
+// Clean up stored worker window ID when window is closed
+chrome.windows.onRemoved.addListener(async (windowId) => {
+  // Check if this was our stored worker window
+  try {
+    const stored = await chrome.storage.session.get(['mercariWorkerWindowId']);
+    if (stored.mercariWorkerWindowId === windowId) {
+      await chrome.storage.session.remove(['mercariWorkerWindowId']);
+      console.log('🧹 [MERCARI] Worker window closed, removed from storage');
+      
+      // Also clean up any tracked tabs from this window
+      try {
+        const tabs = await chrome.tabs.query({ windowId: windowId });
+        for (const tab of tabs) {
+          mercariAutomationTabs.delete(tab.id);
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+});
+
+// Also clean up when tabs are removed (backup)
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   if (mercariAutomationTabs.has(tabId)) {
     mercariAutomationTabs.delete(tabId);
-    
-    // Check if this was our stored worker tab
-    try {
-      const stored = await chrome.storage.session.get(['mercariWorkerTabId']);
-      if (stored.mercariWorkerTabId === tabId) {
-        await chrome.storage.session.remove(['mercariWorkerTabId']);
-        console.log('🧹 [MERCARI] Worker tab closed, removed from storage');
-      }
-    } catch (e) {
-      // Ignore errors
-    }
   }
 });
 
@@ -339,88 +352,94 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         };
         
-        // MV3-FRIENDLY APPROACH: Reusable worker tab (no "new tab" notification)
+        // MV3-FRIENDLY APPROACH: Minimized popup window (effectively invisible)
         // User gesture ✅ (from website -> extension message)
-        // Reuse existing worker tab or create one if it doesn't exist
+        // Create popup window positioned off-screen - won't steal focus and is invisible
         
-        let workerTabId = null;
+        let workerWindowId = null;
+        let backgroundTab = null;
         
-        // Try to get existing worker tab ID from storage
+        // Try to get existing worker window ID from storage
         try {
-          const stored = await chrome.storage.session.get(['mercariWorkerTabId']);
-          workerTabId = stored.mercariWorkerTabId;
+          const stored = await chrome.storage.session.get(['mercariWorkerWindowId']);
+          workerWindowId = stored.mercariWorkerWindowId;
         } catch (e) {
-          console.log('📦 [MERCARI] No stored worker tab ID');
+          console.log('📦 [MERCARI] No stored worker window ID');
         }
         
-        // Check if stored tab ID is still valid
-        let backgroundTab = null;
-        if (workerTabId) {
+        // Check if stored window ID is still valid
+        if (workerWindowId) {
           try {
-            const tab = await chrome.tabs.get(workerTabId);
-            if (tab && tab.url && tab.url.includes('mercari.com')) {
-              // Tab exists and is on Mercari - reuse it
-              console.log('♻️ [MERCARI] Reusing existing worker tab:', workerTabId);
-              backgroundTab = tab;
-              
-              // Update URL if needed (navigate to sell page)
-              if (!tab.url.includes('/sell')) {
-                await chrome.tabs.update(workerTabId, {
-                  url: 'https://www.mercari.com/sell/',
-                  active: false
+            const window = await chrome.windows.get(workerWindowId, { populate: true });
+            if (window && window.tabs && window.tabs.length > 0) {
+              const tab = window.tabs[0];
+              if (tab && tab.url && tab.url.includes('mercari.com')) {
+                // Window exists and has Mercari tab - reuse it
+                console.log('♻️ [MERCARI] Reusing existing worker window:', workerWindowId);
+                backgroundTab = tab;
+                
+                // Update URL if needed (navigate to sell page)
+                if (!tab.url.includes('/sell')) {
+                  await chrome.tabs.update(tab.id, {
+                    url: 'https://www.mercari.com/sell/'
+                  });
+                }
+                
+                // Ensure window stays minimized and off-screen
+                await chrome.windows.update(workerWindowId, {
+                  focused: false,
+                  state: 'minimized'
                 });
               } else {
-                // Ensure tab stays inactive
-                await chrome.tabs.update(workerTabId, { active: false });
+                // Window exists but wrong URL - update it
+                console.log('🔄 [MERCARI] Worker window exists but wrong URL, updating...');
+                await chrome.tabs.update(window.tabs[0].id, {
+                  url: 'https://www.mercari.com/sell/'
+                });
+                backgroundTab = window.tabs[0];
+                await chrome.windows.update(workerWindowId, {
+                  focused: false,
+                  state: 'minimized'
+                });
               }
-            } else {
-              // Tab exists but wrong URL - update it
-              console.log('🔄 [MERCARI] Worker tab exists but wrong URL, updating...');
-              await chrome.tabs.update(workerTabId, {
-                url: 'https://www.mercari.com/sell/',
-                active: false
-              });
-              backgroundTab = await chrome.tabs.get(workerTabId);
             }
           } catch (e) {
-            // Tab doesn't exist anymore - create new one
-            console.log('⚠️ [MERCARI] Stored worker tab no longer exists, creating new one...');
-            workerTabId = null;
+            // Window doesn't exist anymore - create new one
+            console.log('⚠️ [MERCARI] Stored worker window no longer exists, creating new one...');
+            workerWindowId = null;
           }
         }
         
-        // Create new worker tab if we don't have a valid one
+        // Create new popup window if we don't have a valid one
         if (!backgroundTab) {
-          console.log('🔧 [MERCARI] Creating new worker tab...');
-          backgroundTab = await chrome.tabs.create({
+          console.log('🔧 [MERCARI] Creating minimized popup window...');
+          const popupWindow = await chrome.windows.create({
             url: 'https://www.mercari.com/sell/',
-            active: false // CRITICAL: Tab is created but never becomes active/visible
+            type: 'popup',
+            focused: false, // Won't steal focus
+            width: 1,
+            height: 1,
+            left: -10000, // Position off-screen
+            top: -10000,
+            state: 'minimized' // Minimize immediately
           });
-          workerTabId = backgroundTab.id;
           
-          // Save worker tab ID for future reuse
-          try {
-            await chrome.storage.session.set({ mercariWorkerTabId: workerTabId });
-            console.log('💾 [MERCARI] Saved worker tab ID:', workerTabId);
-          } catch (e) {
-            console.warn('⚠️ [MERCARI] Failed to save worker tab ID:', e);
-          }
+          workerWindowId = popupWindow.id;
+          backgroundTab = popupWindow.tabs?.[0] || (await chrome.tabs.query({ windowId: workerWindowId }))[0];
           
-          // Move tab to end of tab bar immediately
+          // Save worker window ID for future reuse
           try {
-            await chrome.tabs.move(workerTabId, { index: -1 });
+            await chrome.storage.session.set({ mercariWorkerWindowId: workerWindowId });
+            console.log('💾 [MERCARI] Saved worker window ID:', workerWindowId);
           } catch (e) {
-            // Ignore move errors
+            console.warn('⚠️ [MERCARI] Failed to save worker window ID:', e);
           }
         }
         
-        console.log('✅ [MERCARI] Worker tab ready:', backgroundTab.id);
+        console.log('✅ [MERCARI] Worker window ready, tab ID:', backgroundTab.id);
         
-        // Track this tab to keep it hidden
+        // Track this tab to keep it hidden (backup protection)
         mercariAutomationTabs.add(backgroundTab.id);
-        
-        // Ensure tab stays inactive
-        await chrome.tabs.update(backgroundTab.id, { active: false });
         
         // Wait for page to load
         await new Promise((resolve) => {
@@ -471,9 +490,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           listingData: listingData
         });
         
-        // Don't close the worker tab - keep it for reuse
-        // This prevents "new tab" notifications on subsequent runs
-        console.log('💾 [MERCARI] Keeping worker tab for reuse:', backgroundTab.id);
+        // Don't close the worker window - keep it for reuse
+        // This prevents "new window" notifications on subsequent runs
+        console.log('💾 [MERCARI] Keeping worker window for reuse:', workerWindowId, 'tab:', backgroundTab.id);
         
         if (result.success) {
           sendResponse(result.response || { success: false, error: 'No response from content script' });
