@@ -641,12 +641,17 @@ async function createMercariListing(listingData, options = {}) {
       console.log('✅ [MERCARI] Listing created successfully!', submitResult.listingUrl);
       console.log('📋 [MERCARI] Listing ID:', submitResult.listingId);
     } else {
-      console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
-      if (submitResult.details) {
-        console.error('📋 [MERCARI] Error details:', submitResult.details);
+      // Only log as error if it's not a "might be processing" case
+      if (submitResult.mightBeProcessing) {
+        console.warn('⚠️ [MERCARI] Listing status unclear - might still be processing:', submitResult.error);
+      } else {
+        console.error('❌ [MERCARI] Form submission failed:', submitResult.error);
+        if (submitResult.details) {
+          console.error('📋 [MERCARI] Error details:', submitResult.details);
+        }
       }
       if (submitResult.url) {
-        console.error('📋 [MERCARI] Current URL:', submitResult.url);
+        console.log('📋 [MERCARI] Current URL:', submitResult.url);
       }
     }
     
@@ -1247,24 +1252,30 @@ async function typeIntoMercariDropdown(testId, text) {
       
       // Focus the input
       input.focus();
-      await sleep(300);
+      await sleep(100); // Reduced from 300ms
       
-      // Clear and set value
+      // Clear the input
       input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
       
-      // Type character by character to trigger autocomplete properly
-      for (let i = 0; i < text.length; i++) {
-        input.value = text.substring(0, i + 1);
-        input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-        input.dispatchEvent(new Event('keydown', { bubbles: true, cancelable: true }));
-        await sleep(100);
-      }
+      // Fast input: Set value directly and trigger events (much faster than typing character-by-character)
+      // This is how robots do it - instant value setting!
+      input.value = text;
       
-      // Dispatch final events
+      // Trigger all necessary events for Mercari's React to detect the change
+      input.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
       input.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', bubbles: true }));
       
-        await sleep(600); // Reduced from 1200ms - autocomplete should appear faster
+      // Also trigger focus/blur to ensure React sees the change
+      input.dispatchEvent(new Event('focus', { bubbles: true }));
+      input.dispatchEvent(new Event('blur', { bubbles: true }));
+      
+      console.log(`⚡ [TYPE DROPDOWN ${testId}] Set value instantly (robot speed!): "${text}"`);
+      
+      // Wait for autocomplete to appear (reduced wait)
+      await sleep(400); // Reduced from 600ms
       
       // Try to find and click the matching option
       const options = Array.from(document.querySelectorAll('[role="option"]'));
@@ -2532,12 +2543,19 @@ async function submitMercariForm(brandToVerify = null) {
     
     console.log('✅ [FORM SUBMIT] List button clicked (single click)');
     
-    // Wait for navigation/success page (reduced wait time)
-    await sleep(3000); // Reduced from 5000ms
+    // Wait for navigation/success page - check multiple times (Mercari can be slow)
+    let currentUrl = window.location.href;
+    let attempts = 0;
+    const maxAttempts = 6; // Check for up to 6 seconds
     
-    // Try to detect success and extract listing URL (fresh check)
-    const currentUrl = window.location.href;
-    console.log('📋 [FORM SUBMIT] URL after wait:', currentUrl);
+    while (attempts < maxAttempts && currentUrl.includes('/sell') && !currentUrl.includes('/item/')) {
+      await sleep(1000); // Check every second
+      currentUrl = window.location.href;
+      attempts++;
+      console.log(`📋 [FORM SUBMIT] Check ${attempts}/${maxAttempts}: URL = ${currentUrl}`);
+    }
+    
+    console.log('📋 [FORM SUBMIT] Final URL:', currentUrl);
     console.log('📋 [FORM SUBMIT] URL changed:', currentUrl !== urlBeforeClick);
     
     if (currentUrl.includes('/item/')) {
@@ -2555,6 +2573,27 @@ async function submitMercariForm(brandToVerify = null) {
         listingUrl: currentUrl
       };
     } else if (currentUrl.includes('/sell')) {
+      // Still on sell page after multiple checks - might be an error OR still processing
+      // Check if button is still there (if gone, might be processing)
+      const stillHasButton = document.querySelector('[data-testid="ListButton"]') !== null;
+      
+      if (!stillHasButton) {
+        // Button disappeared - might be processing, wait a bit more
+        console.log('⏳ [FORM SUBMIT] List button disappeared, might be processing...');
+        await sleep(2000);
+        currentUrl = window.location.href;
+        
+        if (currentUrl.includes('/item/')) {
+          const listingId = currentUrl.split('/item/')[1]?.split('/')[0] || '';
+          console.log('✅ [FORM SUBMIT] Success after additional wait! Listing ID:', listingId);
+          isSubmittingMercariForm = false;
+          return {
+            success: true,
+            listingId: listingId,
+            listingUrl: currentUrl
+          };
+        }
+      }
       // Still on sell page - check for error messages (fresh query)
       const errorSelectors = [
         '[class*="error"]',
@@ -2596,17 +2635,31 @@ async function submitMercariForm(brandToVerify = null) {
         }
       }
       
-      console.error('❌ [FORM SUBMIT] Still on sell page - error detected:', errorText);
-      console.error('📋 [FORM SUBMIT] Error element:', errorMsg);
-      
-      // Reset submission flag on error
-      isSubmittingMercariForm = false;
-      
-      return {
-        success: false,
-        error: `Listing failed: ${errorText}`,
-        url: currentUrl
-      };
+      // Only log as error if we're confident it's actually an error
+      // (not just processing - button disappearing is a good sign it's processing)
+      if (stillHasButton) {
+        console.error('❌ [FORM SUBMIT] Still on sell page after checks - error detected:', errorText);
+        console.error('📋 [FORM SUBMIT] Error element:', errorMsg);
+        
+        // Reset submission flag on error
+        isSubmittingMercariForm = false;
+        
+        return {
+          success: false,
+          error: `Listing failed: ${errorText}`,
+          url: currentUrl
+        };
+      } else {
+        // Button disappeared - might still be processing, but we'll return as unknown
+        console.warn('⚠️ [FORM SUBMIT] Still on sell page but button disappeared - might be processing');
+        isSubmittingMercariForm = false;
+        return {
+          success: false,
+          error: 'Listing status unclear - please check Mercari manually',
+          url: currentUrl,
+          mightBeProcessing: true
+        };
+      }
     }
     
     // Unknown state - reset flag after delay
