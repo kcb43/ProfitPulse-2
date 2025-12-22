@@ -90,7 +90,10 @@ export default function Settings() {
   const [mercariEnhancedConnection, setMercariEnhancedConnection] = useState(() => {
     return localStorage.getItem('mercari_enhanced_connection') === 'true';
   });
-  const [mercariConnected, setMercariConnected] = useState(false);
+  const [mercariConnected, setMercariConnected] = useState(() => {
+    // Initialize from localStorage
+    return localStorage.getItem('profit_orbit_mercari_connected') === 'true';
+  });
   const { sdkReady, fbInstance} = useFacebookSDK();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -162,23 +165,25 @@ export default function Settings() {
     
     // Listen for extension marketplace status updates
     const handleMarketplaceUpdate = (event) => {
-      console.log('Marketplace status update received:', event.detail);
+      console.log('🟢 Profit Orbit: Marketplace status update received:', event.detail);
       
       if (event.detail.marketplace === 'mercari' && event.detail.status.loggedIn) {
-        console.log('Profit Orbit: Mercari connection detected via event!');
-        // Update localStorage first
+        console.log('🟢 Profit Orbit: Mercari connection detected via event!');
+        const userName = event.detail.status.userName || event.detail.status.name || 'Mercari User';
+        
+        // Update localStorage
         localStorage.setItem('profit_orbit_mercari_connected', 'true');
-        if (event.detail.status.userName) {
-          localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
-            userName: event.detail.status.userName,
-            marketplace: 'mercari'
-          }));
-        }
-        // Then update state
+        localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
+          userName: userName,
+          marketplace: 'mercari'
+        }));
+        
+        // Force state update
         setMercariConnected(true);
+        
         toast({
-          title: 'Mercari Detected!',
-          description: `Logged in as ${event.detail.status.userName}`,
+          title: 'Mercari Connected!',
+          description: `Connected as ${userName}`,
         });
       }
     };
@@ -187,20 +192,26 @@ export default function Settings() {
     
     // Also listen for extensionReady event from bridge script
     const handleExtensionReady = (event) => {
-      console.log('Extension ready event:', event.detail);
+      console.log('🟢 Profit Orbit: Extension ready event:', event.detail);
       if (event.detail?.marketplaces?.mercari?.loggedIn) {
-        console.log('Profit Orbit: Mercari connection detected via extensionReady event!');
+        console.log('🟢 Profit Orbit: Mercari connection detected via extensionReady event!');
         const mercariData = event.detail.marketplaces.mercari;
-        // Update localStorage first
+        const userName = mercariData.userName || mercariData.name || 'Mercari User';
+        
+        // Update localStorage
         localStorage.setItem('profit_orbit_mercari_connected', 'true');
-        if (mercariData.userName) {
-          localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
-            userName: mercariData.userName,
-            marketplace: 'mercari'
-          }));
-        }
-        // Then update state
+        localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
+          userName: userName,
+          marketplace: 'mercari'
+        }));
+        
+        // Force state update
         setMercariConnected(true);
+        
+        toast({
+          title: 'Mercari Connected!',
+          description: `Connected as ${userName}`,
+        });
       }
     };
     window.addEventListener('extensionReady', handleExtensionReady);
@@ -270,21 +281,30 @@ export default function Settings() {
       }, 10000);
     }
     
-    // Poll for Mercari connection status every 1 second (more frequent for better detection)
+    // Poll for Mercari connection status every 500ms for faster updates
     const pollInterval = setInterval(() => {
       const currentStatus = localStorage.getItem('profit_orbit_mercari_connected');
       const isConnected = currentStatus === 'true';
-      console.log('Profit Orbit: Polling Mercari status:', currentStatus, 'Current state:', mercariConnected, 'Should be:', isConnected);
       
-      // Always sync state with localStorage
+      // Always sync state with localStorage - force update if different
       if (isConnected !== mercariConnected) {
-        console.log('Profit Orbit: State mismatch detected! Updating state from', mercariConnected, 'to', isConnected);
+        console.log('🟢 Profit Orbit: State sync - updating from', mercariConnected, 'to', isConnected);
         setMercariConnected(isConnected);
+        
         if (isConnected) {
-          checkMercariStatus();
+          // Get user info
+          const userData = localStorage.getItem('profit_orbit_mercari_user');
+          if (userData) {
+            try {
+              const parsed = JSON.parse(userData);
+              console.log('🟢 Profit Orbit: Mercari user:', parsed.userName);
+            } catch (e) {
+              console.error('Error parsing user data:', e);
+            }
+          }
         }
       }
-    }, 1000);
+    }, 500);
     
     // Also listen for storage events (in case extension updates localStorage from another tab)
     const handleStorageChange = (e) => {
@@ -408,34 +428,33 @@ export default function Settings() {
 
   const handleMercariConnect = async () => {
     try {
-      console.log('Checking Mercari connection...');
+      console.log('🟢 Profit Orbit: Checking Mercari connection...');
       toast({
         title: 'Checking Connection...',
         description: 'Querying extension for Mercari login status...',
       });
       
-      // First, force a check via the bridge script by triggering extension query
-      // The bridge script should query the extension and update localStorage
+      // Method 1: Use bridge API if available
       if (window.ProfitOrbitExtension && window.ProfitOrbitExtension.isAvailable()) {
-        console.log('Profit Orbit: Using bridge API to check status');
-        // Use getAllStatus to get current status directly
+        console.log('🟢 Profit Orbit: Using bridge API');
         window.ProfitOrbitExtension.getAllStatus((response) => {
-          console.log('Profit Orbit: getAllStatus response:', response);
+          console.log('🟢 Profit Orbit: getAllStatus response:', response);
+          
           if (response.error) {
-            console.error('Profit Orbit: Error getting status:', response.error);
+            console.error('🔴 Profit Orbit: Error:', response.error);
             toast({
               title: 'Connection Error',
-              description: 'Failed to query extension. Make sure the extension is installed and enabled.',
+              description: response.error,
               variant: 'destructive',
             });
             return;
           }
           
-          // Check if Mercari is logged in
-          if (response?.status?.mercari?.loggedIn) {
-            console.log('Profit Orbit: Mercari is logged in!', response.status.mercari);
-            const mercariData = response.status.mercari;
-            const userName = mercariData.userName || mercariData.name || 'Mercari User';
+          const mercariStatus = response?.status?.mercari;
+          console.log('🟢 Profit Orbit: Mercari status:', mercariStatus);
+          
+          if (mercariStatus?.loggedIn) {
+            const userName = mercariStatus.userName || mercariStatus.name || 'Mercari User';
             
             // Update localStorage
             localStorage.setItem('profit_orbit_mercari_connected', 'true');
@@ -444,47 +463,48 @@ export default function Settings() {
               marketplace: 'mercari'
             }));
             
-            console.log('Profit Orbit: Updated localStorage with Mercari connection:', {
-              connected: true,
-              userName: userName
-            });
-            
-            // Update state
+            // Force state update
             setMercariConnected(true);
             
             toast({
               title: 'Mercari Connected!',
-              description: userName !== 'Mercari User' 
-                ? `Connected as ${userName}` 
-                : 'Your Mercari account is connected.',
+              description: `Connected as ${userName}`,
             });
           } else {
-            console.log('Profit Orbit: Mercari not logged in, response:', response);
-            console.log('Profit Orbit: Mercari status:', response?.status?.mercari);
             toast({
               title: 'Not Connected',
-              description: 'Please log into Mercari first, then try connecting again.',
+              description: 'Please log into Mercari first, then try again.',
               variant: 'destructive',
             });
             showMercariInstructions();
           }
         });
       } else {
-        console.log('Profit Orbit: Bridge API not available, trying fallback');
-        // Try to trigger bridge script via custom event
+        // Method 2: Trigger bridge script check
+        console.log('🟢 Profit Orbit: Bridge API not available, triggering check event');
         window.dispatchEvent(new CustomEvent('checkMercariStatus'));
         
-        // Also check localStorage directly
+        // Check localStorage after delay
         setTimeout(() => {
-          checkMercariStatusFromStorage();
-        }, 1500);
+          const status = localStorage.getItem('profit_orbit_mercari_connected');
+          if (status === 'true') {
+            setMercariConnected(true);
+            const userData = JSON.parse(localStorage.getItem('profit_orbit_mercari_user') || '{}');
+            toast({
+              title: 'Mercari Connected!',
+              description: userData.userName ? `Connected as ${userData.userName}` : 'Your Mercari account is connected.',
+            });
+          } else {
+            showMercariInstructions();
+          }
+        }, 2000);
       }
       
     } catch (error) {
-      console.error('Error connecting Mercari:', error);
+      console.error('🔴 Profit Orbit: Error:', error);
       toast({
         title: 'Connection Error',
-        description: 'Failed to detect Mercari login. Make sure the extension is installed.',
+        description: error.message || 'Failed to check Mercari connection.',
         variant: 'destructive',
       });
     }

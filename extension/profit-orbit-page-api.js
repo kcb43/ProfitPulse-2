@@ -1,58 +1,67 @@
-// Page Context Script - Injected into Profit Orbit web app
-// This runs in the page context, not the isolated content script context
+/**
+ * Page Context API - Injected into page
+ * Exposes ProfitOrbitExtension API to React app
+ */
 
 (function() {
   'use strict';
   
-  console.log('[PAGE] Profit Orbit Extension: Page script loaded');
-  console.log('[PAGE] Profit Orbit Extension: URL:', window.location.href);
+  console.log('🟢 Profit Orbit Page API: Loading...');
   
-  // Store reference to content script's message handler
-  window.__ProfitOrbitBridgeReady = true;
+  // Expose API
+  window.ProfitOrbitExtension = {
+    queryStatus: function() {
+      console.log('🟢 Profit Orbit Page API: queryStatus() called');
+      window.postMessage({ type: 'PROFIT_ORBIT_QUERY_STATUS' }, '*');
+    },
+    
+    isAvailable: function() {
+      return true;
+    },
+    
+    getAllStatus: function(callback) {
+      console.log('🟢 Profit Orbit Page API: getAllStatus() called');
+      const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      
+      // Store callback
+      window.__ProfitOrbitCallbacks = window.__ProfitOrbitCallbacks || {};
+      window.__ProfitOrbitCallbacks[requestId] = callback;
+      
+      // Send request to content script
+      window.postMessage({
+        type: 'PROFIT_ORBIT_GET_ALL_STATUS',
+        requestId: requestId
+      }, '*');
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (window.__ProfitOrbitCallbacks[requestId]) {
+          delete window.__ProfitOrbitCallbacks[requestId];
+          if (callback) callback({ error: 'Timeout waiting for response' });
+        }
+      }, 5000);
+    }
+  };
   
   // Listen for responses from content script
   window.addEventListener('message', function(event) {
     if (event.data.type === 'PROFIT_ORBIT_STATUS_RESPONSE') {
-      const callback = window.__ProfitOrbitCallbacks && window.__ProfitOrbitCallbacks[event.data.requestId];
+      const callback = window.__ProfitOrbitCallbacks?.[event.data.requestId];
       if (callback) {
+        delete window.__ProfitOrbitCallbacks[event.data.requestId];
         if (event.data.error) {
           callback({ error: event.data.error });
         } else {
           callback(event.data.data || {});
         }
-        delete window.__ProfitOrbitCallbacks[event.data.requestId];
       }
     }
   });
   
-  // Expose API that will communicate with content script via postMessage
-  window.ProfitOrbitExtension = {
-    queryStatus: function() {
-      console.log('[PAGE] Profit Orbit Extension: queryStatus() called');
-      window.postMessage({ type: 'PROFIT_ORBIT_QUERY_STATUS' }, '*');
-    },
-    isAvailable: function() {
-      console.log('[PAGE] Profit Orbit Extension: isAvailable() called - returning true');
-      return true; // Assume available if script is injected
-    },
-    getAllStatus: function(callback) {
-      console.log('[PAGE] Profit Orbit Extension: getAllStatus() called');
-      const requestId = Math.random().toString(36).substring(7);
-      window.__ProfitOrbitCallbacks = window.__ProfitOrbitCallbacks || {};
-      window.__ProfitOrbitCallbacks[requestId] = callback;
-      window.postMessage({ 
-        type: 'PROFIT_ORBIT_GET_ALL_STATUS', 
-        requestId: requestId 
-      }, '*');
-    }
-  };
-  
-  console.log('[PAGE] Profit Orbit Extension: Bridge API injected into page context', window.ProfitOrbitExtension);
-  console.log('[PAGE] Profit Orbit Extension: API methods:', Object.keys(window.ProfitOrbitExtension));
-  
-  // Dispatch a custom event to notify React app that bridge is ready
+  // Dispatch ready event
   window.dispatchEvent(new CustomEvent('profitOrbitBridgeReady', {
     detail: { api: window.ProfitOrbitExtension }
   }));
+  
+  console.log('🟢 Profit Orbit Page API: Ready!', window.ProfitOrbitExtension);
 })();
-
