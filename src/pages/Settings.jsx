@@ -440,37 +440,22 @@ export default function Settings() {
         window.ProfitOrbitExtension.getAllStatus((response) => {
           console.log('🟢 Profit Orbit: getAllStatus response:', response);
           
-          if (response.error) {
-            console.error('🔴 Profit Orbit: Error:', response.error);
-            toast({
-              title: 'Connection Error',
-              description: response.error,
-              variant: 'destructive',
-            });
-            return;
-          }
-          
           const mercariStatus = response?.status?.mercari;
           console.log('🟢 Profit Orbit: Mercari status:', mercariStatus);
           
           if (mercariStatus?.loggedIn) {
-            const userName = mercariStatus.userName || mercariStatus.name || 'Mercari User';
+            const userName = mercariStatus.userName || 'Mercari User';
             
-            // Update localStorage
+            // Update localStorage (should already be updated by bridge script)
             localStorage.setItem('profit_orbit_mercari_connected', 'true');
             localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
               userName: userName,
               marketplace: 'mercari'
             }));
             
-            // Force state update immediately
+            // Force state update
             console.log('🟢 Profit Orbit: Setting mercariConnected to TRUE');
             setMercariConnected(true);
-            
-            // Force re-render by updating state again
-            setTimeout(() => {
-              setMercariConnected(true);
-            }, 100);
             
             toast({
               title: 'Mercari Connected!',
@@ -487,30 +472,37 @@ export default function Settings() {
           }
         });
       } else {
-        // Method 2: Trigger bridge script check
-        console.log('🟢 Profit Orbit: Bridge API not available, triggering check event');
-        window.dispatchEvent(new CustomEvent('checkMercariStatus'));
+        // Method 2: Use localStorage polling directly
+        console.log('🟢 Profit Orbit: Bridge API not available, using localStorage polling');
         
-        // Also try to query directly via postMessage
-        window.postMessage({ type: 'PROFIT_ORBIT_QUERY_STATUS' }, '*');
+        // Set request flag for content script
+        localStorage.setItem('profit_orbit_request_status', 'true');
         
-        // Check localStorage after delay
-        setTimeout(() => {
+        // Poll localStorage for response
+        let attempts = 0;
+        const maxAttempts = 20; // 10 seconds
+        
+        const checkInterval = setInterval(() => {
+          attempts++;
           const status = localStorage.getItem('profit_orbit_mercari_connected');
-          console.log('🟢 Profit Orbit: Checked localStorage after delay:', status);
-          if (status === 'true') {
-            console.log('🟢 Profit Orbit: Found connection in localStorage, updating state');
-            setMercariConnected(true);
-            const userData = JSON.parse(localStorage.getItem('profit_orbit_mercari_user') || '{}');
-            toast({
-              title: 'Mercari Connected!',
-              description: userData.userName ? `Connected as ${userData.userName}` : 'Your Mercari account is connected.',
-            });
-          } else {
-            console.log('🔴 Profit Orbit: No connection found in localStorage');
-            showMercariInstructions();
+          
+          if (status === 'true' || attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            
+            if (status === 'true') {
+              console.log('🟢 Profit Orbit: Found connection in localStorage');
+              setMercariConnected(true);
+              const userData = JSON.parse(localStorage.getItem('profit_orbit_mercari_user') || '{}');
+              toast({
+                title: 'Mercari Connected!',
+                description: userData.userName ? `Connected as ${userData.userName}` : 'Your Mercari account is connected.',
+              });
+            } else {
+              console.log('🔴 Profit Orbit: No connection found');
+              showMercariInstructions();
+            }
           }
-        }, 2000);
+        }, 500);
       }
       
     } catch (error) {

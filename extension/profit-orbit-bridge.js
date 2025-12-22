@@ -1,12 +1,12 @@
 /**
- * Content Script for Profit Orbit Domain - SIMPLIFIED VERSION
- * Uses chrome.storage.local for communication (more reliable)
+ * Content Script for Profit Orbit Domain - ULTRA SIMPLE VERSION
+ * Uses localStorage polling for communication (most reliable)
  */
 
 console.log('🔵 Profit Orbit Bridge: Content script loaded');
 
-// Function to sync marketplace status to localStorage
-function syncStatusToLocalStorage(status) {
+// Function to update localStorage with marketplace status
+function updateLocalStorage(status) {
   if (!status) return;
   
   Object.entries(status).forEach(([marketplace, data]) => {
@@ -33,7 +33,7 @@ function syncStatusToLocalStorage(status) {
   }));
 }
 
-// Query status from background
+// Function to query status from background
 function queryStatus() {
   if (!chrome.runtime?.id) {
     console.warn('🔴 Bridge: chrome.runtime not available');
@@ -51,7 +51,7 @@ function queryStatus() {
     console.log('🔵 Bridge: Received status:', response);
     
     if (response?.status) {
-      syncStatusToLocalStorage(response.status);
+      updateLocalStorage(response.status);
     }
   });
 }
@@ -78,13 +78,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-// Listen for chrome.storage changes (backup method)
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes.profit_orbit_marketplace_status) {
-    console.log('🔵 Bridge: Storage changed, syncing to localStorage');
-    syncStatusToLocalStorage(changes.profit_orbit_marketplace_status.newValue);
+// Poll localStorage for status requests from React app
+setInterval(() => {
+  // Check if React app is requesting status
+  const requestFlag = localStorage.getItem('profit_orbit_request_status');
+  if (requestFlag === 'true') {
+    console.log('🔵 Bridge: React app requested status, querying...');
+    localStorage.removeItem('profit_orbit_request_status');
+    queryStatus();
   }
-});
+}, 500); // Check every 500ms
 
 // Query on load
 if (document.readyState === 'loading') {
@@ -95,25 +98,10 @@ if (document.readyState === 'loading') {
   setTimeout(queryStatus, 500);
 }
 
-// Poll every 2 seconds
+// Also poll every 2 seconds to keep status updated
 setInterval(queryStatus, 2000);
 
 // Listen for manual checks
 window.addEventListener('checkMercariStatus', queryStatus);
-
-// Inject page API script
-(function() {
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('profit-orbit-page-api.js');
-  script.onload = () => {
-    console.log('🔵 Bridge: Page API script loaded');
-    script.remove();
-  };
-  script.onerror = () => {
-    console.error('🔴 Bridge: Failed to load page API script');
-    script.remove();
-  };
-  (document.head || document.documentElement).appendChild(script);
-})();
 
 console.log('🔵 Profit Orbit Bridge: Initialized');

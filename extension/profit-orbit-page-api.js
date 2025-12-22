@@ -1,5 +1,6 @@
 /**
- * Page Context API - SIMPLIFIED VERSION
+ * Page Context API - SIMPLIFIED
+ * Uses localStorage polling instead of complex postMessage
  */
 
 (function() {
@@ -7,18 +8,11 @@
   
   console.log('🟢 Profit Orbit Page API: Loading...');
   
-  // Listen for chrome.storage changes via content script
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'profit_orbit_mercari_connected' && e.newValue === 'true') {
-      console.log('🟢 Page API: Mercari connection detected via storage event');
-    }
-  });
-  
-  // Expose API
+  // Simple API that uses localStorage polling
   window.ProfitOrbitExtension = {
     queryStatus: function() {
-      console.log('🟢 Page API: queryStatus() called');
-      window.postMessage({ type: 'PROFIT_ORBIT_QUERY_STATUS' }, '*');
+      console.log('🟢 Page API: queryStatus() called - setting request flag');
+      localStorage.setItem('profit_orbit_request_status', 'true');
     },
     
     isAvailable: function() {
@@ -27,39 +21,44 @@
     
     getAllStatus: function(callback) {
       console.log('🟢 Page API: getAllStatus() called');
-      const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       
-      window.__ProfitOrbitCallbacks = window.__ProfitOrbitCallbacks || {};
-      window.__ProfitOrbitCallbacks[requestId] = callback;
+      // Set request flag
+      localStorage.setItem('profit_orbit_request_status', 'true');
       
-      window.postMessage({
-        type: 'PROFIT_ORBIT_GET_ALL_STATUS',
-        requestId: requestId
-      }, '*');
+      // Poll for response (content script will update localStorage)
+      let attempts = 0;
+      const maxAttempts = 20; // 10 seconds max
       
-      setTimeout(() => {
-        if (window.__ProfitOrbitCallbacks[requestId]) {
-          delete window.__ProfitOrbitCallbacks[requestId];
-          if (callback) callback({ error: 'Timeout' });
+      const checkInterval = setInterval(() => {
+        attempts++;
+        
+        // Check if we got a response
+        const mercariStatus = localStorage.getItem('profit_orbit_mercari_connected');
+        
+        if (mercariStatus === 'true' || attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          
+          // Build response from localStorage
+          const status = {};
+          const marketplaces = ['mercari', 'facebook', 'poshmark', 'ebay', 'etsy'];
+          
+          marketplaces.forEach(marketplace => {
+            const connected = localStorage.getItem(`profit_orbit_${marketplace}_connected`) === 'true';
+            const userData = localStorage.getItem(`profit_orbit_${marketplace}_user`);
+            
+            status[marketplace] = {
+              loggedIn: connected,
+              userName: userData ? JSON.parse(userData).userName : null
+            };
+          });
+          
+          if (callback) {
+            callback({ status: status });
+          }
         }
-      }, 5000);
+      }, 500);
     }
   };
-  
-  // Listen for responses
-  window.addEventListener('message', function(event) {
-    if (event.data.type === 'PROFIT_ORBIT_STATUS_RESPONSE') {
-      const callback = window.__ProfitOrbitCallbacks?.[event.data.requestId];
-      if (callback) {
-        delete window.__ProfitOrbitCallbacks[event.data.requestId];
-        if (event.data.error) {
-          callback({ error: event.data.error });
-        } else {
-          callback(event.data.data || {});
-        }
-      }
-    }
-  });
   
   window.dispatchEvent(new CustomEvent('profitOrbitBridgeReady', {
     detail: { api: window.ProfitOrbitExtension }
