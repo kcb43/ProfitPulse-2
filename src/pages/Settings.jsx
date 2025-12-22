@@ -771,28 +771,11 @@ export default function Settings() {
                               <Button
                                 variant="default"
                                 size="sm"
-                                onClick={() => {
-                                  // Force check connection status
-                                  if (window.ProfitOrbitExtension && window.ProfitOrbitExtension.isAvailable()) {
-                                    window.ProfitOrbitExtension.queryStatus();
-                                    setTimeout(() => {
-                                      checkMercariStatusFromStorage();
-                                    }, 500);
-                                  } else {
-                                    window.dispatchEvent(new CustomEvent('checkMercariStatus'));
-                                    setTimeout(() => {
-                                      checkMercariStatusFromStorage();
-                                    }, 1000);
-                                  }
-                                  toast({
-                                    title: 'Checking Connection...',
-                                    description: 'Querying extension for Mercari login status',
-                                  });
-                                }}
+                                onClick={handleMercariConnect}
                                 className="flex-1 text-xs"
                               >
                                 <RefreshCw className="w-3 h-3 mr-1" />
-                                Check Connection
+                                Connect
                               </Button>
                               <Button
                                 variant="outline"

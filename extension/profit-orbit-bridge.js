@@ -5,84 +5,7 @@
 
 console.log('Profit Orbit Extension: Bridge script loaded on Profit Orbit domain');
 
-// Expose API to React app via window object
-window.ProfitOrbitExtension = {
-  // Query extension for marketplace status
-  queryStatus: () => {
-    queryExtensionStatus();
-  },
-  
-  // Check if extension is available
-  isAvailable: () => {
-    return !!(chrome && chrome.runtime && chrome.runtime.id);
-  },
-  
-  // Get all marketplace statuses
-  getAllStatus: (callback) => {
-    if (!chrome.runtime?.id) {
-      callback({ error: 'Extension not available' });
-      return;
-    }
-    
-    chrome.runtime.sendMessage(
-      { type: 'GET_ALL_STATUS' },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          callback({ error: chrome.runtime.lastError.message });
-        } else {
-          callback(response || {});
-        }
-      }
-    );
-  }
-};
-
-// Listen for messages from background script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Profit Orbit received message from extension:', message);
-  
-  if (message.type === 'MARKETPLACE_STATUS_UPDATE') {
-    const marketplace = message.marketplace;
-    const data = message.data;
-    
-    // Update localStorage so the web app can access it
-    if (data.loggedIn) {
-      localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
-      localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify(data));
-      console.log(`${marketplace} connection saved to localStorage`);
-      
-      // Dispatch custom event that React can listen to
-      window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
-        detail: { marketplace, status: data }
-      }));
-    } else {
-      localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
-      localStorage.removeItem(`profit_orbit_${marketplace}_user`);
-    }
-    
-    sendResponse({ received: true });
-  }
-
-  // Handle request for listing API configuration
-  if (message.type === 'GET_LISTING_CONFIG') {
-    // Get API URL from window (set by React app)
-    const apiUrl = window.LISTING_API_URL || localStorage.getItem('LISTING_API_URL');
-    
-    // Get auth token from Supabase (if available)
-    // The React app should expose this via window or localStorage
-    const authToken = window.SUPABASE_AUTH_TOKEN || localStorage.getItem('SUPABASE_AUTH_TOKEN');
-    
-    sendResponse({
-      apiUrl: apiUrl || null,
-      authToken: authToken || null,
-    });
-    return true;
-  }
-  
-  return true;
-});
-
-// Function to query extension for marketplace statuses
+// Function to query extension for marketplace statuses (defined first so API can reference it)
 function queryExtensionStatus() {
   // Check if extension context is still valid before sending message
   if (!chrome.runtime?.id) {
@@ -141,24 +64,132 @@ function queryExtensionStatus() {
   );
 }
 
-// Listen for manual refresh requests from React app
-window.addEventListener('checkMercariStatus', () => {
-  console.log('Profit Orbit Bridge: Manual status check requested');
-  queryExtensionStatus();
-});
-
-// On page load, query extension for all marketplace statuses
-window.addEventListener('load', () => {
-  setTimeout(queryExtensionStatus, 1000);
-});
-
-// Also query immediately if DOM is already loaded
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(queryExtensionStatus, 500);
+// Expose API to React app via window object immediately
+// Since this runs at document_start, window should be available
+if (typeof window !== 'undefined') {
+  window.ProfitOrbitExtension = {
+    // Query extension for marketplace status
+    queryStatus: () => {
+      console.log('Profit Orbit Bridge: queryStatus() called');
+      queryExtensionStatus();
+    },
+    
+    // Check if extension is available
+    isAvailable: () => {
+      try {
+        const available = !!(chrome && chrome.runtime && chrome.runtime.id);
+        console.log('Profit Orbit Bridge: isAvailable() =', available);
+        return available;
+      } catch (e) {
+        console.log('Profit Orbit Bridge: isAvailable() error:', e);
+        return false;
+      }
+    },
+    
+    // Get all marketplace statuses
+    getAllStatus: (callback) => {
+      console.log('Profit Orbit Bridge: getAllStatus() called');
+      if (!chrome.runtime?.id) {
+        console.log('Profit Orbit Bridge: Extension not available in getAllStatus');
+        if (callback) callback({ error: 'Extension not available' });
+        return;
+      }
+      
+      chrome.runtime.sendMessage(
+        { type: 'GET_ALL_STATUS' },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.log('Profit Orbit Bridge: getAllStatus error:', chrome.runtime.lastError.message);
+            if (callback) callback({ error: chrome.runtime.lastError.message });
+          } else {
+            console.log('Profit Orbit Bridge: getAllStatus response:', response);
+            if (callback) callback(response || {});
+          }
+        }
+      );
+    }
+  };
+  
+  console.log('Profit Orbit Extension: Bridge API exposed to window.ProfitOrbitExtension', window.ProfitOrbitExtension);
+} else {
+  console.error('Profit Orbit Extension: window is not available - bridge script may have loaded too early');
 }
 
-// Poll every 2 seconds to keep status updated (more frequent for better detection)
-setInterval(queryExtensionStatus, 2000);
+// Listen for messages from background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('Profit Orbit received message from extension:', message);
+  
+  if (message.type === 'MARKETPLACE_STATUS_UPDATE') {
+    const marketplace = message.marketplace;
+    const data = message.data;
+    
+    // Update localStorage so the web app can access it
+    if (data.loggedIn) {
+      localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
+      localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify(data));
+      console.log(`${marketplace} connection saved to localStorage`);
+      
+      // Dispatch custom event that React can listen to
+      window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
+        detail: { marketplace, status: data }
+      }));
+    } else {
+      localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
+      localStorage.removeItem(`profit_orbit_${marketplace}_user`);
+    }
+    
+    sendResponse({ received: true });
+  }
+
+  // Handle request for listing API configuration
+  if (message.type === 'GET_LISTING_CONFIG') {
+    // Get API URL from window (set by React app)
+    const apiUrl = window.LISTING_API_URL || localStorage.getItem('LISTING_API_URL');
+    
+    // Get auth token from Supabase (if available)
+    // The React app should expose this via window or localStorage
+    const authToken = window.SUPABASE_AUTH_TOKEN || localStorage.getItem('SUPABASE_AUTH_TOKEN');
+    
+    sendResponse({
+      apiUrl: apiUrl || null,
+      authToken: authToken || null,
+    });
+    return true;
+  }
+  
+  return true;
+});
+
+
+// Set up event listeners when window is ready
+(function setupEventListeners() {
+  if (typeof window === 'undefined') {
+    // If window isn't ready yet, try again
+    setTimeout(setupEventListeners, 100);
+    return;
+  }
+  
+  // Listen for manual refresh requests from React app
+  window.addEventListener('checkMercariStatus', () => {
+    console.log('Profit Orbit Bridge: Manual status check requested');
+    queryExtensionStatus();
+  });
+  
+  // On page load, query extension for all marketplace statuses
+  window.addEventListener('load', () => {
+    setTimeout(queryExtensionStatus, 1000);
+  });
+  
+  // Also query immediately if DOM is already loaded
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(queryExtensionStatus, 500);
+  }
+  
+  // Poll every 2 seconds to keep status updated (more frequent for better detection)
+  setInterval(queryExtensionStatus, 2000);
+  
+  console.log('Profit Orbit Bridge: Event listeners set up');
+})();
 
 // Listen for messages from the Profit Orbit web app (via window.postMessage)
 window.addEventListener('message', async (event) => {
