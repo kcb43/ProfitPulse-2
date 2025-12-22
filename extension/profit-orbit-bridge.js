@@ -106,6 +106,8 @@ function queryExtensionStatus() {
         return;
       }
       
+      console.log('Profit Orbit Bridge: Received response from background:', response);
+      
       if (response && response.status) {
         console.log('Profit Orbit Bridge: Marketplace statuses from extension:', response.status);
         
@@ -140,7 +142,7 @@ function queryExtensionStatus() {
           detail: { marketplaces: response.status }
         }));
       } else {
-        console.log('Profit Orbit Bridge: No status data received from extension');
+        console.log('Profit Orbit Bridge: No status data received from extension, response:', response);
       }
     }
   );
@@ -255,6 +257,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   window.addEventListener('checkMercariStatus', () => {
     console.log('Profit Orbit Bridge: Manual status check requested');
     queryExtensionStatus();
+  });
+  
+  // Also listen for page script requests via postMessage
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+    
+    if (event.data.type === 'PROFIT_ORBIT_QUERY_STATUS') {
+      console.log('Bridge: Page script requested status query');
+      queryExtensionStatus();
+    }
+    
+    if (event.data.type === 'PROFIT_ORBIT_GET_ALL_STATUS') {
+      console.log('Bridge: Page script requested all status, requestId:', event.data.requestId);
+      if (!chrome.runtime?.id) {
+        window.postMessage({
+          type: 'PROFIT_ORBIT_STATUS_RESPONSE',
+          requestId: event.data.requestId,
+          error: 'Extension not available'
+        }, '*');
+        return;
+      }
+      
+      chrome.runtime.sendMessage(
+        { type: 'GET_ALL_STATUS' },
+        (response) => {
+          console.log('Bridge: Received response for page script:', response);
+          if (chrome.runtime.lastError) {
+            window.postMessage({
+              type: 'PROFIT_ORBIT_STATUS_RESPONSE',
+              requestId: event.data.requestId,
+              error: chrome.runtime.lastError.message
+            }, '*');
+          } else {
+            window.postMessage({
+              type: 'PROFIT_ORBIT_STATUS_RESPONSE',
+              requestId: event.data.requestId,
+              data: response || {}
+            }, '*');
+          }
+        }
+      );
+    }
   });
   
   // On page load, query extension for all marketplace statuses
