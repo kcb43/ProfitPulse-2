@@ -61,8 +61,36 @@
           }
         }
       }, 500);
+    },
+    
+    // List item on marketplace - sends message to content script
+    listItem: function(payload) {
+      console.log('🟢 Page API: listItem() called with payload:', payload);
+      
+      // Send message to content script via postMessage
+      // Content script listens for this and handles the listing
+      window.postMessage({
+        type: 'PROFIT_ORBIT_LIST_ITEM',
+        payload: payload,
+        timestamp: Date.now()
+      }, '*');
+      
+      // Return a promise-like object that can be checked for success
+      return {
+        sent: true,
+        timestamp: Date.now()
+      };
     }
   };
+  
+  // Verify ProfitOrbitExtension is properly exposed before dispatching ready event
+  if (typeof window.ProfitOrbitExtension === 'undefined') {
+    console.error('🔴 Page API: CRITICAL - window.ProfitOrbitExtension is undefined after assignment!');
+    throw new Error('Failed to expose ProfitOrbitExtension API');
+  }
+  
+  console.log('🟢 Page API: window.ProfitOrbitExtension exists:', typeof window.ProfitOrbitExtension !== 'undefined');
+  console.log('🟢 Page API: window.ProfitOrbitExtension.listItem exists:', typeof window.ProfitOrbitExtension.listItem === 'function');
   
   window.dispatchEvent(new CustomEvent('profitOrbitBridgeReady', {
     detail: { api: window.ProfitOrbitExtension }

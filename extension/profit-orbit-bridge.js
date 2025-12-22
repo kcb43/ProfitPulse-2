@@ -73,22 +73,62 @@ function updateLocalStorage(status) {
   }));
 }
 
+// Track if extension context is invalidated
+let extensionContextInvalidated = false;
+
+// Function to check if extension context is still valid
+function isExtensionContextValid() {
+  try {
+    if (typeof chrome === 'undefined' || !chrome.runtime) {
+      return false;
+    }
+    // Try to access runtime ID - will throw if invalidated
+    const id = chrome.runtime.id;
+    return !!id;
+  } catch (error) {
+    if (error.message && error.message.includes('Extension context invalidated')) {
+      extensionContextInvalidated = true;
+      return false;
+    }
+    return false;
+  }
+}
+
 // Function to query status from background
 function queryStatus() {
-  console.log('🔵 Bridge: queryStatus() called');
-  
-  if (typeof chrome === 'undefined' || !chrome.runtime) {
-    console.error('🔴 Bridge: chrome.runtime not available');
+  // Check if extension context is still valid
+  if (!isExtensionContextValid()) {
+    if (!extensionContextInvalidated) {
+      console.warn('⚠️ Bridge: Extension context not available');
+    }
     return;
   }
+  
+  console.log('🔵 Bridge: queryStatus() called');
   
   console.log('🔵 Bridge: Sending GET_ALL_STATUS message to background...');
   
   try {
     chrome.runtime.sendMessage({ type: 'GET_ALL_STATUS' }, (response) => {
+      // Check for extension context invalidation
       if (chrome.runtime.lastError) {
-        console.error('🔴 Bridge: Error from background:', chrome.runtime.lastError.message);
+        const errorMsg = chrome.runtime.lastError.message;
+        if (errorMsg && errorMsg.includes('Extension context invalidated')) {
+          extensionContextInvalidated = true;
+          console.error('🔴 Bridge: Extension context invalidated - extension was reloaded');
+          console.error('🔴 Bridge: Please reload this page to reconnect to the extension');
+          // Dispatch event so React app knows extension was reloaded
+          window.dispatchEvent(new CustomEvent('profitOrbitExtensionInvalidated'));
+          return;
+        }
+        console.error('🔴 Bridge: Error from background:', errorMsg);
         return;
+      }
+      
+      // Reset invalidated flag if we got a successful response
+      if (extensionContextInvalidated) {
+        console.log('🟢 Bridge: Extension context restored');
+        extensionContextInvalidated = false;
       }
       
       console.log('🔵 Bridge: Received response from background:', response);
@@ -100,39 +140,67 @@ function queryStatus() {
       }
     });
   } catch (error) {
-    console.error('🔴 Bridge: Exception sending message:', error);
+    if (error.message && error.message.includes('Extension context invalidated')) {
+      extensionContextInvalidated = true;
+      console.error('🔴 Bridge: Extension context invalidated - extension was reloaded');
+      console.error('🔴 Bridge: Please reload this page to reconnect to the extension');
+      window.dispatchEvent(new CustomEvent('profitOrbitExtensionInvalidated'));
+    } else {
+      console.error('🔴 Bridge: Exception sending message:', error);
+    }
   }
 }
 
 // Listen for background messages
 if (typeof chrome !== 'undefined' && chrome.runtime) {
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('🔵 Bridge: Received message from background:', message.type);
-    
-    if (message.type === 'MARKETPLACE_STATUS_UPDATE') {
-      const { marketplace, data } = message;
-      
-      if (data.loggedIn) {
-        localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
-        localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify(data));
-        
-        window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
-          detail: { marketplace, status: data }
-        }));
+  try {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      // Check if extension context is still valid
+      if (extensionContextInvalidated) {
+        console.warn('⚠️ Bridge: Ignoring message - extension context invalidated');
+        return false;
       }
       
-      sendResponse({ received: true });
+      console.log('🔵 Bridge: Received message from background:', message.type);
+      
+      if (message.type === 'MARKETPLACE_STATUS_UPDATE') {
+        const { marketplace, data } = message;
+        
+        if (data.loggedIn) {
+          localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
+          localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify(data));
+          
+          window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
+            detail: { marketplace, status: data }
+          }));
+        }
+        
+        sendResponse({ received: true });
+      }
+      
+      return true;
+    });
+    console.log('🔵 Bridge: Message listener registered');
+  } catch (error) {
+    if (error.message && error.message.includes('Extension context invalidated')) {
+      extensionContextInvalidated = true;
+      console.error('🔴 Bridge: Extension context invalidated while registering message listener');
+      window.dispatchEvent(new CustomEvent('profitOrbitExtensionInvalidated'));
+    } else {
+      console.error('🔴 Bridge: Error registering message listener:', error);
     }
-    
-    return true;
-  });
-  console.log('🔵 Bridge: Message listener registered');
+  }
 } else {
   console.error('🔴 Bridge: Cannot register message listener - chrome.runtime not available');
 }
 
 // Poll localStorage for status requests from React app
-setInterval(() => {
+const statusRequestInterval = setInterval(() => {
+  // Stop polling if extension context is invalidated
+  if (extensionContextInvalidated) {
+    return;
+  }
+  
   const requestFlag = localStorage.getItem('profit_orbit_request_status');
   if (requestFlag === 'true') {
     console.log('🔵🔵🔵 Bridge: React app requested status via localStorage flag 🔵🔵🔵');
@@ -155,8 +223,14 @@ function initializePolling() {
     setTimeout(queryStatus, 500);
   }
 
-  // Poll every 2 seconds
-  setInterval(() => {
+  // Poll every 2 seconds (only if extension context is valid)
+  const pollingInterval = setInterval(() => {
+    // Stop polling if extension context is invalidated
+    if (extensionContextInvalidated) {
+      console.warn('⚠️ Bridge: Stopping polling - extension context invalidated');
+      clearInterval(pollingInterval);
+      return;
+    }
     queryStatus();
   }, 2000);
   
@@ -172,134 +246,9 @@ window.addEventListener('checkMercariStatus', () => {
   queryStatus();
 });
 
-// Inject bridge detection flag into page context (so React app can see it)
-function injectBridgeFlag() {
-  try {
-    // Create a script element that runs in page context
-    const script = document.createElement('script');
-    script.textContent = `
-      (function() {
-        if (typeof window !== 'undefined') {
-          window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
-          console.log('🔵 Bridge: Window flag set in PAGE CONTEXT - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
-          // Dispatch event so React app knows bridge is ready
-          try {
-            window.dispatchEvent(new CustomEvent('profitOrbitBridgeLoaded'));
-          } catch (e) {
-            console.warn('🔵 Bridge: Could not dispatch event:', e);
-          }
-        }
-      })();
-    `;
-    
-    // Find injection target - try multiple methods
-    // Note: We can't append directly to document, must use head or documentElement
-    let target = null;
-    
-    // Method 1: Try document.head (preferred)
-    if (document.head) {
-      target = document.head;
-    }
-    // Method 2: Try document.documentElement (HTML element)
-    else if (document.documentElement) {
-      target = document.documentElement;
-    }
-    // Method 3: Try document.body (might exist at document_start in some cases)
-    else if (document.body) {
-      target = document.body;
-    }
-    
-    if (target) {
-      try {
-        // Use insertBefore to ensure script executes immediately
-        // Insert at the beginning to ensure it runs before other scripts
-        if (target.firstChild) {
-          target.insertBefore(script, target.firstChild);
-        } else {
-          target.appendChild(script);
-        }
-        console.log('🔵 Bridge: Bridge flag injected into page context via', target.tagName || 'unknown');
-        // Remove script tag after execution
-        setTimeout(() => {
-          try {
-            if (script.parentNode) {
-              script.parentNode.removeChild(script);
-            }
-          } catch (e) {
-            // Ignore removal errors
-          }
-        }, 100);
-      } catch (error) {
-        console.error('🔴 Bridge: Failed to inject script:', error);
-        console.error('🔴 Bridge: Error details:', error.message, error.stack);
-        // Retry with delay
-        setTimeout(() => {
-          try {
-            injectBridgeFlag();
-          } catch (e) {
-            console.error('🔴 Bridge: Retry also failed:', e);
-          }
-        }, 100);
-      }
-    } else {
-      // DOM not ready yet, wait for it
-      console.log('🔵 Bridge: DOM not ready, waiting... (readyState:', document.readyState, ')');
-      const tryInject = () => {
-        const target = document.head || document.documentElement || document.body;
-        if (target) {
-          try {
-            // Use insertBefore to ensure script executes immediately
-            if (target.firstChild) {
-              target.insertBefore(script, target.firstChild);
-            } else {
-              target.appendChild(script);
-            }
-            console.log('🔵 Bridge: Bridge flag injected into page context (delayed) via', target.tagName);
-            // Remove script tag after execution
-            setTimeout(() => {
-              try {
-                if (script.parentNode) {
-                  script.parentNode.removeChild(script);
-                }
-              } catch (e) {
-                // Ignore removal errors
-              }
-            }, 100);
-          } catch (e) {
-            console.error('🔴 Bridge: Failed delayed injection:', e);
-            setTimeout(tryInject, 50);
-          }
-        } else {
-          setTimeout(tryInject, 50);
-        }
-      };
-      
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', tryInject, { once: true });
-        // Also try after a timeout as backup
-        setTimeout(tryInject, 1000);
-      } else {
-        setTimeout(tryInject, 50);
-      }
-    }
-  } catch (error) {
-    console.error('🔴 Bridge: Exception injecting bridge flag:', error);
-    // Retry after delay
-    setTimeout(() => {
-      try {
-        injectBridgeFlag();
-      } catch (e) {
-        console.error('🔴 Bridge: Retry also failed:', e);
-      }
-    }, 200);
-  }
-}
-
-// Inject bridge flag - try multiple times to ensure it works
-injectBridgeFlag();
-// Also try after a short delay in case DOM isn't ready
-setTimeout(injectBridgeFlag, 100);
-setTimeout(injectBridgeFlag, 500);
+// NOTE: Bridge flag injection removed - CSP blocks inline scripts
+// Flag is now set in profit-orbit-page-api.js which loads via src=chrome-extension://
+// This avoids CSP violations on sites like Mercari
 
 // Inject page API script into page context
 function injectPageAPI() {

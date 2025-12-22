@@ -572,6 +572,66 @@ if (MARKETPLACE) {
       return false; // No response needed
     }
   });
+  
+  // Listen for LIST_ITEM messages from page API (window.postMessage)
+  window.addEventListener('message', (event) => {
+    // Only accept messages from same origin (page context)
+    if (event.source !== window) return;
+    
+    if (event.data && event.data.type === 'PROFIT_ORBIT_LIST_ITEM') {
+      console.log('📦 [LIST_ITEM] Received listing request from page API:', event.data.payload);
+      
+      const payload = event.data.payload;
+      
+      // Validate payload
+      if (!payload || !payload.marketplace) {
+        console.error('🔴 [LIST_ITEM] Invalid payload - missing marketplace');
+        // Send error back to page
+        window.postMessage({
+          type: 'PROFIT_ORBIT_LIST_ITEM_RESPONSE',
+          success: false,
+          error: 'Invalid payload - missing marketplace',
+          timestamp: Date.now()
+        }, '*');
+        return;
+      }
+      
+      // Only handle Mercari for now
+      if (payload.marketplace === 'mercari' && MARKETPLACE === 'mercari') {
+        console.log('📦 [LIST_ITEM] Processing Mercari listing...');
+        
+        // Create listing and send response back to page
+        createMercariListing(payload.listingData || payload, { skipNavigation: false })
+          .then((result) => {
+            console.log('📦 [LIST_ITEM] Listing result:', result);
+            // Send success/failure back to page
+            window.postMessage({
+              type: 'PROFIT_ORBIT_LIST_ITEM_RESPONSE',
+              success: result.success || false,
+              result: result,
+              timestamp: Date.now()
+            }, '*');
+          })
+          .catch((error) => {
+            console.error('🔴 [LIST_ITEM] Listing failed:', error);
+            window.postMessage({
+              type: 'PROFIT_ORBIT_LIST_ITEM_RESPONSE',
+              success: false,
+              error: error.message || 'Unknown error',
+              timestamp: Date.now()
+            }, '*');
+          });
+      } else {
+        console.warn('⚠️ [LIST_ITEM] Marketplace mismatch or not supported:', payload.marketplace, 'current:', MARKETPLACE);
+        window.postMessage({
+          type: 'PROFIT_ORBIT_LIST_ITEM_RESPONSE',
+          success: false,
+          error: `Marketplace ${payload.marketplace} not supported on this page`,
+          timestamp: Date.now()
+        }, '*');
+      }
+    }
+  });
 
   // Initial check
   updateLoginStatus();
@@ -635,8 +695,13 @@ async function createMercariListing(listingData, options = {}) {
       timestamp: new Date().toISOString()
     });
     
+    // Check if we're on Mercari sell page using proper route detection
+    // Use pathname.startsWith to handle /sell, /sell/, /sell/create, etc.
+    const isOnSellPage = window.location.hostname.endsWith('mercari.com') && 
+                         window.location.pathname.startsWith('/sell');
+    
     // Only navigate if not called from background script (which already navigated the tab)
-    if (!options.skipNavigation && !window.location.href.includes('/sell')) {
+    if (!options.skipNavigation && !isOnSellPage) {
       console.log('🌐 [MERCARI] Navigating to sell page in current tab...');
       // Store listing data in sessionStorage so we can retrieve it after navigation
       sessionStorage.setItem('__mercariPendingListing', JSON.stringify({ ...listingData, skipNavigation: false }));
@@ -657,10 +722,12 @@ async function createMercariListing(listingData, options = {}) {
     }
     
     // If called from background script, ensure we're on the sell page (should already be)
-    if (options.skipNavigation && !window.location.href.includes('/sell')) {
+    if (options.skipNavigation && !isOnSellPage) {
       console.warn('⚠️ [MERCARI] Expected to be on /sell page but not there. Waiting...');
       await sleep(300); // Reduced from 500ms to 300ms
-      if (!window.location.href.includes('/sell')) {
+      const stillOnSellPage = window.location.hostname.endsWith('mercari.com') && 
+                              window.location.pathname.startsWith('/sell');
+      if (!stillOnSellPage) {
         isCreatingMercariListing = false;
         return { success: false, error: 'Not on Mercari sell page' };
       }
@@ -808,7 +875,12 @@ async function createFacebookListing(listingData) {
     console.log('📋 [FACEBOOK] Listing data:', summaryData);
     
     // Navigate to Marketplace create listing page if not already there
-    if (!window.location.href.includes('/marketplace/create') && !window.location.href.includes('/marketplace/sell')) {
+    // Use pathname.startsWith() for CSP-safe route detection (Facebook has strict CSP)
+    const isOnMarketplacePage = window.location.hostname.endsWith('facebook.com') && 
+                                (window.location.pathname.startsWith('/marketplace/create') || 
+                                 window.location.pathname.startsWith('/marketplace/sell'));
+    
+    if (!isOnMarketplacePage) {
       console.log('🌐 [FACEBOOK] Navigating to Marketplace create page...');
       // Store listing data in sessionStorage so we can retrieve it after navigation
       sessionStorage.setItem('__facebookPendingListing', JSON.stringify(listingData));
@@ -1172,7 +1244,10 @@ async function createMercariListingWithPuppeteer(listingData) {
 // Fallback to extension method when Puppeteer fails
 async function createMercariListingExtensionFallback(listingData) {
   // Navigate to sell page if not already there
-  if (!window.location.href.includes('/sell')) {
+  // Check if on Mercari sell page using proper route detection
+  const isOnSellPage = window.location.hostname.endsWith('mercari.com') && 
+                       window.location.pathname.startsWith('/sell');
+  if (!isOnSellPage) {
     window.location.href = 'https://www.mercari.com/sell/';
     
     // Wait for page to load, then retry
