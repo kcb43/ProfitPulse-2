@@ -400,25 +400,69 @@ export default function Settings() {
   const handleMercariConnect = async () => {
     try {
       console.log('Checking Mercari connection...');
+      toast({
+        title: 'Checking Connection...',
+        description: 'Querying extension for Mercari login status...',
+      });
       
       // First, force a check via the bridge script by triggering extension query
       // The bridge script should query the extension and update localStorage
       if (window.ProfitOrbitExtension && window.ProfitOrbitExtension.isAvailable()) {
-        // Use bridge script API
-        window.ProfitOrbitExtension.queryStatus();
-        setTimeout(() => {
-          checkMercariStatusFromStorage();
-        }, 500);
+        console.log('Profit Orbit: Using bridge API to check status');
+        // Use getAllStatus to get current status directly
+        window.ProfitOrbitExtension.getAllStatus((response) => {
+          console.log('Profit Orbit: getAllStatus response:', response);
+          if (response.error) {
+            console.error('Profit Orbit: Error getting status:', response.error);
+            toast({
+              title: 'Connection Error',
+              description: 'Failed to query extension. Make sure the extension is installed and enabled.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          
+          // Check if Mercari is logged in
+          if (response?.status?.mercari?.loggedIn) {
+            console.log('Profit Orbit: Mercari is logged in!', response.status.mercari);
+            const mercariData = response.status.mercari;
+            
+            // Update localStorage
+            localStorage.setItem('profit_orbit_mercari_connected', 'true');
+            localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
+              userName: mercariData.userName || mercariData.name || 'Mercari User',
+              marketplace: 'mercari'
+            }));
+            
+            // Update state
+            setMercariConnected(true);
+            
+            toast({
+              title: 'Mercari Connected!',
+              description: mercariData.userName || mercariData.name 
+                ? `Connected as ${mercariData.userName || mercariData.name}` 
+                : 'Your Mercari account is connected.',
+            });
+          } else {
+            console.log('Profit Orbit: Mercari not logged in');
+            toast({
+              title: 'Not Connected',
+              description: 'Please log into Mercari first, then try connecting again.',
+              variant: 'destructive',
+            });
+            showMercariInstructions();
+          }
+        });
       } else {
+        console.log('Profit Orbit: Bridge API not available, trying fallback');
         // Try to trigger bridge script via custom event
         window.dispatchEvent(new CustomEvent('checkMercariStatus'));
+        
+        // Also check localStorage directly
         setTimeout(() => {
           checkMercariStatusFromStorage();
-        }, 1000);
+        }, 1500);
       }
-      
-      // Check localStorage immediately
-      checkMercariStatusFromStorage();
       
     } catch (error) {
       console.error('Error connecting Mercari:', error);
