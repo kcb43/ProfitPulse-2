@@ -558,13 +558,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function notifyProfitOrbit(message) {
   try {
     const tabs = await chrome.tabs.query({
-      url: ['https://profitorbit.io/*', 'http://localhost:5173/*']
+      url: ['https://profitorbit.io/*', 'http://localhost:5173/*', 'http://localhost:5174/*']
     });
     
+    console.log(`Notifying ${tabs.length} Profit Orbit tab(s) with message:`, message);
+    
     for (const tab of tabs) {
-      chrome.tabs.sendMessage(tab.id, message).catch(() => {
-        // Tab not ready
-      });
+      try {
+        await chrome.tabs.sendMessage(tab.id, message);
+        console.log(`Message sent to tab ${tab.id}`);
+      } catch (error) {
+        // Tab might not be ready or bridge script not loaded
+        console.log(`Could not send message to tab ${tab.id}:`, error.message);
+      }
     }
   } catch (error) {
     console.error('Error notifying Profit Orbit:', error);

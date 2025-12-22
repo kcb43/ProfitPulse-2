@@ -33263,6 +33263,30 @@ export default function CrosslistComposer() {
   
   // Listen for Mercari connection status updates from extension
   useEffect(() => {
+    // Check connection status on mount
+    const checkMercariConnection = () => {
+      const connected = localStorage.getItem('profit_orbit_mercari_connected') === 'true';
+      if (connected !== mercariConnected) {
+        setMercariConnected(connected);
+      }
+      
+      // Update username if available
+      const userData = localStorage.getItem('profit_orbit_mercari_user');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          if (parsed.userName && parsed.userName !== mercariUsername) {
+            setMercariUsername(parsed.userName);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    };
+    
+    // Check immediately
+    checkMercariConnection();
+    
     const handleStorageChange = (e) => {
       if (e.key === 'profit_orbit_mercari_connected') {
         setMercariConnected(e.newValue === 'true');
@@ -33328,24 +33352,52 @@ export default function CrosslistComposer() {
     window.addEventListener('marketplaceStatusUpdate', handleMarketplaceStatusUpdate);
     
     // Check initial state
-    const userData = localStorage.getItem('profit_orbit_mercari_user');
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData);
-        if (parsed.userName) {
-          setMercariUsername(parsed.userName);
+    const checkInitialState = () => {
+      const connected = localStorage.getItem('profit_orbit_mercari_connected') === 'true';
+      setMercariConnected(connected);
+      
+      const userData = localStorage.getItem('profit_orbit_mercari_user');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          if (parsed.userName) {
+            setMercariUsername(parsed.userName);
+          }
+        } catch (e) {
+          // Ignore parse errors
         }
-      } catch (e) {
-        // Ignore parse errors
       }
-    }
+    };
+    
+    checkInitialState();
+    
+    // Poll every 2 seconds to catch updates from extension
+    const pollInterval = setInterval(() => {
+      checkMercariConnection();
+    }, 2000);
+    
+    // Also listen for extensionReady event
+    const handleExtensionReady = (event) => {
+      if (event.detail?.marketplaces?.mercari?.loggedIn) {
+        setMercariConnected(true);
+        const mercariData = event.detail.marketplaces.mercari;
+        if (mercariData.userName) {
+          setMercariUsername(mercariData.userName);
+        }
+      }
+    };
+    window.addEventListener('extensionReady', handleExtensionReady);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('mercari-connection-update', handleMercariConnectionUpdate);
       window.removeEventListener('marketplaceStatusUpdate', handleMarketplaceStatusUpdate);
+      window.removeEventListener('extensionReady', handleExtensionReady);
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
     };
-  }, []);
+  }, [mercariConnected, mercariUsername]);
   
   // Handle OAuth callback from URL params
   useEffect(() => {

@@ -50,44 +50,66 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+// Function to query extension for marketplace statuses
+function queryExtensionStatus() {
+  // Check if extension context is still valid before sending message
+  if (!chrome.runtime?.id) {
+    console.log('Extension context invalidated - page may need refresh');
+    return;
+  }
+  
+  chrome.runtime.sendMessage(
+    { type: 'GET_ALL_STATUS' },
+    (response) => {
+      // Check for runtime errors
+      if (chrome.runtime.lastError) {
+        console.log('Extension context changed:', chrome.runtime.lastError.message);
+        return;
+      }
+      
+      if (response && response.status) {
+        console.log('Marketplace statuses from extension:', response.status);
+        
+        // Update localStorage for all marketplaces
+        Object.entries(response.status).forEach(([marketplace, data]) => {
+          if (data.loggedIn) {
+            localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
+            localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify({
+              userName: data.userName || data.name || 'User',
+              marketplace: marketplace
+            }));
+            
+            // Dispatch event for React components
+            window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
+              detail: { marketplace, status: data }
+            }));
+          } else {
+            localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
+            localStorage.removeItem(`profit_orbit_${marketplace}_user`);
+          }
+        });
+        
+        // Trigger page update
+        window.dispatchEvent(new CustomEvent('extensionReady', {
+          detail: { marketplaces: response.status }
+        }));
+      }
+    }
+  );
+}
+
 // On page load, query extension for all marketplace statuses
 window.addEventListener('load', () => {
-  setTimeout(() => {
-    // Check if extension context is still valid before sending message
-    if (!chrome.runtime?.id) {
-      console.log('Extension context invalidated on page load - page may need refresh');
-      return;
-    }
-    
-    chrome.runtime.sendMessage(
-      { type: 'GET_ALL_STATUS' },
-      (response) => {
-        // Check for runtime errors
-        if (chrome.runtime.lastError) {
-          console.log('Extension context changed on page load:', chrome.runtime.lastError.message);
-          return;
-        }
-        
-        if (response && response.status) {
-          console.log('Initial marketplace statuses:', response.status);
-          
-          // Update localStorage for all marketplaces
-          Object.entries(response.status).forEach(([marketplace, data]) => {
-            if (data.loggedIn) {
-              localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
-              localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify(data));
-            }
-          });
-          
-          // Trigger page update
-          window.dispatchEvent(new CustomEvent('extensionReady', {
-            detail: { marketplaces: response.status }
-          }));
-        }
-      }
-    );
-  }, 1000);
+  setTimeout(queryExtensionStatus, 1000);
 });
+
+// Also query immediately if DOM is already loaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(queryExtensionStatus, 500);
+}
+
+// Poll every 5 seconds to keep status updated
+setInterval(queryExtensionStatus, 5000);
 
 // Listen for messages from the Profit Orbit web app (via window.postMessage)
 window.addEventListener('message', async (event) => {

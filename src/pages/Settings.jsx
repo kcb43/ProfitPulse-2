@@ -182,29 +182,76 @@ export default function Settings() {
     
     window.addEventListener('marketplaceStatusUpdate', handleMarketplaceUpdate);
     
-    // Check if already connected on mount and get username
-    const mercariStatus = localStorage.getItem('profit_orbit_mercari_connected');
-    if (mercariStatus === 'true') {
-      setMercariConnected(true);
-      // Try to get username from localStorage
-      const userData = localStorage.getItem('profit_orbit_mercari_user');
-      if (userData) {
-        try {
-          const parsed = JSON.parse(userData);
-          if (parsed.userName) {
-            // Username will be displayed via getMarketplaceAccountStatus
-          }
-        } catch (e) {
-          // Ignore parse errors
+    // Also listen for extensionReady event from bridge script
+    const handleExtensionReady = (event) => {
+      console.log('Extension ready event:', event.detail);
+      if (event.detail?.marketplaces?.mercari?.loggedIn) {
+        setMercariConnected(true);
+        const mercariData = event.detail.marketplaces.mercari;
+        if (mercariData.userName) {
+          localStorage.setItem('profit_orbit_mercari_user', JSON.stringify({
+            userName: mercariData.userName,
+            marketplace: 'mercari'
+          }));
         }
       }
-    }
+    };
+    window.addEventListener('extensionReady', handleExtensionReady);
+    
+    // Check if already connected on mount and get username
+    const checkMercariStatus = () => {
+      const mercariStatus = localStorage.getItem('profit_orbit_mercari_connected');
+      if (mercariStatus === 'true') {
+        setMercariConnected(true);
+        // Try to get username from localStorage
+        const userData = localStorage.getItem('profit_orbit_mercari_user');
+        if (userData) {
+          try {
+            const parsed = JSON.parse(userData);
+            if (parsed.userName) {
+              // Username will be displayed via getMarketplaceAccountStatus
+            }
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+    };
+    
+    // Check immediately
+    checkMercariStatus();
+    
+    // Poll for Mercari connection status every 2 seconds (in case extension updates localStorage)
+    const pollInterval = setInterval(() => {
+      const currentStatus = localStorage.getItem('profit_orbit_mercari_connected');
+      if (currentStatus === 'true' && !mercariConnected) {
+        setMercariConnected(true);
+        checkMercariStatus();
+      } else if (currentStatus !== 'true' && mercariConnected) {
+        setMercariConnected(false);
+      }
+    }, 2000);
+    
+    // Also listen for storage events (in case extension updates localStorage from another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'profit_orbit_mercari_connected') {
+        const isConnected = e.newValue === 'true';
+        if (isConnected !== mercariConnected) {
+          setMercariConnected(isConnected);
+          checkMercariStatus();
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
       window.removeEventListener('message', handleMessage);
       window.removeEventListener('marketplaceStatusUpdate', handleMarketplaceUpdate);
+      window.removeEventListener('extensionReady', handleExtensionReady);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(pollInterval);
     };
-  }, [searchParams, navigate, toast]);
+  }, [searchParams, navigate, toast, mercariConnected]);
 
   const checkFacebookStatus = async () => {
     try {
