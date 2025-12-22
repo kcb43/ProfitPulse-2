@@ -54,38 +54,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function queryExtensionStatus() {
   // Check if extension context is still valid before sending message
   if (!chrome.runtime?.id) {
-    console.log('Extension context invalidated - page may need refresh');
+    console.log('Profit Orbit Bridge: Extension context invalidated - page may need refresh');
     return;
   }
+  
+  console.log('Profit Orbit Bridge: Querying extension for marketplace statuses...');
   
   chrome.runtime.sendMessage(
     { type: 'GET_ALL_STATUS' },
     (response) => {
       // Check for runtime errors
       if (chrome.runtime.lastError) {
-        console.log('Extension context changed:', chrome.runtime.lastError.message);
+        console.log('Profit Orbit Bridge: Extension context changed:', chrome.runtime.lastError.message);
         return;
       }
       
       if (response && response.status) {
-        console.log('Marketplace statuses from extension:', response.status);
+        console.log('Profit Orbit Bridge: Marketplace statuses from extension:', response.status);
         
         // Update localStorage for all marketplaces
         Object.entries(response.status).forEach(([marketplace, data]) => {
           if (data.loggedIn) {
+            const wasConnected = localStorage.getItem(`profit_orbit_${marketplace}_connected`) === 'true';
             localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
             localStorage.setItem(`profit_orbit_${marketplace}_user`, JSON.stringify({
               userName: data.userName || data.name || 'User',
               marketplace: marketplace
             }));
             
-            // Dispatch event for React components
-            window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
-              detail: { marketplace, status: data }
-            }));
+            // Dispatch event for React components (only if status changed)
+            if (!wasConnected) {
+              console.log(`Profit Orbit Bridge: ${marketplace} connection detected!`);
+              window.dispatchEvent(new CustomEvent('marketplaceStatusUpdate', {
+                detail: { marketplace, status: data }
+              }));
+            }
           } else {
-            localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
-            localStorage.removeItem(`profit_orbit_${marketplace}_user`);
+            const wasConnected = localStorage.getItem(`profit_orbit_${marketplace}_connected`) === 'true';
+            if (wasConnected) {
+              localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
+              localStorage.removeItem(`profit_orbit_${marketplace}_user`);
+            }
           }
         });
         
@@ -93,10 +102,18 @@ function queryExtensionStatus() {
         window.dispatchEvent(new CustomEvent('extensionReady', {
           detail: { marketplaces: response.status }
         }));
+      } else {
+        console.log('Profit Orbit Bridge: No status data received from extension');
       }
     }
   );
 }
+
+// Listen for manual refresh requests from React app
+window.addEventListener('checkMercariStatus', () => {
+  console.log('Profit Orbit Bridge: Manual status check requested');
+  queryExtensionStatus();
+});
 
 // On page load, query extension for all marketplace statuses
 window.addEventListener('load', () => {
@@ -108,8 +125,8 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
   setTimeout(queryExtensionStatus, 500);
 }
 
-// Poll every 5 seconds to keep status updated
-setInterval(queryExtensionStatus, 5000);
+// Poll every 2 seconds to keep status updated (more frequent for better detection)
+setInterval(queryExtensionStatus, 2000);
 
 // Listen for messages from the Profit Orbit web app (via window.postMessage)
 window.addEventListener('message', async (event) => {
