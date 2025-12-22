@@ -8,12 +8,17 @@
 // Base API URL
 const API_BASE = '/api';
 
-// Helper function to get user ID
-// This will need to be adapted based on your auth setup
+// Helper function to get user ID from Supabase auth
+import { getCurrentUserId } from './supabaseClient';
+
 async function getUserId() {
-  // TODO: Get from auth context/session
-  // For now, return null (will be handled by backend)
-  return null;
+  try {
+    const userId = await getCurrentUserId();
+    return userId;
+  } catch (error) {
+    console.error('Error getting user ID:', error);
+    return null;
+  }
 }
 
 // Helper function to make API requests

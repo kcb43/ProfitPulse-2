@@ -27,7 +27,7 @@ export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleGetStarted = () => {
-    navigate('/dashboard');
+    navigate('/signup');
   };
 
   const handleSignIn = async () => {

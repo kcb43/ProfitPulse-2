@@ -3,6 +3,7 @@ import Layout from "./Layout.jsx";
 import Dashboard from "./Dashboard";
 import Landing from "./Landing";
 import Login from "./Login";
+import SignUp from "./SignUp";
 import ProfileSettings from "./ProfileSettings";
 
 import AddSale from "./AddSale";
@@ -92,6 +93,9 @@ function PagesContent() {
               
               {/* Login Page */}
               <Route path="/login" element={<Login />} />
+              
+              {/* Sign Up Page */}
+              <Route path="/signup" element={<SignUp />} />
               
               {/* Protected Dashboard Routes */}
               <Route
