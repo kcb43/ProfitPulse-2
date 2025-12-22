@@ -12,6 +12,13 @@ const MARKETPLACES = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Update version from manifest
+  const manifest = chrome.runtime.getManifest();
+  const versionElements = document.querySelectorAll('#version-text, #version-text-footer');
+  versionElements.forEach(el => {
+    if (el) el.textContent = manifest.version;
+  });
+  
   const marketplacesDiv = document.getElementById('marketplaces');
   const refreshBtn = document.getElementById('refreshBtn');
   const openProfitOrbit = document.getElementById('openProfitOrbit');
