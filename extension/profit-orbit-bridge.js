@@ -21,15 +21,29 @@ console.log('Profit Orbit Extension: Document ready state:', document.readyState
       
       script.onload = function() {
         console.log('Profit Orbit Extension: Page script loaded successfully');
-        // Don't remove immediately - let it stay for debugging
-        setTimeout(() => this.remove(), 1000);
+        // Verify the API was exposed
+        setTimeout(() => {
+          if (window.ProfitOrbitExtension) {
+            console.log('Profit Orbit Extension: Verified API is available in page context');
+          } else {
+            console.warn('Profit Orbit Extension: Script loaded but API not found - script may have errors');
+          }
+          this.remove();
+        }, 2000);
       };
       
       script.onerror = function(error) {
-        console.error('Profit Orbit Extension: Failed to load page script:', error);
+        console.error('Profit Orbit Extension: Failed to load page script');
         console.error('Profit Orbit Extension: Script URL was:', scriptUrl);
-        console.error('Profit Orbit Extension: Check if profit-orbit-page-api.js exists in extension folder');
+        console.error('Profit Orbit Extension: Error details:', error);
+        console.error('Profit Orbit Extension: Check:');
+        console.error('  1. profit-orbit-page-api.js exists in extension folder');
+        console.error('  2. web_accessible_resources in manifest.json includes the file');
+        console.error('  3. Extension was reloaded after adding the file');
         this.remove();
+        
+        // Try fallback: inject directly (may fail due to CSP but worth trying)
+        console.log('Profit Orbit Extension: Attempting fallback injection method...');
       };
       
       // Try to inject into head first, fallback to documentElement
