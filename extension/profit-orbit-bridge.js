@@ -3,16 +3,29 @@
  * Uses localStorage polling for communication (most reliable)
  */
 
-// CRITICAL: This log should appear in the PAGE CONSOLE (F12), not service worker console
-console.log('🔵🔵🔵 Profit Orbit Bridge: Content script loaded - CHECK PAGE CONSOLE (F12) 🔵🔵🔵');
-console.log('🔵 Bridge: Current URL:', window.location.href);
-console.log('🔵 Bridge: Chrome runtime ID:', chrome.runtime?.id);
-console.log('🔵 Bridge: Chrome runtime available:', !!(chrome && chrome.runtime && chrome.runtime.id));
-
-// Make it VERY visible
-if (typeof window !== 'undefined') {
-  window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
-  console.log('🔵 Bridge: Window flag set - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
+// Prevent multiple initializations
+if (window.__PROFIT_ORBIT_BRIDGE_INITIALIZED) {
+  console.log('🔵 Bridge: Already initialized, skipping...');
+} else {
+  window.__PROFIT_ORBIT_BRIDGE_INITIALIZED = true;
+  
+  // CRITICAL: This log should appear in the PAGE CONSOLE (F12), not service worker console
+  console.log('🔵🔵🔵 Profit Orbit Bridge: Content script loaded - CHECK PAGE CONSOLE (F12) 🔵🔵🔵');
+  console.log('🔵 Bridge: Current URL:', window.location.href);
+  
+  // Store runtime ID when available (it can become undefined later)
+  let storedRuntimeId = null;
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+    storedRuntimeId = chrome.runtime.id;
+    console.log('🔵 Bridge: Chrome runtime ID:', storedRuntimeId);
+  }
+  
+  // Make it VERY visible
+  if (typeof window !== 'undefined') {
+    window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
+    window.__PROFIT_ORBIT_RUNTIME_ID = storedRuntimeId;
+    console.log('🔵 Bridge: Window flag set - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
+  }
 }
 
 // Function to update localStorage with marketplace status
@@ -46,32 +59,32 @@ function updateLocalStorage(status) {
 // Function to query status from background
 function queryStatus() {
   // Check if we're in content script context (has chrome.runtime)
-  if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
-    console.error('🔴 Bridge: chrome.runtime not available - script may be in wrong context');
-    console.error('🔴 Bridge: typeof chrome:', typeof chrome);
-    console.error('🔴 Bridge: chrome.runtime:', chrome?.runtime);
-    console.error('🔴 Bridge: chrome.runtime.id:', chrome?.runtime?.id);
-    
-    // Try to get runtime ID from extension URL
-    try {
-      const runtimeId = chrome.runtime?.id;
-      if (!runtimeId) {
-        console.error('🔴 Bridge: Cannot proceed without chrome.runtime.id');
-        return;
-      }
-    } catch (e) {
-      console.error('🔴 Bridge: Error accessing chrome.runtime:', e);
-      return;
-    }
+  if (typeof chrome === 'undefined' || !chrome.runtime) {
+    console.error('🔴 Bridge: chrome.runtime not available');
     return;
   }
   
-  console.log('🔵 Bridge: Querying background for status...');
-  console.log('🔵 Bridge: chrome.runtime.id:', chrome.runtime.id);
+  // Use stored runtime ID or try to get it fresh
+  const runtimeId = chrome.runtime.id || window.__PROFIT_ORBIT_RUNTIME_ID;
   
+  if (!runtimeId) {
+    // Try to get it from chrome.runtime.getURL or sendMessage (which works even without id)
+    console.log('🔵 Bridge: chrome.runtime.id not available, attempting sendMessage anyway...');
+  } else {
+    console.log('🔵 Bridge: Querying background for status...');
+    console.log('🔵 Bridge: Using runtime ID:', runtimeId);
+  }
+  
+  // sendMessage works even if chrome.runtime.id is undefined (it uses the extension context)
   chrome.runtime.sendMessage({ type: 'GET_ALL_STATUS' }, (response) => {
     if (chrome.runtime.lastError) {
       console.error('🔴 Bridge: Error:', chrome.runtime.lastError.message);
+      
+      // If context invalidated, try to refresh
+      if (chrome.runtime.lastError.message.includes('Extension context invalidated')) {
+        console.error('🔴 Bridge: Extension context invalidated - please reload extension');
+        window.__PROFIT_ORBIT_RUNTIME_ID = null;
+      }
       return;
     }
     
