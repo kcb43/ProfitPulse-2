@@ -63,6 +63,10 @@ async function handleGet(req, res, userId) {
 
     return res.status(200).json(data);
   } else {
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID required' });
+    }
+    
     let query = supabase
       .from('sales')
       .select('*')

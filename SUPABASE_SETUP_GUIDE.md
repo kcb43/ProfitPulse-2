@@ -14,10 +14,21 @@
 ## Step 2: Get API Credentials
 
 1. In your Supabase project dashboard, go to **Settings** → **API**
-2. Copy these values:
-   - **Project URL** (e.g., `https://xxxxx.supabase.co`)
-   - **anon/public key** (starts with `eyJ...`)
-   - **service_role key** (starts with `eyJ...`) - Keep this secret!
+2. You'll see two sections:
+   - **Data API**: Shows your Project URL (this is correct and cannot be changed)
+   - **API Keys**: Shows your keys
+
+3. Copy these values:
+   - **Project URL** (from Data API section, e.g., `https://xxxxx.supabase.co`)
+     - ✅ Your URL: `https://hlcwhpajorzbleabavcr.supabase.co`
+   - **anon/public key** (from API Keys section)
+     - This is the "publishable" key - safe to use in frontend code
+     - ✅ Your key: `sb_publishable_AmJEyN9K_q2OJAUCGiO3eA_NZYf6rXm`
+   - **service_role key** (from API Keys section, labeled "secret")
+     - ⚠️ **KEEP THIS SECRET!** Only use in backend/server-side code
+     - ✅ Your key: `sb_secret_jfF_FPZMZNXkJcAp8da0SA_UcqFHU4-`
+
+**Note:** If you see keys starting with `sb_publishable_` or `sb_secret_`, those are the correct keys. Supabase may have updated their format. The older format started with `eyJ...` (JWT tokens), but both formats work.
 
 ## Step 3: Set Environment Variables
 
@@ -26,10 +37,15 @@
 Create or update `.env.local` in your project root:
 
 ```env
-VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_URL=https://hlcwhpajorzbleabavcr.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_AmJEyN9K_q2OJAUCGiO3eA_NZYf6rXm
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_jfF_FPZMZNXkJcAp8da0SA_UcqFHU4-
 ```
+
+**Important:** 
+- Replace with YOUR actual keys if different
+- The `VITE_` prefix means these variables are exposed to the frontend (safe for anon key)
+- The service_role key does NOT have `VITE_` prefix (keeps it server-side only)
 
 ### For Vercel Deployment
 

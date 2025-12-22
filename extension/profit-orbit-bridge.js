@@ -30,6 +30,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     sendResponse({ received: true });
   }
+
+  // Handle request for listing API configuration
+  if (message.type === 'GET_LISTING_CONFIG') {
+    // Get API URL from window (set by React app)
+    const apiUrl = window.LISTING_API_URL || localStorage.getItem('LISTING_API_URL');
+    
+    // Get auth token from Supabase (if available)
+    // The React app should expose this via window or localStorage
+    const authToken = window.SUPABASE_AUTH_TOKEN || localStorage.getItem('SUPABASE_AUTH_TOKEN');
+    
+    sendResponse({
+      apiUrl: apiUrl || null,
+      authToken: authToken || null,
+    });
+    return true;
+  }
   
   return true;
 });

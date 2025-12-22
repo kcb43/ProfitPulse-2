@@ -679,4 +679,133 @@ setInterval(async () => {
   }
 }, 5 * 60 * 1000); // Every 5 minutes
 
+// ============================================================================
+// PLATFORM CONNECTION (Server-Side Listing Automation)
+// ============================================================================
+
+// API URL for listing automation (set by frontend or default)
+let LISTING_API_URL = null;
+
+// Cookie capture functions (inline version since we can't use ES6 imports in manifest v3)
+async function exportCookies(domain) {
+  try {
+    const cookies = await chrome.cookies.getAll({ domain });
+    return cookies.map((cookie) => ({
+      name: cookie.name,
+      value: cookie.value,
+      domain: cookie.domain,
+      path: cookie.path,
+      secure: cookie.secure,
+      httpOnly: cookie.httpOnly,
+      sameSite: cookie.sameSite,
+      expirationDate: cookie.expirationDate,
+    }));
+  } catch (error) {
+    console.error(`Error exporting cookies for ${domain}:`, error);
+    throw error;
+  }
+}
+
+async function getUserAgent() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabs.length > 0) {
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        func: () => navigator.userAgent,
+      });
+      return results[0].result;
+    }
+    return navigator.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+  } catch (error) {
+    return navigator.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+  }
+}
+
+async function connectPlatform(platform, apiUrl, authToken) {
+  try {
+    const domainMap = {
+      mercari: 'mercari.com',
+      facebook: 'facebook.com',
+    };
+
+    const domain = domainMap[platform];
+    if (!domain) {
+      throw new Error(`Unsupported platform: ${platform}`);
+    }
+
+    // Export cookies
+    const cookies = await exportCookies(domain);
+    if (cookies.length === 0) {
+      throw new Error(`No cookies found for ${domain}. Please log in to ${platform} first.`);
+    }
+
+    // Get user agent
+    const userAgent = await getUserAgent();
+
+    // Prepare payload
+    const payload = {
+      platform,
+      cookies,
+      userAgent,
+      meta: {
+        capturedAt: new Date().toISOString(),
+        cookieCount: cookies.length,
+      },
+    };
+
+    // Send to API
+    const response = await fetch(`${apiUrl}/api/platform/connect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Error connecting platform ${platform}:`, error);
+    throw error;
+  }
+}
+
+// Handle platform connection request
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'CONNECT_PLATFORM') {
+    (async () => {
+      try {
+        const { platform, apiUrl, authToken } = message;
+        
+        if (!apiUrl || !authToken) {
+          throw new Error('API URL and auth token are required');
+        }
+
+        // Store API URL for future use
+        LISTING_API_URL = apiUrl;
+
+        const result = await connectPlatform(platform, apiUrl, authToken);
+        sendResponse({ success: true, result });
+      } catch (error) {
+        console.error('Platform connection error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async response
+  }
+
+  if (message.type === 'SET_LISTING_API_URL') {
+    LISTING_API_URL = message.apiUrl;
+    sendResponse({ success: true });
+    return true;
+  }
+});
+
 console.log('Profit Orbit Extension: Background initialized');

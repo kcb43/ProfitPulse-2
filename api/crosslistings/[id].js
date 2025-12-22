@@ -7,13 +7,17 @@
  * - DELETE /api/crosslistings/:id - Delete a crosslisting
  */
 
-import { createClient } from '@base44/sdk';
+import { createClient } from '@supabase/supabase-js';
 
-// Initialize Base44 client
-const base44 = createClient({
-  appId: process.env.VITE_BASE44_APP_ID || process.env.BASE44_APP_ID || "68e86fb5ac26f8511acce7ec",
-  requiresAuth: false,
-});
+// Initialize Supabase client for server-side use
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('⚠️ Supabase environment variables not configured');
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
  * Get user ID from request
@@ -54,9 +58,13 @@ export default async function handler(req, res) {
     // GET /api/crosslistings/:id - Get specific crosslisting (public for Chrome extension)
     if (req.method === 'GET') {
       try {
-        const listing = await base44.entities.Crosslisting.get(id);
+        const { data: listing, error } = await supabase
+          .from('crosslistings')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-        if (!listing) {
+        if (error || !listing) {
           return res.status(404).json({ 
             error: 'Not found',
             message: 'Crosslisting not found.'
@@ -69,18 +77,12 @@ export default async function handler(req, res) {
           title: listing.title,
           description: listing.description,
           price: listing.price,
-          images: Array.isArray(listing.images) ? listing.images : (listing.images ? JSON.parse(listing.images) : []),
+          images: Array.isArray(listing.images) ? listing.images : [],
           category: listing.category || null,
           condition: listing.condition || null,
         });
       } catch (error) {
         console.error('Error fetching crosslisting:', error);
-        if (error.message && error.message.includes('not found')) {
-          return res.status(404).json({ 
-            error: 'Not found',
-            message: 'Crosslisting not found.'
-          });
-        }
         return res.status(500).json({ 
           error: 'Failed to fetch crosslisting',
           message: error.message 
@@ -100,20 +102,20 @@ export default async function handler(req, res) {
       }
 
       try {
-        // Get the listing to verify it exists
-        const existing = await base44.entities.Crosslisting.get(id);
+        // Get the listing to verify it exists and check ownership
+        const { data: existing, error: fetchError } = await supabase
+          .from('crosslistings')
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', userId)
+          .single();
         
-        if (!existing) {
+        if (fetchError || !existing) {
           return res.status(404).json({ 
             error: 'Not found',
             message: 'Crosslisting not found.'
           });
         }
-
-        // TODO: Verify ownership if needed
-        // if (existing.userId !== userId) {
-        //   return res.status(403).json({ error: 'Forbidden', message: 'You do not have permission to update this listing.' });
-        // }
 
         const { title, description, price, images, category, condition } = req.body;
 
@@ -127,27 +129,34 @@ export default async function handler(req, res) {
         if (condition !== undefined) updates.condition = condition || null;
 
         // Update the listing
-        const updated = await base44.entities.Crosslisting.update(id, updates);
+        const { data: updated, error: updateError } = await supabase
+          .from('crosslistings')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', userId)
+          .select()
+          .single();
+
+        if (updateError || !updated) {
+          return res.status(500).json({ 
+            error: 'Failed to update crosslisting',
+            message: updateError?.message || 'Update failed'
+          });
+        }
 
         return res.status(200).json({
           id: updated.id,
           title: updated.title,
           description: updated.description,
           price: updated.price,
-          images: Array.isArray(updated.images) ? updated.images : (updated.images ? JSON.parse(updated.images) : []),
+          images: Array.isArray(updated.images) ? updated.images : [],
           category: updated.category || null,
           condition: updated.condition || null,
-          createdAt: updated.createdAt,
-          updatedAt: updated.updatedAt,
+          createdAt: updated.created_at,
+          updatedAt: updated.updated_at,
         });
       } catch (error) {
         console.error('Error updating crosslisting:', error);
-        if (error.message && error.message.includes('not found')) {
-          return res.status(404).json({ 
-            error: 'Not found',
-            message: 'Crosslisting not found.'
-          });
-        }
         return res.status(500).json({ 
           error: 'Failed to update crosslisting',
           message: error.message 
@@ -167,23 +176,33 @@ export default async function handler(req, res) {
       }
 
       try {
-        // Get the listing to verify it exists
-        const existing = await base44.entities.Crosslisting.get(id);
-        
-        if (!existing) {
-          return res.status(404).json({ 
-            error: 'Not found',
-            message: 'Crosslisting not found.'
+        // Verify listing exists and belongs to user, then delete
+        const { error: deleteError } = await supabase
+          .from('crosslistings')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', userId);
+
+        if (deleteError) {
+          // Check if it's a not found error
+          const { data: existing } = await supabase
+            .from('crosslistings')
+            .select('id')
+            .eq('id', id)
+            .single();
+
+          if (!existing) {
+            return res.status(404).json({ 
+              error: 'Not found',
+              message: 'Crosslisting not found.'
+            });
+          }
+
+          return res.status(500).json({ 
+            error: 'Failed to delete crosslisting',
+            message: deleteError.message 
           });
         }
-
-        // TODO: Verify ownership if needed
-        // if (existing.userId !== userId) {
-        //   return res.status(403).json({ error: 'Forbidden', message: 'You do not have permission to delete this listing.' });
-        // }
-
-        // Delete the listing
-        await base44.entities.Crosslisting.delete(id);
 
         return res.status(200).json({ 
           success: true,
@@ -191,12 +210,6 @@ export default async function handler(req, res) {
         });
       } catch (error) {
         console.error('Error deleting crosslisting:', error);
-        if (error.message && error.message.includes('not found')) {
-          return res.status(404).json({ 
-            error: 'Not found',
-            message: 'Crosslisting not found.'
-          });
-        }
         return res.status(500).json({ 
           error: 'Failed to delete crosslisting',
           message: error.message 

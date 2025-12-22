@@ -90,26 +90,75 @@ function renderMarketplaces(status) {
   });
 }
 
-function handleConnectMarketplace(marketplaceId) {
-  // Get the marketplace URL based on ID
-  const marketplaceUrls = {
-    mercari: 'https://www.mercari.com',
-    facebook: 'https://www.facebook.com',
-    poshmark: 'https://www.poshmark.com',
-    ebay: 'https://www.ebay.com',
-    etsy: 'https://www.etsy.com'
-  };
+async function handleConnectMarketplace(marketplaceId) {
+  // Only Mercari and Facebook support server-side listing automation
+  const supportedPlatforms = ['mercari', 'facebook'];
   
-  const url = marketplaceUrls[marketplaceId] || 'https://www.mercari.com';
-  
-  // Open marketplace in a new tab
-  chrome.tabs.create({
-    url: url,
-    active: true
-  });
-  
-  // Refresh status after a short delay to check if user logged in
-  setTimeout(() => {
-    checkAllStatus();
-  }, 2000);
+  if (!supportedPlatforms.includes(marketplaceId)) {
+    // For other platforms, use old behavior (just open tab)
+    const marketplaceUrls = {
+      poshmark: 'https://www.poshmark.com',
+      ebay: 'https://www.ebay.com',
+      etsy: 'https://www.etsy.com'
+    };
+    
+    const url = marketplaceUrls[marketplaceId];
+    if (url) {
+      chrome.tabs.create({ url, active: true });
+      setTimeout(() => checkAllStatus(), 2000);
+    }
+    return;
+  }
+
+  // For Mercari and Facebook, connect via API
+  try {
+    // Show connecting state
+    const button = event.target;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Connecting...';
+
+    // Get API URL and auth token from web app
+    // First, try to get from web app via message
+    const webAppTabs = await chrome.tabs.query({
+      url: ['https://profitorbit.io/*', 'http://localhost:5173/*', 'http://localhost:5174/*']
+    });
+
+    if (webAppTabs.length === 0) {
+      throw new Error('Please open Profit Orbit web app first to connect platforms');
+    }
+
+    // Request API URL and auth token from web app
+    const response = await chrome.tabs.sendMessage(webAppTabs[0].id, {
+      type: 'GET_LISTING_CONFIG'
+    }).catch(() => null);
+
+    if (!response || !response.apiUrl || !response.authToken) {
+      throw new Error('Could not get API configuration. Please ensure you are logged in to Profit Orbit.');
+    }
+
+    // Connect platform via background script
+    const connectResponse = await chrome.runtime.sendMessage({
+      type: 'CONNECT_PLATFORM',
+      platform: marketplaceId,
+      apiUrl: response.apiUrl,
+      authToken: response.authToken
+    });
+
+    if (connectResponse.success) {
+      button.textContent = '✓ Connected';
+      button.classList.add('status-connected');
+      setTimeout(() => {
+        checkAllStatus();
+      }, 1000);
+    } else {
+      throw new Error(connectResponse.error || 'Connection failed');
+    }
+  } catch (error) {
+    console.error('Connection error:', error);
+    alert(`Failed to connect ${marketplaceId}: ${error.message}`);
+    const button = event.target;
+    button.disabled = false;
+    button.textContent = 'Connect';
+  }
 }

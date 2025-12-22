@@ -305,7 +305,7 @@ export default function Settings() {
   };
 
   const handleMercariConnect = async () => {
-    // Query ALL installed extensions for Profit Orbit extension
+    // Query ALL installed extensions for Orben extension
     // This works because we added externally_connectable to manifest
     try {
       // Get list of all extensions (requires permission)
