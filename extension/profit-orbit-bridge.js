@@ -165,4 +165,69 @@ if (typeof window !== 'undefined') {
   console.log('🔵 Bridge: Window flag set - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
 }
 
+// Inject page API script into page context
+function injectPageAPI() {
+  // Check if already injected
+  if (window.ProfitOrbitExtension) {
+    console.log('🔵 Bridge: Page API already exists, skipping injection');
+    dispatchBridgeReady();
+    return;
+  }
+
+  if (typeof chrome === 'undefined' || !chrome.runtime) {
+    console.error('🔴 Bridge: Cannot inject page API - chrome.runtime not available');
+    return;
+  }
+
+  try {
+    const scriptUrl = chrome.runtime.getURL('profit-orbit-page-api.js');
+    console.log('🔵 Bridge: Injecting page API script:', scriptUrl);
+
+    const script = document.createElement('script');
+    script.src = scriptUrl;
+    
+    script.onload = function() {
+      console.log('🔵 Bridge: Page API script loaded successfully');
+      console.log('🔵 Bridge: window.ProfitOrbitExtension exists:', typeof window.ProfitOrbitExtension !== 'undefined');
+      dispatchBridgeReady();
+    };
+    
+    script.onerror = function(error) {
+      console.error('🔴 Bridge: Failed to load page API script:', error);
+      console.error('🔴 Bridge: Check Network tab for profit-orbit-page-api.js');
+    };
+    
+    // Inject into page context
+    const target = document.head || document.documentElement;
+    if (target) {
+      target.appendChild(script);
+      console.log('🔵 Bridge: Page API script tag appended to', target.tagName);
+    } else {
+      console.error('🔴 Bridge: No injection target available');
+      // Try again when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', injectPageAPI);
+      } else {
+        setTimeout(injectPageAPI, 100);
+      }
+    }
+  } catch (error) {
+    console.error('🔴 Bridge: Exception injecting page API:', error);
+  }
+}
+
+// Dispatch bridge ready event
+function dispatchBridgeReady() {
+  console.log('🔵 Bridge: Dispatching profitOrbitBridgeReady event');
+  window.dispatchEvent(new CustomEvent('profitOrbitBridgeReady'));
+}
+
+// Inject page API script
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', injectPageAPI);
+} else {
+  // DOM already loaded, inject immediately
+  injectPageAPI();
+}
+
 console.log('🔵🔵🔵 PROFIT ORBIT BRIDGE SCRIPT INITIALIZED 🔵🔵🔵');

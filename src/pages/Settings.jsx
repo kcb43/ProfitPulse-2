@@ -435,12 +435,27 @@ export default function Settings() {
         console.log('🟢 Profit Orbit: Bridge script is loaded!');
       } else {
         console.warn('🔴 Profit Orbit: Bridge script NOT loaded!');
+        console.warn('🔴 Profit Orbit: Extension may not be installed or enabled');
+        console.warn('🔴 Profit Orbit: Please check:');
+        console.warn('  1. Extension is installed');
+        console.warn('  2. Extension is enabled');
+        console.warn('  3. Page is refreshed after extension installation');
         toast({
           title: 'Extension Not Detected',
-          description: 'Please reload the extension and refresh this page.',
+          description: 'Please ensure the Profit Orbit extension is installed, enabled, and refresh this page.',
           variant: 'destructive',
         });
         return;
+      }
+      
+      // Check if page API is available (may take a moment to inject)
+      if (!window.ProfitOrbitExtension) {
+        console.warn('⚠️ Profit Orbit: Page API not yet available, waiting...');
+        // Wait a bit for injection
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!window.ProfitOrbitExtension) {
+          console.warn('⚠️ Profit Orbit: Page API still not available after wait');
+        }
       }
       
       toast({
