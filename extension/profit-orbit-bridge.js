@@ -3,7 +3,17 @@
  * Uses localStorage polling for communication (most reliable)
  */
 
-console.log('🔵 Profit Orbit Bridge: Content script loaded');
+// CRITICAL: This log should appear in the PAGE CONSOLE (F12), not service worker console
+console.log('🔵🔵🔵 Profit Orbit Bridge: Content script loaded - CHECK PAGE CONSOLE (F12) 🔵🔵🔵');
+console.log('🔵 Bridge: Current URL:', window.location.href);
+console.log('🔵 Bridge: Chrome runtime ID:', chrome.runtime?.id);
+console.log('🔵 Bridge: Chrome runtime available:', !!(chrome && chrome.runtime && chrome.runtime.id));
+
+// Make it VERY visible
+if (typeof window !== 'undefined') {
+  window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
+  console.log('🔵 Bridge: Window flag set - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
+}
 
 // Function to update localStorage with marketplace status
 function updateLocalStorage(status) {
@@ -83,7 +93,7 @@ setInterval(() => {
   // Check if React app is requesting status
   const requestFlag = localStorage.getItem('profit_orbit_request_status');
   if (requestFlag === 'true') {
-    console.log('🔵 Bridge: React app requested status, querying...');
+    console.log('🔵🔵🔵 Bridge: React app requested status, querying... 🔵🔵🔵');
     localStorage.removeItem('profit_orbit_request_status');
     queryStatus();
   }
