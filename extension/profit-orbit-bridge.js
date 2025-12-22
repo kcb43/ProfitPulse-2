@@ -9,67 +9,26 @@ console.log('Profit Orbit Extension: Document ready state:', document.readyState
 
 // Inject script into page context to expose API to React app
 // This is necessary because content scripts run in an isolated world
+// Use a separate file to avoid CSP violations with inline scripts
 (function() {
   try {
     const script = document.createElement('script');
-    script.textContent = `
-    (function() {
-      // Store reference to content script's message handler
-      window.__ProfitOrbitBridgeReady = true;
-      
-      // Listen for responses from content script
-      window.addEventListener('message', function(event) {
-        if (event.data.type === 'PROFIT_ORBIT_STATUS_RESPONSE') {
-          const callback = window.__ProfitOrbitCallbacks && window.__ProfitOrbitCallbacks[event.data.requestId];
-          if (callback) {
-            if (event.data.error) {
-              callback({ error: event.data.error });
-            } else {
-              callback(event.data.data || {});
-            }
-            delete window.__ProfitOrbitCallbacks[event.data.requestId];
-          }
-        }
-      });
-      
-      // Expose API that will communicate with content script via postMessage
-      window.ProfitOrbitExtension = {
-        queryStatus: function() {
-          console.log('[PAGE] Profit Orbit Extension: queryStatus() called');
-          window.postMessage({ type: 'PROFIT_ORBIT_QUERY_STATUS' }, '*');
-        },
-        isAvailable: function() {
-          console.log('[PAGE] Profit Orbit Extension: isAvailable() called - returning true');
-          return true; // Assume available if script is injected
-        },
-        getAllStatus: function(callback) {
-          console.log('[PAGE] Profit Orbit Extension: getAllStatus() called');
-          const requestId = Math.random().toString(36).substring(7);
-          window.__ProfitOrbitCallbacks = window.__ProfitOrbitCallbacks || {};
-          window.__ProfitOrbitCallbacks[requestId] = callback;
-          window.postMessage({ 
-            type: 'PROFIT_ORBIT_GET_ALL_STATUS', 
-            requestId: requestId 
-          }, '*');
-        }
-      };
-      
-      console.log('[PAGE] Profit Orbit Extension: Bridge API injected into page context', window.ProfitOrbitExtension);
-      console.log('[PAGE] Profit Orbit Extension: API methods:', Object.keys(window.ProfitOrbitExtension));
-      
-      // Dispatch a custom event to notify React app that bridge is ready
-      window.dispatchEvent(new CustomEvent('profitOrbitBridgeReady', {
-        detail: { api: window.ProfitOrbitExtension }
-      }));
-    })();
-  `;
+    // Use chrome.runtime.getURL to get the extension URL for the script file
+    script.src = chrome.runtime.getURL('profit-orbit-page-api.js');
+    script.onload = function() {
+      console.log('Profit Orbit Extension: Page script loaded successfully');
+      this.remove(); // Remove script tag after loading
+    };
+    script.onerror = function() {
+      console.error('Profit Orbit Extension: Failed to load page script');
+      this.remove();
+    };
     
     // Try to inject into head first, fallback to documentElement
     const target = document.head || document.documentElement;
     if (target) {
       target.appendChild(script);
-      script.remove();
-      console.log('Profit Orbit Extension: Page script injected successfully');
+      console.log('Profit Orbit Extension: Page script injection initiated');
     } else {
       console.error('Profit Orbit Extension: Could not find injection target (head or documentElement)');
       // Try again after a delay
@@ -77,8 +36,7 @@ console.log('Profit Orbit Extension: Document ready state:', document.readyState
         const retryTarget = document.head || document.documentElement;
         if (retryTarget) {
           retryTarget.appendChild(script);
-          script.remove();
-          console.log('Profit Orbit Extension: Page script injected on retry');
+          console.log('Profit Orbit Extension: Page script injection retried');
         }
       }, 100);
     }
