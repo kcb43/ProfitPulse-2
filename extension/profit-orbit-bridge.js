@@ -6,6 +6,16 @@
 console.log('Profit Orbit Extension: Bridge script loaded on Profit Orbit domain');
 console.log('Profit Orbit Extension: Current URL:', window.location.href);
 console.log('Profit Orbit Extension: Document ready state:', document.readyState);
+console.log('Profit Orbit Extension: Chrome runtime ID:', chrome.runtime?.id);
+
+// Also log to page console via a custom event (for debugging)
+try {
+  window.dispatchEvent(new CustomEvent('profitOrbitBridgeScriptLoaded', {
+    detail: { url: window.location.href, runtimeId: chrome.runtime?.id }
+  }));
+} catch (e) {
+  // Ignore if window not ready
+}
 
 // Inject script into page context to expose API to React app
 // This is necessary because content scripts run in an isolated world

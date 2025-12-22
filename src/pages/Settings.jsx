@@ -198,7 +198,13 @@ export default function Settings() {
     };
     window.addEventListener('extensionReady', handleExtensionReady);
     
-    // Listen for bridge ready event
+    // Listen for bridge script loaded event (from content script)
+    const handleBridgeScriptLoaded = (event) => {
+      console.log('Profit Orbit: Bridge script loaded event received:', event.detail);
+    };
+    window.addEventListener('profitOrbitBridgeScriptLoaded', handleBridgeScriptLoaded);
+    
+    // Listen for bridge ready event (from page script)
     const handleBridgeReady = () => {
       console.log('Profit Orbit: Bridge ready event received');
       // Try to check status once bridge is ready
