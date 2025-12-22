@@ -10,12 +10,16 @@ console.log('Profit Orbit Extension: Document ready state:', document.readyState
 console.log('Profit Orbit Extension: Chrome runtime ID:', chrome.runtime?.id);
 
 // Dispatch event for React app (this will work once page script loads)
+// Note: window.dispatchEvent works in content scripts, but events won't reach page context
+// The page script will dispatch its own event when it loads
 try {
-  window.dispatchEvent(new CustomEvent('profitOrbitBridgeScriptLoaded', {
-    detail: { url: window.location.href, runtimeId: chrome.runtime?.id }
-  }));
+  if (typeof window !== 'undefined' && window.dispatchEvent) {
+    window.dispatchEvent(new CustomEvent('profitOrbitBridgeScriptLoaded', {
+      detail: { url: window.location.href, runtimeId: chrome.runtime?.id }
+    }));
+  }
 } catch (e) {
-  // Ignore if window not ready - will retry after page script loads
+  console.log('Profit Orbit Extension: Could not dispatch event (this is OK, page script will handle it):', e.message);
 }
 
 // Inject script into page context to expose API to React app
