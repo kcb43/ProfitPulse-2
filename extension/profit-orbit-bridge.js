@@ -4,10 +4,34 @@
  */
 
 // Log to content script console (visible in extension's service worker console)
+// CRITICAL: These logs should appear in the extension's service worker console
+// If you don't see these logs, the content script isn't loading at all
+console.log('=== PROFIT ORBIT BRIDGE SCRIPT LOADING ===');
 console.log('Profit Orbit Extension: Bridge script loaded on Profit Orbit domain');
 console.log('Profit Orbit Extension: Current URL:', window.location.href);
 console.log('Profit Orbit Extension: Document ready state:', document.readyState);
 console.log('Profit Orbit Extension: Chrome runtime ID:', chrome.runtime?.id);
+console.log('Profit Orbit Extension: Chrome runtime available:', !!(chrome && chrome.runtime && chrome.runtime.id));
+
+// Verify script is actually executing
+try {
+  if (!chrome || !chrome.runtime || !chrome.runtime.id) {
+    console.error('Profit Orbit Extension: CRITICAL - chrome.runtime not available!');
+    console.error('Profit Orbit Extension: This means the content script is not in extension context');
+  }
+  
+  if (!window || !document) {
+    console.error('Profit Orbit Extension: CRITICAL - window or document not available!');
+  }
+  
+  // Test if we can access extension APIs
+  const testUrl = chrome.runtime.getURL('profit-orbit-page-api.js');
+  console.log('Profit Orbit Extension: Test getURL result:', testUrl);
+} catch (error) {
+  console.error('Profit Orbit Extension: CRITICAL ERROR during initialization:', error);
+  console.error('Profit Orbit Extension: Error message:', error.message);
+  console.error('Profit Orbit Extension: Error stack:', error.stack);
+}
 
 // Dispatch event for React app (this will work once page script loads)
 // Note: window.dispatchEvent works in content scripts, but events won't reach page context
