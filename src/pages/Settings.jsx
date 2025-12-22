@@ -219,8 +219,22 @@ export default function Settings() {
     // Listen for bridge script loaded event (from content script)
     const handleBridgeScriptLoaded = (event) => {
       console.log('Profit Orbit: Bridge script loaded event received:', event.detail);
+      // Update bridge detection
+      setTimeout(() => {
+        checkMercariStatusFromStorage();
+      }, 500);
     };
     window.addEventListener('profitOrbitBridgeScriptLoaded', handleBridgeScriptLoaded);
+    
+    // Listen for bridge loaded event (from injected script)
+    const handleBridgeLoaded = () => {
+      console.log('Profit Orbit: Bridge loaded event received - flag should be set');
+      // Force check after a brief delay
+      setTimeout(() => {
+        checkMercariStatusFromStorage();
+      }, 500);
+    };
+    window.addEventListener('profitOrbitBridgeLoaded', handleBridgeLoaded);
     
     // Listen for bridge ready event (from page script)
     const handleBridgeReady = () => {
@@ -255,30 +269,101 @@ export default function Settings() {
     // Check immediately
     checkMercariStatus();
     
-    // Also check if bridge is already available
-    if (window.ProfitOrbitExtension) {
-      console.log('Profit Orbit: Bridge API already available on mount');
-      setTimeout(() => {
-        checkMercariStatusFromStorage();
-      }, 1000);
-    } else {
-      console.log('Profit Orbit: Bridge API not yet available, waiting for bridgeReady event...');
-      // Poll for bridge API availability (fallback)
-      const bridgeCheckInterval = setInterval(() => {
-        if (window.ProfitOrbitExtension) {
-          console.log('Profit Orbit: Bridge API detected via polling');
-          clearInterval(bridgeCheckInterval);
+    // Check if bridge is already available
+    const checkBridgeAvailability = () => {
+      const bridgeLoaded = window.__PROFIT_ORBIT_BRIDGE_LOADED === true;
+      const apiAvailable = window.ProfitOrbitExtension && window.ProfitOrbitExtension.isAvailable();
+      
+      if (bridgeLoaded || apiAvailable) {
+        console.log('Profit Orbit: Bridge detected - loaded:', bridgeLoaded, 'API available:', apiAvailable);
+        setTimeout(() => {
           checkMercariStatusFromStorage();
+        }, 1000);
+        return true;
+      }
+      return false;
+    };
+    
+    if (!checkBridgeAvailability()) {
+      console.log('Profit Orbit: Bridge API not yet available, waiting for bridgeReady event...');
+      
+      // Run diagnostic after a short delay
+      setTimeout(() => {
+        runExtensionDiagnostic();
+      }, 2000);
+      
+      // Poll for bridge availability (fallback)
+      const bridgeCheckInterval = setInterval(() => {
+        if (checkBridgeAvailability()) {
+          console.log('Profit Orbit: Bridge detected via polling');
+          clearInterval(bridgeCheckInterval);
         }
       }, 500);
       
-      // Clear interval after 10 seconds
+      // Clear interval after 10 seconds and show final diagnostic
       setTimeout(() => {
         clearInterval(bridgeCheckInterval);
-        if (!window.ProfitOrbitExtension) {
+        if (!window.__PROFIT_ORBIT_BRIDGE_LOADED && !window.ProfitOrbitExtension) {
           console.warn('Profit Orbit: Bridge API still not available after 10 seconds');
+          runExtensionDiagnostic();
         }
       }, 10000);
+    }
+    
+    // Diagnostic function to help troubleshoot extension issues
+    function runExtensionDiagnostic() {
+      console.group('🔍 Profit Orbit Extension Diagnostic');
+      console.log('Current URL:', window.location.href);
+      console.log('Expected URLs:', [
+        'https://profitorbit.io/*',
+        'http://localhost:5173/*',
+        'http://localhost:5174/*'
+      ]);
+      
+      const currentUrl = window.location.href;
+      const urlMatches = [
+        'https://profitorbit.io',
+        'http://localhost:5173',
+        'http://localhost:5174'
+      ].some(pattern => currentUrl.startsWith(pattern));
+      
+      console.log('URL matches expected pattern:', urlMatches ? '✅ YES' : '❌ NO');
+      
+      console.log('Bridge flag (window.__PROFIT_ORBIT_BRIDGE_LOADED):', window.__PROFIT_ORBIT_BRIDGE_LOADED);
+      console.log('Bridge API (window.ProfitOrbitExtension):', window.ProfitOrbitExtension ? '✅ EXISTS' : '❌ NOT FOUND');
+      
+      // Check for bridge script logs
+      console.log('');
+      console.log('🔍 DIAGNOSIS:');
+      if (!window.__PROFIT_ORBIT_BRIDGE_LOADED && !window.ProfitOrbitExtension) {
+        console.error('❌ NO bridge script logs detected in console');
+        console.error('❌ This means the content script is NOT loading');
+        console.error('');
+        console.error('📋 MOST LIKELY CAUSES:');
+        console.error('   1. Extension is NOT installed');
+        console.error('   2. Extension is DISABLED');
+        console.error('   3. Extension has ERRORS preventing it from loading');
+        console.error('');
+        console.error('🔧 HOW TO FIX:');
+        console.error('   1. Open chrome://extensions/ in a new tab');
+        console.error('   2. Look for "Profit Orbit - Crosslisting Assistant"');
+        console.error('   3. If NOT FOUND:');
+        console.error('      - Enable "Developer mode" (top-right toggle)');
+        console.error('      - Click "Load unpacked"');
+        console.error('      - Select the extension/ folder from your project');
+        console.error('   4. If FOUND but DISABLED:');
+        console.error('      - Toggle it ON');
+        console.error('   5. If FOUND but has ERRORS:');
+        console.error('      - Click "Errors" button to see details');
+        console.error('      - Check background script console');
+        console.error('   6. After fixing, RELOAD the extension:');
+        console.error('      - Click the circular arrow (reload) icon');
+        console.error('   7. Then REFRESH this page (F5)');
+        console.error('');
+        console.error('💡 TIP: Check the browser console for logs starting with 🔵');
+        console.error('   If you see NO 🔵 logs, the content script is not loading');
+      }
+      console.groupEnd();
     }
     
     // Poll for Mercari connection status every 500ms for faster updates
@@ -324,6 +409,8 @@ export default function Settings() {
       window.removeEventListener('extensionReady', handleExtensionReady);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('profitOrbitBridgeReady', handleBridgeReady);
+      window.removeEventListener('profitOrbitBridgeLoaded', handleBridgeLoaded);
+      window.removeEventListener('profitOrbitBridgeScriptLoaded', handleBridgeScriptLoaded);
       clearInterval(pollInterval);
     };
   }, [searchParams, navigate, toast, mercariConnected]);
@@ -430,23 +517,84 @@ export default function Settings() {
     try {
       console.log('🟢🟢🟢 Profit Orbit: Checking Mercari connection... 🟢🟢🟢');
       
-      // Check if bridge script is loaded
-      if (window.__PROFIT_ORBIT_BRIDGE_LOADED) {
-        console.log('🟢 Profit Orbit: Bridge script is loaded!');
-      } else {
+      // Check if bridge script is loaded (check both flag and API)
+      const bridgeLoaded = window.__PROFIT_ORBIT_BRIDGE_LOADED === true;
+      const apiAvailable = window.ProfitOrbitExtension && window.ProfitOrbitExtension.isAvailable();
+      
+      // Try to detect if extension is installed by attempting to load web accessible resource
+      let extensionDetected = bridgeLoaded || apiAvailable;
+      
+      if (!extensionDetected) {
+        // Try to detect extension by loading web accessible resource
+        try {
+          // This will only work if extension is installed and web accessible resource exists
+          const testScript = document.createElement('script');
+          testScript.src = 'chrome-extension://invalid/profit-orbit-page-api.js'; // This will fail, but we'll try the real way
+          testScript.onerror = () => {
+            // Expected to fail, but we'll try a different approach
+          };
+          
+          // Try to detect extension by checking if we can access chrome.runtime (only works in extension context)
+          // But we're in page context, so we can't directly check
+          // Instead, we'll check if localStorage has any extension data
+          const hasExtensionData = Object.keys(localStorage).some(key => key.startsWith('profit_orbit_'));
+          if (hasExtensionData) {
+            console.log('🟡 Profit Orbit: Found extension data in localStorage, extension may have been active before');
+          }
+        } catch (e) {
+          // Ignore
+        }
+        
         console.warn('🔴 Profit Orbit: Bridge script NOT loaded!');
         console.warn('🔴 Profit Orbit: Extension may not be installed or enabled');
-        console.warn('🔴 Profit Orbit: Please check:');
-        console.warn('  1. Extension is installed');
-        console.warn('  2. Extension is enabled');
-        console.warn('  3. Page is refreshed after extension installation');
+        console.warn('🔴 Profit Orbit: Current URL:', window.location.href);
+        
+        // Check if URL matches expected patterns
+        const currentUrl = window.location.href;
+        const expectedPatterns = [
+          'https://profitorbit.io',
+          'http://localhost:5173',
+          'http://localhost:5174'
+        ];
+        const urlMatches = expectedPatterns.some(pattern => currentUrl.startsWith(pattern));
+        
+        if (!urlMatches) {
+          console.error('🔴 Profit Orbit: URL does not match expected patterns!');
+          console.error('🔴 Profit Orbit: Expected URLs:');
+          expectedPatterns.forEach(url => console.error(`   - ${url}/*`));
+          console.error('🔴 Profit Orbit: The extension content script only loads on these domains');
+        } else {
+          console.warn('🟡 Profit Orbit: URL matches expected pattern, but extension not detected');
+        }
+        
+        console.warn('🔴 Profit Orbit: Troubleshooting steps:');
+        console.warn('  1. Open chrome://extensions/ in a new tab');
+        console.warn('  2. Enable "Developer mode" (toggle in top-right)');
+        console.warn('  3. Click "Load unpacked" and select the extension/ folder');
+        console.warn('  4. Find "Profit Orbit - Crosslisting Assistant" in the list');
+        console.warn('  5. Make sure the toggle is ON (enabled)');
+        console.warn('  6. Click the reload icon (circular arrow) to reload the extension');
+        console.warn('  7. Check for any error messages (red text) on the extension card');
+        console.warn('  8. Refresh this page (F5 or Ctrl+R)');
+        console.warn('  9. Open browser console (F12) and look for logs starting with 🔵');
+        console.warn('  10. If no 🔵 logs appear, the content script is not loading');
+        console.warn('');
+        console.warn('🔴 Profit Orbit: To check extension background script:');
+        console.warn('  1. Go to chrome://extensions/');
+        console.warn('  2. Find "Profit Orbit - Crosslisting Assistant"');
+        console.warn('  3. Click "service worker" or "background page" link');
+        console.warn('  4. Check console for errors');
+        
         toast({
           title: 'Extension Not Detected',
-          description: 'Please ensure the Profit Orbit extension is installed, enabled, and refresh this page.',
+          description: 'The Profit Orbit extension is not detected. Steps: 1) Go to chrome://extensions/ 2) Enable Developer mode 3) Load extension from extension/ folder 4) Reload extension 5) Refresh this page. Check console (F12) for detailed logs.',
           variant: 'destructive',
+          duration: 15000,
         });
         return;
       }
+      
+      console.log('🟢 Profit Orbit: Bridge detected - loaded:', bridgeLoaded, 'API available:', apiAvailable);
       
       // Check if page API is available (may take a moment to inject)
       if (!window.ProfitOrbitExtension) {
@@ -455,6 +603,7 @@ export default function Settings() {
         await new Promise(resolve => setTimeout(resolve, 500));
         if (!window.ProfitOrbitExtension) {
           console.warn('⚠️ Profit Orbit: Page API still not available after wait');
+          console.warn('⚠️ Profit Orbit: Will use localStorage fallback method');
         }
       }
       

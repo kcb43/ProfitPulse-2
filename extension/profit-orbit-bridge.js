@@ -4,17 +4,30 @@
  */
 
 // IMMEDIATE LOG - Should appear FIRST
-console.log('🔵🔵🔵 PROFIT ORBIT BRIDGE SCRIPT STARTING 🔵🔵🔵');
-console.log('🔵 Bridge: Script file loaded at:', new Date().toISOString());
-console.log('🔵 Bridge: URL:', window.location.href);
-console.log('🔵 Bridge: Document ready state:', document.readyState);
-
-// Prevent multiple initializations
-if (window.__PROFIT_ORBIT_BRIDGE_INITIALIZED) {
-  console.log('⚠️ Bridge: Already initialized, skipping duplicate load');
-  throw new Error('Bridge script already initialized');
+// Using try-catch to prevent any parse errors from silently failing
+try {
+  console.log('🔵🔵🔵 PROFIT ORBIT BRIDGE SCRIPT STARTING 🔵🔵🔵');
+  console.log('🔵 Bridge: Script file loaded at:', new Date().toISOString());
+  console.log('🔵 Bridge: URL:', window.location.href);
+  console.log('🔵 Bridge: Document ready state:', document.readyState);
+  console.log('🔵 Bridge: Content script context - window exists:', typeof window !== 'undefined');
+  console.log('🔵 Bridge: Content script context - document exists:', typeof document !== 'undefined');
+  console.log('🔵 Bridge: Content script context - chrome exists:', typeof chrome !== 'undefined');
+} catch (e) {
+  console.error('🔴 Bridge: ERROR in initial logging:', e);
 }
-window.__PROFIT_ORBIT_BRIDGE_INITIALIZED = true;
+
+// Prevent multiple initializations (using content script's isolated window)
+// Note: This is the content script's window, NOT the page's window
+if (typeof window !== 'undefined' && window.__PROFIT_ORBIT_BRIDGE_INITIALIZED) {
+  console.log('⚠️ Bridge: Already initialized, skipping duplicate load');
+  // Don't throw - just return to avoid breaking injection
+  // throw new Error('Bridge script already initialized');
+} else {
+  if (typeof window !== 'undefined') {
+    window.__PROFIT_ORBIT_BRIDGE_INITIALIZED = true;
+  }
+}
 
 // Check chrome availability immediately
 console.log('🔵 Bridge: typeof chrome:', typeof chrome);
@@ -159,11 +172,134 @@ window.addEventListener('checkMercariStatus', () => {
   queryStatus();
 });
 
-// Set window flag for React app
-if (typeof window !== 'undefined') {
-  window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
-  console.log('🔵 Bridge: Window flag set - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
+// Inject bridge detection flag into page context (so React app can see it)
+function injectBridgeFlag() {
+  try {
+    // Create a script element that runs in page context
+    const script = document.createElement('script');
+    script.textContent = `
+      (function() {
+        if (typeof window !== 'undefined') {
+          window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
+          console.log('🔵 Bridge: Window flag set in PAGE CONTEXT - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
+          // Dispatch event so React app knows bridge is ready
+          try {
+            window.dispatchEvent(new CustomEvent('profitOrbitBridgeLoaded'));
+          } catch (e) {
+            console.warn('🔵 Bridge: Could not dispatch event:', e);
+          }
+        }
+      })();
+    `;
+    
+    // Find injection target - try multiple methods
+    // Note: We can't append directly to document, must use head or documentElement
+    let target = null;
+    
+    // Method 1: Try document.head (preferred)
+    if (document.head) {
+      target = document.head;
+    }
+    // Method 2: Try document.documentElement (HTML element)
+    else if (document.documentElement) {
+      target = document.documentElement;
+    }
+    // Method 3: Try document.body (might exist at document_start in some cases)
+    else if (document.body) {
+      target = document.body;
+    }
+    
+    if (target) {
+      try {
+        // Use insertBefore to ensure script executes immediately
+        // Insert at the beginning to ensure it runs before other scripts
+        if (target.firstChild) {
+          target.insertBefore(script, target.firstChild);
+        } else {
+          target.appendChild(script);
+        }
+        console.log('🔵 Bridge: Bridge flag injected into page context via', target.tagName || 'unknown');
+        // Remove script tag after execution
+        setTimeout(() => {
+          try {
+            if (script.parentNode) {
+              script.parentNode.removeChild(script);
+            }
+          } catch (e) {
+            // Ignore removal errors
+          }
+        }, 100);
+      } catch (error) {
+        console.error('🔴 Bridge: Failed to inject script:', error);
+        console.error('🔴 Bridge: Error details:', error.message, error.stack);
+        // Retry with delay
+        setTimeout(() => {
+          try {
+            injectBridgeFlag();
+          } catch (e) {
+            console.error('🔴 Bridge: Retry also failed:', e);
+          }
+        }, 100);
+      }
+    } else {
+      // DOM not ready yet, wait for it
+      console.log('🔵 Bridge: DOM not ready, waiting... (readyState:', document.readyState, ')');
+      const tryInject = () => {
+        const target = document.head || document.documentElement || document.body;
+        if (target) {
+          try {
+            // Use insertBefore to ensure script executes immediately
+            if (target.firstChild) {
+              target.insertBefore(script, target.firstChild);
+            } else {
+              target.appendChild(script);
+            }
+            console.log('🔵 Bridge: Bridge flag injected into page context (delayed) via', target.tagName);
+            // Remove script tag after execution
+            setTimeout(() => {
+              try {
+                if (script.parentNode) {
+                  script.parentNode.removeChild(script);
+                }
+              } catch (e) {
+                // Ignore removal errors
+              }
+            }, 100);
+          } catch (e) {
+            console.error('🔴 Bridge: Failed delayed injection:', e);
+            setTimeout(tryInject, 50);
+          }
+        } else {
+          setTimeout(tryInject, 50);
+        }
+      };
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tryInject, { once: true });
+        // Also try after a timeout as backup
+        setTimeout(tryInject, 1000);
+      } else {
+        setTimeout(tryInject, 50);
+      }
+    }
+  } catch (error) {
+    console.error('🔴 Bridge: Exception injecting bridge flag:', error);
+    // Retry after delay
+    setTimeout(() => {
+      try {
+        injectBridgeFlag();
+      } catch (e) {
+        console.error('🔴 Bridge: Retry also failed:', e);
+      }
+    }, 200);
+  }
 }
+
+// Inject bridge flag - try multiple times to ensure it works
+injectBridgeFlag();
+// Also try after a short delay in case DOM isn't ready
+setTimeout(injectBridgeFlag, 100);
+setTimeout(injectBridgeFlag, 500);
 
 // Inject page API script into page context
 function injectPageAPI() {

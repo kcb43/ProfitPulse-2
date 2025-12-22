@@ -8,6 +8,10 @@
   
   console.log('🟢 Profit Orbit Page API: Loading...');
   
+  // Set bridge loaded flag in page context (for React app detection)
+  window.__PROFIT_ORBIT_BRIDGE_LOADED = true;
+  console.log('🟢 Page API: Bridge flag set - window.__PROFIT_ORBIT_BRIDGE_LOADED = true');
+  
   // Simple API that uses localStorage polling
   window.ProfitOrbitExtension = {
     queryStatus: function() {
