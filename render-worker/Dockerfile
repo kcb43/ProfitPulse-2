@@ -16,8 +16,10 @@ RUN npm ci --omit=dev
 # But we'll ensure it's available
 RUN npx playwright install chromium --with-deps || true
 
-# Copy application files
-COPY . .
+# Copy application files selectively to avoid Windows permission issues
+COPY index.js ./
+COPY utils-new ./utils
+COPY processors-new ./processors
 
 # Expose a minimal health check port (optional, for monitoring)
 EXPOSE 8080
