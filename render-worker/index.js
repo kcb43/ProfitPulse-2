@@ -188,13 +188,6 @@ async function processJob(job) {
 }
 
 /**
- * Sleep helper
- */
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
  * Main worker loop
  */
 async function workerLoop() {
@@ -211,22 +204,23 @@ async function workerLoop() {
     }
 
     // Claim a job with proper error handling
-    // claimJob() returns null on error/no jobs, or a job object on success
-    // Wrap in catch to handle thrown errors
-    const result = await claimJob().catch((e) => ({ job: null, error: e }));
+    // claimJob() returns null or a job object, but may throw errors
+    // Normalize to { job, error } format for consistent handling
+    const result = await claimJob()
+      .then((job) => ({ job, error: null })) // Success: normalize to { job, error: null }
+      .catch((err) => ({ job: null, error: err })); // Error: normalize to { job: null, error }
     
     if (!result || result.error) {
       console.error('Error claiming job:', result?.error || 'unknown');
-      await sleep(POLL_INTERVAL_MS);
-      return;
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      return; // Continue polling instead of crashing
     }
     
-    // If result has .job property, it's from catch handler; otherwise it's the job directly
-    const job = result.job !== undefined ? result.job : result;
+    const job = result.job;
     if (!job) {
       // No jobs available
-      await sleep(POLL_INTERVAL_MS);
-      return;
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      return; // Continue polling
     }
 
     // Process job (don't await - let it run in background)
@@ -236,7 +230,7 @@ async function workerLoop() {
   } catch (error) {
     // Catch any unexpected errors to prevent worker crash
     console.error('Unexpected error in workerLoop:', error);
-    await sleep(POLL_INTERVAL_MS);
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
   } finally {
     isRunning = false;
   }
