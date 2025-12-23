@@ -242,11 +242,8 @@ const renderMarketplaceIcon = (marketplace, sizeClass = "w-4 h-4") => {
   );
 };
 
-// Module-scope log to prove file is loaded (must be after imports)
-console.log("✅ Crosslist module loaded", new Date().toISOString());
 
 export default function Crosslist() {
-  console.log("✅ Crosslist component rendering", new Date().toISOString());
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -867,47 +864,17 @@ export default function Crosslist() {
 
   // Wrapper function for button clicks - moves async logic out of JSX
   const handleListButtonClick = (e, itemId, marketplace) => {
-    try {
-      console.log("🔥🔥🔥 handleListButtonClick CALLED", { itemId, marketplace, timestamp: new Date().toISOString() });
-      
-      if (!e) {
-        console.error("❌ handleListButtonClick: event is null/undefined");
-        return;
-      }
-      
+    if (e) {
       e.preventDefault();
       e.stopPropagation();
-      
-      console.log("🧩 BUTTON RENDER marketplace=", marketplace);
-      console.log("✅ UI BUTTON CLICKED (inline)", { itemId, marketplace });
-      
-      // Forced Network canary
-      console.log("🔵 About to fetch /health endpoint...");
-      fetch("https://profitorbit-api.fly.dev/health")
-        .then((res) => {
-          console.log("✅ health ok", res.status);
-          return res.json();
-        })
-        .then((data) => console.log("✅ health data", data))
-        .catch((err) => console.error("❌ health fetch error", err));
-      
-      // Call the async handler (don't await - fire and forget)
-      console.log("🔵 About to call handleListOnMarketplaceItem...");
-      
-      if (typeof handleListOnMarketplaceItem !== 'function') {
-        console.error("❌ handleListOnMarketplaceItem is not a function!", typeof handleListOnMarketplaceItem);
-        alert("Error: handleListOnMarketplaceItem is not a function. Check console.");
-        return;
-      }
-      
-      handleListOnMarketplaceItem(itemId, marketplace).catch((error) => {
-        console.error("❌ Error in handleListOnMarketplaceItem:", error);
-        alert(`Error listing item: ${error.message || error}`);
-      });
-    } catch (error) {
-      console.error("❌ CRITICAL ERROR in handleListButtonClick:", error);
-      alert(`Critical error: ${error.message || error}`);
     }
+    handleListOnMarketplaceItem(itemId, marketplace).catch((error) => {
+      toast({
+        title: 'Listing Failed',
+        description: error.message || 'Failed to create listing job.',
+        variant: 'destructive',
+      });
+    });
   };
 
   const handleListOnMarketplaceItem = async (itemId, marketplace) => {
@@ -1659,19 +1626,6 @@ export default function Crosslist() {
                         const isConnected = isPlatformConnected(m.id);
                         const hasActiveJob = activeJobs[it.id];
                         
-                        // Debug logging for Mercari button rendering (row view)
-                        if (m.id === 'mercari') {
-                          console.log("🔵 MERCARI BUTTON DEBUG (row view)", {
-                            itemId: it.id,
-                            itemName: it.item_name,
-                            isListed,
-                            isConnected,
-                            hasActiveJob: !!hasActiveJob,
-                            crosslistLoading,
-                            shouldShow: !isListed && isConnected && !hasActiveJob && ['mercari', 'facebook'].includes(m.id)
-                          });
-                        }
-                        
                         return (
                           <div key={m.id} className="flex flex-col items-center gap-1">
                             <div
@@ -1693,29 +1647,12 @@ export default function Crosslist() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                onClick={(e) => {
-                                  console.log("🔵 BUTTON onClick FIRED (row view)", { 
-                                    itemId: it.id, 
-                                    marketplace: m.id, 
-                                    label: m.label,
-                                    isListed,
-                                    isConnected,
-                                    hasActiveJob,
-                                    crosslistLoading
-                                  });
-                                  if (typeof handleListButtonClick === 'function') {
-                                    handleListButtonClick(e, it.id, m.id);
-                                  } else {
-                                    console.error("❌ handleListButtonClick is not a function!");
-                                    alert("Error: Button handler not available. Check console.");
-                                  }
-                                }}
+                                onClick={(e) => handleListButtonClick(e, it.id, m.id)}
                                 disabled={crosslistLoading}
                                 className="text-xs h-6 px-2"
                                 style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
                               >
                                 List on {m.label}
-                                <span style={{fontSize: 10, opacity: 0.7, marginLeft: 4}}>BUILD: 2025-12-23-click-debug-1</span>
                               </Button>
                             )}
                             {hasActiveJob && activeJobs[it.id] && (
@@ -1821,20 +1758,6 @@ export default function Crosslist() {
                         const isConnected = isPlatformConnected(m.id);
                         const hasActiveJob = activeJobs[it.id];
                         
-                        // Debug logging for Mercari button rendering (grid view)
-                        if (m.id === 'mercari') {
-                          console.log("🔵 MERCARI BUTTON DEBUG (grid view)", {
-                            itemId: it.id,
-                            itemName: it.item_name,
-                            isListed,
-                            status,
-                            isConnected,
-                            hasActiveJob: !!hasActiveJob,
-                            crosslistLoading,
-                            shouldShow: status === 'not_listed' && isConnected && ['mercari', 'facebook'].includes(m.id) && !hasActiveJob
-                          });
-                        }
-                        
                         return (
                           <div
                             key={m.id}
@@ -1856,29 +1779,12 @@ export default function Crosslist() {
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  onClick={(e) => {
-                                    console.log("🔵 BUTTON onClick FIRED (grid view)", { 
-                                      itemId: it.id, 
-                                      marketplace: m.id, 
-                                      label: m.label,
-                                      status,
-                                      isConnected,
-                                      hasActiveJob,
-                                      crosslistLoading
-                                    });
-                                    if (typeof handleListButtonClick === 'function') {
-                                      handleListButtonClick(e, it.id, m.id);
-                                    } else {
-                                      console.error("❌ handleListButtonClick is not a function!");
-                                      alert("Error: Button handler not available. Check console.");
-                                    }
-                                  }}
+                                  onClick={(e) => handleListButtonClick(e, it.id, m.id)}
                                   disabled={crosslistLoading}
                                   className="text-xs h-6 px-2"
                                   style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
                                 >
                                   List on {m.label}
-                                  <span style={{fontSize: 10, opacity: 0.7, marginLeft: 4}}>BUILD: 2025-12-23-click-debug-1</span>
                                 </Button>
                               ) : !isConnected && ['mercari', 'facebook'].includes(m.id) ? (
                                 <span className="text-xs text-muted-foreground">Connect</span>
