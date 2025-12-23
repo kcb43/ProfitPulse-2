@@ -964,7 +964,6 @@ export default function Crosslist() {
       
       const platformStatus = platformStatuses.find((p) => p.platform === normalizedMarketplace);
       console.log("🔵 CROSSLIST DEBUG: platformStatus found", platformStatus);
-      const platformStatus = platformStatuses.find((p) => p.platform === marketplace);
       
       if (!platformStatus || platformStatus.status !== 'connected') {
         console.log("🔵 CROSSLIST DEBUG: Platform not connected, returning early", {
