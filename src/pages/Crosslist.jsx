@@ -864,6 +864,22 @@ export default function Crosslist() {
     return platform?.status === 'connected';
   };
 
+  // Wrapper function for button clicks - moves async logic out of JSX
+  const handleListButtonClick = (e, itemId, marketplace) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🧩 BUTTON RENDER marketplace=", marketplace);
+    console.log("✅ UI BUTTON CLICKED (inline)", { itemId, marketplace });
+    // Forced Network canary
+    fetch("https://profitorbit-api.fly.dev/health")
+      .then(() => console.log("✅ health ok"))
+      .catch(console.error);
+    // Call the async handler (don't await - fire and forget)
+    handleListOnMarketplaceItem(itemId, marketplace).catch((error) => {
+      console.error("Error in handleListOnMarketplaceItem:", error);
+    });
+  };
+
   const handleListOnMarketplaceItem = async (itemId, marketplace) => {
     console.log("✅ HANDLE LIST FIRED", { itemId, marketplace });
     alert("handleListOnMarketplaceItem fired: " + marketplace);
@@ -1634,17 +1650,7 @@ export default function Crosslist() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log("🧩 BUTTON RENDER marketplace=", m.id);
-                                  console.log("✅ UI BUTTON CLICKED (inline)", { itemId: it.id, marketplace: m.id });
-                                  // Forced Network canary
-                                  fetch("https://profitorbit-api.fly.dev/health")
-                                    .then(() => console.log("✅ health ok"))
-                                    .catch(console.error);
-                                  return handleListOnMarketplaceItem(it.id, m.id);
-                                }}
+                                onClick={(e) => handleListButtonClick(e, it.id, m.id)}
                                 disabled={crosslistLoading}
                                 className="text-xs h-6 px-2"
                               >
@@ -1776,17 +1782,7 @@ export default function Crosslist() {
                                   type="button"
                                   size="sm"
                                   variant="outline"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    console.log("🧩 BUTTON RENDER marketplace=", m.id);
-                                    console.log("✅ UI BUTTON CLICKED (inline)", { itemId: it.id, marketplace: m.id });
-                                    // Forced Network canary
-                                    fetch("https://profitorbit-api.fly.dev/health")
-                                      .then(() => console.log("✅ health ok"))
-                                      .catch(console.error);
-                                    return handleListOnMarketplaceItem(it.id, m.id);
-                                  }}
+                                  onClick={(e) => handleListButtonClick(e, it.id, m.id)}
                                   disabled={crosslistLoading}
                                   className="text-xs h-6 px-2"
                                 >
