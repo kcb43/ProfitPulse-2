@@ -188,6 +188,13 @@ async function processJob(job) {
 }
 
 /**
+ * Sleep helper
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Main worker loop
  */
 async function workerLoop() {
@@ -203,16 +210,22 @@ async function workerLoop() {
       return;
     }
 
-    // Claim a job
-    const { job, error } = await claimJob();
-
-    if (error) {
-      console.error('Error claiming job:', error);
+    // Claim a job with proper error handling
+    // claimJob() returns null on error/no jobs, or a job object on success
+    // Wrap in catch to handle thrown errors
+    const result = await claimJob().catch((e) => ({ job: null, error: e }));
+    
+    if (!result || result.error) {
+      console.error('Error claiming job:', result?.error || 'unknown');
+      await sleep(POLL_INTERVAL_MS);
       return;
     }
-
+    
+    // If result has .job property, it's from catch handler; otherwise it's the job directly
+    const job = result.job !== undefined ? result.job : result;
     if (!job) {
       // No jobs available
+      await sleep(POLL_INTERVAL_MS);
       return;
     }
 
@@ -220,6 +233,10 @@ async function workerLoop() {
     processJob(job).catch((err) => {
       console.error('Unhandled error in processJob:', err);
     });
+  } catch (error) {
+    // Catch any unexpected errors to prevent worker crash
+    console.error('Unexpected error in workerLoop:', error);
+    await sleep(POLL_INTERVAL_MS);
   } finally {
     isRunning = false;
   }
