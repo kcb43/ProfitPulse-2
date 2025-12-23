@@ -17,14 +17,26 @@ const PORT = process.env.PORT || 8080;
 // CORS configuration
 // Supports comma-separated origins: "https://profitorbit.io,https://profit-pulse-2.vercel.app"
 // Automatically allows all .vercel.app preview domains
+// Allows Chrome extension origin (restricted to specific extension ID)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
 
+// Allowed Chrome extension IDs (restrict to your extension only)
+const allowedExtensionIds = new Set([
+  'chrome-extension://kdnpgdiacfolpadndicmfobgdfmnkbke',
+]);
+
 function isAllowedOrigin(origin) {
   if (!origin) return true; // allow non-browser tools like curl
   if (allowedOrigins.includes(origin)) return true;
+
+  // allow Chrome extension origin (restricted to specific IDs)
+  if (origin?.startsWith('chrome-extension://')) {
+    if (allowedExtensionIds.has(origin)) return true;
+    return false; // Reject unknown extension IDs
+  }
 
   // allow all Vercel preview deploys
   try {
@@ -37,17 +49,21 @@ function isAllowedOrigin(origin) {
   return false;
 }
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (isAllowedOrigin(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error('Not allowed by CORS: ' + origin));
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS: ' + origin));
+  },
+  credentials: true,
+};
+
+// Handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
