@@ -12,11 +12,21 @@ const LISTING_API_URL =
  */
 async function getAuthToken() {
   try {
-    const { supabase } = await import('./supabaseClient');
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || null;
+    const mod = await import('./supabaseClient');
+    console.log("AUTH DEBUG: supabaseClient module", mod);
+
+    const supabase = mod.supabase;
+    if (!supabase) {
+      console.error("AUTH DEBUG: supabase is undefined");
+      return null;
+    }
+
+    const { data, error } = await supabase.auth.getSession();
+    console.log("AUTH DEBUG: session result", data, error);
+
+    return data?.session?.access_token || null;
   } catch (error) {
-    console.error('Error getting auth token:', error);
+    console.error('AUTH DEBUG: getAuthToken failed:', error);
     return null;
   }
 }
