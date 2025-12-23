@@ -16,6 +16,12 @@ import { supabase } from './utils-new/db.js';
 import { decrypt } from './utils-new/encryption.js';
 import { MercariProcessor } from './processors-new/mercari.js';
 import { FacebookProcessor } from './processors-new/facebook.js';
+import fs from 'fs';
+
+// Debug: Log container file structure
+console.log('FILES IN /app:', fs.readdirSync('/app'));
+console.log('FILES IN /app/utils-new:', fs.existsSync('/app/utils-new') ? fs.readdirSync('/app/utils-new') : 'missing');
+console.log('FILES IN /app/processors-new:', fs.existsSync('/app/processors-new') ? fs.readdirSync('/app/processors-new') : 'missing');
 
 dotenv.config();
 

@@ -2,8 +2,8 @@
  * Base processor class for marketplace listing automation
  */
 
-import { downloadImage } from '../utils/storage.js';
-import { updateJobProgress, logJobEvent } from '../utils/db.js';
+import { downloadImage } from '../utils-new/storage.js';
+import { updateJobProgress, logJobEvent } from '../utils-new/db.js';
 
 export class BaseProcessor {
   constructor(browser, job, platformAccount) {

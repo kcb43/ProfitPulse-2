@@ -3,7 +3,7 @@
  */
 
 import { BaseProcessor } from './base.js';
-import { updateJobProgress, logJobEvent } from '../utils/db.js';
+import { updateJobProgress, logJobEvent } from '../utils-new/db.js';
 
 export class FacebookProcessor extends BaseProcessor {
   async uploadImages(imagePaths) {
