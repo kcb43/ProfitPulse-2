@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+﻿import React, { useMemo, useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPageUrl } from "@/utils";
@@ -862,6 +862,43 @@ export default function Crosslist() {
     return platform?.status === 'connected';
   };
 
+  // Native DOM listener to bypass React onClick issues
+  function MercariListButton({ itemId, marketplaceId }) {
+    const btnRef = useRef(null);
+
+    useEffect(() => {
+      const el = btnRef.current;
+      if (!el) return;
+
+      const handler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        fetch("/api/health", { method: "GET", credentials: "include" }).catch(() => {});
+
+        fetch("/api/listings/create-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            itemId,
+            marketplaceId,
+            platforms: ["mercari"],
+          }),
+        }).catch(() => {});
+      };
+
+      el.addEventListener("click", handler, { capture: true });
+      return () => el.removeEventListener("click", handler, { capture: true });
+    }, [itemId, marketplaceId]);
+
+    return (
+      <button ref={btnRef} type="button" className="text-xs h-6 px-2 border rounded-md">
+        List on Mercari
+      </button>
+    );
+  }
+
   // Wrapper function for button clicks - moves async logic out of JSX
   const handleListButtonClick = async (e, itemId, marketplace) => {
     if (e) {
@@ -1583,17 +1620,21 @@ export default function Crosslist() {
                               {renderMarketplaceIcon(m, "w-6 h-6")}
                             </div>
                             {!isListed && isConnected && !hasActiveJob && ['mercari', 'facebook'].includes(m.id) && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => handleListButtonClick(e, it.id, m.id)}
-                                disabled={crosslistLoading}
-                                className="text-xs h-6 px-2"
-                                style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
-                              >
-                                List on {m.label}
-                              </Button>
+                              m.id === 'mercari' ? (
+                                <MercariListButton itemId={it.id} marketplaceId={m.id} />
+                              ) : (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => handleListButtonClick(e, it.id, m.id)}
+                                  disabled={crosslistLoading}
+                                  className="text-xs h-6 px-2"
+                                  style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
+                                >
+                                  List on {m.label}
+                                </Button>
+                              )
                             )}
                             {hasActiveJob && activeJobs[it.id] && (
                               <div className="text-xs text-blue-600">Processing...</div>
@@ -1715,17 +1756,21 @@ export default function Crosslist() {
                             </div>
                             {status === 'not_listed' ? (
                               isConnected && ['mercari', 'facebook'].includes(m.id) && !hasActiveJob ? (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => handleListButtonClick(e, it.id, m.id)}
-                                  disabled={crosslistLoading}
-                                  className="text-xs h-6 px-2"
-                                  style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
-                                >
-                                  List on {m.label}
-                                </Button>
+                                m.id === 'mercari' ? (
+                                  <MercariListButton itemId={it.id} marketplaceId={m.id} />
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => handleListButtonClick(e, it.id, m.id)}
+                                    disabled={crosslistLoading}
+                                    className="text-xs h-6 px-2"
+                                    style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
+                                  >
+                                    List on {m.label}
+                                  </Button>
+                                )
                               ) : !isConnected && ['mercari', 'facebook'].includes(m.id) ? (
                                 <span className="text-xs text-muted-foreground">Connect</span>
                               ) : null
