@@ -867,25 +867,47 @@ export default function Crosslist() {
 
   // Wrapper function for button clicks - moves async logic out of JSX
   const handleListButtonClick = (e, itemId, marketplace) => {
-    console.log("🔥🔥🔥 handleListButtonClick CALLED", { itemId, marketplace, timestamp: new Date().toISOString() });
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("🧩 BUTTON RENDER marketplace=", marketplace);
-    console.log("✅ UI BUTTON CLICKED (inline)", { itemId, marketplace });
-    // Forced Network canary
-    console.log("🔵 About to fetch /health endpoint...");
-    fetch("https://profitorbit-api.fly.dev/health")
-      .then((res) => {
-        console.log("✅ health ok", res.status);
-        return res.json();
-      })
-      .then((data) => console.log("✅ health data", data))
-      .catch((err) => console.error("❌ health fetch error", err));
-    // Call the async handler (don't await - fire and forget)
-    console.log("🔵 About to call handleListOnMarketplaceItem...");
-    handleListOnMarketplaceItem(itemId, marketplace).catch((error) => {
-      console.error("❌ Error in handleListOnMarketplaceItem:", error);
-    });
+    try {
+      console.log("🔥🔥🔥 handleListButtonClick CALLED", { itemId, marketplace, timestamp: new Date().toISOString() });
+      
+      if (!e) {
+        console.error("❌ handleListButtonClick: event is null/undefined");
+        return;
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log("🧩 BUTTON RENDER marketplace=", marketplace);
+      console.log("✅ UI BUTTON CLICKED (inline)", { itemId, marketplace });
+      
+      // Forced Network canary
+      console.log("🔵 About to fetch /health endpoint...");
+      fetch("https://profitorbit-api.fly.dev/health")
+        .then((res) => {
+          console.log("✅ health ok", res.status);
+          return res.json();
+        })
+        .then((data) => console.log("✅ health data", data))
+        .catch((err) => console.error("❌ health fetch error", err));
+      
+      // Call the async handler (don't await - fire and forget)
+      console.log("🔵 About to call handleListOnMarketplaceItem...");
+      
+      if (typeof handleListOnMarketplaceItem !== 'function') {
+        console.error("❌ handleListOnMarketplaceItem is not a function!", typeof handleListOnMarketplaceItem);
+        alert("Error: handleListOnMarketplaceItem is not a function. Check console.");
+        return;
+      }
+      
+      handleListOnMarketplaceItem(itemId, marketplace).catch((error) => {
+        console.error("❌ Error in handleListOnMarketplaceItem:", error);
+        alert(`Error listing item: ${error.message || error}`);
+      });
+    } catch (error) {
+      console.error("❌ CRITICAL ERROR in handleListButtonClick:", error);
+      alert(`Critical error: ${error.message || error}`);
+    }
   };
 
   const handleListOnMarketplaceItem = async (itemId, marketplace) => {
@@ -1659,11 +1681,25 @@ export default function Crosslist() {
                                 size="sm"
                                 variant="outline"
                                 onClick={(e) => {
-                                  console.log("🔵 BUTTON onClick FIRED (row view)", { itemId: it.id, marketplace: m.id, label: m.label });
-                                  handleListButtonClick(e, it.id, m.id);
+                                  console.log("🔵 BUTTON onClick FIRED (row view)", { 
+                                    itemId: it.id, 
+                                    marketplace: m.id, 
+                                    label: m.label,
+                                    isListed,
+                                    isConnected,
+                                    hasActiveJob,
+                                    crosslistLoading
+                                  });
+                                  if (typeof handleListButtonClick === 'function') {
+                                    handleListButtonClick(e, it.id, m.id);
+                                  } else {
+                                    console.error("❌ handleListButtonClick is not a function!");
+                                    alert("Error: Button handler not available. Check console.");
+                                  }
                                 }}
                                 disabled={crosslistLoading}
                                 className="text-xs h-6 px-2"
+                                style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
                               >
                                 List on {m.label}
                                 <span style={{fontSize: 10, opacity: 0.7, marginLeft: 4}}>BUILD: 2025-12-23-click-debug-1</span>
@@ -1794,11 +1830,25 @@ export default function Crosslist() {
                                   size="sm"
                                   variant="outline"
                                   onClick={(e) => {
-                                    console.log("🔵 BUTTON onClick FIRED (grid view)", { itemId: it.id, marketplace: m.id, label: m.label });
-                                    handleListButtonClick(e, it.id, m.id);
+                                    console.log("🔵 BUTTON onClick FIRED (grid view)", { 
+                                      itemId: it.id, 
+                                      marketplace: m.id, 
+                                      label: m.label,
+                                      status,
+                                      isConnected,
+                                      hasActiveJob,
+                                      crosslistLoading
+                                    });
+                                    if (typeof handleListButtonClick === 'function') {
+                                      handleListButtonClick(e, it.id, m.id);
+                                    } else {
+                                      console.error("❌ handleListButtonClick is not a function!");
+                                      alert("Error: Button handler not available. Check console.");
+                                    }
                                   }}
                                   disabled={crosslistLoading}
                                   className="text-xs h-6 px-2"
+                                  style={{ pointerEvents: crosslistLoading ? 'none' : 'auto', zIndex: 10 }}
                                 >
                                   List on {m.label}
                                   <span style={{fontSize: 10, opacity: 0.7, marginLeft: 4}}>BUILD: 2025-12-23-click-debug-1</span>
