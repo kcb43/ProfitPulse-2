@@ -18,6 +18,9 @@ import { MercariProcessor } from './processors-new/mercari.js';
 import { FacebookProcessor } from './processors-new/facebook.js';
 import fs from 'fs';
 
+// Version stamp to verify deployment
+console.log('WORKER BUILD:', '2025-12-23-import-fix-1');
+
 // Debug: Log container file structure
 console.log('FILES IN /app:', fs.readdirSync('/app'));
 console.log('FILES IN /app/utils-new:', fs.existsSync('/app/utils-new') ? fs.readdirSync('/app/utils-new') : 'missing');
