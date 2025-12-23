@@ -126,6 +126,8 @@ function queryStatus() {
           extensionContextInvalidated = true;
           console.error('🔴 Bridge: Extension context invalidated - extension was reloaded');
           console.error('🔴 Bridge: Please reload this page to reconnect to the extension');
+          // Stop all polling immediately
+          stopAllPolling();
           // Dispatch event so React app knows extension was reloaded
           window.dispatchEvent(new CustomEvent('profitOrbitExtensionInvalidated'));
           return;
@@ -153,6 +155,8 @@ function queryStatus() {
       extensionContextInvalidated = true;
       console.error('🔴 Bridge: Extension context invalidated - extension was reloaded');
       console.error('🔴 Bridge: Please reload this page to reconnect to the extension');
+      // Stop all polling immediately
+      stopAllPolling();
       window.dispatchEvent(new CustomEvent('profitOrbitExtensionInvalidated'));
     } else {
       console.error('🔴 Bridge: Exception sending message:', error);
@@ -194,6 +198,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
     if (error.message && error.message.includes('Extension context invalidated')) {
       extensionContextInvalidated = true;
       console.error('🔴 Bridge: Extension context invalidated while registering message listener');
+      // Stop all polling immediately
+      stopAllPolling();
       window.dispatchEvent(new CustomEvent('profitOrbitExtensionInvalidated'));
     } else {
       console.error('🔴 Bridge: Error registering message listener:', error);
@@ -204,19 +210,45 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 }
 
 // Poll localStorage for status requests from React app
-const statusRequestInterval = setInterval(() => {
-  // Stop polling if extension context is invalidated
-  if (extensionContextInvalidated) {
-    return;
+let statusRequestInterval = null;
+let pollingInterval = null;
+
+function stopAllPolling() {
+  console.warn('⚠️ Bridge: Stopping all polling - extension context invalidated');
+  if (statusRequestInterval) {
+    clearInterval(statusRequestInterval);
+    statusRequestInterval = null;
+  }
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+function startStatusRequestPolling() {
+  // Clear existing interval if any
+  if (statusRequestInterval) {
+    clearInterval(statusRequestInterval);
   }
   
-  const requestFlag = localStorage.getItem('profit_orbit_request_status');
-  if (requestFlag === 'true') {
-    console.log('🔵🔵🔵 Bridge: React app requested status via localStorage flag 🔵🔵🔵');
-    localStorage.removeItem('profit_orbit_request_status');
-    queryStatus();
-  }
-}, 500);
+  statusRequestInterval = setInterval(() => {
+    // Stop polling if extension context is invalidated
+    if (extensionContextInvalidated) {
+      stopAllPolling();
+      return;
+    }
+    
+    const requestFlag = localStorage.getItem('profit_orbit_request_status');
+    if (requestFlag === 'true') {
+      console.log('🔵🔵🔵 Bridge: React app requested status via localStorage flag 🔵🔵🔵');
+      localStorage.removeItem('profit_orbit_request_status');
+      queryStatus();
+    }
+  }, 500);
+}
+
+// Start polling
+startStatusRequestPolling();
 
 // Query status on load
 function initializePolling() {
@@ -233,15 +265,23 @@ function initializePolling() {
   }
 
   // Poll every 2 seconds (only if extension context is valid)
-  const pollingInterval = setInterval(() => {
-    // Stop polling if extension context is invalidated
-    if (extensionContextInvalidated) {
-      console.warn('⚠️ Bridge: Stopping polling - extension context invalidated');
+  function startPolling() {
+    // Clear existing interval if any
+    if (pollingInterval) {
       clearInterval(pollingInterval);
-      return;
     }
-    queryStatus();
-  }, 2000);
+    
+    pollingInterval = setInterval(() => {
+      // Stop polling if extension context is invalidated
+      if (extensionContextInvalidated) {
+        stopAllPolling();
+        return;
+      }
+      queryStatus();
+    }, 2000);
+  }
+  
+  startPolling();
   
   console.log('🔵 Bridge: Polling initialized');
 }

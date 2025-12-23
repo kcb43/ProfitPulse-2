@@ -863,17 +863,6 @@ export default function Crosslist() {
   };
 
   const handleListOnMarketplaceItem = async (itemId, marketplace) => {
-    // Check if platform is connected
-    if (!isPlatformConnected(marketplace)) {
-      toast({
-        title: 'Platform Not Connected',
-        description: `Please connect your ${marketplace} account first using the Chrome extension.`,
-        variant: 'destructive',
-      });
-      setShowPlatformConnect(true);
-      return;
-    }
-
     // Only support Mercari and Facebook for now (automation system)
     if (!['mercari', 'facebook'].includes(marketplace)) {
       // Fallback to old system for other platforms
@@ -926,6 +915,20 @@ export default function Crosslist() {
     // Use new automation system for Mercari and Facebook
     setCrosslistLoading(true);
     try {
+      // Check platform connection status from API (don't rely on extension)
+      const platformStatuses = await platformApi.getStatus();
+      const platformStatus = platformStatuses.find((p) => p.platform === marketplace);
+      
+      if (!platformStatus || platformStatus.status !== 'connected') {
+        toast({
+          title: 'Platform Not Connected',
+          description: `Please connect your ${marketplace} account first using the Chrome extension.`,
+          variant: 'destructive',
+        });
+        setShowPlatformConnect(true);
+        return;
+      }
+
       // Get inventory item
       const inventoryItem = inventory.find((item) => item.id === itemId);
       if (!inventoryItem) {
@@ -942,7 +945,7 @@ export default function Crosslist() {
         images: inventoryItem.image_url ? [inventoryItem.image_url] : [],
       };
 
-      // Create listing job
+      // Create listing job directly via API (independent of extension)
       const result = await listingJobsApi.createJob(itemId, [marketplace], payload);
 
       // Track the job
