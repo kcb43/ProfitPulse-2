@@ -864,6 +864,7 @@ export default function Crosslist() {
 
   // Native DOM listener to bypass React onClick issues
   function MercariListButton({ itemId, marketplaceId }) {
+    console.log("🟢 MERCARI BUTTON RENDER", itemId, marketplaceId);
     const btnRef = useRef(null);
 
     useEffect(() => {
@@ -895,6 +896,7 @@ export default function Crosslist() {
     return (
       <button ref={btnRef} type="button" className="text-xs h-6 px-2 border rounded-md">
         List on Mercari
+        <span style={{ marginLeft: 8, fontSize: 10 }}>MERCARI_BTN_MARKER_7</span>
       </button>
     );
   }
@@ -1626,6 +1628,14 @@ export default function Crosslist() {
                               m.id === 'mercari' ? (
                                 <MercariListButton itemId={it.id} marketplaceId={m.id} />
                               ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => alert('RAW BUTTON CLICKED')}
+                                    style={{ padding: 12, border: '1px solid red', marginBottom: 6 }}
+                                  >
+                                    TEST CLICK
+                                  </button>
                                 <Button
                                   type="button"
                                   size="sm"
@@ -1637,6 +1647,7 @@ export default function Crosslist() {
                                 >
                                   List on {m.label}
                                 </Button>
+                                </>
                               )
                             )}
                             {hasActiveJob && activeJobs[it.id] && (
