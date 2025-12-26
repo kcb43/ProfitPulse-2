@@ -77,6 +77,33 @@ async function getPlatformAccount(userId, platform) {
   };
 }
 
+function validateMercariPayload(p) {
+  const missing = [];
+
+  // Core
+  if (!p?.title || p.title.trim().length < 3) missing.push("title");
+  if (!p?.description || p.description.trim().length < 10) missing.push("description");
+  if (p?.price == null || Number(p.price) <= 0) missing.push("price");
+  if (!p?.category) missing.push("category");
+  if (!p?.condition) missing.push("condition");
+
+  // Shipping
+  if (!p?.shipping) {
+    missing.push("shipping");
+  } else {
+    const s = p.shipping;
+    if (!s?.paidBy) missing.push("shipping.paidBy");
+    if (!s?.method) missing.push("shipping.method");
+    // add weight here if required: if (!s?.weight) missing.push("shipping.weight");
+  }
+
+  // Photos
+  const imgs = p?.images || [];
+  if (!Array.isArray(imgs) || imgs.length === 0) missing.push("images");
+
+  return missing;
+}
+
 /**
  * Process a single listing job
  */
@@ -133,6 +160,16 @@ async function processJob(job) {
 
         // Initialize processor
         await processor.initialize();
+
+        // Validate Mercari payload before filling form
+        if (platform === 'mercari') {
+          const missing = validateMercariPayload(job.payload);
+          if (missing.length) {
+            await safeMarkJobFailed(jobId, `Mercari missing required fields: ${missing.join(", ")}`);
+            await logJobEvent(jobId, 'error', 'Mercari validation failed', { missing });
+            break;
+          }
+        }
 
         // Upload images
         const imagePaths = job.payload.images || [];
