@@ -903,6 +903,8 @@ export default function Crosslist() {
 
   // Wrapper function for button clicks - moves async logic out of JSX
   const handleListButtonClick = async (e, itemId, marketplace) => {
+    console.log("🟣 CLICK HANDLER START", Date.now());
+    alert("CLICK HANDLER START");
     console.log("🟣 CLICK WRAPPER HIT", { itemId, marketplaceId: marketplace, t: Date.now() });
     window.__lastListClick = { itemId, marketplaceId: marketplace, t: Date.now() };
     alert("CLICK WRAPPER HIT");
