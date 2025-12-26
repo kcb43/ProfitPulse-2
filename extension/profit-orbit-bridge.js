@@ -97,6 +97,38 @@ function extractSupabaseToken() {
   return null;
 }
 
+function getListingConfig() {
+  const authToken = extractSupabaseToken();
+  const apiUrl =
+    window.__PO_API_URL ||
+    window.__LISTING_API_URL ||
+    "https://profitorbit-api.fly.dev";
+  return { apiUrl, authToken };
+}
+
+function ensurePlatformConnected(platform) {
+  const { apiUrl, authToken } = getListingConfig();
+  if (!authToken || !apiUrl) {
+    console.warn("⚠️ Bridge: Missing apiUrl/authToken; cannot connect platform", { apiUrlPresent: !!apiUrl, hasToken: !!authToken });
+    return;
+  }
+  try {
+    chrome.runtime.sendMessage(
+      {
+        type: "CONNECT_PLATFORM",
+        platform,
+        apiUrl,
+        authToken,
+      },
+      (resp) => {
+        console.log("🟣 Bridge: CONNECT_PLATFORM response", resp);
+      }
+    );
+  } catch (err) {
+    console.error("🔴 Bridge: Failed to trigger CONNECT_PLATFORM", err);
+  }
+}
+
 // Respond to extension popup asking for API URL + auth token so it can connect the platform
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "GET_LISTING_CONFIG") {
@@ -144,6 +176,8 @@ function updateLocalStorage(status) {
           payload: { userName: data.userName || data.name || 'Mercari User' }
         }, '*');
         console.log('🔵 Bridge: Dispatched MERCARI_CONNECTION_READY event');
+        // Also upsert platform_accounts via API so backend sees Mercari connected
+        ensurePlatformConnected('mercari');
       }
     } else {
       localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
