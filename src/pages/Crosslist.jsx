@@ -864,7 +864,7 @@ export default function Crosslist() {
 
   // Mercari button with capture/bubble probes
   function MercariListButton({ itemId, marketplaceId, onClick }) {
-    console.log("🟠 MercariListButton rendered", { itemId, marketplaceId });
+    console.log("🟠 MercariListButton RENDER", { itemId, marketplaceId, hasOnClick: !!onClick });
 
     const handleClick = (e) => {
       alert("🟠 MercariListButton CLICK");
@@ -875,7 +875,6 @@ export default function Crosslist() {
     return (
       <button
         type="button"
-        onClickCapture={() => alert("CAPTURE: MERCARI BUTTON")}
         onClick={handleClick}
         className="text-xs h-6 px-2 border rounded-md"
       >
@@ -1627,11 +1626,20 @@ export default function Crosslist() {
                             </div>
                             {!isListed && isConnected && !hasActiveJob && ['mercari', 'facebook'].includes(m.id) && (
                               m.id === 'mercari' ? (
-                                <MercariListButton
-                                  itemId={it.id}
-                                  marketplaceId={m.id}
-                                  onClick={(e) => handleListButtonClick(e, it.id, m.id)}
-                                />
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => alert("✅ MERCARI TEST CLICK")}
+                                    style={{ padding: 12, border: "1px solid red", marginBottom: 6 }}
+                                  >
+                                    MERCARI TEST CLICK
+                                  </button>
+                                  <MercariListButton
+                                    itemId={it.id}
+                                    marketplaceId={m.id}
+                                    onClick={(e) => handleListButtonClick(e, it.id, m.id)}
+                                  />
+                                </>
                               ) : (
                                 <>
                                   <button
