@@ -76,6 +76,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { createMarketplaceListing, getUserPages, isConnected } from "@/api/facebookClient";
+import { listingJobsApi } from "@/api/listingApiClient";
 
 const FACEBOOK_ICON_URL = "https://upload.wikimedia.org/wikipedia/commons/b/b9/2023_Facebook_icon.svg";
 const MERCARI_ICON_URL = "https://cdn.brandfetch.io/idjAt9LfED/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B";
@@ -35635,89 +35636,32 @@ export default function CrosslistComposer() {
         setIsMercariListing(true);
         setIsSaving(true);
 
-        // Send to extension for automation
-        // The extension will handle the listing in a background tab
-        window.postMessage({
-          type: 'CREATE_MERCARI_LISTING',
-          listingData: listingData
-        }, '*');
-
         toast({
           title: "Creating Mercari Listing...",
           description: "The extension is creating your listing in the background. This may take a few seconds.",
           duration: 5000,
         });
 
-        // Listen for completion message from extension
-        const handleListingComplete = (event) => {
-          if (event.data.type === 'MERCARI_LISTING_RESPONSE') {
-            window.removeEventListener('message', handleListingComplete);
-            
-            console.log('Received Mercari listing response:', event.data);
-            
-            if (event.data.success) {
-              toast({
-                title: "Listed on Mercari!",
-                description: (
-                  <div>
-                    <p>Your item has been listed successfully.</p>
-                    {event.data.listingUrl && (
-                      <a 
-                        href={event.data.listingUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="underline"
-                      >
-                        View Listing →
-                      </a>
-                    )}
-                  </div>
-                ),
-              });
+        const resp = await listingJobsApi.createJob(
+          currentEditingItemId || null,
+          ['mercari'],
+          listingData
+        );
 
-              // Update inventory item if we have an ID
-              if (currentEditingItemId) {
-                base44.entities.InventoryItem.update(currentEditingItemId, {
-                  status: 'listed',
-                  mercari_listing_id: event.data.listingId || '',
-                }).catch(err => console.error('Error updating inventory:', err));
-              }
-            } else {
-              // Only show error if it's not a "might be processing" case
-              if (!event.data.mightBeProcessing) {
-                toast({
-                  title: "Listing Failed",
-                  description: event.data.error || "Failed to create Mercari listing. Please check Mercari manually.",
-                  variant: "destructive",
-                });
-              } else {
-                toast({
-                  title: "Listing Processing",
-                  description: "The listing is being processed. Please check Mercari in a moment.",
-                });
-              }
-            }
-            
-            setIsMercariListing(false);
-            setIsSaving(false);
-          }
-        };
-        
-        window.addEventListener('message', handleListingComplete);
-        
-        // Timeout after 60 seconds
-        setTimeout(() => {
-          window.removeEventListener('message', handleListingComplete);
-          if (isMercariListing) {
-            setIsMercariListing(false);
-            setIsSaving(false);
-            toast({
-              title: "Listing Timeout",
-              description: "The listing process took too long. Please check Mercari manually.",
-              variant: "destructive",
-            });
-          }
-        }, 60000);
+        toast({
+          title: "Mercari listing job created",
+          description: "Processing in the background. Check Mercari shortly.",
+        });
+
+        if (currentEditingItemId) {
+          base44.entities.InventoryItem.update(currentEditingItemId, {
+            status: 'listed',
+            mercari_listing_id: resp?.listingId || '',
+          }).catch(err => console.error('Error updating inventory:', err));
+        }
+
+        setIsMercariListing(false);
+        setIsSaving(false);
 
       } catch (error) {
         console.error('Error creating Mercari listing:', error);
