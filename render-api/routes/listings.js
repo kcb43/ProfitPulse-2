@@ -66,6 +66,7 @@ async function createListingJobHandler(req, res) {
           message: 'Job queued',
         },
         result: {},
+        error: {}, // ensure NOT NULL constraint satisfied
       })
       .select()
       .single();
