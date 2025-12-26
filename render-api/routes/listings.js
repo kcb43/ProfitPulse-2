@@ -9,18 +9,8 @@ import { supabase } from '../utils/db.js';
 
 const router = express.Router();
 
-/**
- * POST /api/listings/create-job
- * Create a new listing job
- * 
- * Body:
- * {
- *   "inventory_item_id": "uuid",
- *   "platforms": ["mercari", "facebook"],
- *   "payload": { ...listing data... }
- * }
- */
-router.post('/create-job', requireAuth, async (req, res) => {
+// Shared handler so we can alias routes (e.g., /create and /create-job)
+async function createListingJobHandler(req, res) {
   try {
     console.log('🔥 LISTING ROUTE HIT', new Date().toISOString());
     const userId = req.userId;
@@ -100,7 +90,19 @@ router.post('/create-job', requireAuth, async (req, res) => {
       details: error.message,
     });
   }
-});
+}
+
+/**
+ * POST /api/listings/create-job
+ * Create a new listing job
+ */
+router.post('/create-job', requireAuth, createListingJobHandler);
+
+/**
+ * Alias: POST /api/listings/create
+ * Kept for compatibility with older frontend calls
+ */
+router.post('/create', requireAuth, createListingJobHandler);
 
 /**
  * GET /api/listings/jobs/:id
