@@ -35643,7 +35643,7 @@ export default function CrosslistComposer() {
         });
 
         const resp = await listingJobsApi.createJob(
-          currentEditingItemId || null,
+          null, // omit inventory_item_id for now
           ['mercari'],
           listingData
         );
