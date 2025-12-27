@@ -804,13 +804,18 @@ async function exportCookies(domain, urls = []) {
 
       const sameSite = mapSameSite(cookie.sameSite);
 
+      const isHostOnly = !!cookie.hostOnly || (typeof cookie.name === 'string' && cookie.name.startsWith('__Host-'));
+      const cookiePath = cookie.path || '/';
+      const cookieUrl = `${cookie.secure ? 'https' : 'http'}://${cookie.domain}${cookiePath}`;
+
       // Send a Playwright-compatible cookie shape to the API/worker.
-      // Playwright requires either {url} or {domain,path}; we keep domain/path.
+      // IMPORTANT: for host-only cookies (esp. __Host-*), Playwright must receive {url: ...}
+      // so it does NOT set a Domain attribute (which would break __Host cookies).
       const out = {
         name: cookie.name,
         value: cookie.value,
-        domain: cookie.domain,
-        path: cookie.path,
+        ...(isHostOnly ? { url: cookieUrl } : { domain: cookie.domain }),
+        path: cookiePath,
         secure: cookie.secure,
         httpOnly: cookie.httpOnly,
       };

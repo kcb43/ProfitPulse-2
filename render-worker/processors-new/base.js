@@ -42,11 +42,19 @@ export class BaseProcessor {
         const out = {
           name: c.name,
           value: c.value,
-          domain: c.domain,
           path: c.path || '/',
           httpOnly: !!c.httpOnly,
           secure: !!c.secure,
         };
+
+        // Prefer url-based cookies when provided (required for host-only / __Host-* cookies)
+        if (typeof c.url === 'string' && c.url.startsWith('http')) {
+          out.url = c.url;
+        } else if (c.domain) {
+          out.domain = c.domain;
+        } else {
+          return null;
+        }
 
         const sameSite = mapSameSite(c.sameSite);
         if (sameSite) out.sameSite = sameSite;
