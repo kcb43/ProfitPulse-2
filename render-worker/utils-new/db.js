@@ -64,6 +64,7 @@ export async function updateJobProgress(jobId, progress) {
 }
 
 export async function updateJobResult(jobId, result) {
+<<<<<<< Updated upstream
   // Schema-tolerant: some envs may not have completed_at
   const { error } = await supabase
     .from('listing_jobs')
@@ -72,6 +73,13 @@ export async function updateJobResult(jobId, result) {
       result,
       updated_at: new Date().toISOString(),
     })
+=======
+  // Only update the result payload here. Status is managed by the worker logic.
+  // (Some schemas may not have completed_at, and we shouldn't overwrite a failed status.)
+  const { error } = await supabase
+    .from('listing_jobs')
+    .update({ result, updated_at: new Date().toISOString() })
+>>>>>>> Stashed changes
     .eq('id', jobId);
 
   if (error) {
@@ -86,6 +94,10 @@ export async function markJobFailed(jobId, errorMessage) {
     .from('listing_jobs')
     .update({
       status: 'failed',
+<<<<<<< Updated upstream
+=======
+      // Some schemas store `error` as jsonb
+>>>>>>> Stashed changes
       error: { message: errorMessage },
       updated_at: new Date().toISOString(),
     })
@@ -97,12 +109,28 @@ export async function markJobFailed(jobId, errorMessage) {
   }
 }
 
+<<<<<<< Updated upstream
 export async function logJobEvent(jobId, level, message, metadata = {}) {
   const attempts = [
     { job_id: jobId, event_type: level, message, metadata, created_at: new Date().toISOString() },
     { job_id: jobId, event_type: level, message, metadata },
     { job_id: jobId, level, message, metadata },
     { job_id: jobId, type: level, message, metadata },
+=======
+/**
+ * Log job event
+ */
+export async function logJobEvent(jobId, level, message, metadata = {}) {
+  // Schema-tolerant: listing_job_events differs across environments.
+  // Some have NOT NULL `level`, some have `event_type`, some have neither.
+  const attempts = [
+    { job_id: jobId, level, event_type: level, message, metadata, created_at: new Date().toISOString() },
+    { job_id: jobId, level, message, metadata, created_at: new Date().toISOString() },
+    { job_id: jobId, event_type: level, message, metadata, created_at: new Date().toISOString() },
+    { job_id: jobId, level, event_type: level, message, metadata },
+    { job_id: jobId, level, message, metadata },
+    { job_id: jobId, event_type: level, message, metadata },
+>>>>>>> Stashed changes
     { job_id: jobId, message, metadata },
     { job_id: jobId, message },
   ];
@@ -111,11 +139,24 @@ export async function logJobEvent(jobId, level, message, metadata = {}) {
     const { error } = await supabase.from('listing_job_events').insert(row);
     if (!error) return;
 
+<<<<<<< Updated upstream
     const schemaish =
       error.code === 'PGRST204' ||
       (typeof error.message === 'string' && error.message.includes("Could not find the"));
 
     if (!schemaish) {
+=======
+    const msg = typeof error.message === 'string' ? error.message : '';
+    const code = error.code;
+
+    const retriable =
+      code === 'PGRST204' || // column missing in schema cache
+      code === '23502' || // not-null constraint (e.g., missing level)
+      msg.includes('Could not find the') ||
+      msg.includes('null value in column');
+
+    if (!retriable) {
+>>>>>>> Stashed changes
       console.error('Error logging job event:', error);
       return;
     }

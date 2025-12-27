@@ -6,6 +6,18 @@
 console.log('Profit Orbit Extension: Background script loaded');
 console.log('EXT BUILD:', '2025-12-27-connect-debug-2');
 
+function isProfitOrbitAppUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl);
+    if (u.hostname === 'profitorbit.io') return true;
+    if (u.hostname.endsWith('.vercel.app')) return true;
+    if (u.hostname === 'localhost' && (u.port === '5173' || u.port === '5174')) return true;
+    return false;
+  } catch (_) {
+    return false;
+  }
+}
+
 // Track Mercari automation tabs to keep them hidden
 const mercariAutomationTabs = new Set();
 
@@ -76,13 +88,7 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 // Inject bridge script into Profit Orbit pages when they load
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
-    const profitOrbitUrls = [
-      'https://profitorbit.io',
-      'http://localhost:5173',
-      'http://localhost:5174'
-    ];
-    
-    if (profitOrbitUrls.some(url => tab.url.startsWith(url))) {
+    if (isProfitOrbitAppUrl(tab.url)) {
       console.log(`🔵 Background: Profit Orbit page loaded: ${tab.url}`);
       // Inject bridge script dynamically
       await ensureBridgeScriptInjected(tabId);
@@ -611,7 +617,12 @@ async function ensureBridgeScriptInjected(tabId) {
 async function notifyProfitOrbit(message) {
   try {
     const tabs = await chrome.tabs.query({
-      url: ['https://profitorbit.io/*', 'http://localhost:5173/*', 'http://localhost:5174/*']
+      url: [
+        'https://profitorbit.io/*',
+        'https://*.vercel.app/*',
+        'http://localhost:5173/*',
+        'http://localhost:5174/*'
+      ]
     });
     
     console.log(`Notifying ${tabs.length} Profit Orbit tab(s) with message:`, message);
