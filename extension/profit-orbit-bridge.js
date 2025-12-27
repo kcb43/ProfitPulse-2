@@ -148,7 +148,18 @@ function ensurePlatformConnected(platform) {
         authToken,
       },
       (resp) => {
-        console.log("ðŸŸ£ Bridge: CONNECT_PLATFORM response", resp);
+        console.log("🟣 Bridge: CONNECT_PLATFORM response", resp);
+        if (platformId === "mercari") {
+          if (resp?.success) {
+            localStorage.setItem("profit_orbit_mercari_server_connected", "true");
+            localStorage.removeItem("profit_orbit_mercari_connect_error");
+          } else {
+            localStorage.removeItem("profit_orbit_mercari_server_connected");
+            if (resp?.error) {
+              localStorage.setItem("profit_orbit_mercari_connect_error", String(resp.error));
+            }
+          }
+        }
       }
     );
   } catch (err) {
@@ -196,15 +207,14 @@ function updateLocalStorage(status) {
         detail: { marketplace, status: data }
       }));
       
-      // Dispatch connection ready event for Mercari (so React app knows immediately)
+      // For Mercari, dispatch an immediate message (existing consumer expects this type).
+      // IMPORTANT: we do NOT auto-connect to the backend here anymore.
       if (marketplace === 'mercari' && data.loggedIn) {
         window.postMessage({
           type: 'MERCARI_CONNECTION_READY',
           payload: { userName: data.userName || data.name || 'Mercari User' }
         }, '*');
         console.log('🔵 Bridge: Dispatched MERCARI_CONNECTION_READY event');
-        // Also upsert platform_accounts via API so backend sees Mercari connected
-        ensurePlatformConnected('mercari');
       }
     } else {
       localStorage.removeItem(`profit_orbit_${marketplace}_connected`);
@@ -452,6 +462,18 @@ initializePolling();
 window.addEventListener('checkMercariStatus', () => {
   console.log('🔵 Bridge: Manual check requested via event');
   queryStatus();
+});
+
+// Allow the web app to request an explicit server-side connect (CONNECT_PLATFORM).
+// This avoids auto-connecting on every status update while still supporting a "Connect" button in the UI.
+window.addEventListener('message', (event) => {
+  if (event.source !== window) return;
+  const type = event.data?.type;
+  if (type !== 'REQUEST_CONNECT_PLATFORM') return;
+
+  const platform = event.data?.payload?.platform || event.data?.platform;
+  if (!platform) return;
+  ensurePlatformConnected(platform);
 });
 
 // NOTE: Bridge flag injection removed - CSP blocks inline scripts

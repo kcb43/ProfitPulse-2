@@ -24,13 +24,15 @@ const router = express.Router();
  */
 router.post('/connect', requireAuth, async (req, res) => {
   try {
-    const { platform, cookies, userAgent, meta } = req.body;
+    const { platform, cookies, userAgent, meta, session } = req.body;
     const userId = req.userId;
 
     // Validate input
-    if (!platform || !cookies || !Array.isArray(cookies)) {
+    const hasCookiesArray = Array.isArray(cookies);
+    const hasSession = !!session;
+    if (!platform || (!hasCookiesArray && !hasSession)) {
       return res.status(400).json({
-        error: 'Missing required fields: platform, cookies (array)',
+        error: 'Missing required fields: platform, cookies (array) or session',
       });
     }
 
@@ -40,17 +42,22 @@ router.post('/connect', requireAuth, async (req, res) => {
       });
     }
 
-    // Mercari sanity check: if we only received Cloudflare cookies, the user is not actually connected.
-    if (platform === 'mercari') {
+    // Mercari sanity check:
+    // If we only received Cloudflare cookies, require a header-based session to proceed.
+    if (platform === 'mercari' && hasCookiesArray) {
       const names = (cookies || []).map((c) => c?.name).filter(Boolean);
       const onlyCloudflare =
         names.length > 0 &&
         names.every((n) => typeof n === 'string' && (n.startsWith('__cf') || n.startsWith('_cf')));
-      if (onlyCloudflare || names.length < 6) {
+      const hasHeaderSession =
+        session?.type === 'mercari_api_headers' &&
+        typeof session?.headers?.authorization === 'string' &&
+        session.headers.authorization.length > 0;
+      if ((onlyCloudflare || names.length < 6) && !hasHeaderSession) {
         return res.status(400).json({
           error:
-            'Mercari connect failed: captured cookies look incomplete (not logged in). ' +
-            'Open `https://www.mercari.com/sell/` in the same Chrome profile, ensure you are logged in, then reconnect.',
+            'Mercari connect failed: cookies look incomplete (likely not logged in). ' +
+            'Open `https://www.mercari.com/sell/` in the same Chrome profile and reconnect.',
           cookieCount: names.length,
           cookieSample: names.slice(0, 25),
         });
@@ -59,7 +66,8 @@ router.post('/connect', requireAuth, async (req, res) => {
 
     // Encrypt cookies
     const sessionPayload = {
-      cookies,
+      cookies: hasCookiesArray ? cookies : [],
+      session: hasSession ? session : null,
       userAgent: userAgent || null,
       capturedAt: meta?.capturedAt || new Date().toISOString(),
     };

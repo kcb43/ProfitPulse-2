@@ -282,7 +282,7 @@ export default function Settings() {
     };
     window.addEventListener('profitOrbitExtensionInvalidated', handleExtensionInvalidated);
     
-    // Listen for MERCARI_CONNECTION_READY message from extension (immediate notification)
+    // Listen for Mercari logged-in notification from extension (immediate notification)
     const handleMercariConnectionReady = (event) => {
       // Only accept messages from same origin
       if (event.source !== window) return;
@@ -463,8 +463,8 @@ export default function Settings() {
       if (isConnected !== mercariConnected) {
         console.log('🟢 Profit Orbit: State sync - updating from', mercariConnected, 'to', isConnected);
         setMercariConnected(isConnected);
-        
-        // Clear disconnect flag when reconnected (user must have clicked Connect again)
+
+        // Clear disconnect flag when explicitly reconnected
         if (isConnected) {
           localStorage.removeItem('profit_orbit_mercari_disconnected');
           // Get user info
@@ -745,6 +745,13 @@ export default function Settings() {
         
         // Clear disconnect flag when user explicitly connects
         localStorage.removeItem('profit_orbit_mercari_disconnected');
+
+        // Explicitly request the extension to save a server-side session (CONNECT_PLATFORM)
+        try {
+          window.postMessage({ type: 'REQUEST_CONNECT_PLATFORM', payload: { platform: 'mercari' } }, '*');
+        } catch (_) {
+          // ignore
+        }
         
         // Only show success toast if transitioning from disconnected to connected
         if (!wasConnected && !mercariNotificationShown.current) {

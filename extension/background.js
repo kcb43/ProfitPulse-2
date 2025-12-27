@@ -899,6 +899,29 @@ async function connectPlatform(platform, apiUrl, authToken) {
     }
 
     const cookies = await exportCookies(domain, urls, extraCookies);
+
+    // Load captured Mercari API headers (captured via webRequest) as an alternative session signal
+    let mercariApiHeaders = null;
+    let mercariApiHeadersTimestamp = null;
+    if (platform === 'mercari') {
+      try {
+        const stored = await new Promise((resolve) => {
+          chrome.storage.local.get(['mercariApiHeaders', 'mercariApiHeadersTimestamp'], (result) =>
+            resolve(result || {})
+          );
+        });
+        mercariApiHeaders = stored.mercariApiHeaders || null;
+        mercariApiHeadersTimestamp = stored.mercariApiHeadersTimestamp || null;
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    const hasMercariHeaderSession =
+      platform === 'mercari' &&
+      mercariApiHeaders &&
+      typeof mercariApiHeaders.authorization === 'string' &&
+      mercariApiHeaders.authorization.length > 0;
     const urlCookieCount = cookies.filter((c) => typeof c?.url === 'string' && c.url.startsWith('http')).length;
     const cookieNamesSample = cookies.slice(0, 25).map((c) => c.name).join(',');
     const hasHost = cookies.some((c) => typeof c?.name === 'string' && c.name.startsWith('__Host-'));
@@ -906,12 +929,13 @@ async function connectPlatform(platform, apiUrl, authToken) {
       cookies.length > 0 &&
       cookies.every((c) => typeof c?.name === 'string' && (c.name.startsWith('__cf') || c.name.startsWith('_cf')));
     console.log(
-      `🍪 CONNECT_PLATFORM cookie export: platform=${platform} total=${cookies.length} urlCookies=${urlCookieCount} has__Host=${hasHost} sample=${cookieNamesSample}`
+      `🍪 CONNECT_PLATFORM cookie export: platform=${platform} total=${cookies.length} urlCookies=${urlCookieCount} has__Host=${hasHost} hasHeaderSession=${hasMercariHeaderSession} sample=${cookieNamesSample}`
     );
     if (cookies.length === 0) {
       throw new Error(`No cookies found for ${domain}. Please log in to ${platform} first.`);
     }
-    if (platform === 'mercari' && (onlyCloudflare || cookies.length < 6)) {
+    // Mercari: allow connection if we have a header-based session; otherwise require real cookies.
+    if (platform === 'mercari' && (onlyCloudflare || cookies.length < 6) && !hasMercariHeaderSession) {
       throw new Error(
         `Mercari cookies captured look incomplete (cookieCount=${cookies.length}, urlCookies=${urlCookieCount}). ` +
           `Please ensure you're logged into Mercari in THIS Chrome profile, visit https://www.mercari.com/sell/ once, then reconnect.`
@@ -926,9 +950,19 @@ async function connectPlatform(platform, apiUrl, authToken) {
       platform,
       cookies,
       userAgent,
+      session:
+        platform === 'mercari' && hasMercariHeaderSession
+          ? {
+              type: 'mercari_api_headers',
+              headers: mercariApiHeaders,
+              capturedAt: mercariApiHeadersTimestamp ? new Date(mercariApiHeadersTimestamp).toISOString() : null,
+            }
+          : null,
       meta: {
         capturedAt: new Date().toISOString(),
         cookieCount: cookies.length,
+        urlCookieCount,
+        hasMercariHeaderSession,
       },
     };
 
