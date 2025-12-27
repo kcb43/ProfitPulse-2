@@ -136,14 +136,7 @@ function ensurePlatformConnected(platform) {
   const { apiUrl, authToken } = getListingConfig();
   // apiUrl has a default; authToken may be missing if user isn't logged in yet.
   if (!authToken) {
-    const now = Date.now();
-    if (now - __poLastMissingConfigWarnAt > 30000) {
-      __poLastMissingConfigWarnAt = now;
-      console.warn("âš ï¸ Bridge: Missing authToken; cannot connect platform", {
-        platform: platformId,
-        apiUrl,
-      });
-    }
+    // Common on domains where the user isn't logged in (or Supabase token isn't stored).
     return;
   }
   try {

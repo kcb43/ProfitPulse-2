@@ -11,6 +11,7 @@ import {
   updateJobResult,
   markJobFailed,
   logJobEvent,
+  supabase,
 } from './utils-new/db.js';
 import { supabase } from './utils-new/db.js';
 import { decrypt } from './utils-new/encryption.js';
@@ -287,13 +288,22 @@ async function processJob(job) {
       }
     }
 
-    // Update job result
+    // Persist results without overwriting status incorrectly.
     const allSuccess = Object.values(results).every((r) => r.success);
+
     if (!allSuccess) {
-      // If not all succeeded, mark as failed
       await safeMarkJobFailed(jobId, 'Some platforms failed to list');
+      await updateJobResult(jobId, results);
+      console.log(`✅ Job ${jobId} completed (with failures)`);
+      return;
     }
+
+    // All succeeded: mark completed + persist results
     await updateJobResult(jobId, results);
+    await supabase
+      .from('listing_jobs')
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('id', jobId);
 
     console.log(`✅ Job ${jobId} completed`);
   } catch (error) {
