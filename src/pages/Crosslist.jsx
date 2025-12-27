@@ -1836,7 +1836,6 @@ export default function Crosslist() {
                               marketplaceId={m.id}
                               onClick={(e) => handleListButtonClick(e, it.id, m.id)}
                             />
-                            <span style={{ fontSize: 12, opacity: 0.7 }}>BUILD: 2025-12-26-A</span>
                                 ) : (
                                   <Button
                                     type="button"
