@@ -169,10 +169,71 @@ export class MercariProcessor extends BaseProcessor {
 
     await submitButton.click();
 
-    // Wait for confirmation or listing page
-    await this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {
-      // Navigation might not happen, that's okay
-    });
+    // Post-submit forensic dump and checks
+    await this.page.waitForTimeout(2000);
+    console.log("🌐 After submit URL:", this.page.url());
+    console.log("🧠 After submit title:", await this.page.title().catch(() => "no title"));
+
+    try {
+      await this.page.screenshot({ path: `/tmp/mercari-after-submit.png`, fullPage: true });
+      require('fs').writeFileSync(`/tmp/mercari-after-submit.html`, await this.page.content());
+      console.log("🧾 Saved /tmp/mercari-after-submit.png and .html");
+    } catch (e) {
+      console.log("⚠️ Could not save forensic artifacts:", e?.message || e);
+    }
+
+    // Blocker check after submit
+    await this.checkCaptchaWall('after submit');
+    const blockers = [
+      "text=/captcha/i",
+      "text=/verify/i",
+      "text=/unusual/i",
+      "text=/robot/i",
+      "text=/sign in/i",
+      "text=/log in/i",
+      "iframe[src*='captcha']",
+      "iframe[src*='recaptcha']",
+      "iframe[src*='hcaptcha']",
+    ];
+    for (const b of blockers) {
+      const found = await this.page.locator(b).count().catch(() => 0);
+      if (found > 0) {
+        throw new Error(`Mercari blocker detected: ${b} (not able to proceed)`);
+      }
+    }
+
+    // Inline validation errors
+    const errLocators = [
+      "[role='alert']",
+      "[data-testid*='error']",
+      ".error",
+      "text=/required/i",
+      "text=/please enter/i",
+      "text=/invalid/i",
+    ];
+    let anyErr = false;
+    for (const sel of errLocators) {
+      const count = await this.page.locator(sel).count().catch(() => 0);
+      if (count > 0) {
+        anyErr = true;
+        const txt = await this.page.locator(sel).first().innerText().catch(() => "");
+        console.log("🚨 Mercari error found:", sel, "=>", txt.slice(0, 300));
+      }
+    }
+    if (anyErr) {
+      throw new Error("Mercari form validation errors present after submit (see logs)");
+    }
+
+    // Require success: navigation or success message
+    const startUrl = this.page.url();
+    await Promise.race([
+      this.page.waitForURL((url) => url !== startUrl, { timeout: 15000 }),
+      this.page.waitForSelector("text=/listed|success|your listing/i", { timeout: 15000 }),
+    ]).catch(() => {});
+
+    if (this.page.url() === startUrl) {
+      throw new Error("Submit did not navigate or show success; listing likely not created.");
+    }
 
     // Extract listing URL from current page
     const currentUrl = this.page.url();
