@@ -18,6 +18,51 @@ export class BaseProcessor {
     const sessionPayload = platformAccount.session_payload_encrypted || {};
     this.cookies = sessionPayload.cookies || [];
     this.userAgent = sessionPayload.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+    this.session = sessionPayload.session || null;
+  }
+
+  getExtraHTTPHeaders() {
+    // For Mercari, the extension can capture authenticated headers for https://www.mercari.com/v1/api
+    // (authorization, x-csrf-token, x-de-device-token, etc.). Applying these as extra headers may help
+    // Playwright requests behave like an authenticated browser session even when cookies are incomplete.
+    if (this.platformAccount?.platform !== 'mercari') return null;
+    if (this.session?.type !== 'mercari_api_headers') return null;
+    const raw = this.session?.headers;
+    if (!raw || typeof raw !== 'object') return null;
+
+    // Keep only a safe subset of headers that Playwright will accept and that are relevant.
+    // Avoid hop-by-hop and content headers.
+    const allow = new Set([
+      'accept',
+      'accept-language',
+      'apollo-require-preflight',
+      'authorization',
+      'baggage',
+      'priority',
+      'sentry-trace',
+      'x-app-version',
+      'x-csrf-token',
+      'x-de-device-token',
+      'x-double-web',
+      'x-ld-variants',
+      'x-platform',
+      'x-socure-device',
+      // Keep UA client hints only if provided; harmless but not required
+      'sec-ch-ua',
+      'sec-ch-ua-mobile',
+      'sec-ch-ua-platform',
+    ]);
+
+    const out = {};
+    for (const [k, v] of Object.entries(raw)) {
+      const key = String(k).toLowerCase();
+      if (!allow.has(key)) continue;
+      if (typeof v !== 'string' || !v) continue;
+      out[key] = v;
+    }
+
+    if (!out.authorization) return null;
+    return out;
   }
 
   normalizeCookiesForPlaywright(cookies) {
@@ -69,9 +114,15 @@ export class BaseProcessor {
    * Initialize the browser page
    */
   async initialize() {
+    const extraHTTPHeaders = this.getExtraHTTPHeaders();
+    if (extraHTTPHeaders) {
+      console.log(`🧾 Extra HTTP headers enabled for ${this.platformAccount?.platform}:`, Object.keys(extraHTTPHeaders));
+    }
+
     this.context = await this.browser.newContext({
       userAgent: this.userAgent,
       viewport: { width: 1280, height: 720 },
+      ...(extraHTTPHeaders ? { extraHTTPHeaders } : {}),
     });
 
     // Set cookies

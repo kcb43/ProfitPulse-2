@@ -271,7 +271,10 @@ async function processJob(job) {
 
         // Validate Mercari payload before filling form
         if (platform === 'mercari') {
-          const dryRun = String(process.env.MERCARI_DRY_RUN || '').toLowerCase() === 'true';
+          // User request: remove photo upload option for now and just fill/log the form.
+          // MERCARI_SKIP_IMAGES=true forces dry-run semantics (skip upload + skip submit).
+          const skipImages = String(process.env.MERCARI_SKIP_IMAGES || '').toLowerCase() === 'true';
+          const dryRun = skipImages || String(process.env.MERCARI_DRY_RUN || '').toLowerCase() === 'true';
           const { missing, normalized, imageUrls } = normalizeMercariPayload(job.payload);
           const effectiveMissing = dryRun ? missing.filter((m) => m !== 'images') : missing;
 
@@ -306,7 +309,9 @@ async function processJob(job) {
           } else {
             await logJobEvent(jobId, 'warn', 'Mercari dry-run enabled: skipping image upload and submit', {
               platform,
-              note: 'Set MERCARI_DRY_RUN=false to enable full posting',
+              note: skipImages
+                ? 'MERCARI_SKIP_IMAGES=true (requested): only fill/log. Set MERCARI_SKIP_IMAGES=false and MERCARI_DRY_RUN=false to enable full posting.'
+                : 'Set MERCARI_DRY_RUN=false to enable full posting',
             });
           }
         } else {
@@ -335,7 +340,7 @@ async function processJob(job) {
         await logJobEvent(jobId, 'info', 'Form filled', { platform });
 
         // Submit
-        if (platform === 'mercari' && String(process.env.MERCARI_DRY_RUN || '').toLowerCase() === 'true') {
+        if (platform === 'mercari' && (String(process.env.MERCARI_DRY_RUN || '').toLowerCase() === 'true' || String(process.env.MERCARI_SKIP_IMAGES || '').toLowerCase() === 'true')) {
           console.log(`🧪 Job ${jobId}: Mercari dry-run: skipping submit`);
           // Persist a partial "result" for debugging
           results[platform] = {
