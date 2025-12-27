@@ -1060,20 +1060,23 @@ export default function Crosslist() {
         description: `Successfully listed on ${platforms.join(', ')}`,
       });
 
-      // Only mark item as listed AFTER we have a real success result.
-      // (This prevents "queued job" from looking like "posted listing".)
-      const mercariResult = job.result?.mercari;
-      const mercariListingUrl = mercariResult?.listingUrl;
-      const inventoryItemId = job.inventory_item_id || matchedItemId;
-      if (inventoryItemId && mercariResult?.success) {
-        base44.entities.InventoryItem.update(inventoryItemId, {
-          status: 'listed',
-          ...(mercariListingUrl ? { mercari_listing_id: mercariListingUrl } : {}),
-        }).catch(() => {});
-      }
+      // Step 1a: only treat Mercari as success if we have a real items URL
+      const mercariListingUrl = job?.result?.mercari?.listingUrl;
+      const isMercariRealSuccess =
+        job?.result?.mercari?.success === true &&
+        typeof mercariListingUrl === 'string' &&
+        mercariListingUrl.includes('mercari.com/items/');
 
-      // Attempt to open the posted listing (may be blocked by popup blockers).
-      if (mercariListingUrl) {
+      if (isMercariRealSuccess) {
+        const inventoryItemId = job.inventory_item_id || matchedItemId;
+        if (inventoryItemId) {
+          base44.entities.InventoryItem.update(inventoryItemId, {
+            status: 'listed',
+            mercari_listing_id: mercariListingUrl,
+          }).catch(() => {});
+        }
+
+        // Open the posted listing (may be blocked by popup blockers)
         try {
           window.open(mercariListingUrl, '_blank', 'noopener,noreferrer');
         } catch {}
