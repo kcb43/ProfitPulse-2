@@ -189,6 +189,24 @@ export class MercariProcessor extends BaseProcessor {
       }
     }
 
+    // Open listing in a new tab for confirmation
+    if (this.listingUrl && this.context) {
+      try {
+        const viewPage = await this.context.newPage();
+        await viewPage.goto(this.listingUrl, { waitUntil: 'networkidle', timeout: 15000 });
+        await logJobEvent(this.job.id, 'info', 'Opened listing in new tab', {
+          platform: 'mercari',
+          listingUrl: this.listingUrl,
+        });
+      } catch (err) {
+        await logJobEvent(this.job.id, 'warn', 'Failed to open listing tab', {
+          platform: 'mercari',
+          listingUrl: this.listingUrl,
+          error: err?.message,
+        });
+      }
+    }
+
     await logJobEvent(this.job.id, 'info', 'Listing submitted successfully', { platform: 'mercari' });
   }
 }
