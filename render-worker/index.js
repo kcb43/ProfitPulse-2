@@ -31,7 +31,7 @@ dotenv.config();
 
 const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || '2000');
 const MAX_CONCURRENT_JOBS = parseInt(process.env.MAX_CONCURRENT_JOBS || '1');
-const HEADLESS = process.env.PLAYWRIGHT_HEADLESS !== 'false';
+const HEADLESS = false;
 
 let browser = null;
 let isRunning = false;
@@ -47,7 +47,7 @@ async function initBrowser() {
 
   console.log('🚀 Initializing Playwright browser...');
   browser = await chromium.launch({
-    headless: false, // force headed to test bot detection
+    headless: HEADLESS,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
   });
 
