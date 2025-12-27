@@ -78,30 +78,41 @@ async function getPlatformAccount(userId, platform) {
 }
 
 function validateMercariPayload(p) {
+  // Normalize common fields from upstream payload shapes
+  const normalized = {
+    ...p,
+    category: p?.category || p?.mercariCategory || p?.mercariCategoryId,
+    images: Array.isArray(p?.images) ? p.images : (Array.isArray(p?.photos) ? p.photos : []),
+    shipping: p?.shipping || {
+      paidBy: p?.shipping?.paidBy || p?.shippingPayer,
+      method: p?.shipping?.method || p?.deliveryMethod || p?.shippingCarrier,
+    },
+  };
+
   const missing = [];
 
   // Core
-  if (!p?.title || p.title.trim().length < 3) missing.push("title");
-  if (!p?.description || p.description.trim().length < 10) missing.push("description");
-  if (p?.price == null || Number(p.price) <= 0) missing.push("price");
-  if (!p?.category) missing.push("category");
-  if (!p?.condition) missing.push("condition");
+  if (!normalized?.title || normalized.title.trim().length < 3) missing.push("title");
+  if (!normalized?.description || normalized.description.trim().length < 10) missing.push("description");
+  if (normalized?.price == null || Number(normalized.price) <= 0) missing.push("price");
+  if (!normalized?.category) missing.push("category");
+  if (!normalized?.condition) missing.push("condition");
 
   // Shipping
-  if (!p?.shipping) {
+  if (!normalized?.shipping) {
     missing.push("shipping");
   } else {
-    const s = p.shipping;
+    const s = normalized.shipping;
     if (!s?.paidBy) missing.push("shipping.paidBy");
     if (!s?.method) missing.push("shipping.method");
     // add weight here if required: if (!s?.weight) missing.push("shipping.weight");
   }
 
   // Photos
-  const imgs = p?.images || [];
+  const imgs = normalized?.images || [];
   if (!Array.isArray(imgs) || imgs.length === 0) missing.push("images");
 
-  return missing;
+  return { missing, normalized };
 }
 
 /**
@@ -163,13 +174,15 @@ async function processJob(job) {
 
         // Validate Mercari payload before filling form
         if (platform === 'mercari') {
-          const missing = validateMercariPayload(job.payload);
+          const { missing, normalized } = validateMercariPayload(job.payload);
           if (missing.length) {
-          const msg = `Mercari form validation errors: ${missing.join("; ")}`;
+            const msg = `Mercari form validation errors: ${missing.join("; ")}`;
           await safeMarkJobFailed(jobId, msg);
           await logJobEvent(jobId, 'error', 'Mercari validation failed', { missing });
           throw new Error(msg);
           }
+          // Use normalized payload for mercari processing
+          job.payload = normalized;
         }
 
         // Upload images
