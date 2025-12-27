@@ -6,6 +6,24 @@ import { BaseProcessor } from './base.js';
 import { updateJobProgress, logJobEvent } from '../utils-new/db.js';
 
 export class MercariProcessor extends BaseProcessor {
+  async checkCaptchaWall(label) {
+    const captchaHints = [
+      'text=/captcha/i',
+      'text=/verify/i',
+      'text=/robot/i',
+      'text=/unusual traffic/i',
+      'iframe[src*="captcha"]',
+      'iframe[src*="hcaptcha"]',
+      'iframe[src*="recaptcha"]',
+    ];
+    for (const hint of captchaHints) {
+      const count = await this.page.locator(hint).count().catch(() => 0);
+      if (count > 0) {
+        throw new Error(`Blocked by CAPTCHA / verification wall on Mercari (${label})`);
+      }
+    }
+  }
+
   async uploadImages(imagePaths) {
     await updateJobProgress(this.job.id, {
       percent: 20,
@@ -18,6 +36,8 @@ export class MercariProcessor extends BaseProcessor {
         waitUntil: 'networkidle',
       });
     }
+
+    await this.checkCaptchaWall('before upload');
 
     // Wait for image upload area
     const uploadArea = await this.page.waitForSelector(
@@ -70,6 +90,8 @@ export class MercariProcessor extends BaseProcessor {
       percent: 50,
       message: 'Filling listing form...',
     });
+
+    await this.checkCaptchaWall('before form fill');
 
     // Fill title
     const titleInput = await this.page.waitForSelector(
@@ -132,6 +154,8 @@ export class MercariProcessor extends BaseProcessor {
       percent: 80,
       message: 'Submitting listing...',
     });
+
+    await this.checkCaptchaWall('before submit');
 
     // Find and click submit button
     const submitButton = await this.page.waitForSelector(
