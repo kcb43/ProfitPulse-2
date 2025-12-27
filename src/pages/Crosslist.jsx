@@ -1841,20 +1841,11 @@ export default function Crosslist() {
                             {status === 'not_listed' ? (
                               isConnected && ['mercari', 'facebook'].includes(m.id) && !hasActiveJob ? (
                                 m.id === 'mercari' ? (
-<<<<<<< HEAD
-                            <MercariListButton
-                              itemId={it.id}
-                              marketplaceId={m.id}
-                              onClick={(e) => handleListButtonClick(e, it.id, m.id)}
-                            />
-                            <span style={{ fontSize: 12, opacity: 0.7 }}>BUILD: 2025-12-26-A</span>
-=======
                                   <MercariListButton
                                     itemId={it.id}
                                     marketplaceId={m.id}
                                     onClick={(e) => handleListButtonClick(e, it.id, m.id)}
                                   />
->>>>>>> a617b91f5cb3abc4c2039b830ccef3dc075f405d
                                 ) : (
                                   <Button
                                     type="button"
