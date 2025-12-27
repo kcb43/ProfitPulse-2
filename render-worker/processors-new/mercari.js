@@ -157,17 +157,43 @@ export class MercariProcessor extends BaseProcessor {
 
     await this.checkCaptchaWall('before submit');
 
-    // Find and click submit button
-    const submitButton = await this.page.waitForSelector(
-      'button:has-text("List"), button:has-text("出品"), button[type="submit"]',
-      { timeout: 10000 }
-    ).catch(() => null);
+    // Prefer the actual form submit button inside the sell form
+    const submitButton = this.page.locator('form button[type="submit"]').first();
 
-    if (!submitButton) {
-      throw new Error('Could not find submit button on Mercari');
+    // Wait for it to exist + be visible
+    await submitButton.waitFor({ state: 'visible', timeout: 15000 });
+
+    // If it's disabled, Mercari is blocking submit due to missing fields
+    const disabled = await submitButton.isDisabled().catch(() => false);
+    if (disabled) {
+      const requiredMissing = await this.page.evaluate(() => {
+        const invalid = Array.from(document.querySelectorAll(':invalid'));
+        return invalid.map(el => ({
+          name: el.getAttribute('name'),
+          id: el.id,
+          aria: el.getAttribute('aria-label'),
+          placeholder: el.getAttribute('placeholder'),
+          tag: el.tagName,
+          type: el.getAttribute('type'),
+        }));
+      }).catch(() => []);
+      console.log("🚨 Submit disabled; invalid fields:", requiredMissing);
+      throw new Error("Submit button is disabled (Mercari still missing required fields).");
     }
 
-    await submitButton.click();
+    // Wait for actual create-listing POST
+    const createReqPromise = this.page.waitForResponse((resp) => {
+      const url = resp.url();
+      const status = resp.status();
+      return (
+        resp.request().method() === "POST" &&
+        status >= 200 && status < 500 &&
+        (url.includes("/api/") || url.includes("/sell") || url.includes("/listings") || url.includes("/items"))
+      );
+    }, { timeout: 20000 }).catch(() => null);
+
+    await submitButton.scrollIntoViewIfNeeded();
+    await submitButton.click({ delay: 50 });
 
     // Post-submit forensic dump and checks
     await this.page.waitForTimeout(2000);
@@ -224,11 +250,17 @@ export class MercariProcessor extends BaseProcessor {
       throw new Error("Mercari form validation errors present after submit (see logs)");
     }
 
-    // Require success: navigation or success message
+    // If Mercari shows a loading overlay, wait for it to finish
+    await this.page.locator('[aria-busy="true"], .loading, .spinner').first()
+      .waitFor({ state: 'detached', timeout: 20000 })
+      .catch(() => {});
+
+    // Require success: navigation or success message or listing URL pattern
     const startUrl = this.page.url();
     await Promise.race([
-      this.page.waitForURL((url) => url !== startUrl, { timeout: 15000 }),
-      this.page.waitForSelector("text=/listed|success|your listing/i", { timeout: 15000 }),
+      this.page.waitForURL(/\/items\/|\/listing\/|\/sell\/complete|\/sell\/success/i, { timeout: 30000 }),
+      this.page.waitForSelector('a[href*="/items/"]', { timeout: 30000 }),
+      this.page.waitForSelector('text=/Your listing|Listed|Success|出品が完了/i', { timeout: 30000 }),
     ]).catch(() => {});
 
     if (this.page.url() === startUrl) {
