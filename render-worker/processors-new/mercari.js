@@ -66,7 +66,10 @@ export class MercariProcessor extends BaseProcessor {
         });
 
         // Wait for image to be processed (Mercari shows thumbnail)
-        await this.page.waitForTimeout(2000);
+        await this.page.waitForSelector(
+          'img[src^="blob:"], img[src*="mercari"]',
+          { timeout: 10000 }
+        );
 
         // If there are more images, click add more button
         if (i < imagePaths.length - 1) {
@@ -80,6 +83,14 @@ export class MercariProcessor extends BaseProcessor {
         console.error(`Error uploading image ${i + 1}:`, error);
         throw new Error(`Failed to upload image ${i + 1}: ${error.message}`);
       }
+    }
+
+    const uploadedImages = await this.page.$$eval(
+      'img[src^="blob:"], img[src*="mercari"]',
+      imgs => imgs.length
+    );
+    if (uploadedImages === 0) {
+      throw new Error("Mercari did not register uploaded images");
     }
 
     await logJobEvent(this.job.id, 'info', `Successfully uploaded ${imagePaths.length} images`, { platform: 'mercari' });
