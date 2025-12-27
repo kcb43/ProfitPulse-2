@@ -4,7 +4,7 @@
 
 import { BaseProcessor } from './base.js';
 import { updateJobProgress, logJobEvent } from '../utils-new/db.js';
-import { uploadArtifact, uploadTextArtifact, getPublicUrl } from '../utils-new/storage.js';
+import { uploadArtifact, uploadTextArtifact, createSignedUrl, getPublicUrl } from '../utils-new/storage.js';
 
 export class MercariProcessor extends BaseProcessor {
   async uploadMercariDebugArtifacts(kind) {
@@ -27,8 +27,17 @@ export class MercariProcessor extends BaseProcessor {
     await uploadArtifact(bucket, pngPath, png, 'image/png');
     await uploadTextArtifact(bucket, htmlPath, html, 'text/html; charset=utf-8');
 
-    const pngUrl = getPublicUrl(bucket, pngPath);
-    const htmlUrl = getPublicUrl(bucket, htmlPath);
+    // Prefer signed URLs (works even if bucket is private). Fallback to public URL if signing fails.
+    let pngUrl = null;
+    let htmlUrl = null;
+    try {
+      pngUrl = await createSignedUrl(bucket, pngPath, 60 * 60 * 24 * 7);
+      htmlUrl = await createSignedUrl(bucket, htmlPath, 60 * 60 * 24 * 7);
+    } catch (e) {
+      console.log('⚠️ Could not create signed URLs for debug artifacts; falling back to public URLs:', e?.message || e);
+      pngUrl = getPublicUrl(bucket, pngPath);
+      htmlUrl = getPublicUrl(bucket, htmlPath);
+    }
 
     await logJobEvent(jobId, 'info', 'Uploaded Mercari debug artifacts', {
       platform: 'mercari',

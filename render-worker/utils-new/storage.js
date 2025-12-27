@@ -55,3 +55,14 @@ export async function uploadTextArtifact(bucket, path, text, contentType = 'text
   return await uploadArtifact(bucket, path, buf, contentType);
 }
 
+/**
+ * Create a signed URL for a storage object (works for private buckets too).
+ */
+export async function createSignedUrl(bucket, path, expiresInSeconds = 60 * 60 * 24) {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
+  if (error) {
+    throw new Error(`Failed to create signed URL (${bucket}/${path}): ${error.message}`);
+  }
+  return data?.signedUrl;
+}
+
