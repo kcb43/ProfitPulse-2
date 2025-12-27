@@ -963,26 +963,6 @@ export default function Crosslist() {
         return;
       }
 
-      // Use new automation system for Mercari and Facebook
-      // Check platform connection via localStorage flag set by extension
-      const isPlatformConnected = (id) => {
-        if (typeof window === "undefined") return false;
-        return localStorage.getItem(`profit_orbit_${id}_connected`) === "true";
-      };
-
-      const required = [normalizedMarketplace];
-      const notConnected = required.filter((p) => !isPlatformConnected(p));
-
-      if (notConnected.length > 0) {
-        toast({
-          title: 'Platform Not Connected',
-          description: `Please connect your ${notConnected.join(', ')} account first using the Chrome extension.`,
-          variant: 'destructive',
-        });
-        setShowPlatformConnect(true);
-        return;
-      }
-
       console.log("C️⃣ before building listingData");
       // Get inventory item
       const inventoryItem = inventory.find((item) => item.id === itemId);
@@ -991,6 +971,7 @@ export default function Crosslist() {
       }
 
       console.log("D️⃣ before platform connected checks");
+      // Use new automation system for Mercari and Facebook
       // Check platform connection via localStorage flag set by extension
       const isPlatformConnected = (id) => {
         if (typeof window === "undefined") return false;
