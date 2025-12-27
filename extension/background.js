@@ -878,7 +878,11 @@ async function connectPlatform(platform, apiUrl, authToken) {
           : [];
     const cookies = await exportCookies(domain, urls);
     const urlCookieCount = cookies.filter((c) => typeof c?.url === 'string' && c.url.startsWith('http')).length;
-    console.log(`🍪 CONNECT_PLATFORM cookie export: platform=${platform} total=${cookies.length} urlCookies=${urlCookieCount}`);
+    const cookieNamesSample = cookies.slice(0, 25).map((c) => c.name).join(',');
+    const hasHost = cookies.some((c) => typeof c?.name === 'string' && c.name.startsWith('__Host-'));
+    console.log(
+      `🍪 CONNECT_PLATFORM cookie export: platform=${platform} total=${cookies.length} urlCookies=${urlCookieCount} has__Host=${hasHost} sample=${cookieNamesSample}`
+    );
     if (cookies.length === 0) {
       throw new Error(`No cookies found for ${domain}. Please log in to ${platform} first.`);
     }

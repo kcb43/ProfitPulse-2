@@ -271,33 +271,44 @@ async function processJob(job) {
 
         // Validate Mercari payload before filling form
         if (platform === 'mercari') {
+          const dryRun = String(process.env.MERCARI_DRY_RUN || '').toLowerCase() === 'true';
           const { missing, normalized, imageUrls } = normalizeMercariPayload(job.payload);
-          if (missing.length) {
+          const effectiveMissing = dryRun ? missing.filter((m) => m !== 'images') : missing;
+
+          if (effectiveMissing.length) {
             const msg = `Mercari form validation errors: ${missing.join("; ")}`;
             await safeMarkJobFailed(jobId, msg);
             await logJobEvent(jobId, 'error', 'Mercari validation failed', { missing });
             throw new Error(msg);
           }
-          // Download images to temp files for upload (Playwright requires file paths)
-          const localFiles = [];
-          for (const url of imageUrls) {
-            localFiles.push(await downloadToTmp(url));
-          }
           job.payload = {
             ...normalized,
-            images: localFiles,
+            images: dryRun ? [] : imageUrls,
             imageUrls, // keep original urls for debugging if needed
           };
-          // Upload images using local file paths
-          if (localFiles.length === 0) {
-            throw new Error("Mercari requires at least 1 photo. payload.photos is empty/invalid.");
+
+          if (!dryRun) {
+            // Download images to temp files for upload (Playwright requires file paths)
+            const localFiles = [];
+            for (const url of imageUrls) {
+              localFiles.push(await downloadToTmp(url));
+            }
+            job.payload.images = localFiles;
+            if (localFiles.length === 0) {
+              throw new Error("Mercari requires at least 1 photo. payload.photos is empty/invalid.");
+            }
+            console.log(`🖼️ Job ${jobId}: uploading ${localFiles.length} images to Mercari`);
+            await withTimeout(
+              processor.uploadImages(localFiles),
+              4 * 60 * 1000,
+              `mercari uploadImages (${localFiles.length} images)`
+            );
+          } else {
+            await logJobEvent(jobId, 'warn', 'Mercari dry-run enabled: skipping image upload and submit', {
+              platform,
+              note: 'Set MERCARI_DRY_RUN=false to enable full posting',
+            });
           }
-          console.log(`🖼️ Job ${jobId}: uploading ${localFiles.length} images to Mercari`);
-          await withTimeout(
-            processor.uploadImages(localFiles),
-            4 * 60 * 1000,
-            `mercari uploadImages (${localFiles.length} images)`
-          );
         } else {
           const imageUrls = Array.isArray(job.payload.images) ? job.payload.images
             : Array.isArray(job.payload.photos) ? job.payload.photos.map(p => p.preview || p.imageUrl).filter(Boolean)
@@ -324,9 +335,20 @@ async function processJob(job) {
         await logJobEvent(jobId, 'info', 'Form filled', { platform });
 
         // Submit
-        console.log(`🚀 Job ${jobId}: submitting for ${platform}`);
-        await withTimeout(processor.submit(), 3 * 60 * 1000, `${platform} submit`);
-        await logJobEvent(jobId, 'info', 'Listing submitted', { platform });
+        if (platform === 'mercari' && String(process.env.MERCARI_DRY_RUN || '').toLowerCase() === 'true') {
+          console.log(`🧪 Job ${jobId}: Mercari dry-run: skipping submit`);
+          // Persist a partial "result" for debugging
+          results[platform] = {
+            success: false,
+            dryRun: true,
+            message: 'Dry-run mode: form filled but images/submit skipped',
+          };
+          continue;
+        } else {
+          console.log(`🚀 Job ${jobId}: submitting for ${platform}`);
+          await withTimeout(processor.submit(), 3 * 60 * 1000, `${platform} submit`);
+          await logJobEvent(jobId, 'info', 'Listing submitted', { platform });
+        }
 
         // Get listing URL
         console.log(`🔗 Job ${jobId}: fetching listing URL for ${platform}`);

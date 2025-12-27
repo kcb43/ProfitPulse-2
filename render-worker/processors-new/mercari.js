@@ -27,40 +27,37 @@ export class MercariProcessor extends BaseProcessor {
     }
   }
 
-  async uploadImages(imagePaths) {
-    await updateJobProgress(this.job.id, {
-      percent: 20,
-      message: 'Uploading images to Mercari...',
-    });
-
+  async ensureSellPageReady(label) {
     // Navigate to sell page if not already there
     if (!this.page.url().includes('mercari.com/sell')) {
-      // NOTE: `networkidle` often never happens on modern sites due to long-polling/analytics.
-      // Use domcontentloaded + explicit waits instead.
       await this.page.goto('https://www.mercari.com/sell/', {
         waitUntil: 'domcontentloaded',
         timeout: 90000,
       });
     }
 
-    await this.checkCaptchaWall('before upload');
+    await this.checkCaptchaWall(label);
 
-    const ensureStillOnSell = async (label) => {
-      const u = this.page.url();
-      if (
-        u.includes('/login') ||
-        u.includes('/signin') ||
-        u.includes('/authenticate') ||
-        u.includes('/auth')
-      ) {
-        throw new Error(
-          `Mercari session is not logged in (redirected to ${u}) (${label}). Reconnect Mercari in the extension and try again.`
-        );
-      }
-    };
+    const u = this.page.url();
+    if (
+      u.includes('/login') ||
+      u.includes('/signin') ||
+      u.includes('/authenticate') ||
+      u.includes('/auth')
+    ) {
+      throw new Error(
+        `Mercari session is not logged in (redirected to ${u}) (${label}). Reconnect Mercari in the extension and try again.`
+      );
+    }
+  }
 
-    // If we got redirected to login, cookies/session are not valid
-    await ensureStillOnSell('after goto');
+  async uploadImages(imagePaths) {
+    await updateJobProgress(this.job.id, {
+      percent: 20,
+      message: 'Uploading images to Mercari...',
+    });
+
+    await this.ensureSellPageReady('before upload');
 
     // Mercari often hides the file input behind an "Add photos" UI.
     // Try to reveal it and then locate a usable input[type=file].
@@ -84,7 +81,7 @@ export class MercariProcessor extends BaseProcessor {
 
     // Try a few rounds: check for file input, otherwise click "reveal" controls.
     for (let attempt = 1; attempt <= 4; attempt++) {
-      await ensureStillOnSell(`attempt ${attempt}`);
+      await this.ensureSellPageReady(`attempt ${attempt}`);
       for (const sel of fileInputSelectors) {
         uploadArea = await this.page.waitForSelector(sel, { timeout: 5000 }).catch(() => null);
         if (uploadArea) break;
@@ -170,7 +167,8 @@ export class MercariProcessor extends BaseProcessor {
       message: 'Filling listing form...',
     });
 
-    await this.checkCaptchaWall('before form fill');
+    // Ensure we're on the sell form and not blocked/redirected
+    await this.ensureSellPageReady('before form fill');
 
     // Fill title
     const titleInput = await this.page.waitForSelector(
