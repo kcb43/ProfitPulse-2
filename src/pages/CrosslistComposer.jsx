@@ -35659,13 +35659,6 @@ export default function CrosslistComposer() {
           description: "Processing in the background. Check Mercari shortly.",
         });
 
-        if (currentEditingItemId) {
-          base44.entities.InventoryItem.update(currentEditingItemId, {
-            status: 'listed',
-            mercari_listing_id: resp?.listingId || '',
-          }).catch(err => console.error('Error updating inventory:', err));
-        }
-
         setIsMercariListing(false);
         setIsSaving(false);
 

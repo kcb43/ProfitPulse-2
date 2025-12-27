@@ -1059,11 +1059,14 @@ export default function Crosslist() {
   };
 
   const handleJobComplete = (job) => {
+    let matchedItemId = null;
+
     // Remove from active jobs
     setActiveJobs((prev) => {
       const newJobs = { ...prev };
       Object.keys(newJobs).forEach((itemId) => {
         if (newJobs[itemId] === job.id) {
+          matchedItemId = itemId;
           delete newJobs[itemId];
         }
       });
@@ -1079,6 +1082,28 @@ export default function Crosslist() {
         title: 'Listing Complete',
         description: `Successfully listed on ${platforms.join(', ')}`,
       });
+
+      // Step 1a: only treat Mercari as success if we have a real items URL
+      const mercariListingUrl = job?.result?.mercari?.listingUrl;
+      const isMercariRealSuccess =
+        job?.result?.mercari?.success === true &&
+        typeof mercariListingUrl === 'string' &&
+        mercariListingUrl.includes('mercari.com/items/');
+
+      if (isMercariRealSuccess) {
+        const inventoryItemId = job.inventory_item_id || matchedItemId;
+        if (inventoryItemId) {
+          base44.entities.InventoryItem.update(inventoryItemId, {
+            status: 'listed',
+            mercari_listing_id: mercariListingUrl,
+          }).catch(() => {});
+        }
+
+        // Open the posted listing (may be blocked by popup blockers)
+        try {
+          window.open(mercariListingUrl, '_blank', 'noopener,noreferrer');
+        } catch {}
+      }
 
       // Refresh inventory
       queryClient.invalidateQueries(['inventoryItems']);
