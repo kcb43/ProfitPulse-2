@@ -38,6 +38,16 @@ let browser = null;
 let isRunning = false;
 let currentJobs = new Set();
 
+function withTimeout(promise, ms, label) {
+  let t = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    t = setTimeout(() => reject(new Error(`Timeout after ${ms}ms: ${label}`)), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (t) clearTimeout(t);
+  });
+}
+
 /**
  * Initialize Playwright browser
  */
@@ -166,6 +176,7 @@ async function processJob(job) {
     // Process each platform sequentially
     for (const platform of platformsArr) {
       try {
+        console.log(`➡️ Job ${jobId}: starting platform ${platform}`);
         await updateJobProgress(jobId, {
           percent: Math.floor((platformsArr.indexOf(platform) / platformsArr.length) * 100),
           message: `Processing ${platform}...`,
@@ -174,7 +185,9 @@ async function processJob(job) {
         await logJobEvent(jobId, 'info', `Starting ${platform} listing`, { platform });
 
         // Get platform account
+        console.log(`🔐 Job ${jobId}: fetching platform account for ${platform}`);
         const platformAccount = await getPlatformAccount(job.user_id, platform);
+        console.log(`🔐 Job ${jobId}: platform account loaded for ${platform}`);
 
         // Create processor
         let processor;
@@ -190,7 +203,9 @@ async function processJob(job) {
         }
 
         // Initialize processor
+        console.log(`🧭 Job ${jobId}: initializing processor for ${platform}`);
         await processor.initialize();
+        console.log(`🧭 Job ${jobId}: processor initialized for ${platform}`);
 
         // Validate Mercari payload before filling form
         if (platform === 'mercari') {
@@ -215,7 +230,12 @@ async function processJob(job) {
           if (localFiles.length === 0) {
             throw new Error("Mercari requires at least 1 photo. payload.photos is empty/invalid.");
           }
-          await processor.uploadImages(localFiles);
+          console.log(`🖼️ Job ${jobId}: uploading ${localFiles.length} images to Mercari`);
+          await withTimeout(
+            processor.uploadImages(localFiles),
+            4 * 60 * 1000,
+            `mercari uploadImages (${localFiles.length} images)`
+          );
         } else {
           const imageUrls = Array.isArray(job.payload.images) ? job.payload.images
             : Array.isArray(job.payload.photos) ? job.payload.photos.map(p => p.preview || p.imageUrl).filter(Boolean)
@@ -224,7 +244,12 @@ async function processJob(job) {
           console.log("🖼️ Images resolved:", imageUrls.length);
 
           if (imageUrls.length > 0) {
-            await processor.uploadImages(imageUrls);
+            console.log(`🖼️ Job ${jobId}: uploading ${imageUrls.length} images to ${platform}`);
+            await withTimeout(
+              processor.uploadImages(imageUrls),
+              4 * 60 * 1000,
+              `${platform} uploadImages (${imageUrls.length} images)`
+            );
             await logJobEvent(jobId, 'info', `Uploaded ${imageUrls.length} images`, { platform });
           } else {
             throw new Error("No images provided (Mercari requires at least 1 photo).");
@@ -232,14 +257,17 @@ async function processJob(job) {
         }
 
         // Fill form
-        await processor.fillForm(job.payload);
+        console.log(`📝 Job ${jobId}: filling form for ${platform}`);
+        await withTimeout(processor.fillForm(job.payload), 3 * 60 * 1000, `${platform} fillForm`);
         await logJobEvent(jobId, 'info', 'Form filled', { platform });
 
         // Submit
-        await processor.submit();
+        console.log(`🚀 Job ${jobId}: submitting for ${platform}`);
+        await withTimeout(processor.submit(), 3 * 60 * 1000, `${platform} submit`);
         await logJobEvent(jobId, 'info', 'Listing submitted', { platform });
 
         // Get listing URL
+        console.log(`🔗 Job ${jobId}: fetching listing URL for ${platform}`);
         const listingUrl = await processor.getListingUrl();
         if (platform === 'mercari') {
           const ok =

@@ -129,13 +129,29 @@ export class BaseProcessor {
         path = pathParts.slice(1).join('/');
       }
     } else if (imagePath.startsWith('http')) {
-      // If it's a public URL, try to download it directly
-      const response = await fetch(imagePath);
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
+      // If it's a public URL, try to download it directly (with a timeout)
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 45000);
+      try {
+        const response = await fetch(imagePath, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image (${response.status})`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      } finally {
+        clearTimeout(t);
+      }
     }
 
-    return await downloadImage(bucket, path);
+    // Supabase download (add a timeout so a hung download doesn't stall the whole worker)
+    const timeoutMs = 60000;
+    return await Promise.race([
+      downloadImage(bucket, path),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Supabase image download timeout after ${timeoutMs}ms`)), timeoutMs)
+      ),
+    ]);
   }
 
   /**
