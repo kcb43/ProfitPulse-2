@@ -12,6 +12,8 @@
   ],
   "host_permissions": [
     "https://www.mercari.com/*",
+    "https://mercari.com/*",
+    "https://*.mercari.com/*",
     "https://www.facebook.com/*",
     "https://www.poshmark.com/*",
     "https://www.ebay.com/*",

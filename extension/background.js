@@ -938,12 +938,11 @@ async function connectPlatform(platform, apiUrl, authToken) {
     //
     // Header-only sessions may work for API calls, but Playwright UI automation of /sell relies on
     // the browser having the same auth cookies as a normal logged-in session. If we proceed with
-    // only Cloudflare cookies, the worker reliably ends up at a logged-out shell + Cloudflare
-    // bot scripts and the sell form never renders.
+    // only Cloudflare cookies, the worker ends up at a logged-out shell + Cloudflare bot scripts.
     if (platform === 'mercari' && (onlyCloudflare || cookies.length < 6)) {
       throw new Error(
         `Mercari cookies captured look incomplete for UI automation (cookieCount=${cookies.length}, urlCookies=${urlCookieCount}). ` +
-          `Please confirm you're logged into Mercari in THIS Chrome profile, open https://www.mercari.com/sell/ and ensure you can see the sell form, then click Connect again.`
+          `Open https://www.mercari.com/sell/ in THIS Chrome profile and confirm you can see the sell form, then click Connect again.`
       );
     }
 
