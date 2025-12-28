@@ -75,11 +75,33 @@ const LOGIN_DETECTORS = {
   },
   
   facebook: () => {
-    return !!(
-      document.querySelector('[data-pagelet="TopNavBar"]') ||
-      document.querySelector('[aria-label="Account"]') ||
-      document.cookie.includes('c_user=')
-    );
+    // Avoid false positives on login flow
+    const isLoginLike =
+      window.location.pathname.includes('/login') ||
+      window.location.pathname.includes('/recover') ||
+      !!document.querySelector('input[name="email"]') ||
+      !!document.querySelector('input[name="pass"]') ||
+      !!document.querySelector('form[action*="login"]');
+    if (isLoginLike) return false;
+
+    const selectors = [
+      '[data-pagelet="TopNavBar"]',
+      '[aria-label="Account"]',
+      '[aria-label="Your profile"]',
+      'a[aria-label*="Profile"]',
+      '[role="navigation"] a[href*="/me/"]',
+      '[role="navigation"] a[href*="/profile.php"]',
+    ];
+    for (const sel of selectors) {
+      if (document.querySelector(sel)) return true;
+    }
+
+    // Cookie check (may work when not HttpOnly)
+    try {
+      if (document.cookie && document.cookie.includes('c_user=')) return true;
+    } catch (_) {}
+
+    return false;
   },
   
   poshmark: () => {

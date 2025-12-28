@@ -891,11 +891,108 @@ export default function Settings() {
     });
   };
 
+  const handleFacebookLogin = () => {
+    try {
+      window.open('https://www.facebook.com/marketplace/', '_blank', 'noopener,noreferrer');
+    } catch (_) {
+      // ignore
+    }
+    toast({
+      title: 'Open Facebook',
+      description: 'Log into Facebook in the tab that just opened, then come back and click Connect.',
+    });
+  };
+
+  const waitForFacebookConnection = async (timeout = 5000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      const status = (() => {
+        try {
+          return localStorage.getItem('profit_orbit_facebook_connected');
+        } catch (_) {
+          return null;
+        }
+      })();
+
+      if (status === 'true') return true;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+    return false;
+  };
+
+  const showFacebookInstructions = () => {
+    toast({
+      title: 'Facebook Not Detected',
+      description:
+        '1) Make sure the Profit Orbit extension is installed and enabled\n2) Open Facebook.com in a new tab and log in\n3) Come back here and click Connect again\n\nThe extension will detect your login automatically.',
+      variant: 'destructive',
+      duration: 10000,
+    });
+  };
+
+  const handleFacebookConnect = async () => {
+    try {
+      toast({
+        title: 'Connecting to Facebook...',
+        description: 'Checking extension and Facebook login status...',
+      });
+
+      const extensionReady = await waitForExtensionReady(3000);
+      if (!extensionReady) {
+        toast({
+          title: 'Extension Not Ready',
+          description: 'The extension may still be loading. Please refresh the page and try again.',
+          variant: 'destructive',
+          duration: 10000,
+        });
+        runExtensionDiagnostic();
+        return;
+      }
+
+      // Ask the bridge to query status if needed
+      try {
+        window.ProfitOrbitExtension?.queryStatus?.();
+      } catch (_) {}
+
+      const connected = await waitForFacebookConnection(5000);
+      if (connected) {
+        // Clear explicit disconnect flag
+        try {
+          localStorage.removeItem('profit_orbit_facebook_disconnected');
+        } catch (_) {}
+
+        // Ask extension to export cookies & save server-side session
+        try {
+          window.postMessage({ type: 'REQUEST_CONNECT_PLATFORM', payload: { platform: 'facebook' } }, '*');
+        } catch (_) {}
+
+        toast({
+          title: 'Facebook Connected!',
+          description: 'Your Facebook session was detected via the extension.',
+        });
+      } else {
+        toast({
+          title: 'Not Connected',
+          description: 'Please log into Facebook in a new tab first, then try again.',
+          variant: 'destructive',
+        });
+        showFacebookInstructions();
+      }
+    } catch (error) {
+      console.error('🔴 Profit Orbit: Facebook connect error:', error);
+      toast({
+        title: 'Connection Error',
+        description: error?.message || 'Failed to check Facebook connection.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleMarketplaceConnect = (marketplaceId) => {
     console.log('handleMarketplaceConnect called with:', marketplaceId);
     if (marketplaceId === 'facebook') {
-      console.log('Calling loginWithFacebook...');
-      loginWithFacebook();
+      console.log('Calling handleFacebookConnect (extension-based)...');
+      handleFacebookConnect();
     } else if (marketplaceId === 'ebay') {
       window.location.href = '/api/ebay/auth';
     } else if (marketplaceId === 'mercari') {
@@ -915,6 +1012,12 @@ export default function Settings() {
         clearToken();
         setFacebookStatus(null);
         setFacebookPages([]);
+        // Also clear extension-based status (Vendoo-like cookie session)
+        try {
+          localStorage.removeItem('profit_orbit_facebook_connected');
+          localStorage.removeItem('profit_orbit_facebook_user');
+          localStorage.setItem('profit_orbit_facebook_disconnected', 'true');
+        } catch (_) {}
       } else if (marketplaceId === 'ebay') {
         localStorage.removeItem('ebay_user_token');
         localStorage.removeItem('ebay_username');
@@ -962,6 +1065,24 @@ export default function Settings() {
         expired: false,
         accountName: mercariConnected ? JSON.parse(localStorage.getItem('profit_orbit_mercari_user') || '{}').userName : null
       };
+    }
+    // Special handling for Facebook Marketplace (uses extension cookies/session, not Graph API OAuth)
+    if (marketplaceId === 'facebook') {
+      const connected = (() => {
+        try {
+          return localStorage.getItem('profit_orbit_facebook_connected') === 'true';
+        } catch (_) {
+          return false;
+        }
+      })();
+      const accountName = (() => {
+        try {
+          return connected ? JSON.parse(localStorage.getItem('profit_orbit_facebook_user') || '{}')?.userName : null;
+        } catch (_) {
+          return null;
+        }
+      })();
+      return { connected, expired: false, accountName };
     }
     
     const account = marketplaceAccounts[marketplaceId];
@@ -1208,17 +1329,35 @@ export default function Settings() {
                                 Connect
                               </Button>
                             </>
+                          ) : marketplace.id === 'facebook' ? (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleFacebookLogin}
+                                className="flex-1 text-xs"
+                              >
+                                Open Login
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={handleFacebookConnect}
+                                className="flex-1 text-xs"
+                              >
+                                <RefreshCw className="w-3 h-3 mr-1" />
+                                Connect
+                              </Button>
+                            </>
                           ) : (
                             <Button
                               onClick={() => handleMarketplaceConnect(marketplace.id)}
-                              disabled={isComingSoon || (marketplace.id === 'facebook' && !sdkReady)}
+                              disabled={isComingSoon}
                               className="flex-1 text-xs"
                               size="sm"
                             >
                               <img src={iconSrc} alt={marketplace.name} className="w-3 h-3 mr-1 object-contain" />
-                              {marketplace.id === 'facebook' 
-                                ? (!sdkReady ? 'Loading...' : 'Login with Facebook')
-                                : 'Connect'}
+                              Connect
                             </Button>
                           )}
                         </div>
@@ -1270,4 +1409,3 @@ export default function Settings() {
     </div>
   );
 }
-

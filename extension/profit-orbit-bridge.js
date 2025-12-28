@@ -53,6 +53,14 @@ window.addEventListener("message", (event) => {
       }
     );
   }
+  if (msg?.type === "PO_CREATE_FACEBOOK_LISTING") {
+    chrome.runtime.sendMessage(
+      { type: "CREATE_FACEBOOK_LISTING", listingData: msg.payload },
+      (resp) => {
+        window.postMessage({ type: "PO_CREATE_FACEBOOK_LISTING_RESULT", resp }, "*");
+      }
+    );
+  }
 
   // Mercari API recorder controls (for API-mode reverse engineering)
   if (msg?.type === "PO_START_MERCARI_API_RECORDING") {
@@ -76,6 +84,31 @@ window.addEventListener("message", (event) => {
   if (msg?.type === "PO_CLEAR_MERCARI_API_RECORDING") {
     chrome.runtime.sendMessage({ type: "CLEAR_MERCARI_API_RECORDING" }, (resp) => {
       window.postMessage({ type: "PO_CLEAR_MERCARI_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  // Facebook API recorder controls (for API-mode reverse engineering)
+  if (msg?.type === "PO_START_FACEBOOK_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "START_FACEBOOK_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_START_FACEBOOK_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  if (msg?.type === "PO_STOP_FACEBOOK_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "STOP_FACEBOOK_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_STOP_FACEBOOK_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  if (msg?.type === "PO_GET_FACEBOOK_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "GET_FACEBOOK_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_GET_FACEBOOK_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  if (msg?.type === "PO_CLEAR_FACEBOOK_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "CLEAR_FACEBOOK_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_CLEAR_FACEBOOK_API_RECORDING_RESULT", resp }, "*");
     });
   }
 });
@@ -347,6 +380,9 @@ function queryStatus() {
 // Listen for background messages
 if (typeof chrome !== 'undefined' && chrome.runtime) {
   try {
+    // Reduce console spam: only log MARKETPLACE_STATUS_UPDATE when it actually changes.
+    const __poLastStatusLog = new Map(); // key: marketplace, val: stringified minimal status
+
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Check if extension context is still valid
       if (extensionContextInvalidated) {
@@ -354,10 +390,23 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
         return false;
       }
       
-      console.log('🔵 Bridge: Received message from background:', message.type);
+      if (message.type !== 'MARKETPLACE_STATUS_UPDATE') {
+        console.log('🔵 Bridge: Received message from background:', message.type);
+      }
       
       if (message.type === 'MARKETPLACE_STATUS_UPDATE') {
         const { marketplace, data } = message;
+
+        try {
+          const minimal = JSON.stringify({ loggedIn: !!data?.loggedIn, userName: data?.userName || null });
+          const prev = __poLastStatusLog.get(marketplace);
+          if (prev !== minimal) {
+            __poLastStatusLog.set(marketplace, minimal);
+            console.log('🔵 Bridge: Received MARKETPLACE_STATUS_UPDATE', marketplace, minimal);
+          }
+        } catch (_) {
+          // ignore
+        }
         
         if (data.loggedIn) {
           localStorage.setItem(`profit_orbit_${marketplace}_connected`, 'true');
@@ -505,69 +554,19 @@ window.addEventListener('message', (event) => {
 // Flag is now set in profit-orbit-page-api.js which loads via src=chrome-extension://
 // This avoids CSP violations on sites like Mercari
 
-// Inject page API script into page context
-function injectPageAPI() {
-  // Check if already injected
-  if (window.ProfitOrbitExtension) {
-    console.log('🔵 Bridge: Page API already exists, skipping injection');
-    dispatchBridgeReady();
-    return;
-  }
-
-  if (typeof chrome === 'undefined' || !chrome.runtime) {
-    console.error('🔴 Bridge: Cannot inject page API - chrome.runtime not available');
-    return;
-  }
-
-  try {
-    const scriptUrl = chrome.runtime.getURL('profit-orbit-page-api.js');
-    console.log('🔵 Bridge: Injecting page API script:', scriptUrl);
-
-    const script = document.createElement('script');
-    script.src = scriptUrl;
-    
-    script.onload = function() {
-      console.log('🔵 Bridge: Page API script loaded successfully');
-      console.log('🔵 Bridge: window.ProfitOrbitExtension exists:', typeof window.ProfitOrbitExtension !== 'undefined');
-      dispatchBridgeReady();
-    };
-    
-    script.onerror = function(error) {
-      console.error('🔴 Bridge: Failed to load page API script:', error);
-      console.error('🔴 Bridge: Check Network tab for profit-orbit-page-api.js');
-    };
-    
-    // Inject into page context
-    const target = document.head || document.documentElement;
-    if (target) {
-      target.appendChild(script);
-      console.log('🔵 Bridge: Page API script tag appended to', target.tagName);
-    } else {
-      console.error('🔴 Bridge: No injection target available');
-      // Try again when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectPageAPI);
-      } else {
-        setTimeout(injectPageAPI, 100);
-      }
-    }
-  } catch (error) {
-    console.error('🔴 Bridge: Exception injecting page API:', error);
-  }
-}
-
 // Dispatch bridge ready event
 function dispatchBridgeReady() {
   console.log('🔵 Bridge: Dispatching profitOrbitBridgeReady event');
   window.dispatchEvent(new CustomEvent('profitOrbitBridgeReady'));
 }
 
-// Inject page API script
+// NOTE:
+// `profit-orbit-page-api.js` is injected via `extension/manifest.json` as a MAIN-world content_script.
+// Avoid re-injecting from this bridge (isolated world) which can cause repeated "Page API: Loading..." spam.
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', injectPageAPI);
+  document.addEventListener('DOMContentLoaded', dispatchBridgeReady);
 } else {
-  // DOM already loaded, inject immediately
-  injectPageAPI();
+  dispatchBridgeReady();
 }
 
 console.log('🔵🔵🔵 PROFIT ORBIT BRIDGE SCRIPT INITIALIZED 🔵🔵🔵');

@@ -14,7 +14,15 @@
     "https://www.mercari.com/*",
     "https://mercari.com/*",
     "https://*.mercari.com/*",
+    "https://*.supabase.co/*",
+    "https://base44.app/*",
+    "https://*.base44.app/*",
     "https://www.facebook.com/*",
+    "https://m.facebook.com/*",
+    "https://upload.facebook.com/*",
+    "https://rupload.facebook.com/*",
+    "https://graph.facebook.com/*",
+    "https://*.fbcdn.net/*",
     "https://www.poshmark.com/*",
     "https://www.ebay.com/*",
     "https://www.etsy.com/*",
@@ -49,9 +57,22 @@
         "http://localhost:5174/*"
       ],
       "js": [
+        "profit-orbit-page-api.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://profitorbit.io/*",
+        "https://*.vercel.app/*",
+        "http://localhost:5173/*",
+        "http://localhost:5174/*"
+      ],
+      "js": [
         "profit-orbit-bridge.js"
       ],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [

@@ -22,7 +22,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { crosslistingEngine } from '@/services/CrosslistingEngine';
-import { useFacebookSDK, launchFacebookSignup } from '@/hooks/useFacebookSDK';
 
 const MARKETPLACES = [
   {
@@ -67,8 +66,6 @@ export default function MarketplaceConnect() {
   const [accounts, setAccounts] = useState({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { sdkReady } = useFacebookSDK();
-  const [facebookConfigId, setFacebookConfigId] = useState('');
 
   useEffect(() => {
     loadAccounts();
@@ -104,74 +101,44 @@ export default function MarketplaceConnect() {
   };
 
   const handleFacebookConnect = async () => {
-    if (!sdkReady) {
+    // Vendoo-like connection: use extension cookie/session detection, not Facebook developer OAuth.
+    toast({
+      title: 'Connecting to Facebook...',
+      description: 'Make sure you are logged into facebook.com in this Chrome profile, then click Connect again.',
+    });
+
+    try {
+      // Ask extension to query status (bridge updates localStorage)
+      window.ProfitOrbitExtension?.queryStatus?.();
+    } catch (_) {}
+
+    // If already detected, ask extension to persist server session
+    const connected = (() => {
+      try {
+        return localStorage.getItem('profit_orbit_facebook_connected') === 'true';
+      } catch (_) {
+        return false;
+      }
+    })();
+
+    if (!connected) {
       toast({
-        title: 'Facebook SDK Loading',
-        description: 'Please wait for Facebook SDK to load...',
+        title: 'Facebook Not Detected',
+        description: 'Open facebook.com in a new tab, log in, then return here and click Connect again.',
         variant: 'destructive',
+        duration: 10000,
       });
       return;
     }
 
-    // Get configuration ID from environment or prompt user
-    // For now, we'll use a fallback to redirect method if no config ID
-    const configId = facebookConfigId || import.meta.env.VITE_FACEBOOK_CONFIG_ID;
-    
-    if (!configId) {
-      // Fallback to redirect method if no config ID
-      window.location.href = '/auth/facebook/auth';
-      return;
-    }
+    try {
+      window.postMessage({ type: 'REQUEST_CONNECT_PLATFORM', payload: { platform: 'facebook' } }, '*');
+    } catch (_) {}
 
-    // Use embedded signup
-    launchFacebookSignup(
-      configId,
-      async (code) => {
-        // Exchange code for access token
-        try {
-          const response = await fetch('/api/facebook/exchange-code', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ code }),
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to exchange code');
-          }
-
-          const tokenData = await response.json();
-          
-          // Store token
-          localStorage.setItem('facebook_access_token', JSON.stringify(tokenData));
-          
-          // Reload accounts
-          await loadAccounts();
-          
-          toast({
-            title: 'Facebook Connected',
-            description: 'Your Facebook account has been successfully connected.',
-          });
-        } catch (error) {
-          console.error('Error exchanging code:', error);
-          toast({
-            title: 'Connection Failed',
-            description: error.message || 'Failed to connect Facebook account.',
-            variant: 'destructive',
-          });
-        }
-      },
-      (error) => {
-        console.error('Facebook login error:', error);
-        toast({
-          title: 'Connection Failed',
-          description: error.message || 'Facebook login was cancelled or failed.',
-          variant: 'destructive',
-        });
-      }
-    );
+    toast({
+      title: 'Facebook Connected!',
+      description: 'Your Facebook session was detected via the extension.',
+    });
   };
 
   const handleConnect = (marketplaceId) => {
@@ -190,7 +157,12 @@ export default function MarketplaceConnect() {
   const handleDisconnect = async (marketplaceId) => {
     try {
       if (marketplaceId === 'facebook') {
-        localStorage.removeItem('facebook_access_token');
+        // Clear extension-based connection markers
+        try {
+          localStorage.removeItem('profit_orbit_facebook_connected');
+          localStorage.removeItem('profit_orbit_facebook_user');
+          localStorage.setItem('profit_orbit_facebook_disconnected', 'true');
+        } catch (_) {}
       } else if (marketplaceId === 'ebay') {
         localStorage.removeItem('ebay_user_token');
         localStorage.removeItem('ebay_username');
@@ -392,4 +364,3 @@ export default function MarketplaceConnect() {
     </div>
   );
 }
-
