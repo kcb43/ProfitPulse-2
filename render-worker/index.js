@@ -21,7 +21,7 @@ import os from 'os';
 import path from 'path';
 
 // Version stamp to verify deployment
-console.log('WORKER BUILD:', '2025-12-27-worker-fix-4');
+console.log('WORKER BUILD:', '2025-12-28-worker-stealth-2');
 
 // Debug: Log container file structure
 console.log('FILES IN /app:', fs.readdirSync('/app'));
@@ -105,14 +105,7 @@ async function initBrowser() {
 
   browser = await chromium.launch({
     headless: HEADLESS,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-blink-features=AutomationControlled',
-      // Reduce high-signal headless fingerprinting in requests (UA-CH)
-      '--disable-features=UserAgentClientHint,UserAgentClientHintFullVersionList,UserAgentClientHintPlatform',
-    ],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
     ...(proxy?.server ? { proxy } : {}),
   });
 

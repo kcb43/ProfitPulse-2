@@ -124,7 +124,8 @@ export class MercariProcessor extends BaseProcessor {
         console.log('⚠️ Could not upload Mercari debug artifacts:', e?.message || e);
       }
 
-      // Extra signal: detect common Cloudflare bot challenge markers in the HTML we captured.
+      // Extra signal: detect common Cloudflare bot challenge markers in the page HTML.
+      // This will show up in Fly logs (not extension console).
       try {
         const html = await this.page.content().catch(() => '');
         const hasCfChallenge =
@@ -134,11 +135,9 @@ export class MercariProcessor extends BaseProcessor {
             html.toLowerCase().includes('checking your browser') ||
             html.toLowerCase().includes('just a moment'));
         if (hasCfChallenge) {
-          await logJobEvent(this.job.id, 'warn', 'Mercari appears to be serving a Cloudflare challenge (sell form blocked)', {
-            platform: 'mercari',
-            url,
-            title,
-          });
+          console.warn(
+            `⚠️ Mercari Cloudflare challenge detected (sell form blocked) job=${this.job?.id || 'unknown'} url=${url} title=${title}`
+          );
         }
       } catch (_) {
         // ignore
