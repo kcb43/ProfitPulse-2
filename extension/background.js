@@ -770,16 +770,26 @@ let LISTING_API_URL = null;
 async function exportCookies(domain, urls = [], extraCookies = []) {
   try {
     const buckets = [];
+    const bucketDiagnostics = [];
 
     // Domain-based bucket (catches domain cookies like .mercari.com)
-    buckets.push(await chrome.cookies.getAll({ domain }));
+    try {
+      const domainCookies = await chrome.cookies.getAll({ domain });
+      buckets.push(domainCookies);
+      bucketDiagnostics.push({ kind: 'domain', query: domain, count: domainCookies.length });
+    } catch (e) {
+      bucketDiagnostics.push({ kind: 'domain', query: domain, error: e?.message || String(e) });
+      throw e;
+    }
 
     // URL-based buckets (catches host-only cookies like www.mercari.com, including __Host-* cookies)
     for (const url of urls) {
       try {
-        buckets.push(await chrome.cookies.getAll({ url }));
-      } catch (_) {
-        // ignore
+        const urlCookies = await chrome.cookies.getAll({ url });
+        buckets.push(urlCookies);
+        bucketDiagnostics.push({ kind: 'url', query: url, count: urlCookies.length });
+      } catch (e) {
+        bucketDiagnostics.push({ kind: 'url', query: url, error: e?.message || String(e) });
       }
     }
 
@@ -838,6 +848,17 @@ async function exportCookies(domain, urls = [], extraCookies = []) {
       seen.add(key);
       deduped.push(c);
     }
+
+    // Attach diagnostics for callers (non-breaking: normal array with a non-enumerable field)
+    try {
+      Object.defineProperty(deduped, '__bucketDiagnostics', {
+        value: bucketDiagnostics,
+        enumerable: false,
+      });
+    } catch (_) {
+      // ignore
+    }
+
     return deduped;
   } catch (error) {
     console.error(`Error exporting cookies for ${domain}:`, error);
@@ -882,6 +903,10 @@ async function connectPlatform(platform, apiUrl, authToken) {
             'https://www.mercari.com/sell',
             'https://mercari.com/',
             'https://mercari.com/sell/',
+            // Auth / API subdomains sometimes hold the real session cookies
+            'https://auth.mercari.com/',
+            'https://api.mercari.com/',
+            'https://accounts.mercari.com/',
           ]
         : platform === 'facebook'
           ? ['https://www.facebook.com/']
@@ -899,6 +924,17 @@ async function connectPlatform(platform, apiUrl, authToken) {
     }
 
     const cookies = await exportCookies(domain, urls, extraCookies);
+
+    // Print cookie bucket diagnostics so we can see whether url-based queries are returning anything,
+    // and whether any specific subdomain is holding auth cookies.
+    if (platform === 'mercari') {
+      const diag = cookies?.__bucketDiagnostics || [];
+      try {
+        console.log('🍪 MERCARI cookie buckets:', diag);
+      } catch (_) {
+        // ignore
+      }
+    }
 
     // Load captured Mercari API headers (captured via webRequest) as an alternative session signal
     let mercariApiHeaders = null;
