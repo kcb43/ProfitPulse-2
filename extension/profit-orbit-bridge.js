@@ -53,6 +53,31 @@ window.addEventListener("message", (event) => {
       }
     );
   }
+
+  // Mercari API recorder controls (for API-mode reverse engineering)
+  if (msg?.type === "PO_START_MERCARI_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "START_MERCARI_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_START_MERCARI_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  if (msg?.type === "PO_STOP_MERCARI_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "STOP_MERCARI_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_STOP_MERCARI_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  if (msg?.type === "PO_GET_MERCARI_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "GET_MERCARI_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_GET_MERCARI_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
+
+  if (msg?.type === "PO_CLEAR_MERCARI_API_RECORDING") {
+    chrome.runtime.sendMessage({ type: "CLEAR_MERCARI_API_RECORDING" }, (resp) => {
+      window.postMessage({ type: "PO_CLEAR_MERCARI_API_RECORDING_RESULT", resp }, "*");
+    });
+  }
 });
 
 // Helper: extract Supabase access token from localStorage

@@ -4,7 +4,7 @@
  */
 
 console.log('Profit Orbit Extension: Background script loaded');
-console.log('EXT BUILD:', '2025-12-27-connect-debug-2');
+console.log('EXT BUILD:', '2025-12-28-mercari-api-recorder-1');
 
 function isProfitOrbitAppUrl(rawUrl) {
   try {
@@ -114,6 +114,101 @@ const requiredHeaders = [
   'x-double-web', 'x-ld-variants', 'x-platform', 'x-socure-device'
 ];
 
+// --- Mercari API Recorder (for API-mode implementation) ---
+// Records Mercari requests (URL/method/headers/body/status) so we can replicate the listing flow
+// server-side without needing /sell UI automation.
+const mercariApiRecorder = {
+  enabled: false,
+  startedAt: null,
+  maxRecords: 200,
+  // finalized records (oldest trimmed)
+  records: [],
+  // requestId -> partial record
+  pending: new Map(),
+};
+
+function shouldRecordMercariUrl(url) {
+  if (!url) return false;
+  // Mercari commonly uses /v1/api for GraphQL and internal REST, and api.mercari.com for REST.
+  return (
+    url.includes('www.mercari.com/v1/api') ||
+    url.includes('mercari.com/v1/api') ||
+    url.includes('api.mercari.com/') ||
+    url.includes('www.mercari.com/api') ||
+    url.includes('mercari.com/api')
+  );
+}
+
+function decodeRequestBody(details) {
+  const rb = details?.requestBody;
+  if (!rb) return null;
+
+  if (rb.formData && typeof rb.formData === 'object') {
+    return { kind: 'formData', value: rb.formData };
+  }
+
+  if (Array.isArray(rb.raw) && rb.raw.length > 0) {
+    try {
+      // raw is an array of {bytes:ArrayBuffer}
+      const bytes = rb.raw[0]?.bytes;
+      if (!bytes) return { kind: 'raw', value: null };
+      const u8 = new Uint8Array(bytes);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(u8);
+      // Prevent runaway logs/storage.
+      const maxLen = 200_000;
+      return {
+        kind: 'rawText',
+        value: text.length > maxLen ? `${text.slice(0, maxLen)}\n/* …truncated… */` : text,
+        truncated: text.length > maxLen,
+        byteLength: u8.byteLength,
+      };
+    } catch (e) {
+      return { kind: 'raw', value: null, error: e?.message || String(e) };
+    }
+  }
+
+  return null;
+}
+
+function pushFinalMercariRecord(rec) {
+  mercariApiRecorder.records.push(rec);
+  if (mercariApiRecorder.records.length > mercariApiRecorder.maxRecords) {
+    mercariApiRecorder.records.splice(0, mercariApiRecorder.records.length - mercariApiRecorder.maxRecords);
+  }
+}
+
+// Capture request body early.
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    try {
+      if (!mercariApiRecorder.enabled) return;
+      if (!shouldRecordMercariUrl(details.url)) return;
+      // Skip image/media types to avoid huge payloads; we care about JSON + signed-upload flows.
+      if (details.type === 'image' || details.type === 'media') return;
+
+      const now = Date.now();
+      const base = {
+        requestId: details.requestId,
+        t: now,
+        method: details.method,
+        url: details.url,
+        type: details.type,
+        tabId: details.tabId,
+        initiator: details.initiator || null,
+        requestBody: decodeRequestBody(details),
+        requestHeaders: null, // filled in onBeforeSendHeaders
+        statusCode: null, // filled onCompleted/onError
+        error: null,
+      };
+      mercariApiRecorder.pending.set(details.requestId, base);
+    } catch (_) {
+      // ignore
+    }
+  },
+  { urls: ['https://*.mercari.com/*', 'https://mercari.com/*'] },
+  ['requestBody']
+);
+
 // Intercept Mercari API requests to capture headers
 chrome.webRequest.onBeforeSendHeaders.addListener(
   (details) => {
@@ -153,6 +248,53 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         });
       }
     }
+
+    // Recorder: attach headers to the pending record (or create one if we missed onBeforeRequest).
+    try {
+      if (mercariApiRecorder.enabled && shouldRecordMercariUrl(details.url)) {
+        const existing =
+          mercariApiRecorder.pending.get(details.requestId) ||
+          {
+            requestId: details.requestId,
+            t: Date.now(),
+            method: details.method,
+            url: details.url,
+            type: details.type,
+            tabId: details.tabId,
+            initiator: details.initiator || null,
+            requestBody: null,
+            requestHeaders: null,
+            statusCode: null,
+            error: null,
+          };
+
+        const headers = {};
+        for (const h of details.requestHeaders || []) {
+          const name = String(h?.name || '').toLowerCase();
+          if (!name) continue;
+          // Keep a focused set (enough to replicate).
+          if (
+            name === 'authorization' ||
+            name === 'content-type' ||
+            name === 'x-csrf-token' ||
+            name === 'x-de-device-token' ||
+            name === 'x-app-version' ||
+            name === 'x-platform' ||
+            name === 'x-double-web' ||
+            name === 'apollo-require-preflight' ||
+            name === 'accept' ||
+            name === 'accept-language'
+          ) {
+            headers[name] = h.value;
+          }
+        }
+
+        existing.requestHeaders = headers;
+        mercariApiRecorder.pending.set(details.requestId, existing);
+      }
+    } catch (_) {
+      // ignore
+    }
   },
   {
     urls: ['https://www.mercari.com/v1/api*'],
@@ -163,6 +305,42 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 
 console.log('📡 [WEB REQUEST] Network request interceptor installed for Mercari API');
 
+// Recorder: finalize records with status codes.
+chrome.webRequest.onCompleted.addListener(
+  (details) => {
+    try {
+      if (!mercariApiRecorder.enabled) return;
+      if (!shouldRecordMercariUrl(details.url)) return;
+      const rec = mercariApiRecorder.pending.get(details.requestId);
+      if (!rec) return;
+      rec.statusCode = details.statusCode;
+      rec.fromCache = !!details.fromCache;
+      pushFinalMercariRecord(rec);
+      mercariApiRecorder.pending.delete(details.requestId);
+    } catch (_) {
+      // ignore
+    }
+  },
+  { urls: ['https://*.mercari.com/*', 'https://mercari.com/*'] }
+);
+
+chrome.webRequest.onErrorOccurred.addListener(
+  (details) => {
+    try {
+      if (!mercariApiRecorder.enabled) return;
+      if (!shouldRecordMercariUrl(details.url)) return;
+      const rec = mercariApiRecorder.pending.get(details.requestId);
+      if (!rec) return;
+      rec.error = details.error || 'unknown';
+      pushFinalMercariRecord(rec);
+      mercariApiRecorder.pending.delete(details.requestId);
+    } catch (_) {
+      // ignore
+    }
+  },
+  { urls: ['https://*.mercari.com/*', 'https://mercari.com/*'] }
+);
+
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("🟣 Background: onMessage", {
@@ -170,6 +348,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     message,
     sender: { id: sender?.id, url: sender?.url, origin: sender?.origin },
   });
+
+  // --- Mercari API Recorder controls (called from ProfitOrbitExtension API / console) ---
+  if (message.type === 'START_MERCARI_API_RECORDING') {
+    mercariApiRecorder.enabled = true;
+    mercariApiRecorder.startedAt = Date.now();
+    mercariApiRecorder.records = [];
+    mercariApiRecorder.pending.clear();
+    console.log('🎙️ [MERCARI] API recording started');
+    sendResponse({ success: true, startedAt: mercariApiRecorder.startedAt });
+    return true;
+  }
+
+  if (message.type === 'STOP_MERCARI_API_RECORDING') {
+    mercariApiRecorder.enabled = false;
+    const count = mercariApiRecorder.records.length;
+    console.log(`🛑 [MERCARI] API recording stopped (records=${count})`);
+    sendResponse({ success: true, records: count, startedAt: mercariApiRecorder.startedAt });
+    return true;
+  }
+
+  if (message.type === 'GET_MERCARI_API_RECORDING') {
+    // Return a safe/redacted snapshot (don’t leak full bearer token to page context).
+    const safe = mercariApiRecorder.records.map((r) => {
+      const hdrs = { ...(r.requestHeaders || {}) };
+      if (hdrs.authorization) {
+        const v = String(hdrs.authorization);
+        hdrs.authorization = v.startsWith('Bearer ') ? `Bearer ${v.slice(7, 17)}…redacted…` : '…redacted…';
+      }
+      return { ...r, requestHeaders: hdrs };
+    });
+    sendResponse({ success: true, startedAt: mercariApiRecorder.startedAt, records: safe });
+    return true;
+  }
+
+  if (message.type === 'CLEAR_MERCARI_API_RECORDING') {
+    mercariApiRecorder.records = [];
+    mercariApiRecorder.pending.clear();
+    sendResponse({ success: true });
+    return true;
+  }
 
   // Handle login status updates from any marketplace
   if (message.type?.endsWith('_LOGIN_STATUS')) {

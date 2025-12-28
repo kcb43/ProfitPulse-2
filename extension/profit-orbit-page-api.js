@@ -134,6 +134,115 @@
         }, "*");
       });
     }
+    ,
+    // --- Mercari API recorder helpers (use from DevTools console) ---
+    startMercariApiRecording: async function() {
+      return new Promise((resolve) => {
+        let settled = false;
+
+        const settle = (resp) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("message", handler);
+          resolve(resp);
+        };
+
+        const fallback = setTimeout(() => settle({ success: false, error: 'timeout' }), 1500);
+
+        const handler = (event) => {
+          if (event.source !== window) return;
+          const msg = event.data;
+          if (msg?.type === "PO_START_MERCARI_API_RECORDING_RESULT") {
+            clearTimeout(fallback);
+            settle(msg.resp || { success: true });
+          }
+        };
+
+        window.addEventListener("message", handler);
+        window.postMessage({ type: "PO_START_MERCARI_API_RECORDING", timestamp: Date.now() }, "*");
+      });
+    },
+
+    stopMercariApiRecording: async function() {
+      return new Promise((resolve) => {
+        let settled = false;
+
+        const settle = (resp) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("message", handler);
+          resolve(resp);
+        };
+
+        const fallback = setTimeout(() => settle({ success: false, error: 'timeout' }), 1500);
+
+        const handler = (event) => {
+          if (event.source !== window) return;
+          const msg = event.data;
+          if (msg?.type === "PO_STOP_MERCARI_API_RECORDING_RESULT") {
+            clearTimeout(fallback);
+            settle(msg.resp || { success: true });
+          }
+        };
+
+        window.addEventListener("message", handler);
+        window.postMessage({ type: "PO_STOP_MERCARI_API_RECORDING", timestamp: Date.now() }, "*");
+      });
+    },
+
+    getMercariApiRecording: async function() {
+      return new Promise((resolve) => {
+        let settled = false;
+
+        const settle = (resp) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("message", handler);
+          resolve(resp);
+        };
+
+        const fallback = setTimeout(() => settle({ success: false, error: 'timeout' }), 1500);
+
+        const handler = (event) => {
+          if (event.source !== window) return;
+          const msg = event.data;
+          if (msg?.type === "PO_GET_MERCARI_API_RECORDING_RESULT") {
+            clearTimeout(fallback);
+            settle(msg.resp || { success: true });
+          }
+        };
+
+        window.addEventListener("message", handler);
+        window.postMessage({ type: "PO_GET_MERCARI_API_RECORDING", timestamp: Date.now() }, "*");
+      });
+    },
+
+    clearMercariApiRecording: async function() {
+      return new Promise((resolve) => {
+        let settled = false;
+
+        const settle = (resp) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("message", handler);
+          resolve(resp);
+        };
+
+        const fallback = setTimeout(() => settle({ success: false, error: 'timeout' }), 1500);
+
+        const handler = (event) => {
+          if (event.source !== window) return;
+          const msg = event.data;
+          if (msg?.type === "PO_CLEAR_MERCARI_API_RECORDING_RESULT") {
+            clearTimeout(fallback);
+            settle(msg.resp || { success: true });
+          }
+        };
+
+        window.addEventListener("message", handler);
+        window.postMessage({ type: "PO_CLEAR_MERCARI_API_RECORDING", timestamp: Date.now() }, "*");
+      });
+    }
   };
   
   // Verify ProfitOrbitExtension is properly exposed before dispatching ready event
