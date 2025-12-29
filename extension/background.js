@@ -6,7 +6,7 @@
  * - "Uncaught SyntaxError: Illegal return statement"
  */
 console.log('Profit Orbit Extension: Background script loaded');
-console.log('EXT BUILD:', '2025-12-29-background-clean-16-iframe-allframes-origin-filter');
+console.log('EXT BUILD:', '2025-12-29-background-clean-17-upload-no-preflight');
 
 // -----------------------------
 // Helpers
@@ -2047,24 +2047,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         uploadAttemptMeta.fileFieldName = fileFieldName;
         const ext = inferredMime === 'image/png' ? 'png' : inferredMime === 'image/webp' ? 'webp' : inferredMime === 'image/gif' ? 'gif' : 'jpg';
         const fileName = `photo-${Date.now()}.${ext}`;
-        // IMPORTANT (no new tabs/windows):
-        // Upload endpoints like upload.facebook.com are cross-origin from www.facebook.com and can throw
-        // "Failed to fetch" when called from the top frame. To avoid CORS without opening a new tab,
-        // we create a hidden iframe to the upload origin inside an existing facebook.com tab and run
-        // the fetch in that frame (same-origin).
+        // IMPORTANT (no tabs/windows + avoid CORS preflight):
+        // The "Failed to fetch" here is typically caused by the browser doing a CORS preflight due to custom headers
+        // (x-fb-*, sec-fetch-*, etc.). Facebook's real upload requests generally rely on cookies + form fields,
+        // not custom JS-set headers. So we send only simple headers (Accept) and put tokens in the multipart body.
         const fbTabId = await pickFacebookTabId();
         uploadAttemptMeta.fbTabId = fbTabId;
         uploadAttemptMeta.tabFetch = true;
-        let uploadOrigin = null;
-        try {
-          const u = new URL(uploadTemplate.url);
-          uploadOrigin = u.origin;
-        } catch (_) {
-          uploadOrigin = null;
-        }
-        uploadAttemptMeta.uploadOrigin = uploadOrigin;
-        const iframeInfo = uploadOrigin ? await ensureHiddenIframe(fbTabId, uploadOrigin) : { ok: false, reason: 'bad_upload_url' };
-        uploadAttemptMeta.iframe = iframeInfo;
 
         // executeScript args must be JSON-serializable; pass file bytes as base64 string.
         const toBase64 = (ab) => {
@@ -2080,19 +2069,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         uploadAttemptMeta.fileBase64Bytes = imgBlob?.size || null;
         uploadAttemptMeta.fileBase64Chars = fileBase64.length;
 
-        const uploadResult = await facebookFetchInTabAtOrigin(
-          fbTabId,
-          uploadOrigin || 'https://upload.facebook.com',
-          {
-            url: uploadTemplate.url,
-            method: 'POST',
-            headers: uploadHeaders,
-            bodyType: 'formData',
-            formFields: uploadFormFields,
-            file: { fieldName: fileFieldName, fileName, type: inferredMime, base64: fileBase64 },
-          },
-          15000
-        );
+        // Only "simple" headers to avoid preflight. Keep Accept if present.
+        const tabUploadHeaders = {};
+        try {
+          if (uploadHeaders?.accept) tabUploadHeaders.accept = uploadHeaders.accept;
+        } catch (_) {}
+
+        const uploadResult = await facebookFetchInTab(fbTabId, {
+          url: uploadTemplate.url,
+          method: 'POST',
+          headers: tabUploadHeaders,
+          bodyType: 'formData',
+          formFields: uploadFormFields,
+          file: { fieldName: fileFieldName, fileName, type: inferredMime, base64: fileBase64 },
+        });
         const uploadTextRaw = uploadResult?.text || '';
         const uploadOk = !!uploadResult?.ok;
         const uploadStatus = typeof uploadResult?.status === 'number' ? uploadResult.status : 0;
