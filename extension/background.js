@@ -6,7 +6,7 @@
  * - "Uncaught SyntaxError: Illegal return statement"
  */
 console.log('Profit Orbit Extension: Background script loaded');
-console.log('EXT BUILD:', '2025-12-29-background-clean-14-upload-in-upload-host-tab');
+console.log('EXT BUILD:', '2025-12-29-background-clean-15-upload-in-hidden-iframe-no-tabs');
 
 // -----------------------------
 // Helpers
@@ -70,49 +70,78 @@ async function pickFacebookTabId() {
   }
 }
 
-async function ensureTabForOrigin(origin) {
-  // Find or create a background tab at the given origin so same-origin fetch can succeed
-  // (avoids CORS surprises when calling upload.facebook.com from a www.facebook.com document).
+async function ensureFrameForOrigin(tabId, origin) {
+  // Create (if needed) a hidden iframe inside an existing facebook.com tab, then return its frameId.
+  // This avoids opening new tabs/windows while still allowing same-origin fetch to upload.facebook.com.
+  if (!tabId) return null;
   const normalized = String(origin || '').replace(/\/+$/, '');
   if (!normalized) return null;
 
+  // 1) Inject a hidden iframe (idempotent)
   try {
-    const urlPattern = `${normalized}/*`;
-    const tabs = await chrome.tabs.query({ url: [urlPattern] });
-    const existing = (tabs || []).find((t) => t && typeof t.id === 'number');
-    if (existing?.id) return existing.id;
-  } catch (_) {}
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (o) => {
+        try {
+          const origin = String(o || '').replace(/\/+$/, '');
+          if (!origin) return { ok: false, reason: 'missing_origin' };
+          const id = `__po_hidden_iframe_${origin.replace(/[^a-z0-9]/gi, '_')}`;
+          let el = document.getElementById(id);
+          if (!el) {
+            el = document.createElement('iframe');
+            el.id = id;
+            el.src = `${origin}/`;
+            el.style.width = '1px';
+            el.style.height = '1px';
+            el.style.position = 'fixed';
+            el.style.left = '-9999px';
+            el.style.top = '-9999px';
+            el.style.opacity = '0';
+            el.style.pointerEvents = 'none';
+            document.documentElement.appendChild(el);
+          } else {
+            // If the iframe exists but navigated away, re-point it.
+            try {
+              if (typeof el.src === 'string' && !el.src.startsWith(origin)) el.src = `${origin}/`;
+            } catch (_) {}
+          }
+          return { ok: true, id, src: el.src };
+        } catch (e) {
+          return { ok: false, reason: String(e?.message || e || 'inject_failed') };
+        }
+      },
+      args: [normalized],
+    });
+  } catch (_) {
+    // ignore; we'll still try to locate the frame
+  }
 
-  // Create a background tab and wait for it to finish loading
-  const created = await chrome.tabs.create({ url: `${normalized}/`, active: false });
-  const tabId = created?.id;
-  if (!tabId) return null;
-
-  await new Promise((resolve) => {
-    const timeout = setTimeout(() => {
-      try { chrome.tabs.onUpdated.removeListener(listener); } catch (_) {}
-      resolve(true);
-    }, 15000);
-
-    const listener = (updatedTabId, info) => {
-      if (updatedTabId !== tabId) return;
-      if (info.status === 'complete') {
-        clearTimeout(timeout);
-        try { chrome.tabs.onUpdated.removeListener(listener); } catch (_) {}
-        resolve(true);
+  // 2) Poll for the frame to appear via webNavigation.getAllFrames
+  const getAllFrames = async () =>
+    await new Promise((resolve) => {
+      try {
+        chrome.webNavigation.getAllFrames({ tabId }, (frames) => resolve(Array.isArray(frames) ? frames : []));
+      } catch (_) {
+        resolve([]);
       }
-    };
-    chrome.tabs.onUpdated.addListener(listener);
-  });
+    });
 
-  return tabId;
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    const frames = await getAllFrames();
+    const hit = frames.find((f) => typeof f?.url === 'string' && f.url.startsWith(normalized));
+    if (hit && typeof hit.frameId === 'number') return hit.frameId;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+
+  return null;
 }
 
-async function facebookFetchInTab(tabId, args) {
+async function facebookFetchInTab(tabId, args, frameId = null) {
   if (!tabId) throw new Error('No suitable tab found for running this request.');
 
   const results = await chrome.scripting.executeScript({
-    target: { tabId },
+    target: frameId === null ? { tabId } : { tabId, frameIds: [frameId] },
     func: async (payload) => {
       const safeHeaders = { ...(payload?.headers || {}) };
       // Avoid forbidden/meaningless headers; the browser sets these. Passing them can cause failures.
@@ -1933,20 +1962,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         uploadAttemptMeta.fileFieldName = fileFieldName;
         const ext = inferredMime === 'image/png' ? 'png' : inferredMime === 'image/webp' ? 'webp' : inferredMime === 'image/gif' ? 'gif' : 'jpg';
         const fileName = `photo-${Date.now()}.${ext}`;
-        // IMPORTANT:
-        // If the upload host is upload.facebook.com / rupload.facebook.com, doing the fetch from a
-        // www.facebook.com document can still fail (status 0 / Failed to fetch) due to CORS or origin policies.
-        // So we run the upload inside a tab whose origin matches the upload host.
-        let uploadOriginTabId = null;
-        try {
-          const u = new URL(uploadTemplate.url);
-          uploadOriginTabId = await ensureTabForOrigin(u.origin);
-        } catch (_) {
-          uploadOriginTabId = null;
-        }
-        const fbTabId = uploadOriginTabId || (await pickFacebookTabId());
+        // IMPORTANT (no new tabs/windows):
+        // Upload endpoints like upload.facebook.com are cross-origin from www.facebook.com and can throw
+        // "Failed to fetch" when called from the top frame. To avoid CORS without opening a new tab,
+        // we create a hidden iframe to the upload origin inside an existing facebook.com tab and run
+        // the fetch in that frame (same-origin).
+        const fbTabId = await pickFacebookTabId();
         uploadAttemptMeta.fbTabId = fbTabId;
         uploadAttemptMeta.tabFetch = true;
+        let uploadFrameId = null;
+        try {
+          const u = new URL(uploadTemplate.url);
+          uploadFrameId = await ensureFrameForOrigin(fbTabId, u.origin);
+        } catch (_) {
+          uploadFrameId = null;
+        }
+        uploadAttemptMeta.fbFrameId = uploadFrameId;
 
         // executeScript args must be JSON-serializable; pass file bytes as base64 string.
         const toBase64 = (ab) => {
@@ -1962,14 +1993,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         uploadAttemptMeta.fileBase64Bytes = imgBlob?.size || null;
         uploadAttemptMeta.fileBase64Chars = fileBase64.length;
 
-        const uploadResult = await facebookFetchInTab(fbTabId, {
+        const uploadResult = await facebookFetchInTab(
+          fbTabId,
+          {
           url: uploadTemplate.url,
           method: 'POST',
           headers: uploadHeaders,
           bodyType: 'formData',
           formFields: uploadFormFields,
           file: { fieldName: fileFieldName, fileName, type: inferredMime, base64: fileBase64 },
-        });
+          },
+          uploadFrameId
+        );
         const uploadTextRaw = uploadResult?.text || '';
         const uploadOk = !!uploadResult?.ok;
         const uploadStatus = typeof uploadResult?.status === 'number' ? uploadResult.status : 0;
@@ -2007,7 +2042,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               () => {}
             );
           } catch (_) {}
-          throw new Error(`Facebook upload failed in facebook.com tab${uploadErr ? `: ${uploadErr}` : ''}`);
+          throw new Error(`Facebook upload failed in hidden upload frame${uploadErr ? `: ${uploadErr}` : ''}`);
         }
 
         // If FB returned an error payload, surface it clearly (HTTP can still be 200).
