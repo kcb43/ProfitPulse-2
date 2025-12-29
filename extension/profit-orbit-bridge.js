@@ -3,16 +3,30 @@
  * SIMPLIFIED - Direct communication with background
  */
 
+// BUILD stamp (high-signal): use this to confirm Chrome is running the file you think it is.
+const PO_BRIDGE_BUILD = '2025-12-29-bridge-build-1';
+
 // IMMEDIATE LOG - Should appear FIRST
 // Using try-catch to prevent any parse errors from silently failing
 try {
   console.log('🔵🔵🔵 PROFIT ORBIT BRIDGE SCRIPT STARTING 🔵🔵🔵');
+  console.log('🔵 BRIDGE BUILD:', PO_BRIDGE_BUILD);
   console.log('🔵 Bridge: Script file loaded at:', new Date().toISOString());
   console.log('🔵 Bridge: URL:', window.location.href);
   console.log('🔵 Bridge: Document ready state:', document.readyState);
   console.log('🔵 Bridge: Content script context - window exists:', typeof window !== 'undefined');
   console.log('🔵 Bridge: Content script context - document exists:', typeof document !== 'undefined');
   console.log('🔵 Bridge: Content script context - chrome exists:', typeof chrome !== 'undefined');
+
+  // Persist a few breadcrumbs into page localStorage for quick verification.
+  // (Content scripts can access localStorage for the page origin.)
+  try {
+    localStorage.setItem('profit_orbit_bridge_build', PO_BRIDGE_BUILD);
+    localStorage.setItem('profit_orbit_bridge_loaded_at', String(Date.now()));
+    if (typeof chrome !== 'undefined' && chrome?.runtime?.id) {
+      localStorage.setItem('profit_orbit_bridge_extension_id', String(chrome.runtime.id));
+    }
+  } catch (_) {}
 } catch (e) {
   console.error('🔴 Bridge: ERROR in initial logging:', e);
 }

@@ -34911,7 +34911,19 @@ export default function CrosslistComposer() {
   };
 
   const handleDisconnectFacebook = () => {
-    localStorage.removeItem('facebook_access_token');
+    // Clear old OAuth artifacts (legacy)
+    try {
+      localStorage.removeItem('facebook_access_token');
+    } catch (_) {}
+
+    // Clear extension-based session markers
+    try {
+      localStorage.removeItem('profit_orbit_facebook_connected');
+      localStorage.removeItem('profit_orbit_facebook_user');
+      localStorage.setItem('profit_orbit_facebook_disconnected', 'true');
+    } catch (_) {}
+
+    // Keep legacy state cleared too (in case other parts reference it)
     setFacebookToken(null);
     setFacebookPages([]);
     setFacebookSelectedPage(null);
@@ -34921,27 +34933,68 @@ export default function CrosslistComposer() {
     });
   };
   
-  const handleConnectFacebook = () => {
-    // Save current theme to sessionStorage before OAuth redirect
-    const currentTheme = localStorage.getItem('theme') || 'default-light';
-    sessionStorage.setItem('preserved_theme', currentTheme);
-    
-    // Save current form state before redirecting to OAuth
-    const stateToSave = {
-      templateForms,
-      currentEditingItemId,
-      activeForm,
-      selectedCategoryPath,
-      generalCategoryPath,
-      itemIds: itemIds.join(','), // Save as comma-separated string
-      autoSelect,
-    };
-    
-    // Save to sessionStorage (cleared when tab closes)
-    sessionStorage.setItem('facebook_oauth_state', JSON.stringify(stateToSave));
-    
-    // Initiate Facebook OAuth flow
-    window.location.href = '/auth/facebook/auth';
+  const handleConnectFacebook = async () => {
+    // Vendoo-like connection: extension detects logged-in facebook.com session (no developer OAuth redirect).
+    try {
+      toast({
+        title: "Connecting to Facebook...",
+        description: "Checking extension login status...",
+      });
+
+      // Ask extension bridge to refresh status
+      try {
+        window.ProfitOrbitExtension?.queryStatus?.();
+      } catch (_) {}
+
+      const waitFor = async (timeoutMs = 5000) => {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+          const connected = (() => {
+            try {
+              return localStorage.getItem('profit_orbit_facebook_connected') === 'true';
+            } catch (_) {
+              return false;
+            }
+          })();
+          if (connected) return true;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+        return false;
+      };
+
+      const connected = await waitFor(5000);
+      if (!connected) {
+        // Let the user login in the same Chrome profile; we can’t “background login” to Facebook.
+        try {
+          window.open('https://www.facebook.com/marketplace/', '_blank', 'noopener,noreferrer');
+        } catch (_) {}
+
+        toast({
+          title: "Facebook Not Detected",
+          description: "Log into Facebook in the tab that opened, then come back and click Connect again.",
+          variant: "destructive",
+          duration: 10000,
+        });
+        return;
+      }
+
+      // Persist server-side session (same pattern used by Settings)
+      try {
+        window.postMessage({ type: 'REQUEST_CONNECT_PLATFORM', payload: { platform: 'facebook' } }, '*');
+      } catch (_) {}
+
+      toast({
+        title: "Facebook Connected!",
+        description: "Your Facebook session was detected via the extension.",
+      });
+    } catch (e) {
+      console.error('Error connecting Facebook (extension):', e);
+      toast({
+        title: "Connection Error",
+        description: e?.message || "Failed to connect Facebook.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleTemplateSave = async (templateKey) => {

@@ -1,7 +1,5 @@
-/**
- * Listing Job Tracker Component
- * Shows real-time status of listing automation jobs
- */
+// Listing Job Tracker Component
+// Shows real-time status of listing automation jobs
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

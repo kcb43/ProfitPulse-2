@@ -14,13 +14,21 @@
   }
   window.__PROFIT_ORBIT_PAGE_API_LOADED = true;
 
-  const BUILD = '2025-12-28-page-api-mercari-intercept-8';
+  const BUILD = '2025-12-29-page-api-intercept-9';
   console.log('🟢 Profit Orbit Page API: Loading...');
   console.log('🟢 PAGE API BUILD:', BUILD);
+  try {
+    const src = document.currentScript && typeof document.currentScript.src === 'string' ? document.currentScript.src : null;
+    console.log('🟢 PAGE API SRC:', src);
+  } catch (_) {}
 
   try {
     localStorage.setItem('profit_orbit_page_api_build', BUILD);
     localStorage.setItem('profit_orbit_page_api_loaded_at', String(Date.now()));
+    try {
+      const src = document.currentScript && typeof document.currentScript.src === 'string' ? document.currentScript.src : null;
+      if (src) localStorage.setItem('profit_orbit_page_api_src', src);
+    } catch (_) {}
   } catch (_) {}
 
   // Set bridge loaded flag in page context (for React app detection)

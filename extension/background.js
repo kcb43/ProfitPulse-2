@@ -6,7 +6,7 @@
  * - "Uncaught SyntaxError: Illegal return statement"
  */
 console.log('Profit Orbit Extension: Background script loaded');
-console.log('EXT BUILD:', '2025-12-28-background-clean-5');
+console.log('EXT BUILD:', '2025-12-29-background-clean-6');
 
 // -----------------------------
 // Helpers
