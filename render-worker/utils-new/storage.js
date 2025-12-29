@@ -66,3 +66,35 @@ export async function createSignedUrl(bucket, path, expiresInSeconds = 60 * 60 *
   return data?.signedUrl;
 }
 
+
+ * Upload a debug artifact (Buffer/string) to Supabase Storage.
+ * NOTE: uses service role, so bucket can be private; public URL only works if bucket is public.
+ */
+export async function uploadArtifact(bucket, path, body, contentType) {
+  const { data, error } = await supabase.storage.from(bucket).upload(path, body, {
+    contentType: contentType || 'application/octet-stream',
+    upsert: true,
+    cacheControl: '3600',
+  });
+  if (error) {
+    throw new Error(`Failed to upload artifact (${bucket}/${path}): ${error.message}`);
+  }
+  return data?.path || path;
+}
+
+export async function uploadTextArtifact(bucket, path, text, contentType = 'text/plain; charset=utf-8') {
+  const buf = Buffer.from(String(text ?? ''), 'utf8');
+  return await uploadArtifact(bucket, path, buf, contentType);
+}
+
+/**
+ * Create a signed URL for a storage object (works for private buckets too).
+ */
+export async function createSignedUrl(bucket, path, expiresInSeconds = 60 * 60 * 24) {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds);
+  if (error) {
+    throw new Error(`Failed to create signed URL (${bucket}/${path}): ${error.message}`);
+  }
+  return data?.signedUrl;
+}
+

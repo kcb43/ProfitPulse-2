@@ -511,3 +511,97 @@ start().catch((error) => {
 });
 
 
+
+    await supabase
+      .from('listing_jobs')
+      .update({
+        status: 'failed',
+        progress: { percent: 0, message: 'Failed' },
+        result: { error: errMessage },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', jobId);
+  } catch (err) {
+    console.error("❌ safeMarkJobFailed error", err);
+  }
+}
+
+/**
+ * Main worker loop
+ */
+async function workerLoop() {
+  if (isRunning) {
+    return;
+  }
+
+  isRunning = true;
+
+  try {
+    // Don't claim new jobs if we're at max concurrent
+    if (currentJobs.size >= MAX_CONCURRENT_JOBS) {
+      return;
+    }
+
+    // Claim a job with proper error handling
+    // claimJob() returns null or a job object, but may throw errors
+    // Normalize to { job, error } format for consistent handling
+    const result = await claimJob()
+      .then((job) => ({ job, error: null })) // Success: normalize to { job, error: null }
+      .catch((err) => ({ job: null, error: err })); // Error: normalize to { job: null, error }
+    
+    if (!result || result.error) {
+      console.error('Error claiming job:', result?.error || 'unknown');
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      return; // Continue polling instead of crashing
+    }
+    
+    const job = result.job;
+    if (!job) {
+      // No jobs available
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      return; // Continue polling
+    }
+
+    // Process job inline for stability (MAX_CONCURRENT_JOBS=1)
+    await processJob(job);
+  } catch (error) {
+    // Catch any unexpected errors to prevent worker crash
+    console.error('Unexpected error in workerLoop:', error);
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+  } finally {
+    isRunning = false;
+  }
+}
+
+/**
+ * Start worker
+ */
+async function start() {
+  console.log('🚀 Starting Listing Automation Worker...');
+  console.log(`⏱️  Poll interval: ${POLL_INTERVAL_MS}ms`);
+  console.log(`🔢 Max concurrent jobs: ${MAX_CONCURRENT_JOBS}`);
+  console.log(`👻 Headless mode: ${HEADLESS}`);
+
+  // Start polling loop
+  setInterval(workerLoop, POLL_INTERVAL_MS);
+
+  // Run immediately
+  workerLoop();
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('🛑 Shutting down gracefully...');
+    if (browser) {
+      await browser.close();
+    }
+    process.exit(0);
+  });
+}
+
+// Start the worker
+start().catch((error) => {
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
+
+

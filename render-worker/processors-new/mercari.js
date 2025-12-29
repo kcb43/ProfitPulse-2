@@ -474,3 +474,146 @@ export class MercariProcessor extends BaseProcessor {
   }
 }
 
+
+
+    // If it's disabled, Mercari is blocking submit due to missing fields
+    const disabled = await submitButton.isDisabled().catch(() => false);
+    if (disabled) {
+      const requiredMissing = await this.page.evaluate(() => {
+        const invalid = Array.from(document.querySelectorAll(':invalid'));
+        return invalid.map(el => ({
+          name: el.getAttribute('name'),
+          id: el.id,
+          aria: el.getAttribute('aria-label'),
+          placeholder: el.getAttribute('placeholder'),
+          tag: el.tagName,
+          type: el.getAttribute('type'),
+        }));
+      }).catch(() => []);
+      console.log("🚨 Submit disabled; invalid fields:", requiredMissing);
+      throw new Error("Submit button is disabled (Mercari still missing required fields).");
+    }
+
+    // Wait for actual create-listing POST
+    const createReqPromise = this.page.waitForResponse((resp) => {
+      const url = resp.url();
+      const status = resp.status();
+      return (
+        resp.request().method() === "POST" &&
+        status >= 200 && status < 500 &&
+        (url.includes("/api/") || url.includes("/sell") || url.includes("/listings") || url.includes("/items"))
+      );
+    }, { timeout: 20000 }).catch(() => null);
+
+    await submitButton.scrollIntoViewIfNeeded();
+    await submitButton.click({ delay: 50 });
+
+    // Post-submit forensic dump and checks
+    await this.page.waitForTimeout(2000);
+    console.log("🌐 After submit URL:", this.page.url());
+    console.log("🧠 After submit title:", await this.page.title().catch(() => "no title"));
+
+    try {
+      await this.page.screenshot({ path: `/tmp/mercari-after-submit.png`, fullPage: true });
+      require('fs').writeFileSync(`/tmp/mercari-after-submit.html`, await this.page.content());
+      console.log("🧾 Saved /tmp/mercari-after-submit.png and .html");
+    } catch (e) {
+      console.log("⚠️ Could not save forensic artifacts:", e?.message || e);
+    }
+
+    // Blocker check after submit
+    await this.checkCaptchaWall('after submit');
+    const blockers = [
+      "text=/captcha/i",
+      "text=/verify/i",
+      "text=/unusual/i",
+      "text=/robot/i",
+      "text=/sign in/i",
+      "text=/log in/i",
+      "iframe[src*='captcha']",
+      "iframe[src*='recaptcha']",
+      "iframe[src*='hcaptcha']",
+    ];
+    for (const b of blockers) {
+      const found = await this.page.locator(b).count().catch(() => 0);
+      if (found > 0) {
+        throw new Error(`Mercari blocker detected: ${b} (not able to proceed)`);
+      }
+    }
+
+    // Inline validation errors
+    const errLocators = [
+      "[role='alert']",
+      "[data-testid*='error']",
+      ".error",
+      "text=/required/i",
+      "text=/please enter/i",
+      "text=/invalid/i",
+    ];
+    let anyErr = false;
+    for (const sel of errLocators) {
+      const count = await this.page.locator(sel).count().catch(() => 0);
+      if (count > 0) {
+        anyErr = true;
+        const txt = await this.page.locator(sel).first().innerText().catch(() => "");
+        console.log("🚨 Mercari error found:", sel, "=>", txt.slice(0, 300));
+      }
+    }
+    if (anyErr) {
+      throw new Error("Mercari form validation errors present after submit (see logs)");
+    }
+
+    // If Mercari shows a loading overlay, wait for it to finish
+    await this.page.locator('[aria-busy="true"], .loading, .spinner').first()
+      .waitFor({ state: 'detached', timeout: 20000 })
+      .catch(() => {});
+
+    // Require success: navigation or success message or listing URL pattern
+    const startUrl = this.page.url();
+    await Promise.race([
+      this.page.waitForURL(/\/items\/|\/listing\/|\/sell\/complete|\/sell\/success/i, { timeout: 30000 }),
+      this.page.waitForSelector('a[href*="/items/"]', { timeout: 30000 }),
+      this.page.waitForSelector('text=/Your listing|Listed|Success|出品が完了/i', { timeout: 30000 }),
+    ]).catch(() => {});
+
+    if (this.page.url() === startUrl) {
+      throw new Error("Submit did not navigate or show success; listing likely not created.");
+    }
+
+    // Extract listing URL from current page
+    const currentUrl = this.page.url();
+    if (currentUrl.includes('mercari.com/items/')) {
+      this.listingUrl = currentUrl;
+    } else {
+      // Try to find listing URL in page
+      const listingLink = await this.page.$('a[href*="/items/"]');
+      if (listingLink) {
+        this.listingUrl = await listingLink.getAttribute('href');
+        if (!this.listingUrl.startsWith('http')) {
+          this.listingUrl = `https://www.mercari.com${this.listingUrl}`;
+        }
+      }
+    }
+
+    // Open listing in a new tab for confirmation
+    if (this.listingUrl && this.context) {
+      try {
+        const viewPage = await this.context.newPage();
+        await viewPage.goto(this.listingUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await logJobEvent(this.job.id, 'info', 'Opened listing in new tab', {
+          platform: 'mercari',
+          listingUrl: this.listingUrl,
+        });
+      } catch (err) {
+        await logJobEvent(this.job.id, 'warn', 'Failed to open listing tab', {
+          platform: 'mercari',
+          listingUrl: this.listingUrl,
+          error: err?.message,
+        });
+      }
+    }
+
+    await logJobEvent(this.job.id, 'info', 'Listing submitted successfully', { platform: 'mercari' });
+  }
+}
+

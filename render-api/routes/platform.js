@@ -213,3 +213,28 @@ router.delete('/disconnect/:platform', requireAuth, async (req, res) => {
 export default router;
 
 
+
+
+    if (error) {
+      console.error('Database error:', error);
+      return res.status(500).json({
+        error: 'Failed to disconnect platform',
+      });
+    }
+
+    res.json({
+      success: true,
+      platform,
+      status: 'disconnected',
+    });
+  } catch (error) {
+    console.error('Platform disconnect error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+    });
+  }
+});
+
+export default router;
+
+

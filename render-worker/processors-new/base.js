@@ -255,3 +255,103 @@ export class BaseProcessor {
   }
 }
 
+
+      } catch (e) {
+        console.log('⚠️ Could not verify applied cookies:', e?.message || e);
+      }
+    }
+
+    this.page = await this.context.newPage();
+
+    // Mercari/Facebook can be slow and `networkidle` is unreliable; use generous defaults.
+    this.page.setDefaultTimeout(90000);
+    this.page.setDefaultNavigationTimeout(90000);
+  }
+
+  /**
+   * Upload images to the marketplace
+   * Must be implemented by subclasses
+   */
+  async uploadImages(imagePaths) {
+    throw new Error('uploadImages() must be implemented by subclass');
+  }
+
+  /**
+   * Fill the listing form
+   * Must be implemented by subclasses
+   */
+  async fillForm(payload) {
+    throw new Error('fillForm() must be implemented by subclass');
+  }
+
+  /**
+   * Submit the listing
+   * Must be implemented by subclasses
+   */
+  async submit() {
+    throw new Error('submit() must be implemented by subclass');
+  }
+
+  /**
+   * Get the listing URL after submission
+   * Must be implemented by subclasses
+   */
+  async getListingUrl() {
+    return this.listingUrl;
+  }
+
+  /**
+   * Download image from Supabase Storage
+   */
+  async downloadImageFromStorage(imagePath) {
+    // Extract bucket and path from full URL or path
+    let bucket = 'listing-photos';
+    let path = imagePath;
+
+    // If it's a full URL, extract the path
+    if (imagePath.includes('supabase.co/storage/v1/object/public/')) {
+      const urlParts = imagePath.split('/storage/v1/object/public/');
+      if (urlParts.length > 1) {
+        const pathParts = urlParts[1].split('/');
+        bucket = pathParts[0];
+        path = pathParts.slice(1).join('/');
+      }
+    } else if (imagePath.startsWith('http')) {
+      // If it's a public URL, try to download it directly (with a timeout)
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 45000);
+      try {
+        const response = await fetch(imagePath, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image (${response.status})`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    // Supabase download (add a timeout so a hung download doesn't stall the whole worker)
+    const timeoutMs = 60000;
+    return await Promise.race([
+      downloadImage(bucket, path),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Supabase image download timeout after ${timeoutMs}ms`)), timeoutMs)
+      ),
+    ]);
+  }
+
+  /**
+   * Cleanup resources
+   */
+  async cleanup() {
+    if (this.page) {
+      await this.page.close();
+    }
+    if (this.context) {
+      await this.context.close();
+    }
+  }
+}
+
