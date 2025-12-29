@@ -6,7 +6,7 @@
  * - "Uncaught SyntaxError: Illegal return statement"
  */
 console.log('Profit Orbit Extension: Background script loaded');
-console.log('EXT BUILD:', '2025-12-29-background-clean-6');
+console.log('EXT BUILD:', '2025-12-29-background-clean-7');
 
 // -----------------------------
 // Helpers
@@ -1480,21 +1480,108 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           body: await rawBlob.arrayBuffer(),
           credentials: 'include',
         });
-        const uploadText = await uploadResp.text().catch(() => '');
+        const uploadTextRaw = await uploadResp.text().catch(() => '');
+        const uploadText = String(uploadTextRaw || '').replace(/^\s*for\s*\(\s*;\s*;\s*\)\s*;\s*/i, '').trim();
+
+        // Some FB endpoints return JSON with a "for (;;);" prefix or slightly-invalid wrappers.
         let uploadJson = null;
-        try { uploadJson = uploadText ? JSON.parse(uploadText) : null; } catch (_) { uploadJson = null; }
+        try {
+          uploadJson = uploadText ? JSON.parse(uploadText) : null;
+        } catch (_) {
+          uploadJson = null;
+        }
+
+        const headerFirstId = (() => {
+          try {
+            const candidates = [
+              uploadResp.headers?.get?.('x-fb-photo-id'),
+              uploadResp.headers?.get?.('x-fb-media-id'),
+              uploadResp.headers?.get?.('x-fb-image-id'),
+              uploadResp.headers?.get?.('x-fb-upload-media-id'),
+            ].filter(Boolean);
+            const first = candidates[0] ? String(candidates[0]).trim() : null;
+            if (first && /^\d{6,}$/.test(first)) return first;
+          } catch (_) {}
+          return null;
+        })();
 
         const findFirstId = (j) => {
-          const hit = deepFindFirst(j, (o) => typeof o?.fbid === 'string' || typeof o?.fbid === 'number' || typeof o?.photo_id === 'string' || typeof o?.photo_id === 'number');
-          const v = hit?.fbid ?? hit?.photo_id ?? null;
-          if (v) return String(v);
-          const m = /"fbid"\s*:\s*"?(\d{8,})"?/.exec(uploadText) || /"photo_id"\s*:\s*"?(\d{8,})"?/.exec(uploadText);
+          const isIdLike = (v) => {
+            if (typeof v === 'number') return Number.isFinite(v) && v > 0;
+            if (typeof v !== 'string') return false;
+            const s = v.trim();
+            return /^\d{6,}$/.test(s);
+          };
+
+          const PRIORITY_KEYS = [
+            'photo_id',
+            'photoid',
+            'photoId',
+            'photoID',
+            'fbid',
+            'media_id',
+            'mediaId',
+            'image_id',
+            'imageId',
+            'upload_id',
+            'uploadId',
+            'asset_id',
+            'assetId',
+            // last resort:
+            'id',
+          ];
+
+          const hit = deepFindFirst(j, (o) => {
+            if (!o || typeof o !== 'object') return false;
+            for (const k of PRIORITY_KEYS) {
+              if (Object.prototype.hasOwnProperty.call(o, k) && isIdLike(o[k])) return true;
+            }
+            return false;
+          });
+
+          if (hit && typeof hit === 'object') {
+            for (const k of PRIORITY_KEYS) {
+              const v = hit[k];
+              if (isIdLike(v)) return String(v).trim();
+            }
+          }
+
+          // Fallback: regex scan the raw text for common id fields
+          const m =
+            /"photo_id"\s*:\s*"?(\d{6,})"?/.exec(uploadText) ||
+            /"photoId"\s*:\s*"?(\d{6,})"?/.exec(uploadText) ||
+            /"photoID"\s*:\s*"?(\d{6,})"?/.exec(uploadText) ||
+            /"fbid"\s*:\s*"?(\d{6,})"?/.exec(uploadText) ||
+            /"media_id"\s*:\s*"?(\d{6,})"?/.exec(uploadText) ||
+            /"image_id"\s*:\s*"?(\d{6,})"?/.exec(uploadText) ||
+            /"asset_id"\s*:\s*"?(\d{6,})"?/.exec(uploadText);
           return m?.[1] || null;
         };
-        const photoId = uploadJson ? findFirstId(uploadJson) : findFirstId({ text: uploadText });
+
+        const photoId = headerFirstId || (uploadJson ? findFirstId(uploadJson) : findFirstId({ text: uploadText }));
         if (!photoId) {
-          try { chrome.storage.local.set({ facebookLastUploadDebug: { t: Date.now(), ok: uploadResp.ok, status: uploadResp.status, url: uploadTemplate.url, headers: uploadHeaders, text: uploadText.slice(0, 20000) } }, () => {}); } catch (_) {}
-          throw new Error('Facebook upload succeeded but could not determine uploaded photo id. Saved debug as facebookLastUploadDebug.');
+          // Save rich debug (including response headers) so we can patch extraction next time without guessing.
+          try {
+            const respHeaders = {};
+            try {
+              for (const [k, v] of uploadResp.headers.entries()) respHeaders[k] = v;
+            } catch (_) {}
+            chrome.storage.local.set(
+              {
+                facebookLastUploadDebug: {
+                  t: Date.now(),
+                  ok: uploadResp.ok,
+                  status: uploadResp.status,
+                  url: uploadTemplate.url,
+                  requestHeaders: uploadHeaders,
+                  responseHeaders: respHeaders,
+                  text: uploadTextRaw ? String(uploadTextRaw).slice(0, 20000) : '',
+                },
+              },
+              () => {}
+            );
+          } catch (_) {}
+          throw new Error('Facebook upload succeeded but could not determine uploaded photo id. Saved debug as facebookLastUploadDebug (includes response headers).');
         }
         console.log('🟦 [FACEBOOK] Uploaded photo', { photoId, status: uploadResp.status });
 
