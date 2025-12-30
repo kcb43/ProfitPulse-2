@@ -1605,11 +1605,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
 
         const itemIdStr = String(created.itemId);
-        // Prefer canonical items URL; keep /us/item as secondary fallback.
-        const url =
-          itemIdStr.startsWith('m')
-            ? `https://www.mercari.com/items/${itemIdStr}/`
-            : `https://www.mercari.com/us/item/${itemIdStr}/`;
+        // Mercari's public, shareable URLs use `/us/item/<id>/` (not `/items/<id>/`).
+        // Using `/items/` can lead to 404s even when the listing exists.
+        const url = `https://www.mercari.com/us/item/${itemIdStr}/`;
         console.log('🟢 [MERCARI] Listing created', { itemId: created.itemId, url });
         sendResponse({
           success: true,

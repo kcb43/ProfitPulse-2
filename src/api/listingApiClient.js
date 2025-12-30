@@ -3,9 +3,16 @@
  * Handles platform connections and listing job management
  */
 
-const LISTING_API_URL =
-  import.meta.env.VITE_LISTING_API_URL ||
-  'https://profitorbit-api.fly.dev';
+function normalizeBaseUrl(u) {
+  if (!u) return '';
+  const s = String(u).trim();
+  if (!s) return '';
+  return s.endsWith('/') ? s.slice(0, -1) : s;
+}
+
+// Default to same-origin (Vercel) unless explicitly overridden.
+// This removes the hard dependency on Fly.io.
+const LISTING_API_URL = normalizeBaseUrl(import.meta.env.VITE_LISTING_API_URL);
 
 /**
  * Get authentication token from Supabase session

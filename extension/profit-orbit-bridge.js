@@ -219,7 +219,7 @@ function getListingConfig() {
   const apiUrl =
     window.__PO_API_URL ||
     window.__LISTING_API_URL ||
-    "https://profitorbit-api.fly.dev";
+    window.location.origin;
   return { apiUrl, authToken };
 }
 
@@ -273,11 +273,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const apiUrl =
         window.__PO_API_URL ||
         window.__LISTING_API_URL ||
-        "https://profitorbit-api.fly.dev";
+        window.location.origin;
 
       sendResponse({ apiUrl, authToken });
     } catch (err) {
-      sendResponse({ apiUrl: "https://profitorbit-api.fly.dev", authToken: null, error: err?.message });
+      sendResponse({ apiUrl: window.location.origin, authToken: null, error: err?.message });
     }
     return true;
   }
