@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
       "source": "/auth/facebook/callback",
       "destination": "/api/facebook/callback"
     },
@@ -9,7 +13,15 @@
       "destination": "/api/facebook/auth"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/auth/ebay/callback",
+      "destination": "/api/ebay/callback"
+    },
+    {
+      "source": "/auth/ebay/auth",
+      "destination": "/api/ebay/auth"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
