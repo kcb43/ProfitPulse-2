@@ -29,8 +29,7 @@
     "https://profitorbit.io/*",
     "https://*.vercel.app/*",
     "http://localhost:5173/*",
-    "http://localhost:5174/*",
-    "https://*.fly.dev/*"
+    "http://localhost:5174/*"
   ],
   "background": {
     "service_worker": "background.js"

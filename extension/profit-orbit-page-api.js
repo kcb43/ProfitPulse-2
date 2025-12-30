@@ -423,7 +423,8 @@
               // Fake a job so existing UI poller completes without hitting server
               const fakeJobId = `ext-mercari-${Date.now()}`;
               const itemId = result?.itemId || null;
-              const listingUrl = itemId ? `https://www.mercari.com/items/${itemId}/` : result?.url || null;
+              // Mercari public URLs use `/us/item/<id>/`; `/items/<id>/` can 404.
+              const listingUrl = itemId ? `https://www.mercari.com/us/item/${itemId}/` : result?.url || null;
 
               window.__PO_FAKE_JOBS[fakeJobId] = {
                 id: fakeJobId,
