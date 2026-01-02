@@ -5,13 +5,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { sortSalesByRecency } from "@/utils/sales";
-import { format, startOfDay, startOfMonth, startOfYear, subDays, subMonths, subYears } from "date-fns";
+import {
+  format,
+  parseISO,
+  differenceInDays,
+  isAfter,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+  subDays,
+  subMonths,
+  subYears,
+} from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { format, parseISO, differenceInDays, isAfter } from 'date-fns';
 import { supabase } from "@/api/supabaseClient";
 
 import StatCard from "../components/dashboard/StatCard";
