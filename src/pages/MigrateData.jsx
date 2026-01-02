@@ -38,15 +38,38 @@ function toIsoDateOrNull(v) {
   return null;
 }
 
+function isUuidLike(v) {
+  if (!v || typeof v !== "string") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
+function appendImportTag(notes, tagLine) {
+  const base = (notes || "").trim();
+  if (base.includes(tagLine)) return base || null;
+  const joined = base ? `${base}\n${tagLine}` : tagLine;
+  return joined.trim() || null;
+}
+
+function base44Tag(kind, id) {
+  if (!id) return null;
+  return `Base44 ${kind} ID: ${id}`;
+}
+
 function mapInventoryItem(item) {
+  const base44Id = item?.id || item?._id || null;
+  const taggedNotes = base44Tag("inventory", base44Id)
+    ? appendImportTag(item.notes, base44Tag("inventory", base44Id))
+    : (item.notes || null);
+
   return {
+    __base44_id: base44Id,
     item_name: item.item_name || item.itemName || item.title || item.name || "Unnamed Item",
     purchase_price: toNumber(item.purchase_price ?? item.purchasePrice ?? item.cost ?? 0),
     purchase_date: toIsoDateOrNull(item.purchase_date || item.purchaseDate || item.date_purchased),
     source: item.source || item.store || null,
     status: item.status || "available",
     category: item.category || null,
-    notes: item.notes || null,
+    notes: taggedNotes,
     image_url: item.image_url || item.imageUrl || item.image || null,
     images: Array.isArray(item.images)
       ? item.images
@@ -82,8 +105,20 @@ function mapSale(sale) {
       toNumber(other_costs) +
       toNumber(vat_fees));
 
+  const base44SaleId = sale?.id || sale?._id || null;
+  const base44InventoryId = sale.inventory_id || sale.inventoryId || null;
+
+  let taggedNotes = sale.notes || null;
+  const saleTag = base44Tag("sale", base44SaleId);
+  const invTag = base44Tag("inventory", base44InventoryId);
+  if (saleTag) taggedNotes = appendImportTag(taggedNotes, saleTag);
+  if (invTag) taggedNotes = appendImportTag(taggedNotes, `Base44 linked inventory ID: ${base44InventoryId}`);
+
   return {
-    inventory_id: sale.inventory_id || sale.inventoryId || null,
+    __base44_id: base44SaleId,
+    __base44_inventory_id: base44InventoryId,
+    // IMPORTANT: inventory_id must be a UUID in Supabase. We'll fill this in later using a mapping.
+    inventory_id: isUuidLike(base44InventoryId) ? base44InventoryId : null,
     item_name: sale.item_name || sale.itemName || sale.title || null,
     selling_price: toNumber(selling_price),
     sale_date: toIsoDateOrNull(sale.sale_date || sale.saleDate || sale.date_sold),
@@ -93,7 +128,7 @@ function mapSale(sale) {
     vat_fees: toNumber(vat_fees),
     other_costs: toNumber(other_costs),
     profit: Number.isFinite(Number(sale.profit)) ? toNumber(sale.profit) : computedProfit,
-    notes: sale.notes || null,
+    notes: taggedNotes,
     image_url: sale.image_url || sale.imageUrl || null,
     purchase_price: toNumber(purchase_price),
   };
@@ -183,10 +218,54 @@ export default function MigrateData() {
     }
 
     const userId = session.user.id;
-    const invToImport = invRows.map(mapInventoryItem);
-    const salesToImport = salesRows.map(mapSale);
+    const invToImportRaw = invRows.map(mapInventoryItem);
+    const salesToImportRaw = salesRows.map(mapSale);
 
-    if (invToImport.length === 0 && salesToImport.length === 0) {
+    // Load existing rows once so re-running import doesn't duplicate.
+    setStatus("Loading existing inventory + sales (for dedupe)...");
+    let existingInventory = [];
+    let existingSales = [];
+    try {
+      existingInventory = await fetch("/api/inventory", {
+        headers: { "x-user-id": userId },
+      }).then((r) => (r.ok ? r.json() : Promise.resolve([])));
+      existingSales = await fetch("/api/sales", {
+        headers: { "x-user-id": userId },
+      }).then((r) => (r.ok ? r.json() : Promise.resolve([])));
+    } catch {
+      // If this fails, we still proceed (worst case: duplicates)
+      existingInventory = [];
+      existingSales = [];
+    }
+
+    const existingInvNotes = new Map(); // base44Id -> supabaseUuid
+    for (const row of existingInventory || []) {
+      const notes = String(row?.notes || "");
+      const m = notes.match(/Base44 inventory ID:\s*([^\s]+)/i);
+      if (m?.[1] && row?.id) existingInvNotes.set(m[1], row.id);
+    }
+
+    const existingSaleBase44 = new Set();
+    for (const row of existingSales || []) {
+      const notes = String(row?.notes || "");
+      const m = notes.match(/Base44 sale ID:\s*([^\s]+)/i);
+      if (m?.[1]) existingSaleBase44.add(m[1]);
+    }
+
+    // Build base44 inventory id -> newly created uuid mapping for this run
+    const invIdMap = new Map(existingInvNotes);
+
+    const invToImport = invToImportRaw.filter((it) => {
+      if (!it.__base44_id) return true;
+      return !invIdMap.has(it.__base44_id);
+    });
+
+    const salesToImport = salesToImportRaw.filter((s) => {
+      if (!s.__base44_id) return true;
+      return !existingSaleBase44.has(s.__base44_id);
+    });
+
+    if (invToImportRaw.length === 0 && salesToImportRaw.length === 0) {
       setStatus("No rows found. Paste your full Base44 export JSON (recommended) or paste inventory + sales JSON.");
       return;
     }
@@ -195,13 +274,17 @@ export default function MigrateData() {
     try {
       let invOk = 0;
       let salesOk = 0;
+      let invSkipped = invToImportRaw.length - invToImport.length;
+      let salesSkipped = salesToImportRaw.length - salesToImport.length;
       const errs = [];
 
       setStatus(`Importing inventory (${invToImport.length})...`);
       for (const item of invToImport) {
         try {
-          await postWithUser("/api/inventory", userId, item);
+          const { __base44_id, ...payload } = item;
+          const created = await postWithUser("/api/inventory", userId, payload);
           invOk++;
+          if (__base44_id && created?.id) invIdMap.set(__base44_id, created.id);
         } catch (e) {
           errs.push(`Inventory "${item.item_name}": ${e.message}`);
         }
@@ -210,7 +293,19 @@ export default function MigrateData() {
       setStatus(`Importing sales (${salesToImport.length})...`);
       for (const sale of salesToImport) {
         try {
-          await postWithUser("/api/sales", userId, sale);
+          const { __base44_id, __base44_inventory_id, ...payload } = sale;
+
+          // If the sale references a Base44 inventory id, link it to the new UUID if we can.
+          if (__base44_inventory_id && invIdMap.has(__base44_inventory_id)) {
+            payload.inventory_id = invIdMap.get(__base44_inventory_id);
+          }
+
+          // If still not a UUID, drop it to avoid Supabase 400.
+          if (payload.inventory_id && !isUuidLike(payload.inventory_id)) {
+            payload.inventory_id = null;
+          }
+
+          await postWithUser("/api/sales", userId, payload);
           salesOk++;
         } catch (e) {
           errs.push(`Sale "${sale.item_name || "Unknown"}": ${e.message}`);
@@ -218,7 +313,9 @@ export default function MigrateData() {
       }
 
       setErrors(errs);
-      setStatus(`Done. Imported inventory=${invOk}/${invToImport.length}, sales=${salesOk}/${salesToImport.length}. Refresh /dashboard.`);
+      setStatus(
+        `Done. Imported inventory=${invOk}/${invToImport.length} (skipped ${invSkipped}), sales=${salesOk}/${salesToImport.length} (skipped ${salesSkipped}). Refresh /dashboard.`
+      );
 
       // Bust React Query caches so users immediately see data without hard reloads.
       queryClient.invalidateQueries({ queryKey: ["sales"] });
