@@ -31,10 +31,10 @@ function cleanUndefined(obj) {
 function normalizeSaleFromDb(row) {
   if (!row || typeof row !== 'object') return row;
 
-  const toNumberOrNull = (v) => {
-    if (v === null || v === undefined || v === '') return null;
+  const toNumberOr0 = (v, fallback = 0) => {
+    if (v === null || v === undefined || v === '') return fallback;
     const n = Number(v);
-    return Number.isFinite(n) ? n : null;
+    return Number.isFinite(n) ? n : fallback;
   };
 
   const selling_price =
@@ -49,15 +49,15 @@ function normalizeSaleFromDb(row) {
   return {
     ...row,
     // Always provide the fields the frontend expects:
-    selling_price: toNumberOrNull(selling_price),
-    purchase_price: toNumberOrNull(purchase_price),
+    selling_price: toNumberOr0(selling_price, 0),
+    purchase_price: toNumberOr0(purchase_price, 0),
     // Normalize numeric columns returned from Supabase (NUMERICs often come back as strings)
-    sale_price: toNumberOrNull(row.sale_price ?? row.salePrice ?? null),
-    profit: toNumberOrNull(row.profit ?? null),
-    shipping_cost: toNumberOrNull(row.shipping_cost ?? row.shippingCost ?? 0) ?? 0,
-    platform_fees: toNumberOrNull(row.platform_fees ?? row.platformFees ?? 0) ?? 0,
-    vat_fees: toNumberOrNull(row.vat_fees ?? row.vatFees ?? 0) ?? 0,
-    other_costs: toNumberOrNull(row.other_costs ?? row.otherCosts ?? 0) ?? 0,
+    sale_price: toNumberOr0(row.sale_price ?? row.salePrice ?? null, 0),
+    profit: toNumberOr0(row.profit ?? null, 0),
+    shipping_cost: toNumberOr0(row.shipping_cost ?? row.shippingCost ?? 0, 0),
+    platform_fees: toNumberOr0(row.platform_fees ?? row.platformFees ?? 0, 0),
+    vat_fees: toNumberOr0(row.vat_fees ?? row.vatFees ?? 0, 0),
+    other_costs: toNumberOr0(row.other_costs ?? row.otherCosts ?? 0, 0),
   };
 }
 
@@ -272,8 +272,9 @@ async function handleGet(req, res, userId) {
 
     let rows = (data || []).map(normalizeSaleFromDb);
 
-    // Backfill missing sale.category from linked inventory item category (common when imports didn't populate sales.category).
-    // Only runs when inventory_id is present on returned rows.
+    // Backfill missing sale.category from inventory item category.
+    // 1) Prefer exact inventory_id links
+    // 2) Fallback: exact item_name match when unique (helps older imports where inventory_id is null)
     try {
       const need = rows.filter((r) => !r?.category && r?.inventory_id).map((r) => r.inventory_id);
       const inventoryIds = Array.from(new Set(need)).filter(Boolean);
@@ -289,6 +290,37 @@ async function handleGet(req, res, userId) {
           rows = rows.map((r) => {
             if (r?.category) return r;
             const cat = r?.inventory_id ? map.get(r.inventory_id) : null;
+            return cat ? { ...r, category: cat } : r;
+          });
+        }
+      }
+
+      const nameNeed = rows
+        .filter((r) => !r?.category && !r?.inventory_id && r?.item_name)
+        .map((r) => String(r.item_name));
+      const itemNames = Array.from(new Set(nameNeed)).filter(Boolean).slice(0, 2000);
+      if (itemNames.length > 0) {
+        const invByName = await supabase
+          .from('inventory_items')
+          .select('item_name, category')
+          .eq('user_id', userId)
+          .in('item_name', itemNames)
+          .is('deleted_at', null);
+
+        if (!invByName.error && Array.isArray(invByName.data)) {
+          const buckets = new Map();
+          for (const it of invByName.data) {
+            const name = it?.item_name ? String(it.item_name) : null;
+            const cat = it?.category ?? null;
+            if (!name || !cat) continue;
+            if (!buckets.has(name)) buckets.set(name, new Set());
+            buckets.get(name).add(cat);
+          }
+          rows = rows.map((r) => {
+            if (r?.category || r?.inventory_id || !r?.item_name) return r;
+            const set = buckets.get(String(r.item_name));
+            if (!set || set.size !== 1) return r; // only fill when unambiguous
+            const [cat] = Array.from(set);
             return cat ? { ...r, category: cat } : r;
           });
         }

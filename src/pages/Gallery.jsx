@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageIcon, DollarSign, BarChart3, Clock, Award, Zap, TrendingUp, Trophy } from 'lucide-react';
-import { format, parseISO, differenceInDays, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import ShowcaseItemModal from '../components/showcase/ShowcaseItemModal';
 import { sortSalesByRecency } from "@/utils/sales";
 import DealOfTheMonth from '../components/dashboard/DealOfTheMonth';
@@ -28,7 +28,7 @@ export default function GalleryPage() {
     // Showcase: prefer correctness (all-time) while keeping an upper bound for performance.
     queryFn: () => {
       return base44.entities.Sale.list('-sale_date', {
-        since: '1970-01-01T00:00:00.000Z',
+        since: '1970-01-01',
         limit: 5000,
         fields: [
           'id',
@@ -82,13 +82,10 @@ export default function GalleryPage() {
   }, [sortedSales]);
 
   const monthlyStats = useMemo(() => {
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-
-    const monthlySales = salesWithMetrics.filter(s => isWithinInterval(parseISO(s.sale_date), { start: monthStart, end: monthEnd }));
+    const monthKey = format(new Date(), 'yyyy-MM');
+    const monthlySales = salesWithMetrics.filter((s) => s?.sale_date && String(s.sale_date).startsWith(monthKey));
     
-    const totalProfit = monthlySales.reduce((sum, s) => sum + s.profit, 0);
+    const totalProfit = monthlySales.reduce((sum, s) => sum + (Number(s.profit ?? 0) || 0), 0);
     const totalSaleSpeed = monthlySales.reduce((sum, s) => sum + s.saleSpeed, 0);
     const avgSellTime = monthlySales.length > 0 ? totalSaleSpeed / monthlySales.length : 0;
 
@@ -97,7 +94,7 @@ export default function GalleryPage() {
     let highestRoi = null;
 
     monthlySales.forEach(sale => {
-        if (!highestProfit || sale.profit > highestProfit.profit) highestProfit = sale;
+        if (!highestProfit || (Number(sale.profit ?? 0) || 0) > (Number(highestProfit.profit ?? 0) || 0)) highestProfit = sale;
         if ((!fastestSale || sale.saleSpeed < fastestSale.saleSpeed) && sale.saleSpeed !== null) fastestSale = sale;
         if (!highestRoi || sale.roi > highestRoi.roi) highestRoi = sale;
     });

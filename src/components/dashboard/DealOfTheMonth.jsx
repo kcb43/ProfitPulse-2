@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Zap, TrendingUp, Gift } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { format, parseISO, differenceInDays, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 
 const StatHighlight = ({ icon: Icon, color, title, value, itemName, saleId }) => {
   if (!saleId) {
@@ -43,15 +43,11 @@ const StatHighlight = ({ icon: Icon, color, title, value, itemName, saleId }) =>
 export default function DealOfTheMonth({ sales }) {
   const monthLabel = React.useMemo(() => format(new Date(), 'MMMM yyyy'), []);
   const deals = React.useMemo(() => {
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-
-    const monthlySales = sales.filter(sale => {
-        try {
-            const saleDate = parseISO(sale.sale_date);
-            return isWithinInterval(saleDate, { start: monthStart, end: monthEnd });
-        } catch(e) { return false; }
+    const monthKey = format(new Date(), 'yyyy-MM');
+    const monthlySales = (sales ?? []).filter((sale) => {
+      if (!sale?.sale_date) return false;
+      // sale_date is DATE (yyyy-MM-dd). Use string match to avoid timezone drift.
+      return String(sale.sale_date).startsWith(monthKey);
     });
 
     if (monthlySales.length === 0) {
@@ -63,8 +59,8 @@ export default function DealOfTheMonth({ sales }) {
     let highestRoi = null;
 
     monthlySales.forEach(sale => {
-      const profit = sale.profit || 0;
-      const purchasePrice = sale.purchase_price || 0;
+      const profit = Number(sale.profit ?? 0) || 0;
+      const purchasePrice = Number(sale.purchase_price ?? 0) || 0;
       let roi = 0;
       if (purchasePrice > 0) {
         roi = (profit / purchasePrice) * 100;
@@ -77,7 +73,7 @@ export default function DealOfTheMonth({ sales }) {
       let saleSpeed = null;
       if (sale.purchase_date) {
         try {
-            saleSpeed = differenceInDays(parseISO(sale.sale_date), parseISO(sale.purchase_date));
+            saleSpeed = differenceInDays(parseISO(String(sale.sale_date)), parseISO(String(sale.purchase_date)));
         } catch (e) {
             saleSpeed = null;
         }
@@ -115,7 +111,7 @@ export default function DealOfTheMonth({ sales }) {
             icon={Award}
             color="from-amber-400 to-yellow-500"
             title="Highest Profit"
-            value={deals.highestProfit ? `$${deals.highestProfit.profit.toFixed(2)}` : "N/A"}
+            value={deals.highestProfit ? `$${(Number(deals.highestProfit.profit ?? 0) || 0).toFixed(2)}` : "N/A"}
             itemName={deals.highestProfit?.item_name}
             saleId={deals.highestProfit?.id}
           />
@@ -131,7 +127,7 @@ export default function DealOfTheMonth({ sales }) {
             icon={TrendingUp}
             color="from-green-500 to-emerald-600"
             title="Highest ROI"
-            value={deals.highestRoi ? (isFinite(deals.highestRoi.roi) ? `${deals.highestRoi.roi.toFixed(1)}%` : '∞%') : "N/A"}
+            value={deals.highestRoi ? (isFinite(Number(deals.highestRoi.roi)) ? `${Number(deals.highestRoi.roi).toFixed(1)}%` : '∞%') : "N/A"}
             itemName={deals.highestRoi?.item_name}
             saleId={deals.highestRoi?.id}
           />
