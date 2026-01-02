@@ -11,6 +11,38 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+function normalizeImagesFromBody(body) {
+  const b = { ...(body || {}) };
+
+  // `photos` is a UI-only concept; normalize it into `images` (string URL[]) + `image_url` (main image)
+  if (Array.isArray(b.photos) && !Array.isArray(b.images)) {
+    const urls = b.photos
+      .map((p) => (typeof p === 'string' ? p : (p?.imageUrl || p?.url || p?.image_url)))
+      .filter(Boolean);
+    b.images = urls;
+
+    const main = b.photos.find((p) => typeof p === 'object' && p?.isMain);
+    if (!b.image_url) {
+      b.image_url = (typeof main === 'object' ? (main?.imageUrl || main?.url || main?.image_url) : null) || urls[0] || b.image_url || '';
+    }
+  }
+
+  // If we already have images, ensure it is a string array and backfill image_url.
+  if (Array.isArray(b.images)) {
+    b.images = b.images
+      .map((img) => (typeof img === 'string' ? img : (img?.imageUrl || img?.url || img?.image_url)))
+      .filter(Boolean);
+    if (!b.image_url && b.images.length > 0) {
+      b.image_url = b.images[0];
+    }
+  }
+
+  // Never send UI-only field to Supabase (avoids "column does not exist" errors).
+  delete b.photos;
+
+  return b;
+}
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -100,11 +132,10 @@ async function handlePost(req, res, userId) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  const normalized = normalizeImagesFromBody(req.body);
   const itemData = {
-    ...req.body,
+    ...normalized,
     user_id: userId,
-    // Ensure images array exists
-    images: req.body.images || (req.body.image_url ? [req.body.image_url] : []),
   };
 
   const { data, error } = await supabase
@@ -128,15 +159,10 @@ async function handlePut(req, res, userId) {
     return res.status(400).json({ error: 'Item ID required' });
   }
 
-  const updateData = { ...req.body };
+  const updateData = normalizeImagesFromBody(req.body);
   delete updateData.id; // Don't allow ID updates
   delete updateData.user_id; // Don't allow user_id updates
   delete updateData.created_at; // Don't allow created_at updates
-
-  // Ensure images array is properly formatted
-  if (updateData.image_url && !updateData.images) {
-    updateData.images = [updateData.image_url];
-  }
 
   const { data, error } = await supabase
     .from('inventory_items')

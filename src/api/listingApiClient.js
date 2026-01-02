@@ -12,7 +12,9 @@ function normalizeBaseUrl(u) {
 
 // Default to same-origin (Vercel) unless explicitly overridden.
 // This removes the hard dependency on Fly.io.
-const LISTING_API_URL = normalizeBaseUrl(import.meta.env.VITE_LISTING_API_URL);
+const RAW_LISTING_API_URL = normalizeBaseUrl(import.meta.env.VITE_LISTING_API_URL);
+// Safety: if an old Fly.io URL is still set in Vercel env vars, ignore it and use same-origin.
+const LISTING_API_URL = /fly\.dev|fly\.io/i.test(RAW_LISTING_API_URL) ? '' : RAW_LISTING_API_URL;
 
 /**
  * Get authentication token from Supabase session

@@ -257,15 +257,20 @@ export default function AddInventoryItem() {
     }));
   };
 
-  const buildInventoryPayload = (data) => ({
-    ...data,
+  const buildInventoryPayload = (data) => {
+    // `photos` is UI-only state; API expects `images` + `image_url`.
+    const { photos, ...rest } = data || {};
+
+    return {
+      ...rest,
     purchase_price: parseFloat(data.purchase_price) || 0,
     quantity: parseInt(data.quantity, 10) || 1,
     return_deadline: data.return_deadline ? data.return_deadline : null,
-    images: data.photos?.map(p => p.imageUrl || p.url || p).filter(Boolean) || [],
-    image_url: data.photos?.find(p => p.isMain)?.imageUrl || data.photos?.[0]?.imageUrl || data.image_url || '',
+    images: photos?.map(p => p.imageUrl || p.url || p).filter(Boolean) || [],
+    image_url: photos?.find(p => p.isMain)?.imageUrl || photos?.[0]?.imageUrl || data.image_url || '',
     notes: data.notes ? cleanHtmlText(data.notes) : '',
-  });
+    };
+  };
 
   const itemMutation = useMutation({
     mutationFn: (data) => {
