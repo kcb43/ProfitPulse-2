@@ -357,11 +357,27 @@ export default function InventoryPage() {
   const permanentDeleteMutation = useMutation({
     mutationFn: async (itemId) => {
       try {
-        await base44.entities.InventoryItem.delete(itemId);
+        // Hard delete (permanent) — bypass soft delete.
+        await base44.entities.InventoryItem.delete(itemId, true);
         return itemId;
       } catch (error) {
         throw new Error(`Failed to permanently delete item: ${error.message}`);
       }
+    },
+    onMutate: async (itemId) => {
+      await queryClient.cancelQueries({ queryKey: ['inventoryItems'] });
+
+      const previousData = queryClient.getQueryData(['inventoryItems']);
+
+      // Immediately remove from cache so it disappears from "Viewing Deleted Items".
+      queryClient.setQueryData(['inventoryItems'], (old = []) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((item) => item.id !== itemId);
+      });
+
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+
+      return { previousData };
     },
     onSuccess: (deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['inventoryItems'] });
@@ -372,8 +388,11 @@ export default function InventoryPage() {
       setPermanentDeleteDialogOpen(false);
       setItemToPermanentlyDelete(null);
     },
-    onError: (error) => {
+    onError: (error, _itemId, context) => {
       console.error("Permanent delete error:", error);
+      if (context?.previousData) {
+        queryClient.setQueryData(['inventoryItems'], context.previousData);
+      }
       toast({
         title: "Error Permanently Deleting Item",
         description: error.message || "Failed to permanently delete item. Please try again.",
