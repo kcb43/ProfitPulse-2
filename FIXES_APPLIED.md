@@ -35,38 +35,16 @@
 
 ## ⚠️ Manual Steps Required
 
-### 4. Verify VITE_LISTING_API_URL
+### 4. Verify VITE_LISTING_API_URL (optional)
+
+Most installs should **leave this unset** so the app uses same-origin (`/api`) on Vercel.
 
 **Check in browser console**:
 ```javascript
 import.meta.env.VITE_LISTING_API_URL
 ```
 
-**If undefined**, add to Vercel:
-1. Go to Vercel → Project → Settings → Environment Variables
-2. Add: `VITE_LISTING_API_URL = https://profitorbit-api.fly.dev`
-3. Redeploy frontend
-
-### 5. Test API Without Extension (Curl Test)
-
-**Get token in browser console**:
-```javascript
-(await supabase.auth.getSession()).data.session.access_token
-```
-
-**Then in PowerShell**:
-```powershell
-$TOKEN="PASTE_TOKEN_HERE"
-$API="https://profitorbit-api.fly.dev"
-
-curl -Method POST "$API/api/listings/create-job" `
-  -Headers @{ Authorization = "Bearer $TOKEN"; "Content-Type"="application/json" } `
-  -Body '{"platforms":["mercari"],"payload":{"title":"Test Item","price":10}}'
-```
-
-This proves the API works independently of the extension.
-
-### 6. Check Bridge Communication
+### 5. Check Bridge Communication
 
 **In browser console**, verify:
 ```javascript
