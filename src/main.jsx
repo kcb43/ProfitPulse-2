@@ -15,6 +15,9 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       refetchOnWindowFocus: false,
+      // Critical: many pages use `initialData: []` which can otherwise be treated as fresh and skip the first fetch.
+      // Force a fetch on mount so Dashboard/Sales/Inventory load without needing a page switch.
+      refetchOnMount: 'always',
       retry: 1,
     },
   },
