@@ -26,6 +26,7 @@ const Crosslisting = React.lazy(() => import("./Crosslisting"));
 const MarketIntelligence = React.lazy(() => import("./MarketIntelligence"));
 const Settings = React.lazy(() => import("./Settings"));
 const PrivacyPolicy = React.lazy(() => import("./PrivacyPolicy"));
+const MigrateData = React.lazy(() => import("./MigrateData"));
 
 const EbayOauthLanding = React.lazy(() => import("./EbayOauthLanding"));
 import DevErrorBoundary from "../components/DevErrorBoundary";
@@ -286,6 +287,19 @@ function PagesContent() {
                     {withSuspense(
                       <Layout currentPageName="Settings">
                         {withSuspense(<Settings />)}
+                      </Layout>
+                    )}
+                  </AuthGuard>
+                }
+              />
+
+              <Route
+                path="/MigrateData"
+                element={
+                  <AuthGuard>
+                    {withSuspense(
+                      <Layout currentPageName="Settings">
+                        {withSuspense(<MigrateData />)}
                       </Layout>
                     )}
                   </AuthGuard>
