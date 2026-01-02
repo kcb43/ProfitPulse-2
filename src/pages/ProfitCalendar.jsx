@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, TrendingUp, DollarSign, ShoppingBag } from 'lucide-react';
 import {
@@ -39,7 +40,7 @@ export default function ProfitCalendar() {
     return { start, end };
   }, [currentMonth]);
 
-  const { data: rawSales, isLoading } = useQuery({
+  const { data: rawSales, isLoading, error } = useQuery({
     queryKey: ['sales', 'profitCalendar', format(currentMonth, 'yyyy-MM')],
     // IMPORTANT: SalesHistory is correct; this page must not rely on server-side `from/to` filters
     // (they can behave inconsistently depending on DB column types). Fetch a bounded history slice
@@ -182,6 +183,15 @@ export default function ProfitCalendar() {
   return (
     <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 md:bg-[#0b1220]">
       <div className="max-w-5xl mx-auto md:max-w-6xl">
+        {error ? (
+          <div className="mb-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                Profit Calendar failed to load sales: {String(error?.message || error)}
+              </AlertDescription>
+            </Alert>
+          </div>
+        ) : null}
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground md:text-white">Profit Calendar</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1 md:text-slate-300">

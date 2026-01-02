@@ -47,22 +47,13 @@ export default function ReportsPage() {
   // Default to lifetime so categories/tax/avg days are populated immediately.
   const [range, setRange] = React.useState("lifetime");
 
-  const rangeSince = React.useMemo(() => {
-    const d = startOfDay(new Date());
-    if (range === "lifetime") {
-      return '1970-01-01';
-    }
-    const days = RANGE_TO_DAYS[range] ?? 365;
-    d.setDate(d.getDate() - (days - 1)); // inclusive window
-    return format(d, 'yyyy-MM-dd');
-  }, [range]);
-
   const { data: sales, isLoading } = useQuery({
     queryKey: ["sales", "reports", range],
-    // Only pull the date window we need (reports are range-based).
+    // IMPORTANT: do NOT rely on server-side date filters here.
+    // SalesHistory is correct; reports should fetch a bounded slice and filter client-side
+    // so "90 days" can't come back empty due to DB date casting quirks.
     queryFn: () => base44.entities.Sale.list('-sale_date', {
-      since: rangeSince,
-      limit: range === 'lifetime' ? 5000 : 3000,
+      limit: 5000,
       fields: [
         'id',
         'inventory_id',
