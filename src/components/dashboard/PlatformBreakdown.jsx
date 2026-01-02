@@ -29,18 +29,17 @@ const platformIcons = {
 
 export default function PlatformBreakdown({ sales }) {
   const platformStats = React.useMemo(() => {
-    const stats = sales.reduce((acc, sale) => {
-      if (!acc[sale.platform]) {
-        acc[sale.platform] = { count: 0, revenue: 0, profit: 0 };
-      }
-      acc[sale.platform].count += 1;
-      acc[sale.platform].revenue += sale.selling_price || 0;
-      acc[sale.platform].profit += sale.profit || 0;
+    const stats = (sales ?? []).reduce((acc, sale) => {
+      const key = sale?.platform || 'other';
+      if (!acc[key]) acc[key] = { count: 0, revenue: 0, profit: 0 };
+      acc[key].count += 1;
+      acc[key].revenue += sale.selling_price || 0;
+      acc[key].profit += sale.profit || 0;
       return acc;
     }, {});
-    
+
     return Object.entries(stats)
-      .sort(([,a], [,b]) => b.profit - a.profit)
+      .sort(([, a], [, b]) => b.profit - a.profit)
       .slice(0, 5);
   }, [sales]);
 
@@ -58,7 +57,7 @@ export default function PlatformBreakdown({ sales }) {
                   {platformIcons[platform] ? (
                     <img src={platformIcons[platform]} alt={platformNames[platform]} className="w-8 h-8 object-contain" />
                   ) : (
-                    platformNames[platform]
+                    platformNames[platform] || platform
                   )}
                 </Badge>
                 <div>

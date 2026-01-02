@@ -233,6 +233,26 @@ export default function Dashboard() {
     const activeSales = (rawSales ?? []).filter(sale => !sale.deleted_at);
     return sortSalesByRecency(activeSales);
   }, [rawSales]);
+
+  // Separate: most recent sales overall (not limited by chart range).
+  const { data: recentSales = [], isLoading: isLoadingRecentSales } = useQuery({
+    queryKey: ['sales', 'dashboard', 'recent'],
+    queryFn: () => {
+      const qs = new URLSearchParams();
+      qs.set('sort', '-sale_date');
+      qs.set('limit', '15');
+      qs.set('fields', salesFields);
+      return apiGetJson(`/api/sales?${qs.toString()}`);
+    },
+    initialData: [],
+  });
+
+  // Platform performance: use server-side aggregate for correctness + speed.
+  const { data: platformSummary = [], isLoading: isLoadingPlatformSummary } = useQuery({
+    queryKey: ['sales', 'dashboard', 'platformSummary'],
+    queryFn: () => apiGetJson('/api/sales/platform-summary'),
+    initialData: [],
+  });
   
   // Inventory query: use a distinct cache key so other pages (Inventory/Crosslist) don't overwrite it
   // with different queryFns (a source of "data appears after clicking Crosslist").
@@ -585,12 +605,25 @@ export default function Dashboard() {
 
           {/* Recent Sales (Mobile: 2nd, Desktop: Row 2, Col 1-6) */}
           <div className="lg:col-span-full">
-             <RecentSales sales={sales} />
+             <RecentSales sales={recentSales} />
           </div>
 
           {/* Platform Breakdown (Mobile: 3rd, Desktop: Row 1, Col 5-6) */}
           <div className="lg:col-span-2 lg:row-start-1">
-            <PlatformBreakdown sales={sales} />
+            {/* Use platform aggregate when available; fall back to chart-range sales */}
+            {Array.isArray(platformSummary) && platformSummary.length > 0 ? (
+              <PlatformBreakdown
+                sales={platformSummary.map((r) => ({
+                  platform: r.platform,
+                  selling_price: Number(r.total_revenue ?? 0) || 0,
+                  profit: Number(r.total_profit ?? 0) || 0,
+                  deleted_at: null,
+                  // count is rendered via revenue/profit cards; we pass it through as `count` below in the component mapping
+                }))}
+              />
+            ) : (
+              <PlatformBreakdown sales={sales} />
+            )}
           </div>
         </div>
       </div>

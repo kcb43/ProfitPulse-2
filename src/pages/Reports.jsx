@@ -44,13 +44,13 @@ const currency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
 
 export default function ReportsPage() {
-  const [range, setRange] = React.useState("90d");
+  // Default to lifetime so categories/tax/avg days are populated immediately.
+  const [range, setRange] = React.useState("lifetime");
 
   const rangeSince = React.useMemo(() => {
     const d = new Date();
     if (range === "lifetime") {
-      d.setDate(d.getDate() - 365 * 6); // bounded lifetime for speed; can be expanded with pagination later
-      return d.toISOString();
+      return '1970-01-01T00:00:00.000Z';
     }
     const days = RANGE_TO_DAYS[range] ?? 365;
     d.setDate(d.getDate() - days);
