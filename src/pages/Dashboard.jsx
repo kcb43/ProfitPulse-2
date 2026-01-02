@@ -194,32 +194,37 @@ export default function Dashboard() {
     return 2000;
   }, [profitChartRange]);
 
+  const salesFields = React.useMemo(() => ([
+    'id',
+    'item_name',
+    'purchase_date',
+    'sale_date',
+    'platform',
+    'source',
+    'category',
+    'shipping_cost',
+    'platform_fees',
+    'vat_fees',
+    'other_costs',
+    'profit',
+    'notes',
+    'image_url',
+    'deleted_at',
+    'selling_price',
+    'sale_price',
+    'purchase_price',
+  ].join(',')), []);
+
   const { data: rawSales, isLoading: isLoadingSales, error: salesError } = useQuery({
     queryKey: ['sales', 'dashboard', profitChartRange],
-    queryFn: () =>
-      base44.entities.Sale.list('-sale_date', {
-        since: salesSince,
-        limit: salesLimit,
-        fields: [
-          'id',
-          'item_name',
-          'purchase_date',
-          'sale_date',
-          'platform',
-          'source',
-          'category',
-          'shipping_cost',
-          'platform_fees',
-          'vat_fees',
-          'other_costs',
-          'profit',
-          'notes',
-          'image_url',
-          'deleted_at',
-          'selling_price',
-          'purchase_price',
-        ].join(','),
-      }),
+    queryFn: () => {
+      const qs = new URLSearchParams();
+      qs.set('sort', '-sale_date');
+      qs.set('since', salesSince);
+      qs.set('limit', String(salesLimit));
+      qs.set('fields', salesFields);
+      return apiGetJson(`/api/sales?${qs.toString()}`);
+    },
     initialData: [],
   });
 
@@ -231,22 +236,27 @@ export default function Dashboard() {
   
   // Inventory query: use a distinct cache key so other pages (Inventory/Crosslist) don't overwrite it
   // with different queryFns (a source of "data appears after clicking Crosslist").
+  const inventoryFields = React.useMemo(() => ([
+    'id',
+    'item_name',
+    'status',
+    'purchase_date',
+    'quantity',
+    'quantity_sold',
+    'return_deadline',
+    'return_deadline_dismissed',
+    'deleted_at',
+  ].join(',')), []);
+
   const { data: inventoryItems, isLoading: isLoadingInventory, error: inventoryError } = useQuery({
     queryKey: ['inventoryItems', 'dashboard'],
-    queryFn: () =>
-      base44.entities.InventoryItem.list('-purchase_date', {
-        limit: 5000,
-        fields: [
-          'id',
-          'status',
-          'purchase_date',
-          'quantity',
-          'quantity_sold',
-          'return_deadline',
-          'return_deadline_dismissed',
-          'deleted_at',
-        ].join(','),
-      }),
+    queryFn: () => {
+      const qs = new URLSearchParams();
+      qs.set('sort', '-purchase_date');
+      qs.set('limit', '5000');
+      qs.set('fields', inventoryFields);
+      return apiGetJson(`/api/inventory?${qs.toString()}`);
+    },
     initialData: [],
   });
 
