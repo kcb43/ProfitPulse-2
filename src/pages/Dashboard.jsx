@@ -140,9 +140,75 @@ export default function Dashboard() {
     };
   }, []);
 
+  async function apiGetJson(path) {
+    // Small retry loop to avoid "session is null on first paint" races.
+    let session = null;
+    for (let i = 0; i < 6; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await supabase.auth.getSession();
+      session = res?.data?.session || null;
+      if (session?.access_token) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+    };
+
+    const resp = await fetch(path, { headers });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    return resp.json();
+  }
+
+  const {
+    data: salesSummary,
+    isLoading: isLoadingSalesSummary,
+    error: salesSummaryError,
+  } = useQuery({
+    queryKey: ['salesSummary'],
+    queryFn: () => apiGetJson('/api/sales/summary'),
+    initialData: { totalProfit: 0, totalRevenue: 0, totalSales: 0 },
+  });
+
+  // Bounded sales fetch for charts + breakdown (avoid pulling the entire sales table on initial load)
+  const twoYearsAgo = React.useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 365 * 2);
+    return d.toISOString();
+  }, []);
+
   const { data: rawSales, isLoading: isLoadingSales, error: salesError } = useQuery({
-    queryKey: ['sales'],
-    queryFn: () => base44.entities.Sale.list(),
+    queryKey: ['sales', 'dashboard'],
+    queryFn: () =>
+      base44.entities.Sale.list('-sale_date', {
+        since: twoYearsAgo,
+        limit: 5000,
+        fields: [
+          'id',
+          'item_name',
+          'purchase_date',
+          'sale_date',
+          'platform',
+          'source',
+          'category',
+          'shipping_cost',
+          'platform_fees',
+          'vat_fees',
+          'other_costs',
+          'profit',
+          'notes',
+          'image_url',
+          'deleted_at',
+          'selling_price',
+          'purchase_price',
+        ].join(','),
+      }),
     initialData: [],
   });
 
@@ -208,16 +274,12 @@ export default function Dashboard() {
   }, [inventoryItems]);
 
   const { totalProfit, totalRevenue, totalSales, avgProfit, profitMargin, averageSaleSpeed } = React.useMemo(() => {
-    const totalProfit = sales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.selling_price || 0), 0);
-    const totalCosts = sales.reduce((sum, sale) => {
-      const costs = (sale.purchase_price || 0) + 
-                   (sale.shipping_cost || 0) + 
-                   (sale.platform_fees || 0) + 
-                   (sale.other_costs || 0); 
-      return sum + costs;
-    }, 0);
-    const avgProfit = sales.length > 0 ? totalProfit / sales.length : 0;
+    // Accurate totals from server-side aggregates (fast).
+    const totalProfit = salesSummary?.totalProfit ?? 0;
+    const totalRevenue = salesSummary?.totalRevenue ?? 0;
+    const totalSales = salesSummary?.totalSales ?? 0;
+
+    const avgProfit = totalSales > 0 ? totalProfit / totalSales : 0;
     const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
     const salesWithSpeed = sales
@@ -234,8 +296,8 @@ export default function Dashboard() {
     const totalDays = salesWithSpeed.reduce((sum, speed) => sum + speed, 0);
     const averageSaleSpeed = salesWithSpeed.length > 0 ? totalDays / salesWithSpeed.length : 0;
 
-    return { totalProfit, totalRevenue, totalSales: sales.length, avgProfit, profitMargin, averageSaleSpeed };
-  }, [sales]);
+    return { totalProfit, totalRevenue, totalSales, avgProfit, profitMargin, averageSaleSpeed };
+  }, [sales, salesSummary]);
 
   // Calculation for inventory stats - matches Inventory page logic
   const inventoryStats = React.useMemo(() => {
@@ -262,31 +324,15 @@ export default function Dashboard() {
     return { totalQuantity };
   }, [inventoryItems]);
   
-  // Updated isLoading to include inventory loading state
-  const isLoading = isLoadingSales || isLoadingInventory;
-
-  if (isLoading) {
-    return (
-      <div className="p-4 md:p-8 bg-gray-50 dark:bg-gray-900/95">
-        <div className="max-w-7xl mx-auto">
-          <Skeleton className="h-10 w-48 mb-8 bg-gray-200 dark:bg-gray-800" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-32 bg-gray-200 dark:bg-gray-800" />)}
-          </div>
-          <Skeleton className="h-96 bg-gray-200 dark:bg-gray-800" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
       <div className="max-w-7xl mx-auto min-w-0 w-full">
-        {(salesError || inventoryError) && (
+        {(salesError || inventoryError || salesSummaryError) && (
           <div className="mb-4">
             <Alert variant="destructive">
               <AlertDescription>
-                {salesError ? `Sales load error: ${salesError.message}` : null}
+                {salesSummaryError ? `Sales summary error: ${salesSummaryError.message}` : null}
+                {salesError ? ` Sales (chart) error: ${salesError.message}` : null}
                 {inventoryError ? ` Inventory load error: ${inventoryError.message}` : null}
               </AlertDescription>
             </Alert>
@@ -450,20 +496,20 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 min-w-0">
           <StatCard
             title="Total Profit"
-            value={`$${totalProfit.toFixed(2)}`}
+            value={isLoadingSalesSummary ? "Loading..." : `$${totalProfit.toFixed(2)}`}
             icon={DollarSign}
             bgGradient="bg-gradient-to-br from-green-500 to-emerald-600"
           />
           <StatCard
             title="Total Sales"
-            value={totalSales}
+            value={isLoadingSalesSummary ? "Loading..." : totalSales}
             icon={ShoppingBag}
             bgGradient="bg-gradient-to-br from-blue-500 to-indigo-600"
           />
           {/* New StatCard for Inventory */}
           <StatCard
             title="Items in Stock"
-            value={inventoryStats.totalQuantity}
+            value={isLoadingInventory ? "Loading..." : inventoryStats.totalQuantity}
             icon={Package}
             bgGradient="bg-gradient-to-br from-purple-500 to-pink-600"
           />

@@ -107,6 +107,51 @@ function buildSaleCandidates(body, userId) {
   return unique;
 }
 
+function parsePositiveInt(value, { min = 1, max = 5000 } = {}) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.trunc(n);
+  if (i < min) return null;
+  return Math.min(i, max);
+}
+
+function buildSelectFromFields(fieldsCsv) {
+  if (!fieldsCsv) return '*';
+  const allowed = new Set([
+    'id',
+    'user_id',
+    'inventory_id',
+    'item_name',
+    'purchase_date',
+    'sale_date',
+    'platform',
+    'source',
+    'category',
+    'quantity_sold',
+    'return_deadline',
+    'shipping_cost',
+    'platform_fees',
+    'vat_fees',
+    'other_costs',
+    'profit',
+    'notes',
+    'image_url',
+    'deleted_at',
+    'created_at',
+    'selling_price',
+    'sale_price',
+    'purchase_price',
+  ]);
+
+  const fields = String(fieldsCsv)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((f) => allowed.has(f));
+
+  return fields.length ? fields.join(',') : '*';
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -161,11 +206,19 @@ async function handleGet(req, res, userId) {
       return res.status(401).json({ error: 'User ID required' });
     }
     
+    const limit = parsePositiveInt(queryParams.limit);
+    const since = queryParams.since ? String(queryParams.since) : null;
+    const select = buildSelectFromFields(queryParams.fields);
+
     let query = supabase
       .from('sales')
-      .select('*')
+      .select(select)
       .eq('user_id', userId)
       .is('deleted_at', null);
+
+    if (since) {
+      query = query.gte('sale_date', since);
+    }
 
     // Handle sorting
     if (queryParams.sort) {
@@ -176,6 +229,10 @@ async function handleGet(req, res, userId) {
       query = query.order(sortField, { ascending });
     } else {
       query = query.order('sale_date', { ascending: false });
+    }
+
+    if (limit) {
+      query = query.limit(limit);
     }
 
     const { data, error } = await query;
