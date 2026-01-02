@@ -66,36 +66,5 @@ export default defineConfig(({ command, mode }) => {
         },
       },
     },
-    build: {
-      // Improve caching and speed by splitting large vendor groups into stable chunks.
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (!id.includes('node_modules')) return;
-
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            if (id.includes('@tanstack/react-query')) {
-              return 'react-query';
-            }
-            if (id.includes('@supabase/supabase-js')) {
-              return 'supabase';
-            }
-            if (id.includes('recharts') || id.includes('d3-')) {
-              return 'charts';
-            }
-            if (id.includes('cropperjs') || id.includes('react-easy-crop') || id.includes('browser-image-compression')) {
-              return 'image-editor';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'radix-ui';
-            }
-
-            return 'vendor';
-          },
-        },
-      },
-    },
   };
 }); 
