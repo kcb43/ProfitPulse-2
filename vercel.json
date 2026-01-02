@@ -1,28 +1,11 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/auth/facebook/callback",
-      "destination": "/api/facebook/callback"
-    },
-    {
-      "source": "/auth/facebook/auth",
-      "destination": "/api/facebook/auth"
-    },
-    {
-      "source": "/auth/ebay/callback",
-      "destination": "/api/ebay/callback"
-    },
-    {
-      "source": "/auth/ebay/auth",
-      "destination": "/api/ebay/auth"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "^/api/(.*)$", "dest": "/api/$1" },
+    { "src": "^/auth/facebook/callback$", "dest": "/api/facebook/callback" },
+    { "src": "^/auth/facebook/auth$", "dest": "/api/facebook/auth" },
+    { "src": "^/auth/ebay/callback$", "dest": "/api/ebay/callback" },
+    { "src": "^/auth/ebay/auth$", "dest": "/api/ebay/auth" },
+    { "src": "^(.*)$", "dest": "/index.html" }
   ]
 }
