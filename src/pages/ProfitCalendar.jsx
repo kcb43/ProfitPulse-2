@@ -44,7 +44,8 @@ export default function ProfitCalendar() {
     queryFn: () => base44.entities.Sale.list('-sale_date', {
       from: calendarWindow.start.toISOString(),
       to: calendarWindow.end.toISOString(),
-      limit: 2000,
+      // Safety: if a user has lots of sales in a month, don't truncate.
+      limit: 5000,
       fields: [
         'id',
         'item_name',

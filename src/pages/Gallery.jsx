@@ -25,13 +25,11 @@ const platformIcons = {
 export default function GalleryPage() {
   const { data: rawSales, isLoading } = useQuery({
     queryKey: ['sales', 'gallery'],
-    // Showcase should stay snappy; start with a large recent window instead of all-time.
+    // Showcase: prefer correctness (all-time) while keeping an upper bound for performance.
     queryFn: () => {
-      const d = new Date();
-      d.setDate(d.getDate() - 365 * 2);
       return base44.entities.Sale.list('-sale_date', {
-        since: d.toISOString(),
-        limit: 3000,
+        since: '1970-01-01T00:00:00.000Z',
+        limit: 5000,
         fields: [
           'id',
           'item_name',
@@ -81,7 +79,7 @@ export default function GalleryPage() {
       const saleSpeed = sale.purchase_date ? differenceInDays(parseISO(sale.sale_date), parseISO(sale.purchase_date)) : 0;
       return { ...sale, roi, saleSpeed };
     });
-  }, [rawSales]);
+  }, [sortedSales]);
 
   const monthlyStats = useMemo(() => {
     const now = new Date();
