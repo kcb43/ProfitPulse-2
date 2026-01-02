@@ -30,13 +30,15 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
     let groupedData = {};
 
     if (range === '14d') {
-      const fourteenDaysAgo = subDays(new Date(), 14);
-      const relevantSales = sales.filter(s => compareAsc(parseISO(s.sale_date), fourteenDaysAgo) >= 0);
+      // Use date-only comparisons to avoid boundary/timezone issues.
+      const cutoff = subDays(new Date(), 13);
+      const cutoffKey = format(cutoff, 'yyyy-MM-dd');
+      const relevantSales = sales.filter((s) => s?.sale_date && String(s.sale_date).slice(0, 10) >= cutoffKey);
 
       groupedData = relevantSales.reduce((acc, sale) => {
-        const dateKey = format(parseISO(sale.sale_date), 'yyyy-MM-dd');
+        const dateKey = String(sale.sale_date).slice(0, 10);
         if (!acc[dateKey]) {
-          acc[dateKey] = { date: format(parseISO(sale.sale_date), 'MMM dd'), profit: 0 };
+          acc[dateKey] = { date: format(parseISO(dateKey), 'MMM dd'), profit: 0 };
         }
         acc[dateKey].profit += sale.profit || 0;
         return acc;
@@ -44,9 +46,10 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
 
     } else if (range === 'monthly') {
       groupedData = sales.reduce((acc, sale) => {
-        const dateKey = format(parseISO(sale.sale_date), 'yyyy-MM');
+        if (!sale?.sale_date) return acc;
+        const dateKey = String(sale.sale_date).slice(0, 7); // yyyy-MM
         if (!acc[dateKey]) {
-          acc[dateKey] = { date: format(parseISO(sale.sale_date), 'MMM yy'), profit: 0 };
+          acc[dateKey] = { date: format(parseISO(`${dateKey}-01`), 'MMM yy'), profit: 0 };
         }
         acc[dateKey].profit += sale.profit || 0;
         return acc;
@@ -54,7 +57,8 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
 
     } else if (range === 'yearly') {
       groupedData = sales.reduce((acc, sale) => {
-        const dateKey = format(parseISO(sale.sale_date), 'yyyy');
+        if (!sale?.sale_date) return acc;
+        const dateKey = String(sale.sale_date).slice(0, 4); // yyyy
         if (!acc[dateKey]) {
           acc[dateKey] = { date: dateKey, profit: 0 };
         }

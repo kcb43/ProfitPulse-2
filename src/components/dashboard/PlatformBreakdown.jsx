@@ -29,12 +29,23 @@ const platformIcons = {
 
 export default function PlatformBreakdown({ sales }) {
   const platformStats = React.useMemo(() => {
-    const stats = (sales ?? []).reduce((acc, sale) => {
-      const key = sale?.platform || 'other';
+    // Accept either:
+    // - raw sales rows: { platform, selling_price, profit }
+    // - RPC summary rows: { platform, sales_count, total_revenue, total_profit }
+    const stats = (sales ?? []).reduce((acc, row) => {
+      const key = row?.platform || 'other';
       if (!acc[key]) acc[key] = { count: 0, revenue: 0, profit: 0 };
-      acc[key].count += 1;
-      acc[key].revenue += sale.selling_price || 0;
-      acc[key].profit += sale.profit || 0;
+
+      const countInc =
+        Number(row?.sales_count ?? row?.count ?? 1) || 0;
+      const revenueInc =
+        Number(row?.total_revenue ?? row?.selling_price ?? 0) || 0;
+      const profitInc =
+        Number(row?.total_profit ?? row?.profit ?? 0) || 0;
+
+      acc[key].count += countInc;
+      acc[key].revenue += revenueInc;
+      acc[key].profit += profitInc;
       return acc;
     }, {});
 

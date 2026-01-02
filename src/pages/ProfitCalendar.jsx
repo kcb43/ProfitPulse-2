@@ -22,6 +22,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom'; // Assuming react-router-dom for Link
+import { format as formatDate } from 'date-fns';
 
 // Dummy createPageUrl for compilation. In a real app, this would be a real utility.
 const createPageUrl = (url) => url;
@@ -42,8 +43,9 @@ export default function ProfitCalendar() {
     queryKey: ['sales', 'profitCalendar', format(currentMonth, 'yyyy-MM')],
     // Only fetch sales for the visible calendar window (fast).
     queryFn: () => base44.entities.Sale.list('-sale_date', {
-      from: calendarWindow.start.toISOString(),
-      to: calendarWindow.end.toISOString(),
+      // sale_date is DATE; use date-only bounds.
+      from: formatDate(calendarWindow.start, 'yyyy-MM-dd'),
+      to: formatDate(calendarWindow.end, 'yyyy-MM-dd'),
       // Safety: if a user has lots of sales in a month, don't truncate.
       limit: 5000,
       fields: [
@@ -88,15 +90,8 @@ export default function ProfitCalendar() {
     // Aggregate sales data by day
     const aggregatedProfitByDay = {};
     sales.forEach(sale => {
-      let saleDate;
-      try {
-        saleDate = parseISO(sale.sale_date);
-      } catch (error) {
-        // console.error("Error parsing sale_date:", sale.sale_date, error);
-        return; // Skip this sale if date is invalid
-      }
-
-      const formattedDate = format(saleDate, 'yyyy-MM-dd');
+      if (!sale?.sale_date) return;
+      const formattedDate = String(sale.sale_date).slice(0, 10);
       if (!aggregatedProfitByDay[formattedDate]) {
         aggregatedProfitByDay[formattedDate] = { profit: 0, totalSpend: 0, sales: [] };
       }
@@ -128,11 +123,9 @@ export default function ProfitCalendar() {
 
     // Filter sales only for the current month
     const salesInCurrentMonth = sales.filter(sale => {
-      try {
-        return isSameMonth(parseISO(sale.sale_date), currentMonth);
-      } catch {
-        return false;
-      }
+      if (!sale?.sale_date) return false;
+      const monthKey = format(currentMonth, 'yyyy-MM');
+      return String(sale.sale_date).startsWith(monthKey);
     });
 
     salesInCurrentMonth.forEach(sale => {

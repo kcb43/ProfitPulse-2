@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Percent, TrendingUp, Timer, Sparkles, Trophy, Target, Activity } from "lucide-react";
-import { differenceInDays, parseISO, subDays, format } from "date-fns";
+import { differenceInDays, parseISO, subDays, format, startOfDay } from "date-fns";
 import MonthlyPnlChart from "../components/reports/MonthlyPnlChart";
 import CategoryPerformance from "../components/reports/CategoryPerformance";
 import PlatformComparison from "../components/reports/PlatformComparison";
@@ -48,13 +48,13 @@ export default function ReportsPage() {
   const [range, setRange] = React.useState("lifetime");
 
   const rangeSince = React.useMemo(() => {
-    const d = new Date();
+    const d = startOfDay(new Date());
     if (range === "lifetime") {
-      return '1970-01-01T00:00:00.000Z';
+      return '1970-01-01';
     }
     const days = RANGE_TO_DAYS[range] ?? 365;
-    d.setDate(d.getDate() - days);
-    return d.toISOString();
+    d.setDate(d.getDate() - (days - 1)); // inclusive window
+    return format(d, 'yyyy-MM-dd');
   }, [range]);
 
   const { data: sales, isLoading } = useQuery({
@@ -92,11 +92,12 @@ export default function ReportsPage() {
     if (!sortedSales || sortedSales.length === 0) return [];
     if (range === "lifetime") return sortedSales;
     const days = RANGE_TO_DAYS[range];
-    const cutoff = subDays(new Date(), days);
+    const cutoff = startOfDay(subDays(new Date(), days - 1));
+    const cutoffKey = format(cutoff, 'yyyy-MM-dd');
     return sortedSales.filter((sale) => {
-      if (!sale.sale_date) return false;
+      if (!sale?.sale_date) return false;
       try {
-        return parseISO(sale.sale_date) >= cutoff;
+        return String(sale.sale_date).slice(0, 10) >= cutoffKey;
       } catch {
         return false;
       }

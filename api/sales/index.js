@@ -256,7 +256,35 @@ async function handleGet(req, res, userId) {
       return res.status(500).json({ error: error.message });
     }
 
-    return res.status(200).json((data || []).map(normalizeSaleFromDb));
+    let rows = (data || []).map(normalizeSaleFromDb);
+
+    // Backfill missing sale.category from linked inventory item category (common when imports didn't populate sales.category).
+    // Only runs when inventory_id is present on returned rows.
+    try {
+      const need = rows.filter((r) => !r?.category && r?.inventory_id).map((r) => r.inventory_id);
+      const inventoryIds = Array.from(new Set(need)).filter(Boolean);
+      if (inventoryIds.length > 0) {
+        const invRes = await supabase
+          .from('inventory_items')
+          .select('id, category')
+          .eq('user_id', userId)
+          .in('id', inventoryIds);
+
+        if (!invRes.error && Array.isArray(invRes.data)) {
+          const map = new Map(invRes.data.map((it) => [it.id, it.category]));
+          rows = rows.map((r) => {
+            if (r?.category) return r;
+            const cat = r?.inventory_id ? map.get(r.inventory_id) : null;
+            return cat ? { ...r, category: cat } : r;
+          });
+        }
+      }
+    } catch (e) {
+      // Non-fatal; reports can still fall back to Uncategorized.
+      console.warn('Category backfill failed:', e?.message || e);
+    }
+
+    return res.status(200).json(rows);
   }
 }
 

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { sortSalesByRecency } from "@/utils/sales";
+import { format, startOfDay, startOfMonth, startOfYear, subDays, subMonths, subYears } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -179,12 +180,18 @@ export default function Dashboard() {
   // Bounded sales fetch for charts + breakdown (avoid pulling the entire sales table on initial load)
   // We intentionally keep this small so dashboard is fast even with big sales history.
   const salesSince = React.useMemo(() => {
-    const d = new Date();
-    if (profitChartRange === '14d') d.setDate(d.getDate() - 14);
-    else if (profitChartRange === 'monthly') d.setDate(d.getDate() - 365); // last 12 months
-    else if (profitChartRange === 'yearly') d.setDate(d.getDate() - 365 * 6); // last 6 years
-    else d.setDate(d.getDate() - 365 * 2);
-    return d.toISOString();
+    // IMPORTANT: sale_date is a DATE column (yyyy-MM-dd). Use date-only cutoffs for correctness.
+    const today = startOfDay(new Date());
+    if (profitChartRange === '14d') {
+      return format(subDays(today, 13), 'yyyy-MM-dd'); // include today + previous 13 days
+    }
+    if (profitChartRange === 'monthly') {
+      return format(startOfMonth(subMonths(today, 11)), 'yyyy-MM-dd'); // last 12 months (inclusive)
+    }
+    if (profitChartRange === 'yearly') {
+      return format(startOfYear(subYears(today, 5)), 'yyyy-MM-dd'); // last 6 years (inclusive)
+    }
+    return format(subYears(today, 2), 'yyyy-MM-dd');
   }, [profitChartRange]);
 
   const salesLimit = React.useMemo(() => {
