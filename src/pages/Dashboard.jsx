@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format, parseISO, differenceInDays, isAfter } from 'date-fns';
 import { supabase } from "@/api/supabaseClient";
 
@@ -139,7 +140,7 @@ export default function Dashboard() {
     };
   }, []);
 
-  const { data: rawSales, isLoading: isLoadingSales } = useQuery({
+  const { data: rawSales, isLoading: isLoadingSales, error: salesError } = useQuery({
     queryKey: ['sales'],
     queryFn: () => base44.entities.Sale.list(),
     initialData: [],
@@ -152,7 +153,7 @@ export default function Dashboard() {
   }, [rawSales]);
   
   // New query for inventory items
-  const { data: inventoryItems, isLoading: isLoadingInventory } = useQuery({
+  const { data: inventoryItems, isLoading: isLoadingInventory, error: inventoryError } = useQuery({
     queryKey: ['inventoryItems'],
     queryFn: () => base44.entities.InventoryItem.list(),
     initialData: [],
@@ -281,6 +282,16 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
       <div className="max-w-7xl mx-auto min-w-0 w-full">
+        {(salesError || inventoryError) && (
+          <div className="mb-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                {salesError ? `Sales load error: ${salesError.message}` : null}
+                {inventoryError ? ` Inventory load error: ${inventoryError.message}` : null}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 min-w-0">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold text-foreground break-words">Dashboard</h1>

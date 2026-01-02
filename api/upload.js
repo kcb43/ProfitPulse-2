@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getUserIdFromRequest } from './_utils/auth.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -16,7 +17,7 @@ function getUserId(req) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -26,7 +27,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const userId = getUserId(req);
+  const userId = (await getUserIdFromRequest(req, supabase)) || getUserId(req);
 
   try {
     // Handle file upload

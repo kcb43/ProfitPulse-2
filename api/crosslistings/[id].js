@@ -8,6 +8,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { getUserIdFromRequest } from '../_utils/auth.js';
 
 // Initialize Supabase client for server-side use
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -23,21 +24,21 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
  * Get user ID from request
  * TODO: Implement proper authentication (NextAuth session)
  */
-function getUserId(req) {
+async function getUserId(req) {
   if (req.query.userId) {
     return req.query.userId;
   }
   if (req.body && req.body.userId) {
     return req.body.userId;
   }
-  return req.headers['x-user-id'] || null;
+  return (await getUserIdFromRequest(req, supabase)) || req.headers['x-user-id'] || null;
 }
 
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -92,7 +93,7 @@ export default async function handler(req, res) {
 
     // PUT /api/crosslistings/:id - Update crosslisting
     if (req.method === 'PUT') {
-      const userId = getUserId(req);
+      const userId = await getUserId(req);
       
       if (!userId) {
         return res.status(401).json({ 
@@ -166,7 +167,7 @@ export default async function handler(req, res) {
 
     // DELETE /api/crosslistings/:id - Delete crosslisting
     if (req.method === 'DELETE') {
-      const userId = getUserId(req);
+      const userId = await getUserId(req);
       
       if (!userId) {
         return res.status(401).json({ 

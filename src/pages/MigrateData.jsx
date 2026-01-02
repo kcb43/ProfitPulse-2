@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { supabase } from "@/api/supabaseClient";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -117,6 +118,7 @@ async function postWithUser(url, userId, body) {
 }
 
 export default function MigrateData() {
+  const queryClient = useQueryClient();
   const [fullExportJson, setFullExportJson] = useState("");
   const [inventoryJson, setInventoryJson] = useState("");
   const [salesJson, setSalesJson] = useState("");
@@ -217,6 +219,10 @@ export default function MigrateData() {
 
       setErrors(errs);
       setStatus(`Done. Imported inventory=${invOk}/${invToImport.length}, sales=${salesOk}/${salesToImport.length}. Refresh /dashboard.`);
+
+      // Bust React Query caches so users immediately see data without hard reloads.
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["inventoryItems"] });
     } finally {
       setBusy(false);
     }

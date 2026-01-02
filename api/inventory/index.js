@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getUserIdFromRequest } from '../_utils/auth.js';
 
 // Initialize Supabase client for server-side use
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -10,25 +11,17 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Helper to get user ID from request
-// This will need to be adapted based on your auth setup
-function getUserId(req) {
-  // TODO: Extract user ID from auth token/session
-  // For now, return null (will need to be implemented based on your auth system)
-  return req.headers['x-user-id'] || null;
-}
-
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const userId = getUserId(req);
+  const userId = await getUserIdFromRequest(req, supabase);
 
   try {
     switch (req.method) {

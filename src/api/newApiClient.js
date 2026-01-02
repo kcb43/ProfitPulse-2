@@ -10,6 +10,26 @@ const API_BASE = '/api';
 
 // Helper function to get user ID from Supabase auth
 import { getCurrentUserId } from './supabaseClient';
+import { supabase } from './supabaseClient';
+
+async function sleep(ms) {
+  await new Promise((r) => setTimeout(r, ms));
+}
+
+async function getAuthContext() {
+  // Prefer session (includes access_token). Session hydration can lag slightly on cold loads.
+  for (let i = 0; i < 4; i++) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      return { userId: session.user?.id || null, accessToken: session.access_token };
+    }
+    await sleep(150);
+  }
+
+  // Fall back: we might have a user but no token available yet.
+  const userId = await getCurrentUserId();
+  return { userId, accessToken: null };
+}
 
 async function getUserId() {
   try {
@@ -23,11 +43,12 @@ async function getUserId() {
 
 // Helper function to make API requests
 async function apiRequest(endpoint, options = {}) {
-  const userId = await getUserId();
+  const { userId, accessToken } = await getAuthContext();
   
   const headers = {
     'Content-Type': 'application/json',
     ...(userId && { 'x-user-id': userId }),
+    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     ...options.headers,
   };
 
@@ -83,13 +104,14 @@ class EntityWrapper {
 
 // File upload function (replaces base44.integrations.Core.UploadFile)
 export async function uploadFile({ file }) {
-  const userId = await getUserId();
+  const { userId, accessToken } = await getAuthContext();
   
   const formData = new FormData();
   formData.append('file', file);
 
   const headers = {
     ...(userId && { 'x-user-id': userId }),
+    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
   };
 
   const response = await fetch(`${API_BASE}/upload`, {

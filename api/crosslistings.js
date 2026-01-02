@@ -10,6 +10,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { getUserIdFromRequest } from './_utils/auth.js';
 
 // Initialize Supabase client for server-side use
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -26,7 +27,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
  * TODO: Implement proper authentication (NextAuth session)
  * For now, we'll use a userId from query/body or header
  */
-function getUserId(req) {
+async function getUserId(req) {
   // Option 1: From query parameter (for testing)
   if (req.query.userId) {
     return req.query.userId;
@@ -41,7 +42,7 @@ function getUserId(req) {
   // TODO: Implement JWT/session token parsing from NextAuth
   
   // Option 4: From custom header
-  return req.headers['x-user-id'] || null;
+  return (await getUserIdFromRequest(req, supabase)) || req.headers['x-user-id'] || null;
 }
 
 /**
@@ -65,7 +66,7 @@ export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Id');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -74,6 +75,7 @@ export default async function handler(req, res) {
 
   // Check if this is a request for a specific item (has ID in URL)
   const itemId = extractIdFromUrl(req.url) || req.query.id;
+  const userId = await getUserId(req);
 
   try {
     // Handle requests for specific items (with ID in URL)
@@ -115,7 +117,7 @@ export default async function handler(req, res) {
 
       // PUT /api/crosslistings/:id - Update crosslisting
       if (req.method === 'PUT') {
-        const userId = getUserId(req);
+        const userId = await getUserId(req);
         
         if (!userId) {
           return res.status(401).json({ 
@@ -189,7 +191,7 @@ export default async function handler(req, res) {
 
       // DELETE /api/crosslistings/:id - Delete crosslisting
       if (req.method === 'DELETE') {
-        const userId = getUserId(req);
+        const userId = await getUserId(req);
         
         if (!userId) {
           return res.status(401).json({ 
