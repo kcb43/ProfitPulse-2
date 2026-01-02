@@ -77,6 +77,7 @@ function mapInventoryItem(item) {
     quantity: toNumber(item.quantity ?? 1, 1) || 1,
     quantity_sold: toNumber(item.quantity_sold ?? item.quantitySold ?? 0, 0),
     return_deadline: toIsoDateOrNull(item.return_deadline || item.returnDeadline),
+    return_deadline_dismissed: Boolean(item.return_deadline_dismissed ?? item.returnDeadlineDismissed ?? false),
   };
 }
 
@@ -120,9 +121,13 @@ function mapSale(sale) {
     // IMPORTANT: inventory_id must be a UUID in Supabase. We'll fill this in later using a mapping.
     inventory_id: isUuidLike(base44InventoryId) ? base44InventoryId : null,
     item_name: sale.item_name || sale.itemName || sale.title || null,
+    purchase_price: toNumber(purchase_price),
+    purchase_date: toIsoDateOrNull(sale.purchase_date || sale.purchaseDate),
     selling_price: toNumber(selling_price),
     sale_date: toIsoDateOrNull(sale.sale_date || sale.saleDate || sale.date_sold),
     platform: sale.platform || sale.marketplace || null,
+    source: sale.source || sale.store || null,
+    category: sale.category || null,
     shipping_cost: toNumber(shipping_cost),
     platform_fees: toNumber(platform_fees),
     vat_fees: toNumber(vat_fees),
@@ -130,7 +135,8 @@ function mapSale(sale) {
     profit: Number.isFinite(Number(sale.profit)) ? toNumber(sale.profit) : computedProfit,
     notes: taggedNotes,
     image_url: sale.image_url || sale.imageUrl || null,
-    purchase_price: toNumber(purchase_price),
+    quantity_sold: toNumber(sale.quantity_sold ?? sale.quantitySold ?? 1, 1) || 1,
+    return_deadline: toIsoDateOrNull(sale.return_deadline || sale.returnDeadline),
   };
 }
 
