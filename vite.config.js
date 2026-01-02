@@ -13,6 +13,16 @@ export default defineConfig(({ command, mode }) => {
   const useHttps = isDev && process.env.VITE_ENABLE_HTTPS === 'true';
   
   return {
+    define: {
+      __PO_BUILD_SHA__: JSON.stringify(
+        process.env.VERCEL_GIT_COMMIT_SHA ||
+          process.env.VERCEL_GIT_COMMIT_REF ||
+          process.env.GITHUB_SHA ||
+          process.env.COMMIT_SHA ||
+          'dev'
+      ),
+      __PO_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
     plugins: [
       react(),
       // HTTPS with auto-generated self-signed certificates (only if VITE_ENABLE_HTTPS=true)
