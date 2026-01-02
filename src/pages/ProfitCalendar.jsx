@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -41,31 +41,67 @@ export default function ProfitCalendar() {
     return { start, end };
   }, [currentMonth]);
 
+  async function apiGetJson(path) {
+    // Wait briefly for Supabase session hydration.
+    let session = null;
+    for (let i = 0; i < 8; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await supabase.auth.getSession();
+      session = res?.data?.session || null;
+      if (session?.access_token) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    const headers = {
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+    };
+
+    const resp = await fetch(path, { headers });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    return resp.json();
+  }
+
+  const salesFields = [
+    'id',
+    'item_name',
+    'purchase_date',
+    'sale_date',
+    'platform',
+    'profit',
+    'deleted_at',
+    'selling_price',
+    'sale_price',
+    'purchase_price',
+    'shipping_cost',
+    'platform_fees',
+    'vat_fees',
+    'other_costs',
+  ].join(',');
+
   const { data: rawSales, isLoading, error } = useQuery({
-    queryKey: ['sales', 'profitCalendar', format(currentMonth, 'yyyy-MM')],
-    // IMPORTANT: SalesHistory is correct; this page must not rely on server-side `from/to` filters
-    // (they can behave inconsistently depending on DB column types). Fetch a bounded history slice
-    // and filter client-side using date-only keys.
-    queryFn: () => base44.entities.Sale.list('-sale_date', {
-      limit: 5000,
-      fields: [
-        'id',
-        'item_name',
-        'purchase_date',
-        'sale_date',
-        'platform',
-        'profit',
-        'deleted_at',
-        'selling_price',
-        'sale_price',
-        'purchase_price',
-        'shipping_cost',
-        'platform_fees',
-        'vat_fees',
-        'other_costs',
-      ].join(','),
-    }),
+    queryKey: ['sales', 'profitCalendar', 'all'],
+    queryFn: async () => {
+      const qs = new URLSearchParams();
+      qs.set('sort', '-sale_date');
+      qs.set('limit', '5000');
+      qs.set('fields', salesFields);
+      const data = await apiGetJson(`/api/sales?${qs.toString()}`);
+      if (Array.isArray(data) && data.length === 0) {
+        const qs2 = new URLSearchParams();
+        qs2.set('sort', '-sale_date');
+        qs2.set('limit', '5000');
+        return apiGetJson(`/api/sales?${qs2.toString()}`);
+      }
+      return data;
+    },
     initialData: [],
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Filter out soft-deleted sales

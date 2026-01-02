@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,33 +47,68 @@ export default function ReportsPage() {
   // Default to lifetime so categories/tax/avg days are populated immediately.
   const [range, setRange] = React.useState("lifetime");
 
+  async function apiGetJson(path) {
+    let session = null;
+    for (let i = 0; i < 8; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await supabase.auth.getSession();
+      session = res?.data?.session || null;
+      if (session?.access_token) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    const headers = {
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+    };
+
+    const resp = await fetch(path, { headers });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    return resp.json();
+  }
+
+  const salesFields = [
+    'id',
+    'inventory_id',
+    'item_name',
+    'purchase_date',
+    'sale_date',
+    'platform',
+    'category',
+    'profit',
+    'deleted_at',
+    'selling_price',
+    'sale_price',
+    'purchase_price',
+    'shipping_cost',
+    'platform_fees',
+    'vat_fees',
+    'other_costs',
+  ].join(',');
+
   const { data: sales, isLoading } = useQuery({
-    queryKey: ["sales", "reports", range],
-    // IMPORTANT: do NOT rely on server-side date filters here.
-    // SalesHistory is correct; reports should fetch a bounded slice and filter client-side
-    // so "90 days" can't come back empty due to DB date casting quirks.
-    queryFn: () => base44.entities.Sale.list('-sale_date', {
-      limit: 5000,
-      fields: [
-        'id',
-        'inventory_id',
-        'item_name',
-        'purchase_date',
-        'sale_date',
-        'platform',
-        'category',
-        'profit',
-        'deleted_at',
-        'selling_price',
-        'sale_price',
-        'purchase_price',
-        'shipping_cost',
-        'platform_fees',
-        'vat_fees',
-        'other_costs',
-      ].join(','),
-    }),
+    queryKey: ["sales", "reports", "all"],
+    queryFn: async () => {
+      const qs = new URLSearchParams();
+      qs.set('sort', '-sale_date');
+      qs.set('limit', '5000');
+      qs.set('fields', salesFields);
+      const data = await apiGetJson(`/api/sales?${qs.toString()}`);
+      if (Array.isArray(data) && data.length === 0) {
+        const qs2 = new URLSearchParams();
+        qs2.set('sort', '-sale_date');
+        qs2.set('limit', '5000');
+        return apiGetJson(`/api/sales?${qs2.toString()}`);
+      }
+      return data;
+    },
     initialData: [],
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Filter out soft-deleted sales
