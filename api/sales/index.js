@@ -152,6 +152,13 @@ function buildSelectFromFields(fieldsCsv) {
   return fields.length ? fields.join(',') : '*';
 }
 
+function isIsoLike(s) {
+  if (!s) return false;
+  const str = String(s);
+  // Accept ISO date or datetime strings (best-effort).
+  return /^\d{4}-\d{2}-\d{2}/.test(str);
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -208,6 +215,8 @@ async function handleGet(req, res, userId) {
     
     const limit = parsePositiveInt(queryParams.limit);
     const since = queryParams.since ? String(queryParams.since) : null;
+    const from = queryParams.from ? String(queryParams.from) : null;
+    const to = queryParams.to ? String(queryParams.to) : null;
     const select = buildSelectFromFields(queryParams.fields);
 
     let query = supabase
@@ -218,6 +227,12 @@ async function handleGet(req, res, userId) {
 
     if (since) {
       query = query.gte('sale_date', since);
+    }
+    if (from && isIsoLike(from)) {
+      query = query.gte('sale_date', from);
+    }
+    if (to && isIsoLike(to)) {
+      query = query.lte('sale_date', to);
     }
 
     // Handle sorting

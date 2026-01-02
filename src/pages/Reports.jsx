@@ -44,13 +44,45 @@ const currency = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
 
 export default function ReportsPage() {
+  const [range, setRange] = React.useState("90d");
+
+  const rangeSince = React.useMemo(() => {
+    const d = new Date();
+    if (range === "lifetime") {
+      d.setDate(d.getDate() - 365 * 6); // bounded lifetime for speed; can be expanded with pagination later
+      return d.toISOString();
+    }
+    const days = RANGE_TO_DAYS[range] ?? 365;
+    d.setDate(d.getDate() - days);
+    return d.toISOString();
+  }, [range]);
+
   const { data: sales, isLoading } = useQuery({
-    queryKey: ["sales"],
-    queryFn: () => base44.entities.Sale.list(),
+    queryKey: ["sales", "reports", range],
+    // Only pull the date window we need (reports are range-based).
+    queryFn: () => base44.entities.Sale.list('-sale_date', {
+      since: rangeSince,
+      limit: range === 'lifetime' ? 5000 : 3000,
+      fields: [
+        'id',
+        'item_name',
+        'purchase_date',
+        'sale_date',
+        'platform',
+        'category',
+        'profit',
+        'deleted_at',
+        'selling_price',
+        'sale_price',
+        'purchase_price',
+        'shipping_cost',
+        'platform_fees',
+        'vat_fees',
+        'other_costs',
+      ].join(','),
+    }),
     initialData: [],
   });
-
-  const [range, setRange] = React.useState("90d");
 
   // Filter out soft-deleted sales
   const activeSales = React.useMemo(() => (sales ?? []).filter(sale => !sale.deleted_at), [sales]);

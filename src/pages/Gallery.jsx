@@ -24,8 +24,35 @@ const platformIcons = {
 
 export default function GalleryPage() {
   const { data: rawSales, isLoading } = useQuery({
-    queryKey: ['sales'],
-    queryFn: () => base44.entities.Sale.list('-sale_date'),
+    queryKey: ['sales', 'gallery'],
+    // Showcase should stay snappy; start with a large recent window instead of all-time.
+    queryFn: () => {
+      const d = new Date();
+      d.setDate(d.getDate() - 365 * 2);
+      return base44.entities.Sale.list('-sale_date', {
+        since: d.toISOString(),
+        limit: 3000,
+        fields: [
+          'id',
+          'item_name',
+          'purchase_date',
+          'sale_date',
+          'platform',
+          'profit',
+          'notes',
+          'image_url',
+          'deleted_at',
+          'selling_price',
+          'sale_price',
+          'purchase_price',
+          'shipping_cost',
+          'platform_fees',
+          'vat_fees',
+          'other_costs',
+          'created_at',
+        ].join(','),
+      });
+    },
     initialData: [],
   });
 

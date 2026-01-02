@@ -131,8 +131,35 @@ export default function SalesHistory() {
   const queryClient = useQueryClient();
 
   const { data: rawSales, isLoading } = useQuery({
-    queryKey: ['sales'],
-    queryFn: () => base44.entities.Sale.list(),
+    queryKey: ['sales', 'salesHistory'],
+    // IMPORTANT: do NOT fetch entire sales history in one request (can be huge and slow).
+    // This page starts with a large recent slice; we can add "load more" pagination later if needed.
+    queryFn: () => base44.entities.Sale.list('-sale_date', {
+      limit: 2000,
+      fields: [
+        'id',
+        'inventory_id',
+        'item_name',
+        'purchase_date',
+        'sale_date',
+        'platform',
+        'source',
+        'category',
+        'quantity_sold',
+        'shipping_cost',
+        'platform_fees',
+        'vat_fees',
+        'other_costs',
+        'profit',
+        'notes',
+        'image_url',
+        'deleted_at',
+        'selling_price',
+        'sale_price',
+        'purchase_price',
+        'created_at',
+      ].join(','),
+    }),
     initialData: [],
   });
 

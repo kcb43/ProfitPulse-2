@@ -32,9 +32,36 @@ export default function ProfitCalendar() {
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedSales, setSelectedSales] = useState([]);
 
+  const calendarWindow = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 0 });
+    const end = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 0 });
+    return { start, end };
+  }, [currentMonth]);
+
   const { data: rawSales, isLoading } = useQuery({
-    queryKey: ['sales'],
-    queryFn: () => base44.entities.Sale.list(),
+    queryKey: ['sales', 'profitCalendar', format(currentMonth, 'yyyy-MM')],
+    // Only fetch sales for the visible calendar window (fast).
+    queryFn: () => base44.entities.Sale.list('-sale_date', {
+      from: calendarWindow.start.toISOString(),
+      to: calendarWindow.end.toISOString(),
+      limit: 2000,
+      fields: [
+        'id',
+        'item_name',
+        'purchase_date',
+        'sale_date',
+        'platform',
+        'profit',
+        'deleted_at',
+        'selling_price',
+        'sale_price',
+        'purchase_price',
+        'shipping_cost',
+        'platform_fees',
+        'vat_fees',
+        'other_costs',
+      ].join(','),
+    }),
     initialData: [],
   });
 
@@ -55,12 +82,7 @@ export default function ProfitCalendar() {
 
   // Re-evaluation of calendar data and profit aggregation
   const { profitByDay, calendarDays, maxDailyProfit } = useMemo(() => {
-    // Calendar should cover 6 weeks to ensure all days of the month are visible
-    // Start of week is Sunday by default in date-fns, but explicitly setting for clarity
-    const calendarStart = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 0 }); 
-    const calendarEnd = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 0 }); 
-
-    const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+    const days = eachDayOfInterval({ start: calendarWindow.start, end: calendarWindow.end });
 
     // Aggregate sales data by day
     const aggregatedProfitByDay = {};
@@ -92,7 +114,7 @@ export default function ProfitCalendar() {
       calendarDays: days,
       maxDailyProfit: maxDaily
     };
-  }, [sales, currentMonth]);
+  }, [sales, calendarWindow]);
 
   // Re-evaluation of monthly stats
   const { monthlyProfit, monthlySalesCount, avgDailyProfit, monthlyTotalSpend, monthlyRevenue, monthlyCosts } = useMemo(() => {
