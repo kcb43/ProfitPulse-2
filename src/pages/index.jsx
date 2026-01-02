@@ -1,86 +1,52 @@
-import Layout from "./Layout.jsx";
+import React from "react";
 
-import Dashboard from "./Dashboard";
-import Landing from "./Landing";
-import Login from "./Login";
-import SignUp from "./SignUp";
-import ProfileSettings from "./ProfileSettings";
+// Route-level code splitting: keep initial bundle small (Landing/Login/Signup)
+const Layout = React.lazy(() => import("./Layout.jsx"));
 
-import AddSale from "./AddSale";
+const Dashboard = React.lazy(() => import("./Dashboard"));
+const Landing = React.lazy(() => import("./Landing"));
+const Login = React.lazy(() => import("./Login"));
+const SignUp = React.lazy(() => import("./SignUp"));
+const ProfileSettings = React.lazy(() => import("./ProfileSettings"));
 
-import SalesHistory from "./SalesHistory";
+const AddSale = React.lazy(() => import("./AddSale"));
+const SalesHistory = React.lazy(() => import("./SalesHistory"));
 
-import Inventory from "./Inventory";
+const Inventory = React.lazy(() => import("./Inventory"));
+const AddInventoryItem = React.lazy(() => import("./AddInventoryItem"));
 
-import AddInventoryItem from "./AddInventoryItem";
+const Reports = React.lazy(() => import("./Reports"));
+const Gallery = React.lazy(() => import("./Gallery"));
+const SoldItemDetail = React.lazy(() => import("./SoldItemDetail"));
+const ProfitCalendar = React.lazy(() => import("./ProfitCalendar"));
 
-import Reports from "./Reports";
+const Crosslist = React.lazy(() => import("./Crosslist"));
+const CrosslistComposer = React.lazy(() => import("./CrosslistComposer"));
+const Crosslisting = React.lazy(() => import("./Crosslisting"));
+const MarketIntelligence = React.lazy(() => import("./MarketIntelligence"));
+const Settings = React.lazy(() => import("./Settings"));
+const PrivacyPolicy = React.lazy(() => import("./PrivacyPolicy"));
 
-import Gallery from "./Gallery";
-
-import SoldItemDetail from "./SoldItemDetail";
-
-import ProfitCalendar from "./ProfitCalendar";
-
-import Crosslist from "./Crosslist";
-import CrosslistComposer from "./CrosslistComposer";
-import EbayOauthLanding from "./EbayOauthLanding";
-import Crosslisting from "./Crosslisting";
-import MarketIntelligence from "./MarketIntelligence";
-import Settings from "./Settings";
-import PrivacyPolicy from "./PrivacyPolicy";
+const EbayOauthLanding = React.lazy(() => import("./EbayOauthLanding"));
 import DevErrorBoundary from "../components/DevErrorBoundary";
 import ScrollToTop from "../components/ScrollToTop";
 import { AuthGuard } from "../components/AuthGuard";
 
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 
-const PAGES = {
-    
-    Dashboard: Dashboard,
-    
-    AddSale: AddSale,
-    
-    SalesHistory: SalesHistory,
-    
-    Inventory: Inventory,
-    
-    AddInventoryItem: AddInventoryItem,
-    
-    Reports: Reports,
-    
-    Gallery: Gallery,
-    
-    SoldItemDetail: SoldItemDetail,
-    
-    ProfitCalendar: ProfitCalendar,
-    
-    Crosslist: Crosslist,
-    
-    CrosslistComposer: CrosslistComposer,
-    
-    Crosslisting: Crosslisting,
-    
-    MarketIntelligence: MarketIntelligence,
-    
-    Settings: Settings,
-    
-    
-    PrivacyPolicy: PrivacyPolicy,
-    
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
 }
 
-function _getCurrentPage(url) {
-    if (url.endsWith('/')) {
-        url = url.slice(0, -1);
-    }
-    let urlLastPart = url.split('/').pop();
-    if (urlLastPart.includes('?')) {
-        urlLastPart = urlLastPart.split('?')[0];
-    }
-
-    const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
-    return pageName || Object.keys(PAGES)[0];
+function withSuspense(element) {
+  return <React.Suspense fallback={<PageLoader />}>{element}</React.Suspense>;
 }
 
 // Create a wrapper component that uses useLocation inside the Router context
@@ -90,22 +56,24 @@ function PagesContent() {
             <ScrollToTop />
             <Routes>
               {/* Public Landing Page */}
-              <Route path="/" element={<Landing />} />
+              <Route path="/" element={withSuspense(<Landing />)} />
               
               {/* Login Page */}
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={withSuspense(<Login />)} />
               
               {/* Sign Up Page */}
-              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signup" element={withSuspense(<SignUp />)} />
               
               {/* Protected Dashboard Routes */}
               <Route
                 path="/dashboard"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Dashboard">
-                      <Dashboard />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Dashboard">
+                        {withSuspense(<Dashboard />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -113,9 +81,11 @@ function PagesContent() {
                 path="/Dashboard"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Dashboard">
-                      <Dashboard />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Dashboard">
+                        {withSuspense(<Dashboard />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -125,9 +95,11 @@ function PagesContent() {
                 path="/ProfileSettings"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="ProfileSettings">
-                      <ProfileSettings />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="ProfileSettings">
+                        {withSuspense(<ProfileSettings />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -137,9 +109,11 @@ function PagesContent() {
                 path="/AddSale"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="AddSale">
-                      <AddSale />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="AddSale">
+                        {withSuspense(<AddSale />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -148,9 +122,11 @@ function PagesContent() {
                 path="/SalesHistory"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="SalesHistory">
-                      <SalesHistory />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="SalesHistory">
+                        {withSuspense(<SalesHistory />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -159,15 +135,17 @@ function PagesContent() {
                 path="/Inventory"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Inventory">
-                      {import.meta.env.DEV ? (
-                        <DevErrorBoundary>
-                          <Inventory />
-                        </DevErrorBoundary>
-                      ) : (
-                        <Inventory />
-                      )}
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Inventory">
+                        {import.meta.env.DEV ? (
+                          <DevErrorBoundary>
+                            {withSuspense(<Inventory />)}
+                          </DevErrorBoundary>
+                        ) : (
+                          withSuspense(<Inventory />)
+                        )}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -176,9 +154,11 @@ function PagesContent() {
                 path="/AddInventoryItem"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="AddInventoryItem">
-                      <AddInventoryItem />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="AddInventoryItem">
+                        {withSuspense(<AddInventoryItem />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -187,9 +167,11 @@ function PagesContent() {
                 path="/Reports"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Reports">
-                      <Reports />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Reports">
+                        {withSuspense(<Reports />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -198,9 +180,11 @@ function PagesContent() {
                 path="/Gallery"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Gallery">
-                      <Gallery />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Gallery">
+                        {withSuspense(<Gallery />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -209,9 +193,11 @@ function PagesContent() {
                 path="/SoldItemDetail"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="SoldItemDetail">
-                      <SoldItemDetail />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="SoldItemDetail">
+                        {withSuspense(<SoldItemDetail />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -220,9 +206,11 @@ function PagesContent() {
                 path="/ProfitCalendar"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="ProfitCalendar">
-                      <ProfitCalendar />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="ProfitCalendar">
+                        {withSuspense(<ProfitCalendar />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -231,9 +219,11 @@ function PagesContent() {
                 path="/Crosslist"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Crosslist">
-                      <Crosslist />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Crosslist">
+                        {withSuspense(<Crosslist />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -242,9 +232,11 @@ function PagesContent() {
                 path="/CrosslistComposer"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="CrosslistComposer">
-                      <CrosslistComposer />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="CrosslistComposer">
+                        {withSuspense(<CrosslistComposer />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -253,9 +245,11 @@ function PagesContent() {
                 path="/crosslisting"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Crosslisting">
-                      <Crosslisting />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Crosslisting">
+                        {withSuspense(<Crosslisting />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -263,9 +257,11 @@ function PagesContent() {
                 path="/Crosslisting"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Crosslisting">
-                      <Crosslisting />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Crosslisting">
+                        {withSuspense(<Crosslisting />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -274,9 +270,11 @@ function PagesContent() {
                 path="/MarketIntelligence"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="MarketIntelligence">
-                      <MarketIntelligence />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="MarketIntelligence">
+                        {withSuspense(<MarketIntelligence />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
@@ -285,16 +283,18 @@ function PagesContent() {
                 path="/Settings"
                 element={
                   <AuthGuard>
-                    <Layout currentPageName="Settings">
-                      <Settings />
-                    </Layout>
+                    {withSuspense(
+                      <Layout currentPageName="Settings">
+                        {withSuspense(<Settings />)}
+                      </Layout>
+                    )}
                   </AuthGuard>
                 }
               />
               
               {/* Public Routes */}
-              <Route path="/oauth/ebay" element={<EbayOauthLanding />} />
-              <Route path="/PrivacyPolicy" element={<PrivacyPolicy />} />
+              <Route path="/oauth/ebay" element={withSuspense(<EbayOauthLanding />)} />
+              <Route path="/PrivacyPolicy" element={withSuspense(<PrivacyPolicy />)} />
             </Routes>
         </>
     );

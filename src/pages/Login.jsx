@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/api/supabaseClient';
+import { getPublicSiteOrigin } from '@/utils/publicSiteUrl';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   Mail, 
@@ -54,7 +55,7 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${getPublicSiteOrigin()}/dashboard`,
       },
     });
     if (error) {
@@ -66,7 +67,7 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${getPublicSiteOrigin()}/dashboard`,
       },
     });
     if (error) {

@@ -5,7 +5,16 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import App from '@/App.jsx'
 import '@/index.css'
 
-const queryClient = new QueryClient()
+// Sensible defaults to reduce refetch churn and make the app feel faster.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <QueryClientProvider client={queryClient}>

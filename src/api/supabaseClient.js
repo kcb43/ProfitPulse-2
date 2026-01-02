@@ -10,7 +10,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Prefer PKCE so OAuth doesn't put access tokens in the URL hash.
+    // (Supabase will still process legacy hash fragments if they occur.)
+    flowType: 'pkce',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 
 // Helper to get current user ID
 // This will need to be adapted based on your auth setup

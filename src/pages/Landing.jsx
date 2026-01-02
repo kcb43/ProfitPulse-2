@@ -7,6 +7,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/api/supabaseClient';
+import { getPublicSiteOrigin } from '@/utils/publicSiteUrl';
 import { 
   Rocket, 
   Zap, 
@@ -25,6 +26,57 @@ import {
 export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [checkingSession, setCheckingSession] = React.useState(true);
+
+  // If user is already signed in, skip the marketing landing and go straight to dashboard.
+  // Important: Supabase session hydration can be async on cold loads; we briefly wait/subscribe
+  // so users don't get "sent to the cover page" while already signed in.
+  React.useEffect(() => {
+    let cancelled = false;
+    let subscription = null;
+
+    const goDashboard = () => navigate('/dashboard', { replace: true });
+
+    const check = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (session) {
+          goDashboard();
+          return;
+        }
+
+        // Session can appear shortly after hydration; retry a couple times quickly.
+        for (let i = 0; i < 4; i++) {
+          await new Promise((r) => setTimeout(r, 200));
+          const { data: { session: retry } } = await supabase.auth.getSession();
+          if (cancelled) return;
+          if (retry) {
+            goDashboard();
+            return;
+          }
+        }
+      } catch {
+        // ignore; just show landing
+      } finally {
+        if (!cancelled) setCheckingSession(false);
+      }
+    };
+
+    // Also subscribe: if something refreshes/sets session, jump immediately.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      if (session) goDashboard();
+    });
+    subscription = data?.subscription || null;
+
+    check();
+
+    return () => {
+      cancelled = true;
+      if (subscription) subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   // Handle OAuth callback - check for hash fragment with access_token
   React.useEffect(() => {
@@ -77,7 +129,7 @@ export default function Landing() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${getPublicSiteOrigin()}/dashboard`,
       },
     });
     if (error) {
@@ -92,6 +144,17 @@ export default function Landing() {
     }
     setMobileMenuOpen(false);
   };
+
+  if (checkingSession) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
