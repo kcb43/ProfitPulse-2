@@ -54,7 +54,6 @@ async function handleGet(req, res, userId) {
       .select('*')
       .eq('id', id)
       .eq('user_id', userId)
-      .is('deleted_at', null)
       .single();
 
     if (error) {
