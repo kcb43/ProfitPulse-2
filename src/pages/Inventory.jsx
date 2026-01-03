@@ -2277,7 +2277,7 @@ export default function InventoryPage() {
             return (
               <Card 
                 key={item.id} 
-                className={`group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 shadow-sm dark:shadow-lg ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-slate-700/50'}`}
+                className={`group overflow-hidden transition-all duration-300 sm:hover:shadow-2xl sm:hover:scale-[1.02] bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 shadow-sm dark:shadow-lg ${isDeleted ? 'opacity-75 border-2 border-red-300 dark:border-red-700' : 'border-gray-200 dark:border-slate-700/50'}`}
                 style={{
                   borderRadius: '16px',
                 }}
@@ -2439,8 +2439,9 @@ export default function InventoryPage() {
                         <div className="mb-3 space-y-3 rounded-lg border border-dashed border-muted-foreground/40 bg-muted/40 p-3">
                           <div>
                             <Label className="text-xs mb-1.5 block text-muted-foreground">Add a tag</Label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 min-w-0">
                               <Input
+                                className="min-w-0 flex-1"
                                 value={tagDraftValue}
                                 placeholder="e.g. Return Soon"
                                 onChange={(e) =>
@@ -2450,7 +2451,7 @@ export default function InventoryPage() {
                               <Button
                                 type="button"
                                 size="sm"
-                                className="whitespace-nowrap"
+                                className="whitespace-nowrap flex-shrink-0"
                                 onClick={() => handleAddTagToItem(item.id, tagDraftValue)}
                               >
                                 Add
