@@ -33,7 +33,7 @@ import TipOfTheDay from "../components/dashboard/TipOfTheDay";
 import QuickActions from "../components/dashboard/QuickActions";
 import KpiSparkCard from "../components/dashboard/mosaic/KpiSparkCard";
 import ProfitTrendCard from "../components/dashboard/mosaic/ProfitTrendCard";
-import PlatformDonutCard from "../components/dashboard/mosaic/PlatformDonutCard";
+import PlatformRevenueTableCard from "../components/dashboard/mosaic/PlatformRevenueTableCard";
 
 const SUPPORTED_MARKETPLACES = [
   {
@@ -576,7 +576,7 @@ export default function Dashboard() {
             />
           </div>
           <div className="col-span-12 lg:col-span-4">
-            <PlatformDonutCard
+            <PlatformRevenueTableCard
               rows={platformSummary}
               title="Platform Revenue"
               reportsHref={createPageUrl("Reports")}
