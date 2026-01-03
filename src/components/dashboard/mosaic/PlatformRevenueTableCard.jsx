@@ -64,7 +64,6 @@ export default function PlatformRevenueTableCard({
         const profit = Number(r?.total_profit ?? 0) || 0;
         const costBasis = revenue - profit;
         const roi = costBasis > 0 ? (profit / costBasis) * 100 : null;
-        const conversion = revenue > 0 ? (profit / revenue) * 100 : null; // profit margin
         return {
           key,
           name: PLATFORM_META[key]?.name || key.replace(/_/g, " "),
@@ -73,7 +72,6 @@ export default function PlatformRevenueTableCard({
           revenue,
           profit,
           roi,
-          conversion,
         };
       })
       .filter((d) => d.sales > 0 || d.revenue > 0 || d.profit !== 0)
@@ -95,62 +93,95 @@ export default function PlatformRevenueTableCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="overflow-x-auto -mx-2 px-2">
-          <div className="min-w-[520px]">
-            <div className="grid grid-cols-[1fr_90px_70px_90px_110px] gap-3 py-2 text-[11px] font-semibold text-muted-foreground border-b border-border/60">
-              <div>Platform</div>
-              <div className="text-right">ROI</div>
-              <div className="text-right">Sales</div>
-              <div className="text-right">Profit</div>
-              <div className="text-right">Conversion</div>
-            </div>
+        {/* Desktop/tablet: compact table (no horizontal scroll) */}
+        <div className="hidden sm:block">
+          <div className="grid grid-cols-[minmax(0,1fr)_84px_64px_92px] gap-3 py-2 text-[11px] font-semibold text-muted-foreground border-b border-border/60">
+            <div>Platform</div>
+            <div className="text-right">ROI</div>
+            <div className="text-right">Sales</div>
+            <div className="text-right">Profit</div>
+          </div>
 
-            <div className="divide-y divide-border/60">
-              {data.map((d) => (
-                <div
-                  key={d.key}
-                  className="grid grid-cols-[1fr_90px_70px_90px_110px] gap-3 py-3 text-sm"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-9 w-9 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {d.icon ? (
-                        <img src={d.icon} alt={d.name} className="h-5 w-5 object-contain" />
-                      ) : (
-                        <span className="text-xs font-bold text-muted-foreground">
-                          {String(d.name || "?").slice(0, 1).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-foreground truncate">{d.name}</div>
-                      <div className="text-[11px] text-muted-foreground truncate">
-                        Revenue {fmtMoney(d.revenue)}
-                      </div>
-                    </div>
+          <div className="divide-y divide-border/60">
+            {data.map((d) => (
+              <div
+                key={d.key}
+                className="grid grid-cols-[minmax(0,1fr)_84px_64px_92px] gap-3 py-3 text-sm"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-9 w-9 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {d.icon ? (
+                      <img src={d.icon} alt={d.name} className="h-5 w-5 object-contain" />
+                    ) : (
+                      <span className="text-xs font-bold text-muted-foreground">
+                        {String(d.name || "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
                   </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground truncate">{d.name}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">Revenue {fmtMoney(d.revenue)}</div>
+                  </div>
+                </div>
 
-                  <div className="text-right font-medium text-foreground tabular-nums">
-                    {fmtPct(d.roi)}
-                  </div>
-                  <div className="text-right font-medium text-foreground tabular-nums">
-                    {d.sales.toLocaleString()}
-                  </div>
-                  <div className="text-right font-semibold tabular-nums text-emerald-600 dark:text-emerald-300">
+                <div className="text-right font-medium text-foreground tabular-nums">{fmtPct(d.roi)}</div>
+                <div className="text-right font-medium text-foreground tabular-nums">{d.sales.toLocaleString()}</div>
+                <div className="text-right font-semibold tabular-nums text-emerald-600 dark:text-emerald-300">
+                  {fmtMoney(d.profit)}
+                </div>
+              </div>
+            ))}
+            {data.length === 0 ? (
+              <div className="py-6 text-sm text-muted-foreground">No platform data yet.</div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Mobile: stacked row layout (no horizontal scroll) */}
+        <div className="sm:hidden space-y-3">
+          {data.map((d) => (
+            <div
+              key={d.key}
+              className="rounded-2xl border border-border/60 bg-card/60 px-4 py-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-9 w-9 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {d.icon ? (
+                    <img src={d.icon} alt={d.name} className="h-5 w-5 object-contain" />
+                  ) : (
+                    <span className="text-xs font-bold text-muted-foreground">
+                      {String(d.name || "?").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-foreground truncate">{d.name}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">Revenue {fmtMoney(d.revenue)}</div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="rounded-xl bg-muted/25 px-2 py-2">
+                  <div className="text-[10px] text-muted-foreground font-semibold">ROI</div>
+                  <div className="text-sm font-semibold text-foreground tabular-nums">{fmtPct(d.roi)}</div>
+                </div>
+                <div className="rounded-xl bg-muted/25 px-2 py-2">
+                  <div className="text-[10px] text-muted-foreground font-semibold">Sales</div>
+                  <div className="text-sm font-semibold text-foreground tabular-nums">{d.sales.toLocaleString()}</div>
+                </div>
+                <div className="rounded-xl bg-muted/25 px-2 py-2">
+                  <div className="text-[10px] text-muted-foreground font-semibold">Profit</div>
+                  <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-300 tabular-nums">
                     {fmtMoney(d.profit)}
                   </div>
-                  <div className="text-right font-medium text-foreground tabular-nums">
-                    {fmtPct(d.conversion)}
-                  </div>
                 </div>
-              ))}
-
-              {data.length === 0 ? (
-                <div className="py-6 text-sm text-muted-foreground">
-                  No platform data yet.
-                </div>
-              ) : null}
+              </div>
             </div>
-          </div>
+          ))}
+
+          {data.length === 0 ? (
+            <div className="py-2 text-sm text-muted-foreground">No platform data yet.</div>
+          ) : null}
         </div>
       </CardContent>
     </Card>
