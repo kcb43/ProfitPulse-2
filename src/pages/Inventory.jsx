@@ -1401,7 +1401,7 @@ export default function InventoryPage() {
                   </Select>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 min-w-0">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 min-w-0 overflow-x-hidden">
                 <div className="text-xs text-muted-foreground min-w-0 break-words">
                   {showDeletedOnly 
                     ? "Recover deleted items within 30 days. Items older than 30 days are permanently deleted."
@@ -1415,7 +1415,7 @@ export default function InventoryPage() {
                       setShowDeletedOnly((prev) => !prev);
                       setShowFavoritesOnly(false); // Disable favorites when showing deleted
                     }}
-                    className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                    className="flex items-center gap-2 min-w-0 max-w-full"
                   >
                     <Archive className={`w-4 h-4 flex-shrink-0 ${showDeletedOnly ? "" : ""}`} />
                     <span className="truncate">{showDeletedOnly ? "Showing Deleted" : "Show Deleted"}</span>
@@ -1428,7 +1428,7 @@ export default function InventoryPage() {
                       variant={showDismissedReturns ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowDismissedReturns((prev) => !prev)}
-                      className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                      className="flex items-center gap-2 min-w-0 max-w-full"
                     >
                       <AlarmClock className={`w-4 h-4 flex-shrink-0 ${showDismissedReturns ? "" : ""}`} />
                       <span className="truncate">{showDismissedReturns ? "Showing Dismissed" : "Show Dismissed"}</span>
@@ -1442,7 +1442,7 @@ export default function InventoryPage() {
                       variant={showFavoritesOnly ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowFavoritesOnly((prev) => !prev)}
-                      className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                      className="flex items-center gap-2 min-w-0 max-w-full"
                     >
                       <Star className={`w-4 h-4 flex-shrink-0 ${showFavoritesOnly ? "fill-current" : ""}`} />
                       <span className="truncate">{showFavoritesOnly ? "Showing Favorites" : "Show Favorites"}</span>
@@ -1533,7 +1533,7 @@ export default function InventoryPage() {
           )}
 
           {selectedItems.length > 0 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg min-w-0 overflow-x-hidden">
               <span className="text-sm font-medium min-w-0 break-words">
                 {selectedItems.length} item{selectedItems.length === 1 ? "" : "s"} selected
               </span>
@@ -1546,7 +1546,7 @@ export default function InventoryPage() {
                     setBulkUpdateDialogOpen(true);
                   }}
                   disabled={bulkUpdateMutation.isPending}
-                  className="whitespace-nowrap flex-shrink-0"
+                  className="min-w-0 max-w-full"
                 >
                   <Edit className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="truncate">{bulkUpdateMutation.isPending ? "Updating..." : "Bulk Update"}</span>
@@ -1556,7 +1556,7 @@ export default function InventoryPage() {
                   size="sm"
                   onClick={() => setBulkDeleteDialogOpen(true)}
                   disabled={bulkDeleteMutation.isPending}
-                  className="whitespace-nowrap flex-shrink-0"
+                  className="min-w-0 max-w-full"
                 >
                   <Trash2 className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="truncate">{bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}</span>

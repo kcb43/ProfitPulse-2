@@ -145,32 +145,36 @@ export default function PlatformRevenueTableCard({
               key={d.key}
               className="rounded-2xl border border-border/60 bg-card/60 px-4 py-3"
             >
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-10 w-10 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden">
-                  {d.icon ? (
-                    <img src={d.icon} alt={d.name} className="h-6 w-6 object-contain" />
-                  ) : (
-                    <span className="text-sm font-bold text-muted-foreground">
-                      {String(d.name || "?").slice(0, 1).toUpperCase()}
-                    </span>
-                  )}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {d.icon ? (
+                      <img src={d.icon} alt={d.name} className="h-6 w-6 object-contain" />
+                    ) : (
+                      <span className="text-sm font-bold text-muted-foreground">
+                        {String(d.name || "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-foreground truncate">{d.name}</div>
+                  </div>
                 </div>
-                <div className="text-sm font-semibold text-foreground text-center">{d.name}</div>
-              </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-muted/25 px-2 py-2">
-                  <div className="text-[10px] text-muted-foreground font-semibold">ROI</div>
-                  <div className="text-sm font-semibold text-foreground tabular-nums">{fmtPct(d.roi)}</div>
-                </div>
-                <div className="rounded-xl bg-muted/25 px-2 py-2">
-                  <div className="text-[10px] text-muted-foreground font-semibold">Sales</div>
-                  <div className="text-sm font-semibold text-foreground tabular-nums">{d.sales.toLocaleString()}</div>
-                </div>
-                <div className="rounded-xl bg-muted/25 px-2 py-2">
-                  <div className="text-[10px] text-muted-foreground font-semibold">Profit</div>
-                  <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-300 tabular-nums">
-                    {fmtMoney(d.profit)}
+                <div className="grid grid-cols-3 gap-2 text-right">
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-muted-foreground font-semibold">ROI</div>
+                    <div className="text-sm font-semibold text-foreground tabular-nums">{fmtPct(d.roi)}</div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-muted-foreground font-semibold">Sales</div>
+                    <div className="text-sm font-semibold text-foreground tabular-nums">{d.sales.toLocaleString()}</div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-muted-foreground font-semibold">Profit</div>
+                    <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-300 tabular-nums">
+                      {fmtMoney(d.profit)}
+                    </div>
                   </div>
                 </div>
               </div>
