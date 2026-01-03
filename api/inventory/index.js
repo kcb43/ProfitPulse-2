@@ -257,7 +257,8 @@ async function handleGet(req, res, userId) {
         }
       }
 
-      return query;
+      // Execute the query here so callers can reliably destructure { data, error, count }.
+      return await query;
     };
 
     let data = null;

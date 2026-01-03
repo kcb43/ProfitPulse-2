@@ -71,6 +71,12 @@ export default async function handler(req, res) {
   let scanned = 0;
   let updated = 0;
   let skipped = 0;
+  let needReview = 0;
+  let matchedByInventoryId = 0;
+  let matchedByBase44Link = 0;
+  let matchedByNameUnique = 0;
+  let noInventoryMatch = 0;
+  let patchEmpty = 0;
 
   while (true) {
     const salesRes = await supabase
@@ -96,23 +102,30 @@ export default async function handler(req, res) {
         skipped += 1;
         continue;
       }
+      needReview += 1;
 
       let inv = null;
       if (s.inventory_id && invById.has(s.inventory_id)) {
         inv = invById.get(s.inventory_id);
+        matchedByInventoryId += 1;
       } else {
         // 1) Prefer Base44 "linked inventory id" tag (best signal for imported rows)
         const b44Linked = parseBase44LinkedInventoryIdFromSaleNotes(s?.notes);
         if (b44Linked && invByBase44Id.has(b44Linked)) {
           inv = invByBase44Id.get(b44Linked);
+          matchedByBase44Link += 1;
         } else {
           // 2) Fallback: name-based match only if unambiguous
           const name = s.item_name ? String(s.item_name).trim() : '';
-          if (name && invByNameUnique.has(name)) inv = invByNameUnique.get(name);
+          if (name && invByNameUnique.has(name)) {
+            inv = invByNameUnique.get(name);
+            matchedByNameUnique += 1;
+          }
         }
       }
 
       if (!inv) {
+        noInventoryMatch += 1;
         skipped += 1;
         continue;
       }
@@ -125,6 +138,7 @@ export default async function handler(req, res) {
       if (needsCategory && inv.category) patch.category = inv.category;
 
       if (Object.keys(patch).length === 0) {
+        patchEmpty += 1;
         skipped += 1;
         continue;
       }
@@ -157,6 +171,14 @@ export default async function handler(req, res) {
     scanned,
     updated,
     skipped,
+    debug: {
+      needReview,
+      matchedByInventoryId,
+      matchedByBase44Link,
+      matchedByNameUnique,
+      noInventoryMatch,
+      patchEmpty,
+    },
   });
 }
 

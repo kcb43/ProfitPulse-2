@@ -371,14 +371,10 @@ export default function Crosslist() {
     'category',
     'source',
     'image_url',
-    'images',
     'deleted_at',
     'marketplace_listings',
     'ebay_listing_id',
     'facebook_listing_id',
-    'mercari_listing_id',
-    'etsy_listing_id',
-    'poshmark_listing_id',
   ].join(',')), []);
 
   const {
