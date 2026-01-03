@@ -31,6 +31,10 @@ import RecentSales from "../components/dashboard/RecentSales";
 import Gamification from "../components/dashboard/Gamification";
 import TipOfTheDay from "../components/dashboard/TipOfTheDay";
 import QuickActions from "../components/dashboard/QuickActions";
+import KpiSparkCard from "../components/dashboard/mosaic/KpiSparkCard";
+import ProfitTrendCard from "../components/dashboard/mosaic/ProfitTrendCard";
+import PlatformDonutCard from "../components/dashboard/mosaic/PlatformDonutCard";
+import RecentSalesTable from "../components/dashboard/mosaic/RecentSalesTable";
 
 const SUPPORTED_MARKETPLACES = [
   {
@@ -620,7 +624,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Desktop-only Mosaic-like layout */}
+      {/* Desktop-only dashboard layout (rev 2, Mosaic-inspired) */}
       <div className="hidden lg:block">
         <div className="px-6 py-8 w-full max-w-7xl mx-auto">
           {(salesError || inventoryError || salesSummaryError) && (
@@ -641,6 +645,12 @@ export default function Dashboard() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your business performance</p>
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="outline" className="border-gray-300 dark:border-gray-700 text-sm">
+                Filter
+              </Button>
+              <Button variant="outline" className="border-gray-300 dark:border-gray-700 text-sm">
+                Date Range
+              </Button>
               <Link to={createPageUrl("AddSale")}>
                 <Button className="bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                   <Plus className="w-4 h-4 mr-2" />
@@ -657,58 +667,54 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-12 gap-6">
+            {/* KPI Row */}
             <div className="col-span-12 grid grid-cols-3 gap-6">
-              <StatCard
+              <KpiSparkCard
                 title="Total Profit"
-                value={isLoadingSalesSummary ? "Loading..." : `$${totalProfit.toFixed(2)}`}
-                icon={DollarSign}
-                bgGradient="bg-gradient-to-br from-green-500 to-emerald-600"
+                value={isLoadingSalesSummary ? "…" : `$${Number(totalProfit || 0).toFixed(0)}`}
+                deltaLabel={null}
+                deltaPositive={true}
+                stroke="#6366f1"
+                data={(sales || []).slice(0, 30).reverse().map((s) => ({ v: Number(s?.profit ?? 0) || 0 }))}
               />
-              <StatCard
+              <KpiSparkCard
                 title="Total Sales"
-                value={isLoadingSalesSummary ? "Loading..." : totalSales}
-                icon={ShoppingBag}
-                bgGradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+                value={isLoadingSalesSummary ? "…" : String(totalSales || 0)}
+                deltaLabel={null}
+                deltaPositive={true}
+                stroke="#60a5fa"
+                data={(sales || []).slice(0, 30).reverse().map(() => ({ v: 1 }))}
               />
-              <StatCard
+              <KpiSparkCard
                 title="Items in Stock"
-                value={isLoadingInventory ? "Loading..." : inventoryStats.totalQuantity}
-                icon={Package}
-                bgGradient="bg-gradient-to-br from-purple-500 to-pink-600"
+                value={isLoadingInventory ? "…" : String(inventoryStats.totalQuantity || 0)}
+                deltaLabel={null}
+                deltaPositive={true}
+                stroke="#34d399"
+                data={Array.from({ length: 24 }, () => ({ v: 1 }))}
               />
             </div>
 
+            {/* Main chart + side card */}
             <div className="col-span-8">
-              <ProfitChart
-                sales={sales}
-                range={profitChartRange}
-                onRangeChange={setProfitChartRange}
-                totalProfit={totalProfit}
-                totalSales={totalSales}
-                variant="mosaic"
-              />
+              <ProfitTrendCard sales={sales} range={profitChartRange} onRangeChange={setProfitChartRange} />
             </div>
-
             <div className="col-span-4">
-              {Array.isArray(platformSummary) && platformSummary.length > 0 ? (
-                <PlatformBreakdown sales={platformSummary} variant="mosaic" />
-              ) : (
-                <PlatformBreakdown sales={sales} variant="mosaic" />
-              )}
+              <PlatformDonutCard rows={platformSummary} title="Platform Revenue" />
             </div>
 
+            {/* Table-like recent sales */}
             <div className="col-span-12">
-              <RecentSales sales={recentSales} />
+              <RecentSalesTable sales={recentSales} />
             </div>
 
+            {/* Existing blocks (keep your labeled stacks) */}
             <div className="col-span-12">
               <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
             </div>
-
             <div className="col-span-6">
               <QuickActions />
             </div>
-
             <div className="col-span-6">
               <TipOfTheDay />
             </div>
