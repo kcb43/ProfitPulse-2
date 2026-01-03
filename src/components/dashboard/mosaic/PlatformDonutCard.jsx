@@ -1,6 +1,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const COLORS = ["#6366f1", "#60a5fa", "#34d399", "#f472b6", "#fbbf24", "#94a3b8"];
 
@@ -30,7 +32,7 @@ function normalizePlatformKey(raw) {
   return v.replace(/\s+/g, "_");
 }
 
-export default function PlatformDonutCard({ rows, title = "Platform Mix" }) {
+export default function PlatformDonutCard({ rows, title = "Platform Mix", reportsHref }) {
   const data = React.useMemo(() => {
     const arr = Array.isArray(rows) ? rows : [];
     return arr
@@ -52,7 +54,16 @@ export default function PlatformDonutCard({ rows, title = "Platform Mix" }) {
   return (
     <Card className="border border-gray-200/70 dark:border-gray-800/70 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-base font-semibold text-foreground">{title}</CardTitle>
+          {reportsHref ? (
+            <Link to={reportsHref}>
+              <Button variant="outline" size="sm" className="h-8">
+                View Reports
+              </Button>
+            </Link>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-56">

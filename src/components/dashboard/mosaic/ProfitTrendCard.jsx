@@ -78,6 +78,7 @@ function buildSeries(sales, range, customRange) {
 export default function ProfitTrendCard({ sales, range, onRangeChange, customRange, onCustomRangeChange }) {
   const data = React.useMemo(() => buildSeries(sales, range, customRange), [sales, range, customRange]);
   const total = React.useMemo(() => data.reduce((sum, p) => sum + (Number(p.v || 0) || 0), 0), [data]);
+  const stroke = "hsl(var(--po-positive))";
 
   return (
     <Card className="border border-gray-200/70 dark:border-gray-800/70 shadow-sm">
@@ -144,8 +145,8 @@ export default function ProfitTrendCard({ sales, range, onRangeChange, customRan
             <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
               <defs>
                 <linearGradient id="poProfitGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                  <stop offset="0%" stopColor={stroke} stopOpacity={0.25} />
+                  <stop offset="100%" stopColor={stroke} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="2 2" stroke="rgba(148,163,184,0.25)" />
@@ -167,7 +168,7 @@ export default function ProfitTrendCard({ sales, range, onRangeChange, customRan
               <Area
                 type="monotone"
                 dataKey="v"
-                stroke="#6366f1"
+                stroke={stroke}
                 strokeWidth={2}
                 fill="url(#poProfitGrad)"
                 dot={false}

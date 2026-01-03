@@ -18,7 +18,7 @@ import {
   subYears,
 } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star } from "lucide-react";
+import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star, Box } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -383,10 +383,9 @@ export default function Dashboard() {
   
   return (
     <div className="p-4 md:p-6 lg:p-0 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
-      {/* Mobile/Tablet layout (keep existing for now) */}
-      <div className="lg:hidden max-w-7xl mx-auto min-w-0 w-full">
+      <div className="px-0 lg:px-6 py-4 lg:py-8 w-full max-w-7xl mx-auto">
         {(salesError || inventoryError || salesSummaryError) && (
-          <div className="mb-4">
+          <div className="mb-6">
             <Alert variant="destructive">
               <AlertDescription>
                 {salesSummaryError ? `Sales summary error: ${salesSummaryError.message}` : null}
@@ -396,259 +395,18 @@ export default function Dashboard() {
             </Alert>
           </div>
         )}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 min-w-0">
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold text-foreground break-words">Dashboard</h1>
-            <p className="text-muted-foreground mt-1 break-words">Track your business performance</p>
+
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 lg:mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your business performance</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 min-w-0">
-            <Link to={createPageUrl("AddSale")} className="w-full sm:w-auto">
-              <Button className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-md w-full sm:w-auto">
-                <Plus className="w-5 h-5 mr-2" />
-                Add Sale
-              </Button>
-            </Link>
-            <Link
-              to={createPageUrl("AddInventoryItem")}
-              state={{ from: location.pathname || "/Dashboard" }}
-              className="w-full sm:w-auto"
-            >
-              <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-md w-full sm:w-auto">
-                <Package className="w-5 h-5 mr-2" />
-                Add Inventory
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Return Deadline Banner */}
-        <div className="mb-8">
-          <Card className="border border-gray-200/70 dark:border-gray-800/70 bg-white/90 dark:bg-gray-900/70 backdrop-blur rounded-2xl shadow-sm">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
-                <div className="space-y-1 min-w-0">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Marketplace Support</p>
-                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">Track and list your inventory on every marketplace.</h2>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 sm:justify-end min-w-0">
-                  {SUPPORTED_MARKETPLACES.map((marketplace) => {
-                    const isUnavailable = marketplace.available === false;
-                    return (
-                      <div
-                        key={marketplace.key}
-                        className={`group relative flex items-center gap-2 rounded-full border px-3 py-2 shadow-sm transition ${
-                          isUnavailable
-                            ? "border-gray-200/60 dark:border-gray-700/60 bg-gray-100/80 dark:bg-gray-800/60 text-muted-foreground cursor-not-allowed opacity-60"
-                            : "border-gray-200/70 dark:border-gray-700/70 bg-white/90 dark:bg-gray-900/80 text-foreground"
-                        }`}
-                        role="status"
-                        aria-disabled={isUnavailable}
-                      >
-                        <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${
-                          isUnavailable
-                            ? "border-gray-200/60 dark:border-gray-700/60 bg-gray-200 dark:bg-gray-800/70"
-                            : "border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-gray-800"
-                        }`}>
-                          <img
-                            src={marketplace.logo}
-                            alt={marketplace.name}
-                            className={`h-5 w-5 object-contain ${isUnavailable ? "grayscale" : ""}`}
-                            loading="lazy"
-                          />
-                        </span>
-                        <span className="text-sm font-medium break-words">{marketplace.name}</span>
-                        {isUnavailable && (
-                          <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900/90 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                            Coming soon
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Return Deadlines and Smart Reminder Cards */}
-        {(itemsWithUpcomingReturns.length > 0 || staleItems.length > 0) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8 min-w-0">
-            {itemsWithUpcomingReturns.length > 0 && (
-              <Link
-                to={createPageUrl("Inventory?filter=returnDeadline")}
-                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-red-500/50 dark:border-red-500/50 hover:border-red-500/70 dark:hover:border-red-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden min-w-0"
-              >
-                {/* Gradient glow on hover */}
-                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-red-500/20 to-rose-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
-                    {/* Icon box */}
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-rose-500 shadow-lg shadow-red-500/40 flex-shrink-0">
-                      <AlarmClock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                    </div>
-                    
-                    {/* Text content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] sm:text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
-                        Return Deadlines
-                      </div>
-                      <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                        {itemsWithUpcomingReturns.length}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Description */}
-                  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-500 mt-1 sm:mt-2 flex items-center gap-1">
-                    <span className="truncate">View items to return</span>
-                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
-            )}
-            
-            {staleItems.length > 0 && (
-              <Link
-                to={createPageUrl("Inventory?status=available")}
-                className="relative rounded-2xl p-4 sm:p-5 lg:p-6 backdrop-blur-[10px] bg-gray-50/50 dark:bg-slate-800/80 border border-emerald-500/50 dark:border-emerald-500/50 hover:border-emerald-500/70 dark:hover:border-emerald-500/70 shadow-[rgba(0,0,0,0.15)_0px_8px_16px] dark:shadow-[rgba(0,0,0,0.3)_0px_20px_40px] transition-all duration-150 cursor-pointer group overflow-hidden min-w-0"
-              >
-                {/* Gradient glow on hover */}
-                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
-                    {/* Icon box */}
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/40 flex-shrink-0">
-                      <Lightbulb className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                    </div>
-                    
-                    {/* Text content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] sm:text-xs uppercase text-gray-600 dark:text-slate-400 font-medium tracking-wide">
-                        Smart Reminder
-                      </div>
-                      <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                        {staleItems.length}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Description */}
-                  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-500 mt-1 sm:mt-2 flex items-center gap-1">
-                    <span className="truncate">Items need listing</span>
-                    <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
-            )}
-          </div>
-        )}
-
-        {/* Updated grid layout for 3 stat cards instead of 6 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8 min-w-0">
-          <StatCard
-            title="Total Profit"
-            value={isLoadingSalesSummary ? "Loading..." : `$${totalProfit.toFixed(2)}`}
-            icon={DollarSign}
-            bgGradient="bg-gradient-to-br from-green-500 to-emerald-600"
-          />
-          <StatCard
-            title="Total Sales"
-            value={isLoadingSalesSummary ? "Loading..." : totalSales}
-            icon={ShoppingBag}
-            bgGradient="bg-gradient-to-br from-blue-500 to-indigo-600"
-          />
-          {/* New StatCard for Inventory */}
-          <StatCard
-            title="Items in Stock"
-            value={isLoadingInventory ? "Loading..." : inventoryStats.totalQuantity}
-            icon={Package}
-            bgGradient="bg-gradient-to-br from-purple-500 to-pink-600"
-          />
-        </div>
-
-        {/* Dashboard cards: Your Progress (full-width), Quick Actions, Tip of the Day and Tax Summary side-by-side */}
-        <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6 min-w-0">
-          {/* Full-width Your Progress section */}
-          <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
-          
-          {/* Quick Actions section */}
-          <QuickActions />
-          
-          {/* Tip of Day */}
-          <TipOfTheDay />
-        </div>
-
-        <div className="flex justify-start lg:justify-end mb-6">
-          <Link to={createPageUrl("Gallery")}>
-            <Button variant="outline" className="font-semibold gap-2">
-              <Star className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)] animate-pulse" />
-              View Deals of the Month
-            </Button>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 min-w-0">
-          {/* Profit Chart (Mobile: 1st, Desktop: Row 1, Col 1-4) */}
-          <div className="lg:col-span-4 lg:row-start-1">
-            <ProfitChart 
-              sales={sales} 
-              range={profitChartRange} 
-              onRangeChange={setProfitChartRange}
-              totalProfit={totalProfit}
-              totalSales={totalSales}
-            />
-          </div>
-
-          {/* Recent Sales (Mobile: 2nd, Desktop: Row 2, Col 1-6) */}
-          <div className="lg:col-span-full">
-             <RecentSales sales={recentSales} />
-          </div>
-
-          {/* Platform Breakdown (Mobile: 3rd, Desktop: Row 1, Col 5-6) */}
-          <div className="lg:col-span-2 lg:row-start-1">
-            {/* Use platform aggregate when available; fall back to chart-range sales */}
-            {Array.isArray(platformSummary) && platformSummary.length > 0 ? (
-              <PlatformBreakdown
-                sales={platformSummary}
-              />
-            ) : (
-              <PlatformBreakdown sales={sales} />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop-only dashboard layout (rev 2, Mosaic-inspired) */}
-      <div className="hidden lg:block">
-        <div className="px-6 py-8 w-full max-w-7xl mx-auto">
-          {(salesError || inventoryError || salesSummaryError) && (
-            <div className="mb-6">
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {salesSummaryError ? `Sales summary error: ${salesSummaryError.message}` : null}
-                  {salesError ? ` Sales (chart) error: ${salesError.message}` : null}
-                  {inventoryError ? ` Inventory load error: ${inventoryError.message}` : null}
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your business performance</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Tip banner (Desktop only: next to Add Sale) */}
+            <div className="hidden lg:block">
+              <TipOfTheDay variant="banner" />
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" className="border-gray-300 dark:border-gray-700 text-sm">
-                Filter
-              </Button>
               <Link to={createPageUrl("AddSale")}>
                 <Button className="bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
                   <Plus className="w-4 h-4 mr-2" />
@@ -663,70 +421,78 @@ export default function Dashboard() {
               </Link>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-12 gap-6">
-            {/* KPI Row */}
-            <div className="col-span-12 grid grid-cols-3 gap-6">
-              <KpiSparkCard
-                title="Total Profit"
-                value={isLoadingSalesSummary ? "…" : `$${Number(totalProfit || 0).toFixed(0)}`}
-                deltaLabel={null}
-                deltaPositive={true}
-                stroke="#6366f1"
-                data={(sales || []).slice(0, 30).reverse().map((s) => ({ v: Number(s?.profit ?? 0) || 0 }))}
-              />
-              <KpiSparkCard
-                title="Total Sales"
-                value={isLoadingSalesSummary ? "…" : String(totalSales || 0)}
-                deltaLabel={null}
-                deltaPositive={true}
-                stroke="#60a5fa"
-                data={(sales || []).slice(0, 30).reverse().map(() => ({ v: 1 }))}
-              />
-              <KpiSparkCard
-                title="Items in Stock"
-                value={isLoadingInventory ? "…" : String(inventoryStats.totalQuantity || 0)}
-                deltaLabel={null}
-                deltaPositive={true}
-                stroke="#34d399"
-                data={Array.from({ length: 24 }, () => ({ v: 1 }))}
-              />
-            </div>
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          {/* KPI Row */}
+          <div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            <KpiSparkCard
+              title="Total Profit"
+              value={isLoadingSalesSummary ? "…" : `$${Number(totalProfit || 0).toFixed(0)}`}
+              deltaLabel={null}
+              deltaPositive={true}
+              stroke="hsl(var(--po-positive))"
+              data={(sales || []).slice(0, 30).reverse().map((s) => ({ v: Number(s?.profit ?? 0) || 0 }))}
+            />
+            <KpiSparkCard
+              title="Total Sales"
+              value={isLoadingSalesSummary ? "…" : String(totalSales || 0)}
+              deltaLabel={null}
+              deltaPositive={true}
+              stroke="hsl(var(--po-info))"
+              data={(sales || []).slice(0, 30).reverse().map(() => ({ v: 1 }))}
+            />
+            <KpiSparkCard
+              title="Items in Stock"
+              value={isLoadingInventory ? "…" : String(inventoryStats.totalQuantity || 0)}
+              deltaLabel={null}
+              deltaPositive={true}
+              right={
+                <div className="h-12 w-12 rounded-xl bg-muted/40 flex items-center justify-center">
+                  <Box className="h-6 w-6 text-foreground" />
+                </div>
+              }
+            />
+          </div>
 
-            {/* Main chart + side card */}
-            <div className="col-span-8">
-              <ProfitTrendCard
-                sales={sales}
-                range={desktopProfitRange}
-                onRangeChange={setDesktopProfitRange}
-                customRange={desktopCustomRange}
-                onCustomRangeChange={setDesktopCustomRange}
-              />
-            </div>
-            <div className="col-span-4">
-              <PlatformDonutCard rows={platformSummary} title="Platform Revenue" />
-            </div>
+          {/* Main chart + side card */}
+          <div className="col-span-12 lg:col-span-8">
+            <ProfitTrendCard
+              sales={sales}
+              range={desktopProfitRange}
+              onRangeChange={setDesktopProfitRange}
+              customRange={desktopCustomRange}
+              onCustomRangeChange={setDesktopCustomRange}
+            />
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <PlatformDonutCard
+              rows={platformSummary}
+              title="Platform Revenue"
+              reportsHref={createPageUrl("Reports")}
+            />
+          </div>
 
-            {/* Your progress + quick actions */}
-            <div className="col-span-12">
-              <Gamification
-                sales={sales}
-                stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }}
-                variant="mosaic"
-              />
-            </div>
-            <div className="col-span-12">
-              <QuickActions />
-            </div>
+          {/* Tip of the Day (Mobile only: above Your Progress) */}
+          <div className="col-span-12 lg:hidden">
+            <TipOfTheDay variant="banner" />
+          </div>
 
-            {/* Recent sales (restore carousel) */}
-            <div className="col-span-12">
-              <RecentSales sales={recentSales} />
-            </div>
+          {/* Your progress + quick actions */}
+          <div className="col-span-12">
+            <Gamification
+              sales={sales}
+              stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }}
+              variant="mosaic"
+            />
+          </div>
+          <div className="col-span-12">
+            <QuickActions />
+          </div>
 
-            <div className="col-span-12">
-              <TipOfTheDay />
-            </div>
+          {/* Recent sales (carousel) */}
+          <div className="col-span-12">
+            <RecentSales sales={recentSales} />
           </div>
         </div>
       </div>

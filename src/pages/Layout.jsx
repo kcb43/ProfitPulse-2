@@ -48,7 +48,6 @@ const navigationCategories = [
       { title: "Crosslist", url: createPageUrl("Crosslist"), icon: CrossSquareIcon },
       { title: "Add Sale", url: createPageUrl("AddSale"), icon: Plus },
       { title: "Market Intelligence", url: createPageUrl("MarketIntelligence"), icon: TrendingUp },
-      { title: "Settings", url: createPageUrl("Settings"), icon: Settings },
     ]
   },
   {
@@ -86,6 +85,9 @@ const themes = {
       --border: 240 5.9% 90%;
       --input: 240 5.9% 90%;
       --ring: 240 10% 3.9%;
+      --po-positive: 142 71% 45%;
+      --po-info: 212 96% 55%;
+      --po-warning: 38 92% 50%;
     `
   },
 'default-dark': {
@@ -111,6 +113,9 @@ const themes = {
     --border: 213 26% 22%;
     --input: 213 26% 22%;
     --ring: 240 4.9% 83.9%;
+    --po-positive: 142 71% 45%;
+    --po-info: 212 96% 55%;
+    --po-warning: 38 92% 50%;
   `
 },
   'money-green-dark': {
@@ -136,6 +141,9 @@ const themes = {
       --border: 213 26% 22%;
       --input: 213 26% 22%;
       --ring: 142 71% 50%;
+      --po-positive: 142 71% 45%;
+      --po-info: 212 96% 55%;
+      --po-warning: 38 92% 50%;
     `
   }
 };
@@ -179,30 +187,27 @@ export default function Layout({ children }) {
     <SidebarProvider>
       <style>{themeStyles}</style>
       <div className="min-h-screen flex w-full bg-[#FAFAF9] dark:bg-gray-900/95">
-        <Sidebar className="border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950/95 w-[279px]">
-          <SidebarHeader className="border-b border-gray-100 dark:border-gray-800 p-6">
+        <Sidebar className="border-r border-border/60 bg-background w-[252px]">
+          <SidebarHeader className="border-b border-border/60 px-4 py-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                <BarChart3 className="w-6 h-6 text-white" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h2 className="font-bold text-gray-900 dark:text-gray-100 text-lg">Orben</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Reselling Analytics</p>
+                <h2 className="font-bold text-foreground text-base leading-tight">Profit Orbit</h2>
+                <p className="text-xs text-muted-foreground">Reselling Analytics</p>
               </div>
             </div>
           </SidebarHeader>
           
-          <SidebarContent className="px-3.5 pt-4 pb-6">
+          <SidebarContent className="px-2 pt-3 pb-4">
             {navigationCategories.map((category, categoryIndex) => (
               <React.Fragment key={category.title}>
                 {/* Category */}
-                <div className={categoryIndex === navigationCategories.length - 1 ? "" : categoryIndex === 0 ? "-mb-2 md:mb-0" : categoryIndex === 1 ? "-mb-2 md:mb-0" : ""}>
+                <div className={categoryIndex === navigationCategories.length - 1 ? "" : "mb-3"}>
                   {/* Category Header */}
-                  <div className={`flex items-center gap-2.5 px-3.5 py-2 border-l-[3px] border-transparent bg-gradient-to-r from-green-500/10 dark:from-green-500/10 to-transparent transition-all duration-300 ${categoryIndex === 1 ? "mt-0 md:mt-0" : ""}`} style={{ marginBottom: '0px' }}>
-                    <div className="w-5 h-5 rounded-md bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center p-1 shadow-lg shadow-green-500/30">
-                      <category.icon className="w-3 h-3 text-white stroke-[2.5]" />
-                    </div>
-                    <span className="text-[11px] font-bold uppercase tracking-[1.1px] text-slate-400 dark:text-slate-400 sidebar-nav-category-header">
+                  <div className="flex items-center gap-2 px-3 py-1.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                       {category.title}
                     </span>
                   </div>
@@ -213,40 +218,29 @@ export default function Layout({ children }) {
                       const isActive = location.pathname === item.url;
                       const IconComponent = item.icon;
                       return (
-                        <li key={item.title} className="relative transition-all duration-300">
+                        <li key={item.title} className="relative">
                           <Link
                             to={item.url}
                             className={`
-                              flex items-center gap-3 h-[43px] px-4 py-2.5 mx-2 rounded-[10px]
-                              transition-all duration-300 ease-out
-                              relative overflow-hidden
+                              flex items-center gap-3 h-10 px-3 mx-2 rounded-lg
+                              transition-colors duration-150
                               ${isActive
-                                ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white border border-green-500/50 shadow-lg shadow-green-500/40'
-                                : 'text-slate-400 dark:text-slate-400 border border-transparent hover:border-green-500/20 hover:bg-green-500/5 dark:hover:bg-green-500/5'
+                                ? 'bg-emerald-500/15 text-foreground'
+                                : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
                               }
                             `}
                           >
-                            {/* Active background effect */}
-                            {isActive && (
-                              <div className="absolute inset-0 rounded-[12px] bg-gradient-to-br from-green-400/10 to-emerald-500/10 opacity-0 hover:opacity-100 transition-opacity duration-300 -z-10" />
-                            )}
-
                             {/* Icon */}
                             <IconComponent 
                               className={`
-                                w-5 h-5 flex-shrink-0 transition-all duration-300
-                                ${isActive 
-                                  ? 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]' 
-                                  : 'text-slate-400 dark:text-slate-400 sidebar-nav-item-icon'
-                                }
+                                w-4.5 h-4.5 flex-shrink-0
                               `}
-                              strokeWidth={isActive ? 2 : 2}
+                              strokeWidth={2}
                             />
 
                             {/* Text */}
                             <span className={`
-                              text-sm font-medium flex-1 tracking-wide
-                              ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400 sidebar-nav-item-text'}
+                              text-sm font-medium flex-1
                             `}>
                               {item.title}
                             </span>
@@ -260,21 +254,26 @@ export default function Layout({ children }) {
                 {/* Category Divider (except for last category) */}
                 {categoryIndex < navigationCategories.length - 1 && (
                   <div 
-                    className={`h-px bg-gradient-to-r from-transparent via-slate-500/30 to-transparent mx-4 ${categoryIndex === 0 ? "my-1 md:my-2" : categoryIndex === 1 ? "my-1 md:my-2" : "my-2"}`}
-                    style={{ scale: 1, outline: 'none' }}
+                    className="h-px bg-border/60 mx-4 my-2"
                   />
                 )}
               </React.Fragment>
             ))}
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-gray-100 dark:border-gray-800 p-4 space-y-3">
+          <SidebarFooter className="border-t border-border/60 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <UserProfile />
               
+              <Link to={createPageUrl("Settings")} className="inline-flex">
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </Link>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400">
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                     <Palette className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -292,10 +291,10 @@ export default function Layout({ children }) {
               </DropdownMenu>
 
             </div>
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="pt-2 border-t border-border/60">
               <Link
                 to={createPageUrl("PrivacyPolicy")}
-                className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors"
+                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150"
               >
                 <Shield className="w-3 h-3" />
                 <span>Privacy Policy</span>
