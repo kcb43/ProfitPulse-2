@@ -64,6 +64,25 @@ function buildSelectFromFields(fieldsCsv) {
   return fields.length ? fields.join(',') : '*';
 }
 
+function extractMissingColumnFromSupabaseError(message) {
+  const msg = String(message || '');
+  // Example: Could not find the 'images' column of 'inventory_items' in the schema cache
+  const m1 = msg.match(/Could not find the '([^']+)' column of 'inventory_items'/i);
+  if (m1?.[1]) return m1[1];
+  // Example: column inventory_items.images does not exist
+  const m2 = msg.match(/column\s+(?:inventory_items\.)?("?)([a-zA-Z0-9_]+)\1\s+does not exist/i);
+  if (m2?.[2]) return m2[2];
+  return null;
+}
+
+function stripColumnFromSelect(select, col) {
+  const s = String(select || '').trim();
+  if (!s || s === '*') return s;
+  const parts = s.split(',').map((p) => p.trim()).filter(Boolean);
+  const next = parts.filter((p) => p !== col);
+  return next.length ? next.join(',') : '*';
+}
+
 function normalizeImagesFromBody(body) {
   const b = { ...(body || {}) };
 
@@ -134,15 +153,31 @@ async function handleGet(req, res, userId) {
 
   if (id) {
     // Get single item
-    const select = buildSelectFromFields(queryParams.fields);
-    const { data, error } = await supabase
-      .from('inventory_items')
-      .select(select)
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+    let select = buildSelectFromFields(queryParams.fields);
+    let lastError = null;
+    let data = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res1 = await supabase
+        .from('inventory_items')
+        .select(select)
+        .eq('id', id)
+        .eq('user_id', userId)
+        .single();
+      if (!res1.error) {
+        data = res1.data;
+        lastError = null;
+        break;
+      }
+      lastError = res1.error;
+      const missing = extractMissingColumnFromSupabaseError(res1.error.message);
+      if (!missing) break;
+      const next = stripColumnFromSelect(select, missing);
+      if (next === select) break;
+      select = next;
+    }
 
-    if (error) {
+    if (lastError) {
       return res.status(404).json({ error: 'Item not found' });
     }
 
@@ -163,7 +198,7 @@ async function handleGet(req, res, userId) {
     const wantCount = String(queryParams.count || '').toLowerCase() === 'true' || paged;
     const limit = parsePositiveInt(queryParams.limit) || (paged ? 50 : null);
     const offset = parseNonNegativeInt(queryParams.offset);
-    const select = buildSelectFromFields(queryParams.fields);
+    let select = buildSelectFromFields(queryParams.fields);
     const search = queryParams.search ? String(queryParams.search).trim() : '';
     const status = queryParams.status ? String(queryParams.status).trim() : '';
     const excludeStatus = queryParams.exclude_status ? String(queryParams.exclude_status).trim() : '';
@@ -172,59 +207,81 @@ async function handleGet(req, res, userId) {
       ? idsCsv.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 5000)
       : null;
 
-    let query = supabase
-      .from('inventory_items')
-      .select(select, wantCount ? { count: 'exact' } : undefined)
-      .eq('user_id', userId);
+    const runQuery = async (selectStr) => {
+      let query = supabase
+        .from('inventory_items')
+        .select(selectStr, wantCount ? { count: 'exact' } : undefined)
+        .eq('user_id', userId);
 
-    if (ids && ids.length) {
-      query = query.in('id', ids);
-    }
-
-    if (search) {
-      // Allow searching by item name, category, or source (UI expects this).
-      const q = `%${search}%`;
-      query = query.or(`item_name.ilike.${q},category.ilike.${q},source.ilike.${q}`);
-    }
-
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    if (excludeStatus) {
-      query = query.neq('status', excludeStatus);
-    }
-
-    // Default behavior: hide deleted items unless explicitly requested.
-    if (deletedOnly) {
-      query = query.not('deleted_at', 'is', null);
-    } else if (!includeDeleted) {
-      query = query.is('deleted_at', null);
-    }
-
-    // Handle sorting
-    if (queryParams.sort) {
-      const sortField = queryParams.sort.startsWith('-') 
-        ? queryParams.sort.substring(1) 
-        : queryParams.sort;
-      const ascending = !queryParams.sort.startsWith('-');
-      query = query.order(sortField, { ascending });
-    } else {
-      query = query.order('purchase_date', { ascending: false });
-    }
-
-    if (limit) {
-      if (offset !== null && offset !== undefined) {
-        query = query.range(offset, offset + limit - 1);
-      } else {
-        query = query.limit(limit);
+      if (ids && ids.length) {
+        query = query.in('id', ids);
       }
+
+      if (search) {
+        // Allow searching by item name, category, or source (UI expects this).
+        const q = `%${search}%`;
+        query = query.or(`item_name.ilike.${q},category.ilike.${q},source.ilike.${q}`);
+      }
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      if (excludeStatus) {
+        query = query.neq('status', excludeStatus);
+      }
+
+      // Default behavior: hide deleted items unless explicitly requested.
+      if (deletedOnly) {
+        query = query.not('deleted_at', 'is', null);
+      } else if (!includeDeleted) {
+        query = query.is('deleted_at', null);
+      }
+
+      // Handle sorting
+      if (queryParams.sort) {
+        const sortField = queryParams.sort.startsWith('-')
+          ? queryParams.sort.substring(1)
+          : queryParams.sort;
+        const ascending = !queryParams.sort.startsWith('-');
+        query = query.order(sortField, { ascending });
+      } else {
+        query = query.order('purchase_date', { ascending: false });
+      }
+
+      if (limit) {
+        if (offset !== null && offset !== undefined) {
+          query = query.range(offset, offset + limit - 1);
+        } else {
+          query = query.limit(limit);
+        }
+      }
+
+      return query;
+    };
+
+    let data = null;
+    let count = null;
+    let lastError = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      // eslint-disable-next-line no-await-in-loop
+      const { data: d, error: e, count: c } = await runQuery(select);
+      if (!e) {
+        data = d || [];
+        count = c;
+        lastError = null;
+        break;
+      }
+      lastError = e;
+      const missing = extractMissingColumnFromSupabaseError(e.message);
+      if (!missing) break;
+      const next = stripColumnFromSelect(select, missing);
+      if (next === select) break;
+      select = next;
     }
 
-    const { data, error, count } = await query;
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
+    if (lastError) {
+      return res.status(500).json({ error: lastError.message });
     }
 
     if (paged) {

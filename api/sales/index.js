@@ -289,7 +289,9 @@ async function handleGet(req, res, userId) {
     }
     if (needsReview) {
       // NOTE: This is an OR filter. UI should avoid combining needs_review with searchTerm.
-      query = query.or('inventory_id.is.null,purchase_date.is.null,source.is.null,category.is.null');
+      // We intentionally do NOT include inventory_id here — many older rows may not have it,
+      // and that would make "Needs Review" too broad and appear to "do nothing".
+      query = query.or('purchase_date.is.null,source.is.null,category.is.null');
     }
     if (platform) {
       query = query.eq('platform', platform);

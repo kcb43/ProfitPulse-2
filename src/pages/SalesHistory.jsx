@@ -240,12 +240,17 @@ export default function SalesHistory() {
   });
 
   const isNeedsReviewSale = React.useCallback((sale) => {
+    // Keep this consistent with the server's needs_review filter:
+    // focus on missing purchase_date/source/category (NOT inventory_id).
     return (
-      !sale?.inventory_id ||
       !sale?.purchase_date ||
       !sale?.source ||
       !sale?.category
     );
+  }, []);
+
+  const isMissingInventoryLink = React.useCallback((sale) => {
+    return !sale?.inventory_id;
   }, []);
 
   const { data: needsReviewCountPage } = useQuery({
@@ -1762,7 +1767,7 @@ export default function SalesHistory() {
                             >
                               <ArchiveRestore className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </Button>
-                            {isNeedsReviewSale(sale) && (
+                            {(isNeedsReviewSale(sale) || isMissingInventoryLink(sale)) && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1969,7 +1974,7 @@ export default function SalesHistory() {
                                     Copy
                                   </Button>
                                 </Link>
-                                {isNeedsReviewSale(sale) && (
+                                {(isNeedsReviewSale(sale) || isMissingInventoryLink(sale)) && (
                                   <Button
                                     variant="outline"
                                     onClick={() => {

@@ -86,7 +86,7 @@ export default async function handler(req, res) {
     if (category === '__uncategorized') query = query.is('category', null);
     else query = query.eq('category', category);
   }
-  if (needsReview) query = query.or('inventory_id.is.null,purchase_date.is.null,source.is.null,category.is.null');
+  if (needsReview) query = query.or('purchase_date.is.null,source.is.null,category.is.null');
   if (platform) query = query.eq('platform', platform);
   if (Number.isFinite(minProfit)) query = query.gte('profit', minProfit);
   if (Number.isFinite(maxProfit)) query = query.lte('profit', maxProfit);
