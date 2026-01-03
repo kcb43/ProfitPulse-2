@@ -1331,9 +1331,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
             </div>
           </DialogHeader>
 
-          <div className="ant-modal-body flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden p-3 sm:p-4" style={{ scale: 1, outline: 'none' }}>
+          <div className="ant-modal-body flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden p-2 sm:p-4" style={{ scale: 1, outline: 'none' }}>
             {/* Compact Sidebar */}
-            <div className="w-full md:w-[220px] bg-gray-50 backdrop-blur-sm md:border-r border-gray-200 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 flex-shrink-0 max-h-[38dvh] md:max-h-none order-1">
+            <div className="w-full md:w-[220px] bg-gray-50 backdrop-blur-sm md:border-r border-gray-200 overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 flex-shrink-0 max-h-[30dvh] md:max-h-none order-1">
               {/* Template Section - Compact */}
               <div className="space-y-2">
                 <Select
@@ -1581,9 +1581,9 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
           </div>
 
             {/* Main Content - Image preview */}
-            <div className="w-full md:flex-1 flex flex-col min-w-0 flex-1 overflow-hidden bg-transparent dark:bg-transparent mt-3 md:mt-0 md:pl-3 order-2" style={{ scale: 1, outline: 'none' }}>
+            <div className="w-full md:flex-1 flex flex-col min-w-0 flex-1 overflow-hidden bg-transparent dark:bg-transparent mt-2 md:mt-0 md:pl-3 order-2" style={{ scale: 1, outline: 'none' }}>
               <div 
-                className={`image-edit-container w-full flex-1 min-h-[45dvh] md:min-h-0 overflow-hidden flex items-center justify-center rounded-lg ${isCropping ? 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700'}`}
+                className={`image-edit-container w-full flex-1 min-h-[58dvh] md:min-h-0 overflow-hidden flex items-center justify-center rounded-lg ${isCropping ? 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700'}`}
                 style={{ 
                   scale: 1,
                   outline: 'none'
@@ -1591,7 +1591,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               >
                 {imgSrc && (
                   <div
-                    className="relative flex items-center justify-center pb-16 md:pb-0"
+                    className="relative flex items-center justify-center pb-20 md:pb-0"
                     style={{ outline: 'none', border: 'none', width: '100%', height: '100%', backgroundColor: 'rgba(255, 255, 255, 1)' }}
                   >
                     {/* Image edited checkmark - top right */}
