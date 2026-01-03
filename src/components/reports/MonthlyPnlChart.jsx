@@ -56,30 +56,35 @@ export default function MonthlyPnlChart({ sales, rangeLabel }) {
       }));
   }, [sales]);
 
+  const gridStroke = "hsl(var(--border))";
+  const tickColor = "hsl(var(--muted-foreground))";
+  const tooltipBg = "hsl(var(--popover))";
+  const tooltipFg = "hsl(var(--foreground))";
+
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-lg">
+      <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:border-white/10 dark:bg-zinc-950">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-sm text-white/60">Monthly P&L</div>
-            <div className="text-lg font-semibold text-white">Revenue vs Costs</div>
+            <div className="text-sm text-muted-foreground">Monthly P&amp;L</div>
+            <div className="text-lg font-semibold text-foreground">Revenue vs Costs</div>
           </div>
         </div>
         <div className="h-64 flex items-center justify-center">
-          <div className="text-sm text-white/40">Not enough sales in this range to render the chart.</div>
+          <div className="text-sm text-muted-foreground">Not enough sales in this range to render the chart.</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-lg">
+    <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:border-white/10 dark:bg-zinc-950">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-sm text-white/60">Monthly P&L</div>
-          <div className="text-lg font-semibold text-white">Revenue vs Costs</div>
+          <div className="text-sm text-muted-foreground">Monthly P&amp;L</div>
+          <div className="text-lg font-semibold text-foreground">Revenue vs Costs</div>
         </div>
-        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+        <div className="rounded-full border border-border/60 bg-muted/20 px-3 py-1 text-xs text-muted-foreground dark:border-white/10 dark:bg-white/5">
           Profit highlighted
         </div>
       </div>
@@ -87,26 +92,27 @@ export default function MonthlyPnlChart({ sales, rangeLabel }) {
       <div className="h-64 md:h-96 lg:h-[420px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>
-            <CartesianGrid strokeDasharray="3 6" stroke="rgba(255,255,255,0.06)" />
+            <CartesianGrid strokeDasharray="3 6" stroke={gridStroke} />
             <XAxis
               dataKey="month"
-              tick={{ fill: 'rgba(255,255,255,0.6)' }}
+              tick={{ fill: tickColor }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: 'rgba(255,255,255,0.6)' }}
+              tick={{ fill: tickColor }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(value) => `$${value.toFixed(0)}`}
             />
             <Tooltip
               contentStyle={{
-                background: 'rgba(10,10,10,0.95)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: tooltipBg,
+                color: tooltipFg,
+                border: `1px solid ${gridStroke}`,
                 borderRadius: 12,
               }}
-              labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
+              labelStyle={{ color: tickColor }}
               formatter={(value) => `$${Number(value).toFixed(2)}`}
             />
             <Area
@@ -136,10 +142,10 @@ export default function MonthlyPnlChart({ sales, rangeLabel }) {
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
         {data.slice(-3).map((d) => (
-          <div key={d.month} className="rounded-xl border border-white/10 bg-white/5 p-2">
-            <div className="text-white/60">{d.month}</div>
-            <div className="text-white font-semibold">${Math.round(d.profit || 0).toLocaleString()}</div>
-            <div className="text-white/50">profit</div>
+          <div key={d.month} className="rounded-xl border border-border/60 bg-muted/20 p-2 dark:border-white/10 dark:bg-white/5">
+            <div className="text-muted-foreground">{d.month}</div>
+            <div className="text-foreground font-semibold">${Math.round(d.profit || 0).toLocaleString()}</div>
+            <div className="text-muted-foreground">profit</div>
           </div>
         ))}
       </div>

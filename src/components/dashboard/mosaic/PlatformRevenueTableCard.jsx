@@ -51,7 +51,7 @@ function fmtPct(n) {
 
 export default function PlatformRevenueTableCard({
   rows,
-  title = "Platform Revenue",
+  title = "Platform Performance",
   reportsHref,
 }) {
   const data = React.useMemo(() => {
@@ -108,19 +108,20 @@ export default function PlatformRevenueTableCard({
                 key={d.key}
                 className="grid grid-cols-[minmax(0,1fr)_84px_64px_92px] gap-3 py-3 text-sm"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-9 w-9 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {d.icon ? (
-                      <img src={d.icon} alt={d.name} className="h-5 w-5 object-contain" />
-                    ) : (
-                      <span className="text-xs font-bold text-muted-foreground">
-                        {String(d.name || "?").slice(0, 1).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-foreground truncate">{d.name}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">Revenue {fmtMoney(d.revenue)}</div>
+                <div className="flex items-center justify-start min-w-0">
+                  <div className="flex flex-col items-center gap-1 min-w-0">
+                    <div className="h-9 w-9 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {d.icon ? (
+                        <img src={d.icon} alt={d.name} className="h-5 w-5 object-contain" />
+                      ) : (
+                        <span className="text-xs font-bold text-muted-foreground">
+                          {String(d.name || "?").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] font-semibold text-foreground truncate max-w-[140px] text-center">
+                      {d.name}
+                    </div>
                   </div>
                 </div>
 
@@ -144,20 +145,17 @@ export default function PlatformRevenueTableCard({
               key={d.key}
               className="rounded-2xl border border-border/60 bg-card/60 px-4 py-3"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="h-9 w-9 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <div className="flex flex-col items-center gap-2">
+                <div className="h-10 w-10 rounded-full border border-border/60 bg-muted/30 flex items-center justify-center overflow-hidden">
                   {d.icon ? (
-                    <img src={d.icon} alt={d.name} className="h-5 w-5 object-contain" />
+                    <img src={d.icon} alt={d.name} className="h-6 w-6 object-contain" />
                   ) : (
-                    <span className="text-xs font-bold text-muted-foreground">
+                    <span className="text-sm font-bold text-muted-foreground">
                       {String(d.name || "?").slice(0, 1).toUpperCase()}
                     </span>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-foreground truncate">{d.name}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">Revenue {fmtMoney(d.revenue)}</div>
-                </div>
+                <div className="text-sm font-semibold text-foreground text-center">{d.name}</div>
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-2">

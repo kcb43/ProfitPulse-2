@@ -390,22 +390,22 @@ export default function ProfitCalendar() {
 
           {/* KPI Cards Section */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 md:px-6 md:pb-4">
-            <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-lg">
-              <div className="text-sm text-white/60">Revenue</div>
-              <div className="mt-1 text-2xl font-semibold text-white">${Math.round(monthlyRevenue || 0).toLocaleString()}</div>
-              <div className="mt-2 text-xs text-blue-400/80">This month</div>
+            <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:border-white/10 dark:bg-zinc-950">
+              <div className="text-sm text-muted-foreground">Revenue</div>
+              <div className="mt-1 text-2xl font-semibold text-foreground dark:text-white">${Math.round(monthlyRevenue || 0).toLocaleString()}</div>
+              <div className="mt-2 text-xs text-blue-600/80 dark:text-blue-400/80">This month</div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-lg">
-              <div className="text-sm text-white/60">Costs</div>
-              <div className="mt-1 text-2xl font-semibold text-white">${Math.round(monthlyCosts || 0).toLocaleString()}</div>
-              <div className="mt-2 text-xs text-orange-400/80">This month</div>
+            <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:border-white/10 dark:bg-zinc-950">
+              <div className="text-sm text-muted-foreground">Costs</div>
+              <div className="mt-1 text-2xl font-semibold text-foreground dark:text-white">${Math.round(monthlyCosts || 0).toLocaleString()}</div>
+              <div className="mt-2 text-xs text-orange-600/80 dark:text-orange-400/80">This month</div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-lg">
-              <div className="text-sm text-white/60">Profit Margin</div>
-              <div className="mt-1 text-2xl font-semibold text-white">
+            <div className="rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:border-white/10 dark:bg-zinc-950">
+              <div className="text-sm text-muted-foreground">Profit Margin</div>
+              <div className="mt-1 text-2xl font-semibold text-foreground dark:text-white">
                 {monthlyRevenue ? `${Math.round((monthlyProfit / monthlyRevenue) * 1000) / 10}%` : '0%'}
               </div>
-              <div className="mt-2 text-xs text-green-400/80">This month</div>
+              <div className="mt-2 text-xs text-emerald-600/80 dark:text-green-400/80">This month</div>
             </div>
 
           </div>

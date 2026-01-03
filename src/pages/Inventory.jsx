@@ -1935,11 +1935,7 @@ export default function InventoryPage() {
                             setItemToView(item);
                             setViewDialogOpen(true);
                           }}
-                          className={`w-full text-white font-semibold py-2 px-3 rounded-md text-center transition-all shadow-md leading-tight text-xs ${
-                            item.status === 'listed' 
-                              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
-                              : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                          }`}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-md text-center transition-all shadow-md leading-tight text-xs"
                         >
                           View Details
                         </Button>
@@ -1960,11 +1956,7 @@ export default function InventoryPage() {
                             setItemToView(item);
                             setViewDialogOpen(true);
                           }}
-                          className={`flex-1 text-white font-semibold py-2 px-2 rounded-md text-center transition-all shadow-md leading-tight text-[11px] ${
-                            item.status === 'listed' 
-                              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
-                              : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                          }`}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-2 rounded-md text-center transition-all shadow-md leading-tight text-[11px]"
                         >
                           View Details
                         </Button>
@@ -2163,11 +2155,7 @@ export default function InventoryPage() {
                                 setItemToView(item);
                                 setViewDialogOpen(true);
                               }}
-                              className={`w-full text-white font-semibold rounded-xl text-xs h-9 shadow-sm ${
-                                item.status === 'listed' 
-                                  ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
-                                  : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                              }`}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs h-9 shadow-sm"
                             >
                               View Details
                             </Button>
@@ -2331,18 +2319,40 @@ export default function InventoryPage() {
 
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(item.id)}
-                          className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent transition ${
-                            favoriteMarked
-                              ? "bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
-                              : "text-gray-700 dark:text-gray-300 hover:text-amber-500 hover:bg-amber-500/10"
-                          }`}
-                        >
-                          <Star className={`h-4 w-4 ${favoriteMarked ? "fill-current" : ""}`} />
-                          <span className="sr-only">{favoriteButtonLabel}</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(item.id)}
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent transition ${
+                              favoriteMarked
+                                ? "bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
+                                : "text-gray-700 dark:text-gray-300 hover:text-amber-500 hover:bg-amber-500/10"
+                            }`}
+                            title={favoriteButtonLabel}
+                          >
+                            <Star className={`h-4 w-4 ${favoriteMarked ? "fill-current" : ""}`} />
+                            <span className="sr-only">{favoriteButtonLabel}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSoldDialogName(item.item_name || "");
+                              setSoldDialogOpen(true);
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent transition text-muted-foreground hover:text-blue-600 hover:bg-blue-600/10"
+                            title="Search"
+                          >
+                            <BarChart className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClick(item)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent transition text-muted-foreground hover:text-red-600 hover:bg-red-600/10"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                         <div className="flex items-center gap-2">
                           {/* Edit Photo Button */}
                           {item.image_url && item.image_url !== DEFAULT_IMAGE_URL && (
@@ -2526,11 +2536,7 @@ export default function InventoryPage() {
                             setItemToView(item);
                             setViewDialogOpen(true);
                           }}
-                          className={`w-full text-white font-semibold text-xs shadow-md ${
-                            item.status === 'listed' 
-                              ? 'bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600' 
-                              : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                          }`}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md"
                         >
                           View Details
                         </Button>
@@ -2567,18 +2573,6 @@ export default function InventoryPage() {
                                 Mark Sold
                               </Button>
                             )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSoldDialogName(item.item_name || "");
-                                setSoldDialogOpen(true);
-                              }}
-                              className="w-full dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:text-white text-xs h-8"
-                            >
-                              <BarChart className="w-3.5 h-3.5 mr-1" />
-                              Search
-                            </Button>
                             <Link
                               to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
                               state={returnStateForInventory}
@@ -2603,16 +2597,6 @@ export default function InventoryPage() {
                                 List on FB
                               </Button>
                             )}
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleDeleteClick(item)} 
-                              disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-xs border-red-600/50"
-                            >
-                              <Trash2 className="w-3 h-3 mr-1" />
-                              Delete
-                            </Button>
                           </div>
                         )}
                       </div>

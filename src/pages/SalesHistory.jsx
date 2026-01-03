@@ -1472,7 +1472,7 @@ export default function SalesHistory() {
                             )}
                             <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="block">
                               <Button 
-                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm"
                               >
                                 View Details
                               </Button>
@@ -1669,7 +1669,7 @@ export default function SalesHistory() {
                       {/* View Details Button */}
                       <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full min-w-0 flex justify-center">
                         <Button 
-                          className="bg-gradient-to-r from-indigo-600 via-indigo-600 to-purple-600 hover:from-indigo-500 hover:via-indigo-600 hover:to-purple-500 text-white font-semibold py-0.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 text-[7px] sm:text-xs"
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-0.5 sm:py-1.5 px-1 sm:px-3 rounded-md sm:rounded-xl text-center transition-all duration-200 active:scale-95 shadow-md text-[7px] sm:text-xs"
                           style={{ letterSpacing: '0.3px', fontSize: '7px', width: 'auto', minWidth: '60px', maxWidth: '70px', boxSizing: 'border-box' }}
                         >
                           <span className="whitespace-nowrap">
@@ -1934,7 +1934,7 @@ export default function SalesHistory() {
                           {/* Actions */}
                           <div className="p-4 bg-gray-50/80 dark:bg-slate-800/40 flex flex-col gap-2">
                             <Link to={createPageUrl(`SoldItemDetail?id=${sale.id}&expandFees=true`)} className="w-full">
-                              <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl text-xs h-9 shadow-sm shadow-indigo-500/20">
+                              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs h-9 shadow-sm">
                                 View Details
                               </Button>
                             </Link>

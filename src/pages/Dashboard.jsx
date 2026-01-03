@@ -585,7 +585,7 @@ export default function Dashboard() {
           <div className="col-span-12 lg:col-span-4">
             <PlatformRevenueTableCard
               rows={platformSummary}
-              title="Platform Revenue"
+              title="Platform Performance"
               reportsHref={createPageUrl("Reports")}
             />
           </div>

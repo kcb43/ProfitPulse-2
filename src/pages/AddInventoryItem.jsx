@@ -798,16 +798,16 @@ export default function AddInventoryItem() {
                       type="button"
                       onClick={() => photoInputRef.current?.click()}
                       disabled={uploadingPhotos}
-                      className="flex aspect-square w-full max-w-md flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/50 text-muted-foreground transition hover:border-foreground/80 hover:text-foreground disabled:opacity-50"
+                      className="relative aspect-square w-32 sm:w-40 md:w-52 rounded-2xl border-2 border-dashed border-muted-foreground/40 bg-muted/20 flex items-center justify-center overflow-hidden transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:border-primary hover:bg-primary/5 cursor-pointer"
                     >
                       {uploadingPhotos ? (
-                        <Loader2 className="w-8 h-8 animate-spin" />
+                        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                       ) : (
-                        <>
-                          <Camera className="w-8 h-8 mb-2" />
-                          <span className="text-sm font-medium">Add photos</span>
-                          <span className="text-xs text-muted-foreground/70 mt-1">Upload up to {MAX_PHOTOS} photos</span>
-                        </>
+                        <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                          <Camera className="w-7 h-7 sm:w-9 sm:h-9" />
+                          <span className="text-xs sm:text-sm font-medium">Add item photo</span>
+                          <span className="text-[11px] sm:text-xs text-muted-foreground/70">Tap to upload</span>
+                        </div>
                       )}
                     </button>
                   )}
