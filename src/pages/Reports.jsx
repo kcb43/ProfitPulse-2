@@ -106,9 +106,7 @@ export default function ReportsPage() {
       }
       return data;
     },
-    initialData: [],
-    staleTime: 0,
-    refetchOnMount: 'always',
+    placeholderData: [],
   });
 
   // Filter out soft-deleted sales

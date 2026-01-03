@@ -51,7 +51,7 @@ export default function GalleryPage() {
         ].join(','),
       });
     },
-    initialData: [],
+    placeholderData: [],
   });
 
   useEffect(() => {

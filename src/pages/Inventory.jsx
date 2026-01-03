@@ -147,12 +147,35 @@ export default function InventoryPage() {
     return updates;
   };
 
+  const inventoryFields = React.useMemo(() => ([
+    'id',
+    'item_name',
+    'status',
+    'purchase_price',
+    'purchase_date',
+    'quantity',
+    'quantity_sold',
+    'return_deadline',
+    'return_deadline_dismissed',
+    'deleted_at',
+    'image_url',
+    'images',
+    'source',
+    'category',
+    'notes',
+    'created_at',
+  ].join(',')), []);
+
   const { data: inventoryItems, isLoading } = useQuery({
     queryKey: ['inventoryItems', 'inventory'],
     // Include deleted items so "Show Deleted" can work reliably.
     // Other pages (Dashboard/Crosslist) still use the default list behavior (exclude deleted).
-    queryFn: () => base44.entities.InventoryItem.list('-purchase_date', { include_deleted: 'true' }),
-    initialData: [],
+    queryFn: () => base44.entities.InventoryItem.list('-purchase_date', {
+      include_deleted: 'true',
+      limit: 5000,
+      fields: inventoryFields,
+    }),
+    placeholderData: [],
     notifyOnChangeProps: 'all', // Ensure we get notified of all changes for optimistic updates
   });
 

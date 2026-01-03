@@ -190,7 +190,7 @@ export default function Dashboard() {
   } = useQuery({
     queryKey: ['salesSummary'],
     queryFn: () => apiGetJson('/api/sales/summary'),
-    initialData: { totalProfit: 0, totalRevenue: 0, totalSales: 0 },
+    placeholderData: { totalProfit: 0, totalRevenue: 0, totalSales: 0 },
   });
 
   // IMPORTANT: keep Dashboard chart inputs consistent with Sales History.
@@ -228,7 +228,7 @@ export default function Dashboard() {
       qs.set('fields', salesFields);
       return apiGetJson(`/api/sales?${qs.toString()}`);
     },
-    initialData: [],
+    placeholderData: [],
   });
 
   // Filter out soft-deleted sales for dashboard calculations and display
@@ -247,14 +247,14 @@ export default function Dashboard() {
       qs.set('fields', salesFields);
       return apiGetJson(`/api/sales?${qs.toString()}`);
     },
-    initialData: [],
+    placeholderData: [],
   });
 
   // Platform performance: use server-side aggregate for correctness + speed.
   const { data: platformSummary = [], isLoading: isLoadingPlatformSummary } = useQuery({
     queryKey: ['sales', 'dashboard', 'platformSummary'],
     queryFn: () => apiGetJson('/api/sales/platform-summary'),
-    initialData: [],
+    placeholderData: [],
   });
   
   // Inventory query: use a distinct cache key so other pages (Inventory/Crosslist) don't overwrite it
@@ -280,7 +280,7 @@ export default function Dashboard() {
       qs.set('fields', inventoryFields);
       return apiGetJson(`/api/inventory?${qs.toString()}`);
     },
-    initialData: [],
+    placeholderData: [],
   });
 
   // Memo to calculate items with upcoming return deadlines

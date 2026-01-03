@@ -362,12 +362,34 @@ export default function Crosslist() {
     "Zara",
   ];
 
+  const inventoryFields = React.useMemo(() => ([
+    'id',
+    'item_name',
+    'status',
+    'purchase_price',
+    'purchase_date',
+    'category',
+    'source',
+    'image_url',
+    'images',
+    'deleted_at',
+    'marketplace_listings',
+    'ebay_listing_id',
+    'facebook_listing_id',
+    'mercari_listing_id',
+    'etsy_listing_id',
+    'poshmark_listing_id',
+  ].join(',')), []);
+
   const { data: inventory = [], isLoading, refetch: refetchInventory } = useQuery({
     queryKey: ["inventoryItems", "crosslist"],
-    queryFn: () => base44.entities.InventoryItem.list("-purchase_date"),
-    initialData: [],
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Always consider data stale so it refetches
+    queryFn: () => base44.entities.InventoryItem.list("-purchase_date", {
+      limit: 5000,
+      fields: inventoryFields,
+    }),
+    placeholderData: [],
+    // Avoid churn; user can pull-to-refresh by reloading or using in-app actions.
+    refetchOnWindowFocus: false,
   });
 
   const crosslistableItems = useMemo(

@@ -99,9 +99,7 @@ export default function ProfitCalendar() {
       }
       return data;
     },
-    initialData: [],
-    staleTime: 0,
-    refetchOnMount: 'always',
+    placeholderData: [],
   });
 
   // Filter out soft-deleted sales
