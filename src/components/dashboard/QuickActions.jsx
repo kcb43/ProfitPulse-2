@@ -27,7 +27,8 @@ export default function QuickActions() {
       icon: Layers,
       link: createPageUrl("Crosslist"),
       gradient: "from-cyan-500 via-sky-500 to-blue-600",
-      shadow: "shadow-sky-500/30"
+      shadow: "shadow-sky-500/30",
+      hoverBorder: "hover:border-blue-500/40 dark:hover:border-blue-400/30"
     },
     {
       title: "View Reports",
@@ -35,7 +36,8 @@ export default function QuickActions() {
       icon: BarChart3,
       link: createPageUrl("Reports"),
       gradient: "from-orange-500 via-amber-500 to-yellow-600",
-      shadow: "shadow-orange-500/30"
+      shadow: "shadow-orange-500/30",
+      hoverBorder: "hover:border-orange-500/40 dark:hover:border-orange-400/30"
     }
   ];
 
@@ -49,7 +51,9 @@ export default function QuickActions() {
             <Link
               key={action.title}
               to={action.link}
-              className="relative rounded-xl p-4 sm:p-8 lg:p-12 backdrop-blur-[10px] bg-card/60 border border-border/60 hover:border-emerald-500/30 dark:hover:border-emerald-400/25 shadow-[rgba(0,0,0,0.06)_0px_4px_12px] dark:shadow-[rgba(0,0,0,0.18)_0px_8px_16px] hover:shadow-[rgba(0,0,0,0.10)_0px_6px_16px] dark:hover:shadow-[rgba(0,0,0,0.22)_0px_10px_20px] transition-all duration-200 text-center group hover:scale-[1.01] hover:-translate-y-0.5"
+              className={`relative rounded-xl p-4 sm:p-8 lg:p-12 backdrop-blur-[10px] bg-card/60 border border-border/60 ${
+                action.hoverBorder || "hover:border-emerald-500/30 dark:hover:border-emerald-400/25"
+              } shadow-[rgba(0,0,0,0.06)_0px_4px_12px] dark:shadow-[rgba(0,0,0,0.18)_0px_8px_16px] hover:shadow-[rgba(0,0,0,0.10)_0px_6px_16px] dark:hover:shadow-[rgba(0,0,0,0.22)_0px_10px_20px] transition-all duration-200 text-center group hover:scale-[1.01] hover:-translate-y-0.5`}
             >
               {/* Icon with gradient background */}
               <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 mx-auto mb-2 sm:mb-3 lg:mb-4 rounded-xl flex items-center justify-center bg-gradient-to-br ${action.gradient} shadow-lg ${action.shadow}`}>

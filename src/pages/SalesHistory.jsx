@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { stripCustomFeeNotes } from "@/utils/customFees";
 import { useToast } from "@/components/ui/use-toast";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const platformIcons = {
   ebay: "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg",
@@ -126,9 +127,15 @@ export default function SalesHistory() {
     sale_date: "",
   });
   const [viewMode, setViewMode] = useState("grid"); // "list" or "grid" (grid = inventory-style rows)
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Mobile-only: keep Sales History in Grid view (no List view on mobile)
+  React.useEffect(() => {
+    if (isMobile && viewMode !== "grid") setViewMode("grid");
+  }, [isMobile, viewMode]);
 
   const { data: rawSales, isLoading } = useQuery({
     queryKey: ['sales', 'salesHistory'],
@@ -842,14 +849,16 @@ export default function SalesHistory() {
             <h1 className="text-3xl font-bold text-foreground break-words">Sales History</h1>
             <p className="text-muted-foreground mt-1 break-words">View and manage all your sales</p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
-            className="flex-shrink-0"
-          >
-            {viewMode === "list" ? <Grid2X2 className="w-4 h-4 mr-2" /> : <Rows className="w-4 h-4 mr-2" />}
-            {viewMode === "list" ? "Grid View" : "List View"}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="outline"
+              onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+              className="flex-shrink-0"
+            >
+              {viewMode === "list" ? <Grid2X2 className="w-4 h-4 mr-2" /> : <Rows className="w-4 h-4 mr-2" />}
+              {viewMode === "list" ? "Grid View" : "List View"}
+            </Button>
+          )}
         </div>
 
         <Card className="border-0 shadow-lg mb-6">

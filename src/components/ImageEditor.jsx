@@ -30,6 +30,7 @@ import {
   CheckCircle,
   Layers
 } from 'lucide-react';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * Advanced Image Editor Component
@@ -46,6 +47,7 @@ import {
  */
 export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = 'edited-image.jpg', allImages = [], onApplyToAll, itemId, onAddImage }) {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [imgSrc, setImgSrc] = useState(null);
   const [originalImgSrc, setOriginalImgSrc] = useState(null);
   const [filters, setFilters] = useState({
@@ -634,7 +636,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
       };
 
       img.src = imgSrc;
-    }, 80);
+    }, 40);
 
     return () => {
       if (previewRenderTimerRef.current) {
@@ -1600,7 +1602,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
               >
                 {imgSrc && (
                   <div
-                    className="relative flex items-center justify-center pb-20 md:pb-0"
+                    className="relative flex items-center justify-center pb-24 md:pb-0 pt-3 md:pt-0"
                     style={{ outline: 'none', border: 'none', width: '100%', height: '100%', backgroundColor: 'rgba(255, 255, 255, 1)' }}
                   >
                     {/* Image edited checkmark - top right */}
@@ -1674,7 +1676,7 @@ export function ImageEditor({ open, onOpenChange, imageSrc, onSave, fileName = '
                     {/* Rotate buttons overlay - always visible */}
                     <div style={{
                       position: 'absolute',
-                      bottom: '12px',
+                      bottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 64px)' : '12px',
                       left: '50%',
                       transform: 'translateX(-50%)',
                       display: 'flex',

@@ -1710,14 +1710,14 @@ export default function Crosslist() {
             })}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 w-full max-w-full overflow-hidden">
             {filtered.map((it) => {
               const map = computeListingState(it);
               const listedCount = Object.values(map).filter(Boolean).length;
               return (
                 <Card 
                   key={it.id} 
-                  className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] border-gray-200 dark:border-slate-700/50 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 shadow-sm dark:shadow-lg"
+                  className="group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] border-gray-200 dark:border-slate-700/50 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 shadow-sm dark:shadow-lg max-w-full"
                   style={{
                     borderRadius: '16px',
                   }}
@@ -1732,7 +1732,7 @@ export default function Crosslist() {
                         src={it.image_url || "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"}
                         alt={it.item_name}
                         fallback="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/4abea2f77_box.png"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover max-w-full"
                         lazy={true}
                       />
                     </div>

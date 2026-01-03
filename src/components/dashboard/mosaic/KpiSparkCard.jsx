@@ -45,7 +45,7 @@ export default function KpiSparkCard({
             </div>
           </div>
           {right ? (
-            <div className="flex items-center justify-center h-14 w-14">{right}</div>
+            <div className="flex items-center justify-end h-14 min-w-[56px]">{right}</div>
           ) : (
             <div className="h-14 w-28">
               <ResponsiveContainer width="100%" height="100%">

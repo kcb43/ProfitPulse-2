@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, differenceInDays, isAfter } from "date-fns";
-import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database, ImageIcon, ArchiveRestore, Archive, Grid2X2, Rows, Check, Facebook, Search } from "lucide-react";
+import { Plus, Package, DollarSign, Trash2, Edit, ShoppingCart, Tag, Filter, AlarmClock, Copy, BarChart, Star, X, TrendingUp, Database, ImageIcon, ArchiveRestore, Archive, Grid2X2, Rows, Check, Facebook, Search, GalleryHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
@@ -96,7 +96,7 @@ export default function InventoryPage() {
   const [showDismissedReturns, setShowDismissedReturns] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState({ url: null, itemId: null });
-  const [viewMode, setViewMode] = useState("grid"); // "list" or "grid"
+  const [viewMode, setViewMode] = useState("grid"); // "list" | "grid" | "gallery"
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [itemToView, setItemToView] = useState(null);
   const [facebookListingDialogOpen, setFacebookListingDialogOpen] = useState(false);
@@ -1138,6 +1138,14 @@ export default function InventoryPage() {
                 {viewMode === "list" ? <Grid2X2 className="w-4 h-4 mr-2" /> : <Rows className="w-4 h-4 mr-2" />}
                 {viewMode === "list" ? "Grid View" : "List View"}
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => setViewMode((m) => (m === "gallery" ? "grid" : "gallery"))}
+                className="flex-shrink-0"
+              >
+                <GalleryHorizontal className="w-4 h-4 mr-2" />
+                {viewMode === "gallery" ? "Exit Gallery" : "Gallery Mode"}
+              </Button>
               <Link
                 to={createPageUrl("AddInventoryItem")}
                 state={returnStateForInventory}
@@ -1417,7 +1425,49 @@ export default function InventoryPage() {
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground">Loading...</div>
           ) : sortedItems.length > 0 ? (
-            viewMode === "list" ? (
+            viewMode === "gallery" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 overflow-x-hidden max-w-full">
+                {sortedItems.map((item) => {
+                  const rawQuantity = Number(item.quantity ?? 1);
+                  const quantity = Number.isFinite(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
+                  const rawSold = Number(item.quantity_sold ?? 0);
+                  const quantitySold = Number.isFinite(rawSold) && rawSold >= 0 ? rawSold : 0;
+                  const remaining = Math.max(quantity - quantitySold, 0);
+                  return (
+                    <Link
+                      key={item.id}
+                      to={createPageUrl(`AddInventoryItem?id=${item.id}`)}
+                      state={returnStateForInventory}
+                      className="group block"
+                    >
+                      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 hover:bg-muted/40 transition-colors">
+                        <div className="relative aspect-square bg-gray-50 dark:bg-slate-900/50">
+                          <OptimizedImage
+                            src={item.image_url || DEFAULT_IMAGE_URL}
+                            alt={item.item_name}
+                            fallback={DEFAULT_IMAGE_URL}
+                            className="w-full h-full object-cover"
+                            lazy={true}
+                          />
+                          <div className="absolute top-2 right-2 rounded-full bg-black/70 text-white text-[11px] px-2 py-0.5">
+                            x{remaining}
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <div className="text-sm font-semibold text-foreground line-clamp-2">
+                            {item.item_name || "Untitled Item"}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            ${Number(item.purchase_price || 0).toFixed(2)}
+                            {item.purchase_date ? ` • ${format(parseISO(item.purchase_date), "MMM d, yyyy")}` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : viewMode === "list" ? (
               <div className="space-y-6 sm:space-y-6 overflow-x-hidden max-w-full">
                 {sortedItems.map(item => {
                   const today = new Date();

@@ -18,7 +18,7 @@ import {
   subYears,
 } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star, Box } from "lucide-react";
+import { DollarSign, TrendingUp, ShoppingBag, Percent, Plus, Package, AlarmClock, Lightbulb, Timer, Star, Box, Bell, ChevronDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -86,6 +86,7 @@ export default function Dashboard() {
   const [profitChartRange, setProfitChartRange] = useState('14d');
   const [desktopProfitRange, setDesktopProfitRange] = useState('14d');
   const [desktopCustomRange, setDesktopCustomRange] = useState(undefined);
+  const [stockAlertsOpen, setStockAlertsOpen] = useState(false);
 
   // Handle OAuth callback - process hash fragment before AuthGuard redirects
   useEffect(() => {
@@ -380,6 +381,8 @@ export default function Dashboard() {
     
     return { totalQuantity };
   }, [inventoryItems]);
+
+  const hasStockAlerts = (itemsWithUpcomingReturns?.length || 0) > 0 || (staleItems?.length || 0) > 0;
   
   return (
     <div className="p-4 md:p-6 lg:p-0 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
@@ -423,6 +426,46 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Desktop-only: attention cards at top */}
+        {hasStockAlerts && (
+          <div className="hidden lg:grid grid-cols-2 gap-4 mb-6">
+            {(itemsWithUpcomingReturns?.length || 0) > 0 && (
+              <Link to={createPageUrl("Inventory?filter=returnDeadline")} className="block">
+                <div className="relative rounded-2xl p-5 backdrop-blur bg-card/60 border border-red-500/40 hover:border-red-500/60 transition shadow-sm overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-red-500/15 to-rose-500/10 rounded-full blur-2xl" />
+                  <div className="relative flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-rose-500 shadow-lg shadow-red-500/30 flex-shrink-0">
+                      <AlarmClock className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Return Deadlines</div>
+                      <div className="text-3xl font-bold text-foreground">{itemsWithUpcomingReturns.length}</div>
+                      <div className="text-xs text-muted-foreground mt-1">View items to return</div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+            {(staleItems?.length || 0) > 0 && (
+              <Link to={createPageUrl("Inventory?filter=stale")} className="block">
+                <div className="relative rounded-2xl p-5 backdrop-blur bg-card/60 border border-emerald-500/35 hover:border-emerald-500/55 transition shadow-sm overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-emerald-500/15 to-teal-500/10 rounded-full blur-2xl" />
+                  <div className="relative flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/30 flex-shrink-0">
+                      <Lightbulb className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Smart Reminder</div>
+                      <div className="text-3xl font-bold text-foreground">{staleItems.length}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Items need listing</div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Tip of the Day (Mobile only: above KPI cards) */}
           <div className="col-span-12 lg:hidden">
@@ -458,14 +501,69 @@ export default function Dashboard() {
               deltaLabel={null}
               deltaPositive={true}
               right={
-                <Link to={createPageUrl("Inventory")} className="group">
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:opacity-95 transition-opacity">
-                    <Box className="h-6 w-6 text-white" />
-                  </div>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to={createPageUrl("Inventory")} className="group">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:opacity-95 transition-opacity">
+                      <Box className="h-6 w-6 text-white" />
+                    </div>
+                  </Link>
+                  {hasStockAlerts && (
+                    <button
+                      type="button"
+                      onClick={() => setStockAlertsOpen((v) => !v)}
+                      className="lg:hidden inline-flex items-center gap-1 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-2 py-2 text-yellow-700 dark:text-yellow-300"
+                      aria-label="Show inventory alerts"
+                    >
+                      <Bell className="h-4 w-4" />
+                      <ChevronDown className={`h-4 w-4 transition-transform ${stockAlertsOpen ? "rotate-180" : ""}`} />
+                    </button>
+                  )}
+                </div>
               }
             />
           </div>
+
+          {/* Mobile-only: expandable attention cards under Items in Stock */}
+          {hasStockAlerts && stockAlertsOpen && (
+            <div className="col-span-12 lg:hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(itemsWithUpcomingReturns?.length || 0) > 0 && (
+                  <Link to={createPageUrl("Inventory?filter=returnDeadline")} className="block">
+                    <div className="relative rounded-2xl p-4 backdrop-blur bg-card/60 border border-red-500/40 shadow-sm overflow-hidden">
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-red-500/15 to-rose-500/10 rounded-full blur-2xl" />
+                      <div className="relative flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-rose-500 shadow-lg shadow-red-500/25 flex-shrink-0">
+                          <AlarmClock className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Return Deadlines</div>
+                          <div className="text-2xl font-bold text-foreground">{itemsWithUpcomingReturns.length}</div>
+                          <div className="text-[10px] text-muted-foreground mt-1">View items to return</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                )}
+                {(staleItems?.length || 0) > 0 && (
+                  <Link to={createPageUrl("Inventory?filter=stale")} className="block">
+                    <div className="relative rounded-2xl p-4 backdrop-blur bg-card/60 border border-emerald-500/35 shadow-sm overflow-hidden">
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-emerald-500/15 to-teal-500/10 rounded-full blur-2xl" />
+                      <div className="relative flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 shadow-lg shadow-emerald-500/25 flex-shrink-0">
+                          <Lightbulb className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Smart Reminder</div>
+                          <div className="text-2xl font-bold text-foreground">{staleItems.length}</div>
+                          <div className="text-[10px] text-muted-foreground mt-1">Items need listing</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Main chart + side card */}
           <div className="col-span-12 lg:col-span-8">
