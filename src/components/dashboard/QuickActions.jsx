@@ -57,7 +57,16 @@ export default function QuickActions() {
               </div>
               
               {/* Title */}
-              <div className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+              <div
+                className={[
+                  "text-xs sm:text-sm font-semibold text-gray-900 dark:text-white transition-colors",
+                  action.title === "Create Listing"
+                    ? "group-hover:text-blue-600 dark:group-hover:text-blue-300"
+                    : action.title === "View Reports"
+                      ? "group-hover:text-orange-600 dark:group-hover:text-orange-300"
+                      : "group-hover:text-emerald-700 dark:group-hover:text-emerald-300",
+                ].join(" ")}
+              >
                 {action.title}
               </div>
               

@@ -25,6 +25,8 @@ const CrosslistComposer = React.lazy(() => import("./CrosslistComposer"));
 const Crosslisting = React.lazy(() => import("./Crosslisting"));
 const MarketIntelligence = React.lazy(() => import("./MarketIntelligence"));
 const Settings = React.lazy(() => import("./Settings"));
+const Tools = React.lazy(() => import("./Tools"));
+const Analytics = React.lazy(() => import("./Analytics"));
 const PrivacyPolicy = React.lazy(() => import("./PrivacyPolicy"));
 const MigrateData = React.lazy(() => import("./MigrateData"));
 
@@ -287,6 +289,32 @@ function PagesContent() {
                     {withSuspense(
                       <Layout currentPageName="Settings">
                         {withSuspense(<Settings />)}
+                      </Layout>
+                    )}
+                  </AuthGuard>
+                }
+              />
+
+              <Route
+                path="/Tools"
+                element={
+                  <AuthGuard>
+                    {withSuspense(
+                      <Layout currentPageName="Tools">
+                        {withSuspense(<Tools />)}
+                      </Layout>
+                    )}
+                  </AuthGuard>
+                }
+              />
+
+              <Route
+                path="/Analytics"
+                element={
+                  <AuthGuard>
+                    {withSuspense(
+                      <Layout currentPageName="Analytics">
+                        {withSuspense(<Analytics />)}
                       </Layout>
                     )}
                   </AuthGuard>

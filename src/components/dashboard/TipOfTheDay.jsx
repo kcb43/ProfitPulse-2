@@ -84,7 +84,7 @@ export default function TipOfTheDay({ variant }) {
         </div>
         <div className="min-w-0">
           <div className="text-xs font-semibold text-foreground">Tip of the Day</div>
-          <div className="text-xs text-yellow-900/80 dark:text-yellow-200/80 line-clamp-2">"{tip}"</div>
+          <div className="text-xs text-yellow-900/80 dark:text-yellow-200/80 line-clamp-3 whitespace-normal leading-snug">"{tip}"</div>
         </div>
       </div>
     );

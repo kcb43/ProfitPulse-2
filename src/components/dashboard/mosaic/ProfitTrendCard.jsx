@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { format, parseISO, subDays, isAfter, isBefore } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function buildSeries(sales, range, customRange) {
   const s = Array.isArray(sales) ? sales : [];
@@ -76,9 +77,14 @@ function buildSeries(sales, range, customRange) {
 }
 
 export default function ProfitTrendCard({ sales, range, onRangeChange, customRange, onCustomRangeChange }) {
+  const isMobile = useIsMobile();
   const data = React.useMemo(() => buildSeries(sales, range, customRange), [sales, range, customRange]);
   const total = React.useMemo(() => data.reduce((sum, p) => sum + (Number(p.v || 0) || 0), 0), [data]);
   const stroke = "hsl(var(--po-positive))";
+  const chartMargin = React.useMemo(
+    () => (isMobile ? { top: 8, right: 6, bottom: 6, left: 0 } : { top: 8, right: 16, bottom: 8, left: 8 }),
+    [isMobile]
+  );
 
   return (
     <Card className="border border-gray-200/70 dark:border-gray-800/70 shadow-sm">
@@ -140,9 +146,9 @@ export default function ProfitTrendCard({ sales, range, onRangeChange, customRan
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-72">
+        <div className={`h-72 ${isMobile ? "-mx-3" : ""}`}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
+            <AreaChart data={data} margin={chartMargin}>
               <defs>
                 <linearGradient id="poProfitGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor={stroke} stopOpacity={0.25} />
@@ -155,6 +161,7 @@ export default function ProfitTrendCard({ sales, range, onRangeChange, customRan
                 axisLine={false}
                 tickLine={false}
                 fontSize={12}
+                width={isMobile ? 42 : 56}
                 tickFormatter={(v) => `$${Number(v || 0).toFixed(0)}`}
               />
               <Tooltip

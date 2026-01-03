@@ -175,9 +175,9 @@ export default function Gamification({ sales, stats, variant }) {
               </div>
             </div>
 
-            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+            <div className="rounded-xl border border-border/60 bg-muted/20 px-3 py-2 sm:px-4 sm:py-3 max-w-[135px] sm:max-w-none">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tier</div>
-              <div className="mt-1 text-xl font-bold text-foreground">{tierInfo.name}</div>
+              <div className="mt-1 text-lg sm:text-xl font-bold text-foreground">{tierInfo.name}</div>
               <div className="text-xs text-muted-foreground mt-1">{points.toLocaleString()} pts</div>
             </div>
           </div>
