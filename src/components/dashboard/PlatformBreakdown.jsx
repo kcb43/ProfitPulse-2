@@ -27,7 +27,8 @@ const platformIcons = {
   offer_up: "https://cdn.brandfetch.io/id5p1Knwlt/theme/dark/symbol.svg?c=1dxbfHSJFAPEGdCLU4o5B"
 };
 
-export default function PlatformBreakdown({ sales }) {
+export default function PlatformBreakdown({ sales, variant }) {
+  const isMosaic = variant === 'mosaic';
   const platformStats = React.useMemo(() => {
     // Accept either:
     // - raw sales rows: { platform, selling_price, profit }
@@ -55,7 +56,7 @@ export default function PlatformBreakdown({ sales }) {
   }, [sales]);
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className={isMosaic ? "border border-gray-200/70 dark:border-gray-800/70 shadow-sm" : "border-0 shadow-sm"}>
       <CardHeader>
         <CardTitle className="text-xl font-bold text-foreground">Platform Performance</CardTitle>
       </CardHeader>

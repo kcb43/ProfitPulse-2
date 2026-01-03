@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/popover";
 import ReportsExportPopup from "./ReportsExportPopup";
 
-export default function ProfitChart({ sales, range, onRangeChange, totalProfit, totalSales }) {
+export default function ProfitChart({ sales, range, onRangeChange, totalProfit, totalSales, variant }) {
   const { chartData, baseTitle, badgeLabel, badgeClass } = React.useMemo(() => {
     const badgeConfig = {
       '14d': { label: 'Last 14 Days', className: 'bg-emerald-500' },
@@ -76,19 +76,30 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
 
   }, [sales, range]);
 
+  const isMosaic = variant === 'mosaic';
+
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className={isMosaic ? "border border-gray-200/70 dark:border-gray-800/70 shadow-sm" : "border-0 shadow-sm"}>
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <div className="flex items-center flex-wrap gap-3">
-              <CardTitle className="text-xl font-bold text-foreground flex items-center flex-wrap gap-3">
+              <div>
+                <CardTitle className="text-xl font-bold text-foreground flex items-center flex-wrap gap-3">
                 <span className="leading-tight">{baseTitle}</span>
                 {badgeLabel ? (
                   <span className={`inline-flex items-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm ${badgeClass}`}>
                     {badgeLabel}
                   </span>
                 ) : null}
-              </CardTitle>
+                </CardTitle>
+                {isMosaic ? (
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">${Number(totalProfit || 0).toFixed(0)}</span>
+                    <span className="mx-2 text-gray-300 dark:text-gray-700">•</span>
+                    <span>{Number(totalSales || 0)} sales</span>
+                  </div>
+                ) : null}
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="icon" className="h-9 w-auto sm:w-9 px-2 sm:px-0 sm:hidden">
@@ -123,16 +134,19 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={chartData}>
+          <AreaChart
+            data={chartData}
+            margin={isMosaic ? { top: 8, right: 16, bottom: 8, left: 8 } : undefined}
+          >
             <defs>
               <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="date" stroke="#9ca3af" style={{ fontSize: '12px' }} />
-            <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} tickFormatter={(value) => `$${value.toFixed(0)}`}/>
+            <CartesianGrid strokeDasharray={isMosaic ? "2 2" : "3 3"} stroke={isMosaic ? "rgba(148,163,184,0.25)" : "#f0f0f0"} />
+            <XAxis dataKey="date" stroke="#9ca3af" style={{ fontSize: '12px' }} axisLine={false} tickLine={false} />
+            <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${value.toFixed(0)}`}/>
             <Tooltip 
               contentStyle={{ 
                 backgroundColor: 'hsl(var(--background))', 
@@ -150,6 +164,8 @@ export default function ProfitChart({ sales, range, onRangeChange, totalProfit, 
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#profitGradient)" 
+              isAnimationActive={true}
+              animationDuration={isMosaic ? 450 : 250}
             />
           </AreaChart>
         </ResponsiveContainer>

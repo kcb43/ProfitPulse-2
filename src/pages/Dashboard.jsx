@@ -377,8 +377,9 @@ export default function Dashboard() {
   }, [inventoryItems]);
   
   return (
-    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
-      <div className="max-w-7xl mx-auto min-w-0 w-full">
+    <div className="p-4 md:p-6 lg:p-0 min-h-screen bg-gray-50 dark:bg-gray-900 overflow-x-hidden w-full max-w-full">
+      {/* Mobile/Tablet layout (keep existing for now) */}
+      <div className="lg:hidden max-w-7xl mx-auto min-w-0 w-full">
         {(salesError || inventoryError || salesSummaryError) && (
           <div className="mb-4">
             <Alert variant="destructive">
@@ -615,6 +616,102 @@ export default function Dashboard() {
             ) : (
               <PlatformBreakdown sales={sales} />
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop-only Mosaic-like layout */}
+      <div className="hidden lg:block">
+        <div className="px-6 py-8 w-full max-w-7xl mx-auto">
+          {(salesError || inventoryError || salesSummaryError) && (
+            <div className="mb-6">
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {salesSummaryError ? `Sales summary error: ${salesSummaryError.message}` : null}
+                  {salesError ? ` Sales (chart) error: ${salesError.message}` : null}
+                  {inventoryError ? ` Inventory load error: ${inventoryError.message}` : null}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your business performance</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to={createPageUrl("AddSale")}>
+                <Button className="bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Sale
+                </Button>
+              </Link>
+              <Link to={createPageUrl("AddInventoryItem")} state={{ from: location.pathname || "/Dashboard" }}>
+                <Button variant="outline" className="border-gray-300 dark:border-gray-700">
+                  <Package className="w-4 h-4 mr-2" />
+                  Add Inventory
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 grid grid-cols-3 gap-6">
+              <StatCard
+                title="Total Profit"
+                value={isLoadingSalesSummary ? "Loading..." : `$${totalProfit.toFixed(2)}`}
+                icon={DollarSign}
+                bgGradient="bg-gradient-to-br from-green-500 to-emerald-600"
+              />
+              <StatCard
+                title="Total Sales"
+                value={isLoadingSalesSummary ? "Loading..." : totalSales}
+                icon={ShoppingBag}
+                bgGradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+              />
+              <StatCard
+                title="Items in Stock"
+                value={isLoadingInventory ? "Loading..." : inventoryStats.totalQuantity}
+                icon={Package}
+                bgGradient="bg-gradient-to-br from-purple-500 to-pink-600"
+              />
+            </div>
+
+            <div className="col-span-8">
+              <ProfitChart
+                sales={sales}
+                range={profitChartRange}
+                onRangeChange={setProfitChartRange}
+                totalProfit={totalProfit}
+                totalSales={totalSales}
+                variant="mosaic"
+              />
+            </div>
+
+            <div className="col-span-4">
+              {Array.isArray(platformSummary) && platformSummary.length > 0 ? (
+                <PlatformBreakdown sales={platformSummary} variant="mosaic" />
+              ) : (
+                <PlatformBreakdown sales={sales} variant="mosaic" />
+              )}
+            </div>
+
+            <div className="col-span-12">
+              <RecentSales sales={recentSales} />
+            </div>
+
+            <div className="col-span-12">
+              <Gamification sales={sales} stats={{ totalProfit, totalSales, avgProfit, profitMargin, averageSaleSpeed }} />
+            </div>
+
+            <div className="col-span-6">
+              <QuickActions />
+            </div>
+
+            <div className="col-span-6">
+              <TipOfTheDay />
+            </div>
           </div>
         </div>
       </div>
