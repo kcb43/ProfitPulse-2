@@ -83,6 +83,10 @@ export default async function handler(req, res) {
   let noInventoryMatch = 0;
   let patchEmpty = 0;
   const sampleMissingBase44Links = [];
+  let needReviewWithNotes = 0;
+  let needReviewWithBase44SaleTag = 0;
+  let needReviewWithBase44LinkedInvTag = 0;
+  const sampleNeedReview = [];
 
   while (true) {
     const salesRes = await supabase
@@ -109,6 +113,22 @@ export default async function handler(req, res) {
         continue;
       }
       needReview += 1;
+      const notesStr = String(s?.notes || '');
+      if (notesStr.trim()) needReviewWithNotes += 1;
+      if (/Base44 sale ID:/i.test(notesStr)) needReviewWithBase44SaleTag += 1;
+      if (/Base44 linked inventory ID:/i.test(notesStr)) needReviewWithBase44LinkedInvTag += 1;
+      if (sampleNeedReview.length < 10) {
+        sampleNeedReview.push({
+          saleId: s.id,
+          itemName: s.item_name || null,
+          hasInventoryId: !!s.inventory_id,
+          purchase_date: s.purchase_date || null,
+          source: s.source || null,
+          category: s.category || null,
+          notesSnippet: notesStr ? notesStr.slice(0, 220) : '',
+          parsedBase44LinkedInventoryId: parseBase44LinkedInventoryIdFromSaleNotes(notesStr),
+        });
+      }
 
       let inv = null;
       if (s.inventory_id && invById.has(s.inventory_id)) {
@@ -201,6 +221,9 @@ export default async function handler(req, res) {
       inventoryWithBase44Tag,
       inventoryBase44MapSize: invByBase44Id.size,
       needReview,
+      needReviewWithNotes,
+      needReviewWithBase44SaleTag,
+      needReviewWithBase44LinkedInvTag,
       matchedByInventoryId,
       matchedByBase44Link,
       matchedByBase44LinkDb,
@@ -208,6 +231,7 @@ export default async function handler(req, res) {
       noInventoryMatch,
       patchEmpty,
       sampleMissingBase44Links,
+      sampleNeedReview,
     },
   });
 }
