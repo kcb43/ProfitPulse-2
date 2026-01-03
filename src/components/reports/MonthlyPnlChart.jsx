@@ -19,6 +19,11 @@ export default function MonthlyPnlChart({ sales, rangeLabel }) {
   }, [rangeLabel]);
 
   const data = React.useMemo(() => {
+    // Prefer pre-aggregated series when available (server-side reports summary).
+    if (Array.isArray(sales) && sales.length > 0 && sales[0]?.month && sales[0]?.profit !== undefined && sales[0]?.revenue !== undefined) {
+      return sales;
+    }
+
     const monthlyData = sales.reduce((acc, sale) => {
       if (!sale.sale_date) {
         return acc;

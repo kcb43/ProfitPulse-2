@@ -8,6 +8,11 @@ export default function CategoryPerformance({ sales, rangeLabel }) {
     return rangeLabel.toLowerCase() === "lifetime" ? "lifetime data" : `last ${rangeLabel}`;
   }, [rangeLabel]);
   const categoryData = React.useMemo(() => {
+    // Prefer pre-aggregated categories when available (server-side reports summary).
+    if (Array.isArray(sales) && sales.length > 0 && sales[0]?.name && sales[0]?.sales !== undefined && sales[0]?.profit !== undefined) {
+      return sales;
+    }
+
     const categories = sales.reduce((acc, sale) => {
       const category = sale.category || "Uncategorized";
       if (!acc[category]) {

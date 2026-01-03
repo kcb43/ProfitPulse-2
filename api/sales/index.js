@@ -129,6 +129,14 @@ function parsePositiveInt(value, { min = 1, max = 5000 } = {}) {
   return Math.min(i, max);
 }
 
+function parseNonNegativeInt(value, { min = 0, max = 500000 } = {}) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.trunc(n);
+  if (i < min) return null;
+  return Math.min(i, max);
+}
+
 function buildSelectFromFields(fieldsCsv) {
   if (!fieldsCsv) return '*';
   const allowed = new Set([
@@ -228,16 +236,31 @@ async function handleGet(req, res, userId) {
     }
     
     const limit = parsePositiveInt(queryParams.limit);
+    const offset = parseNonNegativeInt(queryParams.offset);
+    const paged = String(queryParams.paged || '').toLowerCase() === 'true';
+    const wantCount = String(queryParams.count || '').toLowerCase() === 'true' || paged;
     const since = queryParams.since ? String(queryParams.since) : null;
     const from = queryParams.from ? String(queryParams.from) : null;
     const to = queryParams.to ? String(queryParams.to) : null;
+    const includeDeleted = String(queryParams.include_deleted || '').toLowerCase() === 'true';
+    const deletedOnly = String(queryParams.deleted_only || '').toLowerCase() === 'true';
+    const search = queryParams.search ? String(queryParams.search).trim() : '';
+    const platform = queryParams.platform ? String(queryParams.platform).trim() : '';
+    const minProfit = queryParams.min_profit !== undefined ? Number(queryParams.min_profit) : null;
+    const maxProfit = queryParams.max_profit !== undefined ? Number(queryParams.max_profit) : null;
     const select = buildSelectFromFields(queryParams.fields);
 
     let query = supabase
       .from('sales')
-      .select(select)
-      .eq('user_id', userId)
-      .is('deleted_at', null);
+      .select(select, wantCount ? { count: 'exact' } : undefined)
+      .eq('user_id', userId);
+
+    // Default behavior: hide deleted unless explicitly requested.
+    if (deletedOnly) {
+      query = query.not('deleted_at', 'is', null);
+    } else if (!includeDeleted) {
+      query = query.is('deleted_at', null);
+    }
 
     if (since) {
       query = query.gte('sale_date', since);
@@ -247,6 +270,19 @@ async function handleGet(req, res, userId) {
     }
     if (to && isIsoLike(to)) {
       query = query.lte('sale_date', to);
+    }
+
+    if (search) {
+      query = query.ilike('item_name', `%${search}%`);
+    }
+    if (platform) {
+      query = query.eq('platform', platform);
+    }
+    if (Number.isFinite(minProfit)) {
+      query = query.gte('profit', minProfit);
+    }
+    if (Number.isFinite(maxProfit)) {
+      query = query.lte('profit', maxProfit);
     }
 
     // Handle sorting
@@ -260,11 +296,16 @@ async function handleGet(req, res, userId) {
       query = query.order('sale_date', { ascending: false });
     }
 
-    if (limit) {
-      query = query.limit(limit);
+    const finalLimit = limit || (paged ? 50 : null);
+    if (finalLimit) {
+      if (offset !== null && offset !== undefined) {
+        query = query.range(offset, offset + finalLimit - 1);
+      } else {
+        query = query.limit(finalLimit);
+      }
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       return res.status(500).json({ error: error.message });
@@ -328,6 +369,15 @@ async function handleGet(req, res, userId) {
     } catch (e) {
       // Non-fatal; reports can still fall back to Uncategorized.
       console.warn('Category backfill failed:', e?.message || e);
+    }
+
+    if (paged) {
+      return res.status(200).json({
+        data: rows,
+        total: typeof count === 'number' ? count : null,
+        limit: finalLimit || null,
+        offset: offset || 0,
+      });
     }
 
     return res.status(200).json(rows);

@@ -84,17 +84,22 @@ export default function ProfitCalendar() {
   ].join(',');
 
   const { data: rawSales, isLoading, error } = useQuery({
-    queryKey: ['sales', 'profitCalendar', 'all'],
+    queryKey: ['sales', 'profitCalendar', format(calendarWindow.start, 'yyyy-MM-dd'), format(calendarWindow.end, 'yyyy-MM-dd')],
     queryFn: async () => {
       const qs = new URLSearchParams();
       qs.set('sort', '-sale_date');
-      qs.set('limit', '5000');
+      // Only fetch sales for the visible calendar window (typically ~5-6 weeks).
+      qs.set('from', format(calendarWindow.start, 'yyyy-MM-dd'));
+      qs.set('to', format(calendarWindow.end, 'yyyy-MM-dd'));
+      qs.set('limit', '2000');
       qs.set('fields', salesFields);
       const data = await apiGetJson(`/api/sales?${qs.toString()}`);
       if (Array.isArray(data) && data.length === 0) {
         const qs2 = new URLSearchParams();
         qs2.set('sort', '-sale_date');
-        qs2.set('limit', '5000');
+        qs2.set('from', format(calendarWindow.start, 'yyyy-MM-dd'));
+        qs2.set('to', format(calendarWindow.end, 'yyyy-MM-dd'));
+        qs2.set('limit', '2000');
         return apiGetJson(`/api/sales?${qs2.toString()}`);
       }
       return data;

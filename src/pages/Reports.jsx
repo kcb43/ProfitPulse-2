@@ -4,13 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Percent, TrendingUp, Timer, Sparkles, Trophy, Target, Activity } from "lucide-react";
-import { differenceInDays, parseISO, subDays, format, startOfDay } from "date-fns";
+import { parseISO, format } from "date-fns";
 import MonthlyPnlChart from "../components/reports/MonthlyPnlChart";
 import CategoryPerformance from "../components/reports/CategoryPerformance";
 import PlatformComparison from "../components/reports/PlatformComparison";
 import StatCard from "../components/dashboard/StatCard";
 import TaxSummary from "../components/dashboard/TaxSummary";
-import { sortSalesByRecency } from "@/utils/sales";
 
 const PLATFORM_DISPLAY_NAMES = {
   ebay: "eBay",
@@ -71,182 +70,42 @@ export default function ReportsPage() {
     return resp.json();
   }
 
-  const salesFields = [
-    'id',
-    'inventory_id',
-    'item_name',
-    'purchase_date',
-    'sale_date',
-    'platform',
-    'category',
-    'profit',
-    'deleted_at',
-    'selling_price',
-    'sale_price',
-    'purchase_price',
-    'shipping_cost',
-    'platform_fees',
-    'vat_fees',
-    'other_costs',
-  ].join(',');
-
-  const { data: sales, isLoading } = useQuery({
-    queryKey: ["sales", "reports", "all"],
+  const { data: reportSummary, isLoading } = useQuery({
+    queryKey: ["reports", "summary", range],
     queryFn: async () => {
       const qs = new URLSearchParams();
-      qs.set('sort', '-sale_date');
-      qs.set('limit', '5000');
-      qs.set('fields', salesFields);
-      const data = await apiGetJson(`/api/sales?${qs.toString()}`);
-      if (Array.isArray(data) && data.length === 0) {
-        const qs2 = new URLSearchParams();
-        qs2.set('sort', '-sale_date');
-        qs2.set('limit', '5000');
-        return apiGetJson(`/api/sales?${qs2.toString()}`);
-      }
-      return data;
+      qs.set('range', range);
+      return apiGetJson(`/api/reports/summary?${qs.toString()}`);
     },
-    placeholderData: [],
+    placeholderData: null,
   });
 
-  // Filter out soft-deleted sales
-  const activeSales = React.useMemo(() => (sales ?? []).filter(sale => !sale.deleted_at), [sales]);
-  const sortedSales = React.useMemo(() => sortSalesByRecency(activeSales), [activeSales]);
-
   const filteredSales = React.useMemo(() => {
-    if (!sortedSales || sortedSales.length === 0) return [];
-    if (range === "lifetime") return sortedSales;
-    const days = RANGE_TO_DAYS[range];
-    const cutoff = startOfDay(subDays(new Date(), days - 1));
-    return sortedSales.filter((sale) => {
-      if (!sale?.sale_date) return false;
-      try {
-        return parseISO(String(sale.sale_date)) >= cutoff;
-      } catch {
-        return false;
-      }
-    });
-  }, [sales, range]);
+    // For chart components we now pass pre-aggregated series/categories/platforms via the "sales" prop.
+    return [];
+  }, []);
 
   const rangeLabel = RANGE_LABELS[range] ?? "lifetime";
-  const hasData = filteredSales.length > 0;
+  const hasData = Boolean(reportSummary?.totals?.salesCount);
 
   const metrics = React.useMemo(() => {
-    const totalProfit = filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + (sale.selling_price || 0), 0);
-    const avgProfit = filteredSales.length > 0 ? totalProfit / filteredSales.length : 0;
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
-
-    const salesWithSpeed = filteredSales
-      .map((sale) => {
-        if (!sale.purchase_date || !sale.sale_date) return null;
-        try {
-          return Math.max(0, differenceInDays(parseISO(sale.sale_date), parseISO(sale.purchase_date)));
-        } catch {
-          return null;
-        }
-      })
-      .filter((speed) => speed !== null);
-
-    const totalDays = salesWithSpeed.reduce((sum, speed) => sum + speed, 0);
-    const averageSaleSpeed = salesWithSpeed.length > 0 ? totalDays / salesWithSpeed.length : 0;
-
-    return { totalProfit, totalRevenue, avgProfit, profitMargin, averageSaleSpeed };
-  }, [filteredSales]);
+    const t = reportSummary?.totals || {};
+    return {
+      totalProfit: Number(t.totalProfit || 0),
+      totalRevenue: Number(t.totalRevenue || 0),
+      avgProfit: Number(t.avgProfit || 0),
+      profitMargin: Number(t.profitMargin || 0),
+      averageSaleSpeed: Number(t.averageSaleSpeed || 0),
+    };
+  }, [reportSummary]);
 
   const comparison = React.useMemo(() => {
-    if (range === "lifetime") return null;
-    const days = RANGE_TO_DAYS[range];
-    const now = new Date();
-    const currentStart = subDays(now, days);
-    const previousStart = subDays(currentStart, days);
-
-    const inWindow = (sale, start, end) => {
-      if (!sale.sale_date) return false;
-      const date = parseISO(sale.sale_date);
-      return date >= start && date < end;
-    };
-
-    const currentProfit = filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-    const previousSales = sortedSales.filter((sale) => inWindow(sale, previousStart, currentStart));
-    const previousProfit = previousSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-
-    const change = currentProfit - previousProfit;
-    const changePct = previousProfit > 0 ? (change / previousProfit) * 100 : null;
-
-    const currentAvg = filteredSales.length > 0 ? currentProfit / filteredSales.length : 0;
-    const previousAvg = previousSales.length > 0 ? previousProfit / previousSales.length : 0;
-    const avgChange = currentAvg - previousAvg;
-    const avgChangePct = previousAvg > 0 ? (avgChange / previousAvg) * 100 : null;
-
-    return {
-      previousProfit,
-      change,
-      changePct,
-      currentAvg,
-      previousAvg,
-      avgChange,
-      avgChangePct,
-    };
-  }, [range, filteredSales, sales]);
+    return reportSummary?.comparison || null;
+  }, [reportSummary]);
 
   const insights = React.useMemo(() => {
-    if (!hasData) {
-      return {
-        topPlatform: null,
-        topCategory: null,
-        highestProfitSale: null,
-        fastestSale: null,
-      };
-    }
-
-    const platformMap = filteredSales.reduce((acc, sale) => {
-      const key = sale.platform || "other";
-      if (!acc[key]) {
-        acc[key] = {
-          key,
-          name: PLATFORM_DISPLAY_NAMES[key] || key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          profit: 0,
-          sales: 0,
-        };
-      }
-      acc[key].profit += sale.profit || 0;
-      acc[key].sales += 1;
-      return acc;
-    }, {});
-
-    const categoryMap = filteredSales.reduce((acc, sale) => {
-      const key = sale.category || "Uncategorized";
-      if (!acc[key]) acc[key] = { profit: 0, sales: 0 };
-      acc[key].profit += sale.profit || 0;
-      acc[key].sales += 1;
-      return acc;
-    }, {});
-
-    const topPlatform = Object.values(platformMap)
-      .sort((a, b) => b.profit - a.profit)[0] || null;
-
-    const topCategory = Object.entries(categoryMap)
-      .map(([name, stats]) => ({ name, ...stats }))
-      .sort((a, b) => b.profit - a.profit)[0] || null;
-
-    const highestProfitSale = [...filteredSales].sort((a, b) => (b.profit || 0) - (a.profit || 0))[0] || null;
-
-    const fastestSale = filteredSales
-      .map((sale) => {
-        if (!sale.sale_date || !sale.purchase_date) return null;
-        try {
-          const days = Math.max(0, differenceInDays(parseISO(sale.sale_date), parseISO(sale.purchase_date)));
-          return { ...sale, days };
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.days - b.days)[0] || null;
-
-    return { topPlatform, topCategory, highestProfitSale, fastestSale };
-  }, [filteredSales, hasData]);
+    return reportSummary?.insights || { topPlatform: null, topCategory: null, highestProfitSale: null, fastestSale: null };
+  }, [reportSummary]);
 
   if (isLoading) {
     return (
@@ -317,7 +176,7 @@ export default function ReportsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
-          <MonthlyPnlChart sales={filteredSales} rangeLabel={rangeLabel} />
+          <MonthlyPnlChart sales={reportSummary?.series || []} rangeLabel={rangeLabel} />
           <InsightsPanel
             hasData={hasData}
             rangeLabel={rangeLabel}
@@ -327,13 +186,13 @@ export default function ReportsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CategoryPerformance sales={filteredSales} rangeLabel={rangeLabel} />
-          <PlatformComparison sales={filteredSales} rangeLabel={rangeLabel} />
+          <CategoryPerformance sales={reportSummary?.categories || []} rangeLabel={rangeLabel} />
+          <PlatformComparison sales={reportSummary?.platforms || []} rangeLabel={rangeLabel} />
         </div>
 
         {/* Tax Summary Section */}
         <div className="mt-6">
-          <TaxSummary sales={sortedSales} totalProfit={metrics.totalProfit} />
+          <TaxSummary sales={[]} totalProfit={metrics.totalProfit} ytdProfitOverride={reportSummary?.ytdProfit ?? 0} />
         </div>
       </div>
     </div>

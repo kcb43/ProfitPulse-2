@@ -19,6 +19,14 @@ function parsePositiveInt(value, { min = 1, max = 5000 } = {}) {
   return Math.min(i, max);
 }
 
+function parseNonNegativeInt(value, { min = 0, max = 500000 } = {}) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.trunc(n);
+  if (i < min) return null;
+  return Math.min(i, max);
+}
+
 function buildSelectFromFields(fieldsCsv) {
   if (!fieldsCsv) return '*';
   const allowed = new Set([
@@ -147,13 +155,39 @@ async function handleGet(req, res, userId) {
     
     const includeDeleted = String(queryParams.include_deleted || '').toLowerCase() === 'true';
     const deletedOnly = String(queryParams.deleted_only || '').toLowerCase() === 'true';
-    const limit = parsePositiveInt(queryParams.limit);
+    const paged = String(queryParams.paged || '').toLowerCase() === 'true';
+    const wantCount = String(queryParams.count || '').toLowerCase() === 'true' || paged;
+    const limit = parsePositiveInt(queryParams.limit) || (paged ? 50 : null);
+    const offset = parseNonNegativeInt(queryParams.offset);
     const select = buildSelectFromFields(queryParams.fields);
+    const search = queryParams.search ? String(queryParams.search).trim() : '';
+    const status = queryParams.status ? String(queryParams.status).trim() : '';
+    const excludeStatus = queryParams.exclude_status ? String(queryParams.exclude_status).trim() : '';
+    const idsCsv = queryParams.ids ? String(queryParams.ids) : '';
+    const ids = idsCsv
+      ? idsCsv.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 5000)
+      : null;
 
     let query = supabase
       .from('inventory_items')
-      .select(select)
+      .select(select, wantCount ? { count: 'exact' } : undefined)
       .eq('user_id', userId);
+
+    if (ids && ids.length) {
+      query = query.in('id', ids);
+    }
+
+    if (search) {
+      query = query.ilike('item_name', `%${search}%`);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (excludeStatus) {
+      query = query.neq('status', excludeStatus);
+    }
 
     // Default behavior: hide deleted items unless explicitly requested.
     if (deletedOnly) {
@@ -174,13 +208,26 @@ async function handleGet(req, res, userId) {
     }
 
     if (limit) {
-      query = query.limit(limit);
+      if (offset !== null && offset !== undefined) {
+        query = query.range(offset, offset + limit - 1);
+      } else {
+        query = query.limit(limit);
+      }
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       return res.status(500).json({ error: error.message });
+    }
+
+    if (paged) {
+      return res.status(200).json({
+        data: data || [],
+        total: typeof count === 'number' ? count : null,
+        limit: limit || null,
+        offset: offset || 0,
+      });
     }
 
     return res.status(200).json(data || []);

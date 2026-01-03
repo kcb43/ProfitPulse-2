@@ -42,6 +42,7 @@ import { InventoryItemViewDialog } from "@/components/InventoryItemViewDialog";
 import { FacebookListingDialog } from "@/components/FacebookListingDialog";
 import { isConnected } from "@/api/facebookClient";
 import EbaySearchDialog from "@/components/EbaySearchDialog";
+import { supabase } from "@/api/supabaseClient";
 
 const sourceIcons = {
   "Amazon": "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68e86fb5ac26f8511acce7ec/af08cfed1_Logo.png",
@@ -97,6 +98,8 @@ export default function InventoryPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [imageToEdit, setImageToEdit] = useState({ url: null, itemId: null });
   const [viewMode, setViewMode] = useState("grid"); // "list" | "grid" | "gallery"
+  const [pageSize, setPageSize] = useState(50);
+  const [pageIndex, setPageIndex] = useState(0);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [itemToView, setItemToView] = useState(null);
   const [facebookListingDialogOpen, setFacebookListingDialogOpen] = useState(false);
@@ -120,7 +123,33 @@ export default function InventoryPage() {
     isFavorite,
     getTags,
     clearRemovedItems,
+    tagState,
   } = useInventoryTags();
+
+  async function apiGetJson(path) {
+    // Wait briefly for Supabase session hydration.
+    let session = null;
+    for (let i = 0; i < 8; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await supabase.auth.getSession();
+      session = res?.data?.session || null;
+      if (session?.access_token) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    const headers = {
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+    };
+
+    const resp = await fetch(path, { headers });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    return resp.json();
+  }
   const returnStateForInventory = React.useMemo(() => ({
     from: {
       pathname: location.pathname,
@@ -166,18 +195,58 @@ export default function InventoryPage() {
     'created_at',
   ].join(',')), []);
 
-  const { data: inventoryItems, isLoading } = useQuery({
-    queryKey: ['inventoryItems', 'inventory'],
-    // Include deleted items so "Show Deleted" can work reliably.
-    // Other pages (Dashboard/Crosslist) still use the default list behavior (exclude deleted).
-    queryFn: () => base44.entities.InventoryItem.list('-purchase_date', {
-      include_deleted: 'true',
-      limit: 5000,
-      fields: inventoryFields,
-    }),
-    placeholderData: [],
-    notifyOnChangeProps: 'all', // Ensure we get notified of all changes for optimistic updates
+  const favoriteIdsCsv = React.useMemo(() => {
+    if (!showFavoritesOnly) return '';
+    const ids = Object.entries(tagState || {})
+      .filter(([, v]) => Boolean(v?.favorite))
+      .map(([id]) => id);
+    return ids.join(',');
+  }, [showFavoritesOnly, tagState]);
+
+  // Reset paging when key filters change
+  useEffect(() => {
+    setPageIndex(0);
+  }, [filters.search, filters.status, showDeletedOnly, showFavoritesOnly, sort, pageSize]);
+
+  const { data: inventoryPage, isLoading } = useQuery({
+    queryKey: ['inventoryItems', 'inventory', pageIndex, pageSize, filters.search, filters.status, showDeletedOnly, showFavoritesOnly, sort, favoriteIdsCsv],
+    queryFn: async () => {
+      const qs = new URLSearchParams();
+      qs.set('paged', 'true');
+      qs.set('count', 'true');
+      qs.set('limit', String(pageSize));
+      qs.set('offset', String(pageIndex * pageSize));
+      qs.set('fields', inventoryFields);
+      qs.set('sort', sort === 'oldest' ? 'purchase_date' : '-purchase_date');
+
+      if (showDeletedOnly) {
+        qs.set('deleted_only', 'true');
+      } else {
+        qs.set('include_deleted', 'true');
+      }
+
+      const search = (filters.search || '').trim();
+      if (search) qs.set('search', search);
+
+      if (filters.status === 'available' || filters.status === 'listed' || filters.status === 'sold') {
+        qs.set('status', filters.status);
+      } else if (filters.status === 'not_sold') {
+        qs.set('exclude_status', 'sold');
+      }
+
+      if (favoriteIdsCsv) qs.set('ids', favoriteIdsCsv);
+
+      return apiGetJson(`/api/inventory?${qs.toString()}`);
+    },
+    placeholderData: { data: [], total: 0, limit: pageSize, offset: 0 },
+    notifyOnChangeProps: 'all',
   });
+
+  const inventoryItems = React.useMemo(() => inventoryPage?.data || [], [inventoryPage]);
+  const totalItems = Number.isFinite(Number(inventoryPage?.total)) ? Number(inventoryPage.total) : 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const canPrev = pageIndex > 0;
+  const canNext = pageIndex + 1 < totalPages;
 
   useEffect(() => {
     if (isLoading) return;
@@ -1212,6 +1281,77 @@ export default function InventoryPage() {
               <CardTitle className="text-base sm:text-lg text-gray-900 dark:text-white">Filters & Sort</CardTitle>
             </CardHeader>
             <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+                <div className="text-xs text-muted-foreground">
+                  Showing <span className="font-semibold text-foreground">{inventoryItems.length}</span>
+                  {totalItems ? (
+                    <>
+                      {" "}
+                      of <span className="font-semibold text-foreground">{totalItems}</span>
+                    </>
+                  ) : null}
+                  {" "}items
+                  {" "}• page <span className="font-semibold text-foreground">{pageIndex + 1}</span>
+                  {" "}of <span className="font-semibold text-foreground">{totalPages}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Per page</Label>
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(v) => {
+                      const n = Number(v);
+                      if (n === 50 || n === 100 || n === 200) setPageSize(n);
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-[110px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    disabled={!canPrev}
+                    onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+                    className="h-9"
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={!canNext}
+                    onClick={() => setPageIndex((p) => p + 1)}
+                    className="h-9"
+                  >
+                    Next
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-9"
+                    onClick={() => {
+                      const qs = new URLSearchParams();
+                      // Match current filters; export up to 5000 rows.
+                      if (showDeletedOnly) qs.set('deleted_only', 'true');
+                      else qs.set('include_deleted', 'true');
+                      if (filters.search?.trim()) qs.set('search', filters.search.trim());
+                      if (filters.status === 'available' || filters.status === 'listed' || filters.status === 'sold') qs.set('status', filters.status);
+                      else if (filters.status === 'not_sold') qs.set('exclude_status', 'sold');
+                      if (favoriteIdsCsv) qs.set('ids', favoriteIdsCsv);
+                      qs.set('limit', '5000');
+                      window.open(`/api/inventory/export?${qs.toString()}`, '_blank');
+                    }}
+                  >
+                    Export CSV
+                  </Button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
                   <Label htmlFor="search" className="text-xs mb-1.5 block">Search</Label>

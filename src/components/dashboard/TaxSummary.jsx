@@ -6,12 +6,13 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format, startOfYear, parseISO } from 'date-fns';
 
-export default function TaxSummary({ sales, totalProfit }) {
+export default function TaxSummary({ sales, totalProfit, ytdProfitOverride }) {
   const currentYear = new Date().getFullYear();
   const yearStart = startOfYear(new Date());
   
   // Calculate year-to-date profit
   const ytdProfit = React.useMemo(() => {
+    if (Number.isFinite(Number(ytdProfitOverride))) return Number(ytdProfitOverride);
     if (!sales || sales.length === 0) return 0;
     
     return sales.reduce((sum, sale) => {

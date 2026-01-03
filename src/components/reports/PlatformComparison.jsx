@@ -25,6 +25,11 @@ export default function PlatformComparison({ sales, rangeLabel }) {
     return rangeLabel.toLowerCase() === "lifetime" ? "lifetime data" : `last ${rangeLabel}`;
   }, [rangeLabel]);
   const platformData = React.useMemo(() => {
+    // Prefer pre-aggregated platforms when available (server-side reports summary).
+    if (Array.isArray(sales) && sales.length > 0 && sales[0]?.platformKey && sales[0]?.profit !== undefined && sales[0]?.revenue !== undefined) {
+      return sales;
+    }
+
     const platforms = sales.reduce((acc, sale) => {
       const platform = sale.platform;
       if (!acc[platform]) {

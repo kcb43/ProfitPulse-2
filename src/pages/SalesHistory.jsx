@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -37,6 +37,7 @@ import { stripCustomFeeNotes } from "@/utils/customFees";
 import { useToast } from "@/components/ui/use-toast";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/api/supabaseClient";
 
 const platformIcons = {
   ebay: "https://upload.wikimedia.org/wikipedia/commons/1/1b/EBay_logo.svg",
@@ -131,44 +132,108 @@ export default function SalesHistory() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [pageSize, setPageSize] = useState(50);
+  const [pageIndex, setPageIndex] = useState(0);
 
   // Mobile-only: keep Sales History in Grid view (no List view on mobile)
   React.useEffect(() => {
     if (isMobile && viewMode !== "grid") setViewMode("grid");
   }, [isMobile, viewMode]);
 
-  const { data: rawSales, isLoading } = useQuery({
-    queryKey: ['sales', 'salesHistory'],
-    // IMPORTANT: do NOT fetch entire sales history in one request (can be huge and slow).
-    // This page starts with a large recent slice; we can add "load more" pagination later if needed.
-    queryFn: () => base44.entities.Sale.list('-sale_date', {
-      limit: 2000,
-      fields: [
-        'id',
-        'inventory_id',
-        'item_name',
-        'purchase_date',
-        'sale_date',
-        'platform',
-        'source',
-        'category',
-        'quantity_sold',
-        'shipping_cost',
-        'platform_fees',
-        'vat_fees',
-        'other_costs',
-        'profit',
-        'notes',
-        'image_url',
-        'deleted_at',
-        'selling_price',
-        'sale_price',
-        'purchase_price',
-        'created_at',
-      ].join(','),
-    }),
-    initialData: [],
+  async function apiGetJson(path) {
+    // Wait briefly for Supabase session hydration.
+    let session = null;
+    for (let i = 0; i < 8; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await supabase.auth.getSession();
+      session = res?.data?.session || null;
+      if (session?.access_token) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    const headers = {
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      ...(session?.user?.id ? { 'x-user-id': session.user.id } : {}),
+    };
+
+    const resp = await fetch(path, { headers });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(err.error || `HTTP ${resp.status}`);
+    }
+    return resp.json();
+  }
+
+  const salesFields = React.useMemo(() => ([
+    'id',
+    'inventory_id',
+    'item_name',
+    'purchase_date',
+    'sale_date',
+    'platform',
+    'source',
+    'category',
+    'quantity_sold',
+    'shipping_cost',
+    'platform_fees',
+    'vat_fees',
+    'other_costs',
+    'profit',
+    'notes',
+    'image_url',
+    'deleted_at',
+    'selling_price',
+    'sale_price',
+    'purchase_price',
+    'created_at',
+  ].join(',')), []);
+
+  // Reset paging when filters change.
+  useEffect(() => {
+    setPageIndex(0);
+  }, [
+    filters.searchTerm,
+    filters.platform,
+    filters.minProfit,
+    filters.maxProfit,
+    filters.startDate,
+    filters.endDate,
+    showDeletedOnly,
+    pageSize,
+  ]);
+
+  const { data: salesPage, isLoading } = useQuery({
+    queryKey: ['sales', 'salesHistory', pageIndex, pageSize, filters, showDeletedOnly],
+    queryFn: async () => {
+      const qs = new URLSearchParams();
+      qs.set('paged', 'true');
+      qs.set('count', 'true');
+      qs.set('sort', '-sale_date');
+      qs.set('limit', String(pageSize));
+      qs.set('offset', String(pageIndex * pageSize));
+      qs.set('fields', salesFields);
+
+      if (showDeletedOnly) qs.set('deleted_only', 'true');
+      else qs.set('include_deleted', 'false');
+
+      if (filters.searchTerm?.trim()) qs.set('search', filters.searchTerm.trim());
+      if (filters.platform && filters.platform !== 'all') qs.set('platform', filters.platform);
+      if (filters.minProfit !== '') qs.set('min_profit', String(filters.minProfit));
+      if (filters.maxProfit !== '') qs.set('max_profit', String(filters.maxProfit));
+      if (filters.startDate) qs.set('from', filters.startDate.toISOString().slice(0, 10));
+      if (filters.endDate) qs.set('to', filters.endDate.toISOString().slice(0, 10));
+
+      return apiGetJson(`/api/sales?${qs.toString()}`);
+    },
+    placeholderData: { data: [], total: 0, limit: pageSize, offset: 0 },
   });
+
+  const rawSales = React.useMemo(() => salesPage?.data || [], [salesPage]);
+  const totalSales = Number.isFinite(Number(salesPage?.total)) ? Number(salesPage.total) : 0;
+  const totalPages = Math.max(1, Math.ceil(totalSales / pageSize));
+  const canPrev = pageIndex > 0;
+  const canNext = pageIndex + 1 < totalPages;
 
   const salesWithMetrics = React.useMemo(() => {
     if (!rawSales) return [];
@@ -869,6 +934,79 @@ export default function SalesHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+              <div className="text-xs text-muted-foreground">
+                Showing <span className="font-semibold text-foreground">{rawSales.length}</span>
+                {totalSales ? (
+                  <>
+                    {" "}
+                    of <span className="font-semibold text-foreground">{totalSales}</span>
+                  </>
+                ) : null}
+                {" "}sales
+                {" "}• page <span className="font-semibold text-foreground">{pageIndex + 1}</span>
+                {" "}of <span className="font-semibold text-foreground">{totalPages}</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Per page</Label>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(v) => {
+                    const n = Number(v);
+                    if (n === 50 || n === 100 || n === 200) setPageSize(n);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-[110px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="200">200</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  disabled={!canPrev}
+                  onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+                  className="h-9"
+                >
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={!canNext}
+                  onClick={() => setPageIndex((p) => p + 1)}
+                  className="h-9"
+                >
+                  Next
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-9"
+                  onClick={() => {
+                    const qs = new URLSearchParams();
+                    // Match current filters; export up to 5000 rows.
+                    if (showDeletedOnly) qs.set('deleted_only', 'true');
+                    else qs.set('include_deleted', 'false');
+                    if (filters.searchTerm?.trim()) qs.set('search', filters.searchTerm.trim());
+                    if (filters.platform && filters.platform !== 'all') qs.set('platform', filters.platform);
+                    if (filters.minProfit !== '') qs.set('min_profit', String(filters.minProfit));
+                    if (filters.maxProfit !== '') qs.set('max_profit', String(filters.maxProfit));
+                    if (filters.startDate) qs.set('from', filters.startDate.toISOString().slice(0, 10));
+                    if (filters.endDate) qs.set('to', filters.endDate.toISOString().slice(0, 10));
+                    qs.set('limit', '5000');
+                    window.open(`/api/sales/export?${qs.toString()}`, '_blank');
+                  }}
+                >
+                  Export CSV
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
               <div className="relative min-w-0">
                 <Label htmlFor="search" className="text-xs sm:text-sm mb-1.5 block break-words">Search</Label>
